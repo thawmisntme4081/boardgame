@@ -83,57 +83,39 @@ sky-team/
 
 The whole game is one serialisable `GameState` object plus pure functions that return a new state; no rule lives in React or in socket handlers.
 
-```ts
-// packages/shared/src/types.ts
-export type Seat = 'pilot' | 'copilot';
-export type Phase = 'lobby' | 'strategy' | 'placing' | 'resolving' | 'won' | 'crashed';
+Implemented in Phase 1 (`packages/shared/src`):
 
-export type SlotId =
-  | 'axisPilot' | 'axisCopilot'
-  | 'enginePilot' | 'engineCopilot'
-  | 'radioPilot' | 'radioCopilot1' | 'radioCopilot2'
-  | 'gear1' | 'gear2' | 'gear3'            // pilot
-  | 'brakes1' | 'brakes2' | 'brakes3'      // pilot, in order
-  | 'flaps1' | 'flaps2' | 'flaps3' | 'flaps4' // copilot, in order
-  | `concentration${1 | 2 | 3}`;           // either player
+| File | Contents |
+| --- | --- |
+| `types.ts` | `Seat`, `SlotId`, `Phase` (`strategy` → `placing` → … → `won` / `lost`), `EndReason`, `Scenario`, `PlaceIntent`, `GameEvent`, `GameState` |
+| `slots.ts` | Every slot's seat colours, allowed values and group; the 4 mandatory slots |
+| `scenarios.ts` | Altitude track and YUL scenario as data |
+| `state.ts` | `createGame(scenario, seed)` |
+| `rules.ts` | `rollDice`, `canPlaceDie`, `placeDie`, `legalMoves`, `resolveRound`, `checkLanding`, `spendReroll`, `rerollDice` |
+| `rng.ts` | mulberry32; `rngSeed` + `rngState` live in the state, so `rngSeed` + `log` replay a game |
+| `random-play.ts` | Random-legal-move games for fuzzing and `pnpm --filter @sky/shared random-play` |
 
-export interface Die { id: string; value: 1 | 2 | 3 | 4 | 5 | 6; }
+Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { dieId, slot, coffeeDelta })` returns `{ ok: true }` or `{ ok: false, reason }`; `placeDie` throws `RuleError` on an illegal move. Axis and engines resolve **as soon as the second die is placed** (as the rulebook says); `placeDie` ends the round by itself once nobody can place another die.
 
-export interface GameState {
-  roomCode: string;
-  scenarioId: string;
-  phase: Phase;
-  round: number;
-  altitude: number;                 // e.g. 6000 -> 0
-  currentSeat: Seat;
-  firstSeat: Seat;                  // alternates per scenario rules
-  dice: Record<Seat, Die[]>;        // unplaced dice (secret)
-  placed: Partial<Record<SlotId, { seat: Seat; value: number }>>;
-  axis: number;                     // crash when |axis| > 2
-  approachIndex: number;            // position on approach track
-  approachPlanes: number[];         // plane count per space
-  aeroBlue: number;                 // raised by landing gear
-  aeroOrange: number;               // raised by flaps
-  gear: [boolean, boolean, boolean];
-  flaps: [boolean, boolean, boolean, boolean];
-  brakes: number;
-  coffee: number;                   // 0..3
-  rngSeed: number;
-  log: GameEvent[];                 // for replay and debugging
-  endReason?: string;
-}
-```
+**Base-game numbers (checked against the rulebook and the physical board):**
 
-Rule functions in `rules.ts`, each pure and unit-tested:
+| Rule | Value |
+| --- | --- |
+| Axis | Tilts toward the higher die by the difference; not reset between rounds; lose on reaching 3 marks either way |
+| Aerodynamics | Blue starts between 4–5 (+1 per landing gear, 7–8 when all down); orange between 8–9 (+1 per flap, just past 12) |
+| Speed | ≤ blue: 0 spaces; ≤ orange: 1 space; above: 2 spaces. Final round: compared with brakes instead |
+| Landing gear | 1/2, 3/4, 5/6, any order |
+| Flaps | 1/2, 2/3, 4/5, 5/6, in order |
+| Brakes | 2, then 4, then 6; marker starts left of 2; landing needs speed below the marker |
+| Radio | Pilot 1 space, co-pilot 2; die value N removes a plane N−1 spaces ahead of the current position |
+| Coffee | +1 per concentration die, max 3, shared; each token ±1, no wrap past 1 or 6 |
+| Altitude | 7 rounds, 6000 → 0; first player alternates (pilot at 6000); reroll tokens at 6000 and 2000 |
+| Collision / overshoot | Advancing with planes in the current position, or from the airport, loses |
 
-1. `createGame(scenario, seed)` builds the start state.
-2. `rollDice(state)` rolls 4 dice per seat with the seeded RNG and moves to `placing`.
-3. `canPlaceDie(state, seat, dieId, slot, coffeeDelta)` returns `{ ok: true }` or `{ ok: false, reason }`.
-4. `placeDie(state, seat, dieId, slot, coffeeDelta)` applies the slot effect and passes the turn.
-5. `resolveRound(state)` applies axis, engine speed, approach movement and altitude, then checks for crashes.
-6. `checkLanding(state)` on the final round: approach clear, axis level, all gear and flaps down, brakes above speed.
+**Assumptions to revisit:**
 
-Use a **seedable RNG** (e.g. mulberry32) so any bug can be replayed from `rngSeed` + `log`. Check exact slot values and thresholds against the rulebook while writing tests; the numbers above are a starting model.
+- If the seat on turn has no legal placement, the turn passes to the partner; if neither can place, the leftover dice are lost and the round ends (the rulebook does not cover this).
+- Placing on a flap or brake that is already deployed is allowed and has no effect (the rulebook says so for landing gear).
 
 ## Socket.IO protocol
 
@@ -144,12 +126,12 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 | Client → Server | `room:create` | `{ name }` | ack `{ code, seat, token }` |
 | Client → Server | `room:join` | `{ code, name }` | ack `{ seat, token }` or error |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
-| Client → Server | `game:ready` | `{}` | rolls dice when both ready |
+| Client → Server | `game:ready` | `{}` | ack `{ ok }`; rolls dice when both ready |
 | Client → Server | `game:place` | `{ dieId, slot, coffeeDelta }` | ack `{ ok }` or `{ ok:false, reason }` |
 | Client → Server | `chat:send` | `{ text }` | rejected during `placing` |
 | Client → Server | `game:rematch` | `{}` | new game, same room |
 | Server → Client | `game:view` | `PlayerView` | after every change |
-| Server → Client | `room:presence` | `{ pilot, copilot }` online flags | on join/leave |
+| Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready |
 | Server → Client | `chat:message` | `{ seat, text, at }` | strategy phase only |
 
 ```ts
@@ -241,7 +223,7 @@ Eleven phases, each ending in something you can run; do not start networking unt
 - [x] shadcn/ui init in `packages/client` (`@/` alias), add components only as needed
 - [x] Scripts: `dev` (server + Vite together via `concurrently`), `build`, `test`, `e2e`
 - [x] Add a CI workflow (`.github/workflows/ci.yml`: typecheck, lint, format check, test, build)
-- [ ] Push to GitHub (local repo initialised on `main`; no remote yet)
+- [x] Push to GitHub (`origin` = `thawmisntme4081/boardgame`)
 
 **Done when:** `pnpm dev` starts both apps and `pnpm test` runs an empty suite. ✅ Verified Sep 28, 2026.
 
@@ -249,30 +231,33 @@ Setup notes: pnpm 12 via corepack (esbuild approved in `allowBuilds`); TypeScrip
 
 ### Phase 1: Core rules in `shared`
 
-- [ ] Types for state, slots, dice, events
-- [ ] Seedable RNG and `createGame`
-- [ ] `canPlaceDie` / `placeDie` for every slot type
-- [ ] Coffee: earn on concentration, spend for ±1
-- [ ] `resolveRound`: axis, speed from engines vs aero markers, approach movement, altitude
-- [ ] Crash checks: axis out of range, moving into planes, overshooting
-- [ ] `checkLanding` win conditions
-- [ ] Script that plays random legal moves to the end, 1,000 times
+- [x] Types for state, slots, dice, events
+- [x] Seedable RNG and `createGame`
+- [x] `canPlaceDie` / `placeDie` for every slot type
+- [x] Coffee: earn on concentration, spend for ±1
+- [x] `resolveRound`: axis, speed from engines vs aero markers, approach movement, altitude
+- [x] Crash checks: axis out of range, moving into planes, overshooting, missing the airport, empty mandatory spaces
+- [x] `checkLanding` win conditions
+- [x] Reroll tokens (spend one, then both players may reroll once)
+- [x] Script that plays random legal moves to the end, 1,000 times (`pnpm --filter @sky/shared random-play`, plus a fast-check fuzz test)
+- [x] Replace the placeholder YUL approach track with the real plane counts
 
-**Done when:** unit tests cover every rule and the random-play script never throws.
+**Done when:** unit tests cover every rule and the random-play script never throws. ✅ Verified Sep 28, 2026: 69 tests pass, including 1,000 fuzzed games.
 
 ### Phase 2: Server and rooms
 
-- [ ] Express serves `/health`; Socket.IO attached to the same HTTP server
-- [ ] Room manager: 4-letter codes, seat assignment, reconnect tokens
-- [ ] Handlers for `room:create`, `room:join`, `game:ready`
-- [ ] Zod schemas for every incoming payload
+- [x] Express serves `/health`; Socket.IO attached to the same HTTP server (`app.ts` builds it unstarted so tests pick a random port)
+- [x] Room manager: 4-letter codes (no I or O), creator = pilot, joiner = co-pilot, UUID reconnect tokens
+- [x] Handlers for `room:create`, `room:join`, `game:ready` (dice roll when both players are ready), plus server-side `room:rejoin`
+- [x] Zod schemas for every incoming payload; bad payloads, missing acks and handler errors answer `bad-request` without crashing
+- [x] `viewFor` in `shared/views.ts` and the typed protocol in `shared/events.ts` (needed for `game:view`)
 
-**Done when:** two socket clients in an integration test can join the same room and both receive a `game:view`.
+**Done when:** two socket clients in an integration test can join the same room and both receive a `game:view`. ✅ Verified Sep 28, 2026: 99 tests pass (30 new: rooms, schemas, `viewFor`, and Socket.IO integration tests against a real server).
 
 ### Phase 3: Gameplay over the wire
 
 - [ ] `game:place` handler using the shared rules
-- [ ] `viewFor` filtering, emitted to each seat after every change
+- [ ] `viewFor` filtering, emitted to each seat after every change (`viewFor` and `broadcastRoom` exist since Phase 2)
 - [ ] Chat locked during `placing`
 - [ ] Round resolution and game over broadcast
 
