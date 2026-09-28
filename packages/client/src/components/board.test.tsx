@@ -186,3 +186,19 @@ describe('StatusBar', () => {
     expect(screen.queryByRole('button', { name: /Ready to roll|Waiting/ })).not.toBeInTheDocument();
   });
 });
+
+describe('Leave game', () => {
+  it('asks for confirmation before giving up the seat', async () => {
+    render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Leave game' }));
+    const dialog = screen.getByRole('dialog', { name: 'Leave this game?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
+    expect(api.leaveGame).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Leave game' }));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Leave game' }),
+    );
+    expect(api.leaveGame).toHaveBeenCalled();
+  });
+});

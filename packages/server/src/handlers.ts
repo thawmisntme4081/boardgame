@@ -57,7 +57,27 @@ const joined = ({ room, player }: Seated): JoinResult => ({
 
 const OK: AckResult = { ok: true };
 
-export function registerHandlers(io: GameServer, rooms: RoomManager): void {
+export interface HandlerOptions {
+  /** Behind a proxy (Render, Railway, Fly), read the client IP from X-Forwarded-For. */
+  trustProxy?: boolean;
+}
+
+/** The address used for the per-IP room limit. */
+export function clientIp(socket: GameSocket, trustProxy = false): string {
+  const forwarded = socket.handshake.headers['x-forwarded-for'];
+  const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0]?.trim();
+  return (trustProxy && first) || socket.handshake.address || 'unknown';
+}
+
+/** A game that has not started: the rematch someone else already asked for. */
+const isFresh = (room: Room) =>
+  room.game.phase === 'strategy' && room.game.round === 1 && room.game.log.length === 0;
+
+export function registerHandlers(
+  io: GameServer,
+  rooms: RoomManager,
+  options: HandlerOptions = {},
+): void {
   io.on('connection', (socket: GameSocket) => {
     /** Wraps a handler so a bug answers `bad-request` instead of crashing the process. */
     const on = <R extends JoinResult | AckResult>(
@@ -99,7 +119,7 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
     on('room:create', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(createRoomSchema, payload);
       if (!data) return reply({ ok: false, error: 'bad-request' });
-      const result = rooms.create(data.name, socket.id);
+      const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy));
       if (!result.ok) return reply(result);
       void socket.join(result.value.room.code);
       reply(joined(result.value));
@@ -132,6 +152,18 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
       broadcastRoom(io, rooms, result.value.room);
     });
 
+    on<AckResult>('room:leave', (payload, reply) => {
+      if (!emptySchema.safeParse(payload).success) {
+        return reply({ ok: false, error: 'bad-request' });
+      }
+      const left = rooms.leave(socket.id);
+      if (!left) return reply({ ok: false, error: 'not-in-room' });
+      void socket.leave(left.room.code);
+      reply(OK);
+      // The partner sees the empty seat and a fresh game, ready for someone new.
+      if (!left.closed) broadcastRoom(io, rooms, left.room);
+    });
+
     onSeated('game:ready', emptySchema, (_data, { room, player }) => {
       if (room.game.phase !== 'strategy') return { ok: false, error: 'not-strategy' };
       player.ready = true;
@@ -143,6 +175,15 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
     });
 
     onSeated('game:place', placeSchema, (intent, { room, player }) => {
+      // A double tap sends the same move twice; the repeat is accepted and changes nothing.
+      const repeat = room.game.log.some(
+        (e) =>
+          e.type === 'place' &&
+          e.seat === player.seat &&
+          e.dieId === intent.dieId &&
+          e.slot === intent.slot,
+      );
+      if (repeat) return OK;
       const check = canPlaceDie(room.game, player.seat, intent);
       if (!check.ok) return { ok: false, error: check.reason };
       // Axis, engines and the end of the round (landing included) resolve inside placeDie.
@@ -165,6 +206,8 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
     });
 
     onSeated('game:rematch', emptySchema, (_data, { room }) => {
+      // Both players often press "Fly again": the second press finds the new game.
+      if (isFresh(room)) return OK;
       if (!isGameOver(room.game)) return { ok: false, error: 'game-not-over' };
       rooms.rematch(room);
       return OK;

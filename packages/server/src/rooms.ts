@@ -25,9 +25,23 @@ export interface Room {
   code: string;
   players: Partial<Record<Seat, Player>>;
   game: GameState;
+  /** Counted against the per-IP room limit while the room exists. */
+  creatorIp: string;
   createdAt: number;
   lastActivity: number;
 }
+
+export interface RoomOptions {
+  now?: () => number;
+  seed?: () => number;
+  /** Rooms with nobody connected are removed after this long without activity. */
+  idleTtlMs?: number;
+  /** Live rooms one IP address may have created at once. */
+  maxRoomsPerIp?: number;
+}
+
+export const DEFAULT_IDLE_TTL_MS = 30 * 60_000;
+export const DEFAULT_MAX_ROOMS_PER_IP = 5;
 
 export interface Seated {
   room: Room;
@@ -46,10 +60,14 @@ export class RoomManager {
 
   private readonly now: () => number;
   private readonly newSeed: () => number;
+  private readonly idleTtlMs: number;
+  private readonly maxRoomsPerIp: number;
 
-  constructor(options: { now?: () => number; seed?: () => number } = {}) {
+  constructor(options: RoomOptions = {}) {
     this.now = options.now ?? Date.now;
     this.newSeed = options.seed ?? (() => randomInt(2 ** 31));
+    this.idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_TTL_MS;
+    this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
   }
 
   get size(): number {
@@ -68,13 +86,16 @@ export class RoomManager {
   }
 
   /** The creator takes the pilot seat. */
-  create(name: string, socketId: string): Result<Seated> {
+  create(name: string, socketId: string, ip = 'unknown'): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
+    const fromIp = [...this.rooms.values()].filter((r) => r.creatorIp === ip).length;
+    if (fromIp >= this.maxRoomsPerIp) return err('too-many-rooms');
     const code = this.newCode();
     const room: Room = {
       code,
       players: {},
       game: createGame(YUL, this.newSeed()),
+      creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
     };
@@ -114,6 +135,38 @@ export class RoomManager {
     this.sockets.delete(socketId);
     if (seated) seated.player.socketId = null;
     return seated;
+  }
+
+  /**
+   * The player gives up their seat for good. An empty room is deleted; otherwise the
+   * game restarts, so whoever takes the free seat starts fresh with the one who stayed.
+   */
+  leave(socketId: string): (Seated & { closed: boolean }) | undefined {
+    const seated = this.bySocket(socketId);
+    if (!seated) return undefined;
+    const { room, player } = seated;
+    this.sockets.delete(socketId);
+    delete room.players[player.seat];
+    if (SEATS.every((seat) => !room.players[seat])) {
+      this.rooms.delete(room.code);
+      return { room, player, closed: true };
+    }
+    this.rematch(room);
+    return { room, player, closed: false };
+  }
+
+  /** Deletes rooms that nobody is connected to and that have been idle too long. */
+  sweep(): string[] {
+    const cutoff = this.now() - this.idleTtlMs;
+    const removed: string[] = [];
+    for (const room of this.rooms.values()) {
+      const anyoneOnline = SEATS.some((seat) => room.players[seat]?.socketId);
+      if (!anyoneOnline && room.lastActivity <= cutoff) {
+        this.rooms.delete(room.code);
+        removed.push(room.code);
+      }
+    }
+    return removed;
   }
 
   presence(room: Room): Presence {

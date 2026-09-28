@@ -1,7 +1,17 @@
 import { otherSeat, type PlayerView, type Presence } from '@sky/shared';
-import { WifiOff } from 'lucide-react';
-import { ready } from '@/api';
+import { LogOut, WifiOff } from 'lucide-react';
+import { leaveGame, ready } from '@/api';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
 import type { Connection } from '@/store';
@@ -30,6 +40,38 @@ function ReadyButton({ ready: isReady, partnerName }: { ready: boolean; partnerN
     >
       {isReady ? `Waiting for ${partnerName}…` : 'Ready to roll'}
     </Button>
+  );
+}
+
+/** Gives up your seat, after a confirmation; your partner's game restarts. */
+function LeaveButton({ partnerName }: { partnerName: string }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-11" aria-label="Leave game">
+          <LogOut />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Leave this game?</DialogTitle>
+          <DialogDescription>
+            Your seat is given up and {partnerName}’s game restarts, waiting for a new partner. To
+            pause instead, just close the tab: your seat is kept for 30 minutes.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2">
+          <DialogClose asChild>
+            <Button variant="outline" className="h-11">
+              Stay
+            </Button>
+          </DialogClose>
+          <Button variant="destructive" className="h-11" onClick={() => void leaveGame()}>
+            Leave game
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -102,6 +144,7 @@ export function StatusBar({
           {view.phase === 'strategy' && (
             <ReadyButton ready={presence?.[view.seat]?.ready ?? false} partnerName={partnerName} />
           )}
+          <LeaveButton partnerName={partnerName} />
         </div>
       </div>
     </header>

@@ -14,7 +14,9 @@ function Screen() {
 
   if (!session) return <Lobby />;
   if (!view) return <Connecting />;
-  if (!presence?.pilot || !presence.copilot) return <WaitingRoom code={session.code} />;
+  if (!presence?.pilot || !presence.copilot) {
+    return <WaitingRoom code={session.code} missing={presence?.pilot ? 'copilot' : 'pilot'} />;
+  }
   return (
     <Suspense fallback={<Connecting />}>
       <Game view={view} presence={presence} />

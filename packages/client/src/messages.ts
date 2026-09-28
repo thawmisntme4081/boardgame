@@ -11,6 +11,7 @@ const errors: Record<ErrorCode | MoveError, string> = {
   'already-in-room': 'You are already in a game.',
   'not-strategy': 'Dice are already rolled.',
   'game-not-over': 'The game is not over yet.',
+  'too-many-rooms': 'You have too many open games. Finish or leave one first.',
   'game-over': 'The game is over.',
   'not-placing': 'Dice are not rolled yet.',
   'not-your-turn': 'Wait for your partner to place a die.',

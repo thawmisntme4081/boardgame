@@ -292,6 +292,7 @@ describe('rerolls over sockets', () => {
 describe('game:rematch', () => {
   it('only works once the game is over, then starts a fresh game in the same room', async () => {
     const { clients, room, code } = await seatedRoom();
+    await bothReady(clients);
     expect(await clients.pilot.emitWithAck('game:rematch', {})).toEqual({
       ok: false,
       error: 'game-not-over',
@@ -305,5 +306,127 @@ describe('game:rematch', () => {
     expect(room().code).toBe(code);
     expect(room().players.pilot).toMatchObject({ name: 'Ana', ready: false });
     expect(room().game.log).toEqual([]);
+  });
+});
+
+describe('robustness', () => {
+  it('rejoining mid-round resumes exactly where the player was', async () => {
+    const { clients, room, code } = await seatedRoom();
+    await bothReady(clients);
+    const die = room().game.dice.pilot[1]!;
+    expectOk(
+      await clients.pilot.emitWithAck('game:place', {
+        dieId: die.id,
+        slot: 'axisPilot',
+        coffeeDelta: 0,
+      }),
+    );
+    const before = viewFor(room().game, 'pilot');
+    const token = room().players.pilot!.token;
+
+    clients.pilot.disconnect();
+    const back = await server!.connect();
+    const view = next(back, 'game:view');
+    expect(await back.emitWithAck('room:rejoin', { code, token })).toMatchObject({
+      ok: true,
+      seat: 'pilot',
+    });
+    expect(await view).toEqual(before);
+    expect((await view).myDice).toHaveLength(3);
+  });
+
+  it('accepts a double-tapped move once', async () => {
+    const { clients, room } = await seatedRoom();
+    await bothReady(clients);
+    const intent = {
+      dieId: room().game.dice.pilot[0]!.id,
+      slot: 'axisPilot',
+      coffeeDelta: 0,
+    } as const;
+    const [first, second] = await Promise.all([
+      clients.pilot.emitWithAck('game:place', intent),
+      clients.pilot.emitWithAck('game:place', intent),
+    ]);
+    expect(first).toEqual({ ok: true });
+    expect(second).toEqual({ ok: true });
+    expect(room().game.log.filter((e) => e.type === 'place')).toHaveLength(1);
+    expect(room().game.dice.pilot).toHaveLength(3);
+    expect(room().game.currentSeat).toBe('copilot');
+  });
+
+  it('still rejects a different move with an already placed die', async () => {
+    const { clients, room } = await seatedRoom();
+    await bothReady(clients);
+    const dieId = room().game.dice.pilot[0]!.id;
+    expectOk(
+      await clients.pilot.emitWithAck('game:place', { dieId, slot: 'axisPilot', coffeeDelta: 0 }),
+    );
+    expect(
+      await clients.pilot.emitWithAck('game:place', { dieId, slot: 'enginePilot', coffeeDelta: 0 }),
+    ).toEqual({ ok: false, error: 'not-your-turn' });
+  });
+
+  it('starts one new game when both players press "Fly again"', async () => {
+    let seeds = 0;
+    server = await startTestServer(new RoomManager({ seed: () => ++seeds }));
+    const pilot = await server.connect();
+    const copilot = await server.connect();
+    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
+    joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
+    const room = server.rooms.get(code)!;
+    room.game = { ...room.game, phase: 'lost', endReason: 'spin' };
+
+    const [a, b] = await Promise.all([
+      pilot.emitWithAck('game:rematch', {}),
+      copilot.emitWithAck('game:rematch', {}),
+    ]);
+    expect(a).toEqual({ ok: true });
+    expect(b).toEqual({ ok: true });
+    expect(seeds).toBe(2); // the room's first game + exactly one rematch
+    expect(room.game.phase).toBe('strategy');
+  });
+
+  it('leaving frees the seat, restarts the partner and lets someone new join', async () => {
+    const { clients, room, code } = await seatedRoom();
+    await bothReady(clients);
+
+    const presence = next(clients.copilot, 'room:presence');
+    const view = next(clients.copilot, 'game:view');
+    expectOk(await clients.pilot.emitWithAck('room:leave', {}));
+    expect((await presence).pilot).toBeNull();
+    expect(await view).toMatchObject({ phase: 'strategy', round: 1, myDice: [] });
+    expect(await clients.pilot.emitWithAck('game:ready', {})).toEqual({
+      ok: false,
+      error: 'not-in-room',
+    });
+
+    const newcomer = await server!.connect();
+    expect(await newcomer.emitWithAck('room:join', { code, name: 'Cat' })).toMatchObject({
+      ok: true,
+      seat: 'pilot',
+    });
+    expect(room().players.pilot?.name).toBe('Cat');
+  });
+
+  it('deletes the room when both players leave', async () => {
+    const { clients, code } = await seatedRoom();
+    expectOk(await clients.pilot.emitWithAck('room:leave', {}));
+    expectOk(await clients.copilot.emitWithAck('room:leave', {}));
+    expect(server!.rooms.get(code)).toBeUndefined();
+    expect(await clients.pilot.emitWithAck('room:leave', {})).toEqual({
+      ok: false,
+      error: 'not-in-room',
+    });
+  });
+
+  it('limits how many rooms one address can create', async () => {
+    server = await startTestServer(new RoomManager({ maxRoomsPerIp: 1 }));
+    const first = await server.connect();
+    const second = await server.connect();
+    expect((await first.emitWithAck('room:create', { name: 'Ana' })).ok).toBe(true);
+    expect(await second.emitWithAck('room:create', { name: 'Ana' })).toEqual({
+      ok: false,
+      error: 'too-many-rooms',
+    });
   });
 });

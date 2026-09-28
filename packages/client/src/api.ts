@@ -2,6 +2,7 @@
 import type { AckResult, JoinResult, SlotId } from '@sky/shared';
 import { toast } from 'sonner';
 import { errorText } from './messages';
+import { createPartnerNotifier } from './partner';
 import { inviteUrl, saveSession } from './session';
 import { socket } from './socket';
 import { useGame } from './store';
@@ -19,11 +20,20 @@ async function withTimeout<R>(request: () => Promise<R>): Promise<R | null> {
 
 const emit = () => socket.timeout(ACK_TIMEOUT_MS);
 
+/** Requests still waiting for their ack, so a double tap does not send a second one. */
+const pending = new Set<string>();
+
 /** Shows the error for a failed ack; true when the server accepted the request. */
-async function run(request: () => Promise<AckResult>): Promise<boolean> {
-  const result = await withTimeout(request);
-  if (result && !result.ok) toast.error(errorText(result.error));
-  return result?.ok ?? false;
+async function run(key: string, request: () => Promise<AckResult>): Promise<boolean> {
+  if (pending.has(key)) return false;
+  pending.add(key);
+  try {
+    const result = await withTimeout(request);
+    if (result && !result.ok) toast.error(errorText(result.error));
+    return result?.ok ?? false;
+  } finally {
+    pending.delete(key);
+  }
 }
 
 function setUrl(path: string): void {
@@ -45,7 +55,12 @@ export function startConnection(): void {
   socket.on('disconnect', () => store().setConnection('offline'));
   socket.io.on('reconnect_attempt', () => store().setConnection('connecting'));
   socket.on('game:view', (view) => store().setView(view));
-  socket.on('room:presence', (presence) => store().setPresence(presence));
+  const onPartner = createPartnerNotifier((text) => toast.message(text));
+  socket.on('room:presence', (presence) => {
+    const { presence: before, session } = store();
+    if (session) onPartner(before, presence, session.seat);
+    store().setPresence(presence);
+  });
 
   // Phones pause background tabs; when ours comes back, reconnect or resync the seat.
   document.addEventListener('visibilitychange', () => {
@@ -93,22 +108,25 @@ export async function joinRoom(code: string, name: string): Promise<boolean> {
   return onJoined(result, name);
 }
 
-export const ready = () => run(() => emit().emitWithAck('game:ready', {}));
+export const ready = () => run('ready', () => emit().emitWithAck('game:ready', {}));
 
 /** Places the selected die, with its draft coffee, on `slot`. */
 export async function placeSelected(slot: SlotId): Promise<boolean> {
   const { selectedDieId, coffeeDelta } = useGame.getState();
   if (!selectedDieId) return false;
-  return run(() => emit().emitWithAck('game:place', { dieId: selectedDieId, slot, coffeeDelta }));
+  return run('place', () =>
+    emit().emitWithAck('game:place', { dieId: selectedDieId, slot, coffeeDelta }),
+  );
 }
 
-export const spendReroll = () => run(() => emit().emitWithAck('game:spend-reroll', {}));
+export const spendReroll = () =>
+  run('spend-reroll', () => emit().emitWithAck('game:spend-reroll', {}));
 
 export function reroll(dieIds: string[]): Promise<boolean> {
-  return run(() => emit().emitWithAck('game:reroll', { dieIds }));
+  return run('reroll', () => emit().emitWithAck('game:reroll', { dieIds }));
 }
 
-export const rematch = () => run(() => emit().emitWithAck('game:rematch', {}));
+export const rematch = () => run('rematch', () => emit().emitWithAck('game:rematch', {}));
 
 function forgetSession(): void {
   saveSession(null);
@@ -116,11 +134,17 @@ function forgetSession(): void {
   setUrl('/');
 }
 
-/** Back to the lobby. The server keeps the seat until the room is cleaned up (Phase 5). */
-export function leaveGame(): void {
+/** Gives up the seat for good and goes back to the lobby. */
+export async function leaveGame(): Promise<void> {
+  let left = false;
+  try {
+    left = (await emit().emitWithAck('room:leave', {})).ok;
+  } catch {
+    // Offline: fall through and drop the connection instead.
+  }
   forgetSession();
-  // A fresh connection so this browser no longer counts as seated.
-  socket.disconnect().connect();
+  // If the server did not hear us, a fresh connection at least stops us counting as seated.
+  if (!left) socket.disconnect().connect();
 }
 
 export async function shareInvite(code: string): Promise<void> {

@@ -51,6 +51,13 @@ describe('WaitingRoom', () => {
   });
 });
 
+describe('WaitingRoom after a partner left', () => {
+  it('names the missing seat', () => {
+    render(<WaitingRoom code="QRST" missing="pilot" />);
+    expect(screen.getByText('Waiting for your pilot')).toBeInTheDocument();
+  });
+});
+
 describe('codeFromPath', () => {
   it('reads /r/ABCD links only', () => {
     expect(codeFromPath('/r/abcd')).toBe('ABCD');

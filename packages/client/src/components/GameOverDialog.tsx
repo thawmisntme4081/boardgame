@@ -35,7 +35,7 @@ export function GameOverDialog({ view }: { view: PlayerView }) {
           </ul>
         )}
         <DialogFooter className="gap-2">
-          <Button variant="outline" className="h-11" onClick={leaveGame}>
+          <Button variant="outline" className="h-11" onClick={() => void leaveGame()}>
             Leave
           </Button>
           <Button className="h-11" onClick={() => void rematch()}>

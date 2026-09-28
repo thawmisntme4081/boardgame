@@ -23,7 +23,9 @@ describe('RoomManager', () => {
   it('never reuses a live room code', () => {
     const rooms = new RoomManager();
     const codes = new Set<string>();
-    for (let i = 0; i < 500; i++) codes.add(unwrap(rooms.create('P', `s${i}`)).room.code);
+    for (let i = 0; i < 500; i++) {
+      codes.add(unwrap(rooms.create('P', `s${i}`, `10.0.${i >> 8}.${i & 255}`)).room.code);
+    }
     expect(codes.size).toBe(500);
   });
 
@@ -90,5 +92,69 @@ describe('RoomManager', () => {
     now = 5000;
     unwrap(rooms.join(room.code, 'Ben', 's2'));
     expect(room.lastActivity).toBe(5000);
+  });
+
+  it('limits live rooms per IP address', () => {
+    const rooms = new RoomManager({ maxRoomsPerIp: 2 });
+    unwrap(rooms.create('A', 's1', '1.2.3.4'));
+    const second = unwrap(rooms.create('B', 's2', '1.2.3.4'));
+    expect(rooms.create('C', 's3', '1.2.3.4')).toEqual({ ok: false, error: 'too-many-rooms' });
+    expect(rooms.create('D', 's4', '5.6.7.8').ok).toBe(true);
+    // Leaving an empty room frees the slot.
+    rooms.leave('s2');
+    expect(rooms.get(second.room.code)).toBeUndefined();
+    expect(rooms.create('C', 's3', '1.2.3.4').ok).toBe(true);
+  });
+
+  it('frees the seat on leave and restarts the game for the partner', () => {
+    let seed = 100;
+    const rooms = new RoomManager({ seed: () => seed++ });
+    const { room } = unwrap(rooms.create('Ana', 's1'));
+    const pilotToken = room.players.pilot!.token;
+    unwrap(rooms.join(room.code, 'Ben', 's2'));
+    room.players.copilot!.ready = true;
+    room.game = { ...room.game, round: 3, log: [{ type: 'round-end', round: 2 }] };
+
+    const left = rooms.leave('s1');
+    expect(left).toMatchObject({ closed: false, player: { name: 'Ana', seat: 'pilot' } });
+    expect(room.players.pilot).toBeUndefined();
+    expect(rooms.bySocket('s1')).toBeUndefined();
+    expect(room.game).toMatchObject({ round: 1, phase: 'strategy', log: [], rngSeed: 101 });
+    expect(room.players.copilot!.ready).toBe(false);
+    expect(rooms.rejoin(room.code, pilotToken, 's9')).toEqual({ ok: false, error: 'bad-token' });
+
+    // Someone new takes the free pilot seat.
+    expect(unwrap(rooms.join(room.code, 'Cat', 's3')).player.seat).toBe('pilot');
+  });
+
+  it('deletes the room when the last player leaves', () => {
+    const rooms = new RoomManager();
+    const { room } = unwrap(rooms.create('Ana', 's1'));
+    expect(rooms.leave('s1')).toMatchObject({ closed: true });
+    expect(rooms.get(room.code)).toBeUndefined();
+    expect(rooms.size).toBe(0);
+    expect(rooms.leave('s1')).toBeUndefined();
+  });
+
+  it('sweeps rooms that nobody is connected to after the idle time', () => {
+    let now = 0;
+    const rooms = new RoomManager({ now: () => now, idleTtlMs: 1000 });
+    const idle = unwrap(rooms.create('Ana', 's1', 'a')).room;
+    const busy = unwrap(rooms.create('Ben', 's2', 'b')).room;
+    const recent = unwrap(rooms.create('Cat', 's3', 'c')).room;
+    rooms.disconnect('s1');
+    now = 900;
+    rooms.disconnect('s3');
+    rooms.touch(recent);
+
+    now = 1000;
+    expect(rooms.sweep()).toEqual([idle.code]);
+    expect(rooms.get(idle.code)).toBeUndefined();
+    // Still connected, even though idle: kept.
+    expect(rooms.get(busy.code)).toBeDefined();
+    // Nobody connected, but active 100 ms ago: kept until its own idle time passes.
+    expect(rooms.get(recent.code)).toBeDefined();
+    now = 1900;
+    expect(rooms.sweep()).toEqual([recent.code]);
   });
 });

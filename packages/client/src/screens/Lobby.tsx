@@ -1,3 +1,4 @@
+import type { Seat } from '@sky/shared';
 import { Plane, Share2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { createRoom, joinRoom, leaveGame, shareInvite } from '@/api';
@@ -103,13 +104,15 @@ export function Lobby() {
   );
 }
 
-/** After creating a game: share the code and wait for the co-pilot. */
-export function WaitingRoom({ code }: { code: string }) {
+/** Waiting for the empty seat to be filled: after creating a game, or after a partner left. */
+export function WaitingRoom({ code, missing = 'copilot' }: { code: string; missing?: Seat }) {
   return (
     <Shell>
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Waiting for your co-pilot</CardTitle>
+          <CardTitle className="text-xl">
+            Waiting for your {missing === 'pilot' ? 'pilot' : 'co-pilot'}
+          </CardTitle>
           <CardDescription>Send them this code or the invite link.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -123,7 +126,7 @@ export function WaitingRoom({ code }: { code: string }) {
           <Button className="h-11" onClick={() => void shareInvite(code)}>
             <Share2 /> Share invite
           </Button>
-          <Button variant="ghost" className="h-11" onClick={leaveGame}>
+          <Button variant="ghost" className="h-11" onClick={() => void leaveGame()}>
             Cancel
           </Button>
         </CardContent>

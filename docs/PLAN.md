@@ -133,6 +133,7 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 | Client → Server | `room:create` | `{ name }` | ack `{ ok, code, seat, token }` |
 | Client → Server | `room:join` | `{ code, name }` | ack `{ ok, code, seat, token }` or `{ ok:false, error }` |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
+| Client → Server | `room:leave` | `{}` | ack; seat freed, partner's game restarts; empty room deleted |
 | Client → Server | `game:ready` | `{}` | ack; rolls dice when both are ready |
 | Client → Server | `game:place` | `{ dieId, slot, coffeeDelta }` | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
 | Client → Server | `game:spend-reroll` | `{}` | ack; both players may then reroll once |
@@ -141,7 +142,7 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 | Server → Client | `game:view` | `PlayerView` | to each seat after every change |
 | Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready/every change |
 
-Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room error (`bad-request`, `not-in-room`, `game-not-over`, …) or the `MoveError` from the shared rules. Types live in `packages/shared/src/events.ts` (`ClientToServer`, `ServerToClient`).
+Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room error (`bad-request`, `not-in-room`, `game-not-over`, `too-many-rooms`, …) or the `MoveError` from the shared rules. Types live in `packages/shared/src/events.ts` (`ClientToServer`, `ServerToClient`).
 
 **Hidden information.** `viewFor(state, seat)` is the only way state leaves the server:
 
@@ -281,13 +282,13 @@ Notes: `canPlaceDie` was split so the client runs the same check (`checkPlacemen
 
 ### Phase 5: Robustness
 
-- [ ] Reconnect: token in `localStorage`, `room:rejoin` restores the seat (built in Phase 4: `session.ts` + `api.ts`; needs the reload test below)
-- [ ] Presence indicator when the partner drops (status bar shows online/offline since Phase 4; add a toast)
-- [ ] Idempotent moves (ignore duplicate `game:place` from double clicks)
-- [ ] Room cleanup after 30 minutes idle; limit rooms per IP
-- [ ] Handle one or both players leaving mid-game
+- [x] Reconnect: token in `localStorage`, `room:rejoin` restores the seat (reload, reconnect, or a phone tab coming back)
+- [x] Presence indicator when the partner drops: status bar dot, plus a message if they are still gone after 3 s ("lost connection", then "is back"); a quick refresh shows nothing
+- [x] Idempotent moves: a repeated `game:place` for a die already placed on that slot is accepted and changes nothing; the client also never sends the same request twice while one is waiting; both players pressing "Fly again" starts one game
+- [x] Room cleanup: rooms nobody is connected to are removed after 30 minutes without activity (swept every minute); at most 5 live rooms per creator IP (`too-many-rooms`)
+- [x] Leaving mid-game: `room:leave` (Leave button with confirmation in the status bar) frees the seat; the partner is told, their game restarts and they wait for someone new; when both leave the room is deleted. Closing the tab only marks you offline.
 
-**Done when:** refreshing either tab mid-round resumes the game exactly.
+**Done when:** refreshing either tab mid-round resumes the game exactly. ✅ Verified Sep 29, 2026: in Chromium (desktop + emulated iPhone 13), reloading each tab mid-round showed identical dice, placed dice, turn and round; plus drop/return and leave flows. 155 tests pass (server: rejoin mid-round, double taps, double rematch, leave, idle sweep, per-IP limit, client IP; client: partner messages, Leave confirmation).
 
 ### Phase 6: Tests and CI
 
@@ -405,7 +406,7 @@ CMD ["node", "packages/server/dist/index.js"]
 
 Check each host's current pricing and sleep rules before choosing; a sleeping or restarting free instance drops live games.
 
-**Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30`, `LOG_LEVEL=info`, optional `SENTRY_DSN`.
+**Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
 
 **CI/CD with GitHub Actions**
 

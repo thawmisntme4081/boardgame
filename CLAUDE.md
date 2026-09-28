@@ -19,6 +19,8 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - Seedable RNG; tests use fixed seeds. Log every accepted move for replay.
 - No in-game chat (removed at the user's request): players talk outside the app in the strategy phase and press "Ready to roll"; do not add chat back unless asked.
 - Game state is in memory for v1: run a single server instance.
+- Closing a tab only marks a player offline (seat kept); `room:leave` gives the seat up. Rooms nobody is connected to are swept after `ROOM_TTL_MINUTES` (30) idle; `ROOMS_PER_IP` (5) caps live rooms per creator IP (`TRUST_PROXY=1` behind a proxy).
+- Repeated requests must be harmless: a duplicate `game:place` for an already-placed die is accepted as a no-op, a second rematch on a fresh game is OK, and the client never sends the same request twice while one is pending.
 
 ## UI rules
 
@@ -49,5 +51,5 @@ When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm ty
 - `pnpm -r build` — production build
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI
 - `pnpm --filter @sky/shared random-play [games] [firstSeed]` — play random games and print how they ended
-- `pnpm --filter @sky/client dev --host` (+ `pnpm --filter @sky/server dev`) — open the game from a phone on the LAN
+- `pnpm dev:lan` — like `pnpm dev`, but Vite listens on the LAN so a phone can open the Network URL it prints
 - `pnpm exec playwright install chromium` — one-time browser download for Playwright

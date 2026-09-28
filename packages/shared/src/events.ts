@@ -10,7 +10,8 @@ export type ErrorCode =
   | 'not-in-room'
   | 'already-in-room'
   | 'not-strategy'
-  | 'game-not-over';
+  | 'game-not-over'
+  | 'too-many-rooms';
 
 export type JoinResult =
   { ok: true; code: string; seat: Seat; token: string } | { ok: false; error: ErrorCode };
@@ -48,6 +49,8 @@ export interface ClientToServer {
   'room:create': (payload: CreateRoomPayload, ack: (result: JoinResult) => void) => void;
   'room:join': (payload: JoinRoomPayload, ack: (result: JoinResult) => void) => void;
   'room:rejoin': (payload: RejoinRoomPayload, ack: (result: JoinResult) => void) => void;
+  /** Give up your seat for good (closing the tab only marks you offline). */
+  'room:leave': (payload: Empty, ack: (result: AckResult) => void) => void;
   'game:ready': (payload: Empty, ack: (result: AckResult) => void) => void;
   'game:place': (payload: PlaceIntent, ack: (result: AckResult) => void) => void;
   /** Spend a reroll token: both players may then reroll once. */
