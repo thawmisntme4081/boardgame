@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    // e2e code runs callbacks inside the browser (page.evaluate).
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["node"]
   },
   "include": ["vitest.config.ts", "playwright.config.ts", "e2e"]

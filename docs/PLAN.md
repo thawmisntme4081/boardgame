@@ -292,7 +292,15 @@ Notes: `canPlaceDie` was split so the client runs the same check (`checkPlacemen
 
 ### Phase 6: Tests and CI
 
-- [ ] Unit, integration and Playwright suites green in GitHub Actions (see Testing)
+- [x] Unit, property, integration and component suites (Vitest): 159 tests
+- [x] Playwright E2E in `e2e/` against the production build (the server serves `client/dist`), on Desktop Chrome, iPhone 13 (WebKit) and Pixel 7: lobby, invite link, unknown code, a full game to a crash + "Fly again", a landing from a prepared final round, refreshing either tab mid-round, leaving and a newcomer joining, and one desktop + phone game
+- [x] CI workflow: job `check` (typecheck, lint, format, Vitest, build) on every push to `main` and every PR; job `e2e` after it installs Chromium + WebKit and runs `pnpm e2e`, uploading the report on failure
+- [ ] Suites green in GitHub Actions (needs a push; not run yet)
+- [ ] Lighthouse mobile audit in CI (not added)
+
+**Done when:** unit, integration and Playwright suites are green in GitHub Actions. ⏳ Everything passes locally Sep 29, 2026 (Vitest 159/159; Playwright 22/22 on three consecutive runs, 2 skips by design); the Actions run happens on your next push.
+
+E2E setup: `pnpm e2e` builds the app and starts `node packages/server/dist/index.js` on port 3100 with `GAME_SEED=1` (same dice every game, so runs repeat), `E2E_HOOKS=1` (a test-only `POST /__e2e/rooms/:code/game` that sets up a game state; used for the landing test, since a random win through the UI is unreliable) and `ROOMS_PER_IP=1000`. Both `GAME_SEED` and `E2E_HOOKS` are ignored when `NODE_ENV=production`.
 
 ### Phase 7: Deploy
 
@@ -344,7 +352,7 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 | Property / fuzz | Vitest + fast-check | Random legal games never throw; axis and coffee stay in range; dice never leak | Every push |
 | Integration | Vitest + `socket.io-client` | Real server on a random port, two clients: join, play, reconnect, illegal moves rejected | Every push |
 | Component | React Testing Library | Dice tray selection, valid-slot highlighting, rerolls, game over | Every push |
-| End-to-end | Playwright | Two browser contexts play the base scenario to a win and to a crash | Every push to `main`, before deploy |
+| End-to-end | Playwright | Two browser contexts: lobby, a full game to a crash, a landing (prepared final round), refresh mid-round, leaving; on three devices | Every push to `main` and every PR (after the `check` job) |
 | Manual | Two machines | Latency, reconnects on mobile data, UX feel | Before each release |
 
 **Rule tests to write first:**
@@ -378,7 +386,7 @@ Ship one Docker image running one Node process that serves the built React files
 **Build**
 
 1. `pnpm -r build`: Vite outputs `client/dist`, `tsc` (or tsup) outputs `server/dist`.
-2. Express serves `client/dist` as static files with a fallback to `index.html` for `/r/:code` links.
+2. Express serves `client/dist` as static files with a fallback to `index.html` for `/r/:code` links (built in Phase 6 for the E2E tests: `clientDir` in `app.ts`).
 3. Same origin for page and socket, so no CORS setup is needed in production.
 
 ```dockerfile

@@ -19,6 +19,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - Seedable RNG; tests use fixed seeds. Log every accepted move for replay.
 - No in-game chat (removed at the user's request): players talk outside the app in the strategy phase and press "Ready to roll"; do not add chat back unless asked.
 - Game state is in memory for v1: run a single server instance.
+- `GAME_SEED` (fixed dice) and `E2E_HOOKS` (test-only `POST /__e2e/rooms/:code/game`) exist for tests and are ignored when `NODE_ENV=production`; never enable them on a public server.
 - Closing a tab only marks a player offline (seat kept); `room:leave` gives the seat up. Rooms nobody is connected to are swept after `ROOM_TTL_MINUTES` (30) idle; `ROOMS_PER_IP` (5) caps live rooms per creator IP (`TRUST_PROXY=1` behind a proxy).
 - Repeated requests must be harmless: a duplicate `game:place` for an already-placed die is accepted as a no-op, a second rematch on a fresh game is OK, and the client never sends the same request twice while one is pending.
 
@@ -47,7 +48,7 @@ When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm ty
 
 - `pnpm dev` — server + Vite together
 - `pnpm test` — Vitest
-- `pnpm e2e` — Playwright
+- `pnpm e2e` — Playwright: builds, starts the production server on port 3100 (`GAME_SEED=1`, `E2E_HOOKS=1`) and runs `e2e/` on Desktop Chrome, iPhone 13 (WebKit), Pixel 7; `pnpm exec playwright test -g "<name>" --project "Desktop Chrome"` for one test
 - `pnpm -r build` — production build
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI
 - `pnpm --filter @sky/shared random-play [games] [firstSeed]` — play random games and print how they ended
