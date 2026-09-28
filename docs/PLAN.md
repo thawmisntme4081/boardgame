@@ -93,7 +93,9 @@ Implemented in Phase 1 (`packages/shared/src`):
 | `state.ts` | `createGame(scenario, seed)` |
 | `rules.ts` | `rollDice`, `canPlaceDie`, `placeDie`, `legalMoves`, `resolveRound`, `checkLanding`, `spendReroll`, `rerollDice` |
 | `rng.ts` | mulberry32; `rngSeed` + `rngState` live in the state, so `rngSeed` + `log` replay a game |
-| `random-play.ts` | Random-legal-move games for fuzzing and `pnpm --filter @sky/shared random-play` |
+| `views.ts` | `PlayerView` and `viewFor(state, seat)` |
+| `events.ts` | Socket.IO protocol types (see below) |
+| `random-play.ts` | Random agent (`createRandomAgent`, `applyAgentAction`) and `playRandomGame`, imported as `@sky/shared/random-play`; used by fuzzing, the socket full-game test and `pnpm --filter @sky/shared random-play` |
 
 Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { dieId, slot, coffeeDelta })` returns `{ ok: true }` or `{ ok: false, reason }`; `placeDie` throws `RuleError` on an illegal move. Axis and engines resolve **as soon as the second die is placed** (as the rulebook says); `placeDie` ends the round by itself once nobody can place another die.
 
@@ -123,30 +125,20 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 
 | Direction | Event | Payload | Server response |
 | --- | --- | --- | --- |
-| Client → Server | `room:create` | `{ name }` | ack `{ code, seat, token }` |
-| Client → Server | `room:join` | `{ code, name }` | ack `{ seat, token }` or error |
+| Client → Server | `room:create` | `{ name }` | ack `{ ok, code, seat, token }` |
+| Client → Server | `room:join` | `{ code, name }` | ack `{ ok, code, seat, token }` or `{ ok:false, error }` |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
-| Client → Server | `game:ready` | `{}` | ack `{ ok }`; rolls dice when both ready |
-| Client → Server | `game:place` | `{ dieId, slot, coffeeDelta }` | ack `{ ok }` or `{ ok:false, reason }` |
-| Client → Server | `chat:send` | `{ text }` | rejected during `placing` |
-| Client → Server | `game:rematch` | `{}` | new game, same room |
-| Server → Client | `game:view` | `PlayerView` | after every change |
-| Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready |
-| Server → Client | `chat:message` | `{ seat, text, at }` | strategy phase only |
+| Client → Server | `game:ready` | `{}` | ack; rolls dice when both are ready |
+| Client → Server | `game:place` | `{ dieId, slot, coffeeDelta }` | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
+| Client → Server | `game:spend-reroll` | `{}` | ack; both players may then reroll once |
+| Client → Server | `game:reroll` | `{ dieIds }` | ack; rerolls your chosen dice (may be none) |
+| Client → Server | `chat:send` | `{ text }` (1–200 chars) | ack; `chat-locked` during `placing` |
+| Client → Server | `game:rematch` | `{}` | ack; new game, same room and seats; `game-not-over` otherwise |
+| Server → Client | `game:view` | `PlayerView` | to each seat after every change |
+| Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready/every change |
+| Server → Client | `chat:message` | `{ seat, name, text, at }` | to both players |
 
-```ts
-// packages/shared/src/events.ts
-export interface ClientToServer {
-  'room:create': (p: { name: string }, ack: (r: JoinResult) => void) => void;
-  'room:join':   (p: { code: string; name: string }, ack: (r: JoinResult) => void) => void;
-  'game:place':  (p: PlaceIntent, ack: (r: MoveResult) => void) => void;
-  // ...
-}
-export interface ServerToClient {
-  'game:view': (v: PlayerView) => void;
-  // ...
-}
-```
+Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room error (`bad-request`, `not-in-room`, `chat-locked`, …) or the `MoveError` from the shared rules. Types live in `packages/shared/src/events.ts` (`ClientToServer`, `ServerToClient`).
 
 **Hidden information.** `viewFor(state, seat)` is the only way state leaves the server:
 
@@ -157,7 +149,7 @@ export interface ServerToClient {
 
 **No-talking rule in code.** Chat is open in the `strategy` phase between rounds and locked from the moment dice are rolled, mirroring the table rule.
 
-**Server handler pattern:** parse payload with Zod → check seat and turn → `canPlaceDie` → `placeDie` → maybe `resolveRound` → emit `viewFor` to each seat. Any failure returns `{ ok:false, reason }` and changes nothing.
+**Server handler pattern** (`onSeated` in `handlers.ts`): parse payload with Zod → find the socket's seat → `canPlaceDie` → `placeDie` (which resolves axis, engines, the end of the round and landing) → `broadcastRoom` sends presence and each seat's `viewFor`. Any failure returns `{ ok:false, error }` and changes nothing.
 
 ## Responsive UI (mobile web)
 
@@ -256,12 +248,16 @@ Setup notes: pnpm 12 via corepack (esbuild approved in `allowBuilds`); TypeScrip
 
 ### Phase 3: Gameplay over the wire
 
-- [ ] `game:place` handler using the shared rules
-- [ ] `viewFor` filtering, emitted to each seat after every change (`viewFor` and `broadcastRoom` exist since Phase 2)
-- [ ] Chat locked during `placing`
-- [ ] Round resolution and game over broadcast
+- [x] `game:place` handler using the shared rules (rule reasons returned in the ack; illegal moves change nothing)
+- [x] `viewFor` filtering, emitted to each seat after every change
+- [x] Chat locked during `placing` (`chat:send` / `chat:message`; open in strategy, between rounds and after the game)
+- [x] Round resolution and game over broadcast (every view carries `phase`, `endReason`, `landingFailures`)
+- [x] Reroll events: `game:spend-reroll`, `game:reroll`
+- [x] `game:rematch`: fresh game in the same room once the game is over (either player can start it)
 
-**Done when:** a scripted two-client test plays a full game over sockets and no payload ever contains the partner's dice values.
+**Done when:** a scripted two-client test plays a full game over sockets and no payload ever contains the partner's dice values. ✅ Verified Sep 28, 2026: 110 tests pass. `game.test.ts` drives the shared random agent over two real sockets (seed 1: 6 rounds, over 40 actions), checks the server state against an in-process game after every action, and checks every pair of views for leaked partner dice; a second test broadcasts a landing win.
+
+Notes: the in-process vs. socket comparison found a `-0` coffee delta from `legalMoves` (JSON turns it into `0`); fixed in `rules.ts`. The careful random agent never wins on the real YUL track (0 wins in 3,000 games), so the win is tested from a prepared final round.
 
 ### Phase 4: React client
 

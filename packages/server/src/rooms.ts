@@ -44,7 +44,13 @@ export class RoomManager {
   /** Which room and seat each connected socket occupies. */
   private readonly sockets = new Map<string, { code: string; seat: Seat }>();
 
-  constructor(private readonly now: () => number = Date.now) {}
+  private readonly now: () => number;
+  private readonly newSeed: () => number;
+
+  constructor(options: { now?: () => number; seed?: () => number } = {}) {
+    this.now = options.now ?? Date.now;
+    this.newSeed = options.seed ?? (() => randomInt(2 ** 31));
+  }
 
   get size(): number {
     return this.rooms.size;
@@ -62,13 +68,13 @@ export class RoomManager {
   }
 
   /** The creator takes the pilot seat. */
-  create(name: string, socketId: string, seed = randomInt(2 ** 31)): Result<Seated> {
+  create(name: string, socketId: string): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const code = this.newCode();
     const room: Room = {
       code,
       players: {},
-      game: createGame(YUL, seed),
+      game: createGame(YUL, this.newSeed()),
       createdAt: this.now(),
       lastActivity: this.now(),
     };
@@ -120,6 +126,16 @@ export class RoomManager {
 
   bothSeated(room: Room): boolean {
     return SEATS.every((seat) => room.players[seat]);
+  }
+
+  /** Same room and seats, fresh game. */
+  rematch(room: Room): void {
+    room.game = createGame(room.game.scenario, this.newSeed());
+    for (const seat of SEATS) {
+      const player = room.players[seat];
+      if (player) player.ready = false;
+    }
+    this.touch(room);
   }
 
   touch(room: Room): void {

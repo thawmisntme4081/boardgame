@@ -84,7 +84,7 @@ describe('RoomManager', () => {
 
   it('tracks activity time', () => {
     let now = 1000;
-    const rooms = new RoomManager(() => now);
+    const rooms = new RoomManager({ now: () => now });
     const { room } = unwrap(rooms.create('Ana', 's1'));
     expect(room.createdAt).toBe(1000);
     now = 5000;

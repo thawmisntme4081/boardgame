@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createRoomSchema, joinRoomSchema, readySchema, rejoinRoomSchema } from './schemas';
+import { createRoomSchema, joinRoomSchema, emptySchema, rejoinRoomSchema } from './schemas';
 
 describe('payload schemas', () => {
   it('trims names and limits them to 1..20 characters', () => {
@@ -27,8 +27,8 @@ describe('payload schemas', () => {
   });
 
   it('accepts an empty or missing ready payload', () => {
-    expect(readySchema.safeParse({}).success).toBe(true);
-    expect(readySchema.safeParse(undefined).success).toBe(true);
-    expect(readySchema.safeParse('ready').success).toBe(false);
+    expect(emptySchema.safeParse({}).success).toBe(true);
+    expect(emptySchema.safeParse(undefined).success).toBe(true);
+    expect(emptySchema.safeParse('ready').success).toBe(false);
   });
 });

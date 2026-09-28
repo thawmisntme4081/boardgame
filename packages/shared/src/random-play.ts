@@ -69,14 +69,18 @@ function partnerCanAnswer(after: GameState, seat: Seat, slot: SlotId): boolean {
   );
 }
 
-/** `careful` agents avoid obvious blunders; pure random agents rarely pass round 2. */
-export function playRandomGame(
-  seed: number,
-  scenario: Scenario = YUL,
-  onStep?: (state: GameState) => void,
-  careful = true,
-): GameState {
-  // The agent's choices use their own stream so they never disturb the game's dice.
+export type AgentAction =
+  | { type: 'roll' }
+  | { type: 'spend-reroll'; seat: Seat }
+  | { type: 'reroll'; seat: Seat; dieIds: string[] }
+  | { type: 'place'; seat: Seat; intent: PlaceIntent };
+
+/**
+ * A random player for both seats. It sees the whole state (it is a test tool), and its
+ * choices use their own RNG stream so they never disturb the game's dice.
+ * `careful` agents avoid obvious blunders; pure random agents rarely pass round 2.
+ */
+export function createRandomAgent(seed: number, careful = true) {
   let agentRng = seed ^ 0x5bd1e995;
   const rand = () => {
     const r = nextRandom(agentRng);
@@ -85,31 +89,49 @@ export function playRandomGame(
   };
   const pick = <T>(items: T[]): T => items[Math.floor(rand() * items.length)]!;
 
-  let state = createGame(scenario, seed);
-  for (let step = 0; step < MAX_STEPS; step++) {
-    onStep?.(state);
-    if (isGameOver(state)) return state;
-
-    if (state.phase === 'strategy') {
-      state = rollDice(state);
-      continue;
-    }
+  return (state: GameState): AgentAction => {
+    if (state.phase === 'strategy') return { type: 'roll' };
     const pending = SEATS.find((seat) => state.rerollPending[seat]);
     if (pending) {
-      const ids = state.dice[pending].filter(() => rand() < 0.5).map((d) => d.id);
-      state = rerollDice(state, pending, ids);
-      continue;
+      const dieIds = state.dice[pending].filter(() => rand() < 0.5).map((d) => d.id);
+      return { type: 'reroll', seat: pending, dieIds };
     }
     if (canSpendReroll(state).ok && rand() < 0.1) {
-      state = spendReroll(state, pick([...SEATS]));
-      continue;
+      return { type: 'spend-reroll', seat: pick([...SEATS]) };
     }
-
     const seat = state.currentSeat;
     if (!seat) throw new Error('placing phase without a current seat');
     const moves = legalMoves(state, seat);
     if (moves.length === 0) throw new Error(`${seat} is on turn with no legal move`);
-    state = placeDie(state, seat, pick(careful ? carefulMoves(state, moves) : moves));
+    return { type: 'place', seat, intent: pick(careful ? carefulMoves(state, moves) : moves) };
+  };
+}
+
+export function applyAgentAction(state: GameState, action: AgentAction): GameState {
+  switch (action.type) {
+    case 'roll':
+      return rollDice(state);
+    case 'spend-reroll':
+      return spendReroll(state, action.seat);
+    case 'reroll':
+      return rerollDice(state, action.seat, action.dieIds);
+    case 'place':
+      return placeDie(state, action.seat, action.intent);
+  }
+}
+
+export function playRandomGame(
+  seed: number,
+  scenario: Scenario = YUL,
+  onStep?: (state: GameState) => void,
+  careful = true,
+): GameState {
+  const agent = createRandomAgent(seed, careful);
+  let state = createGame(scenario, seed);
+  for (let step = 0; step < MAX_STEPS; step++) {
+    onStep?.(state);
+    if (isGameOver(state)) return state;
+    state = applyAgentAction(state, agent(state));
   }
   throw new Error(`game with seed ${seed} did not finish in ${MAX_STEPS} steps`);
 }

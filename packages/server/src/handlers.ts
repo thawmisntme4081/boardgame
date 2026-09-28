@@ -1,6 +1,13 @@
 import {
+  canPlaceDie,
+  canRerollDice,
+  canSpendReroll,
+  isGameOver,
+  placeDie,
+  rerollDice,
   rollDice,
   SEATS,
+  spendReroll,
   viewFor,
   type AckResult,
   type ClientToServer,
@@ -10,7 +17,15 @@ import {
 import type { Server, Socket } from 'socket.io';
 import type { z } from 'zod';
 import type { Room, RoomManager, Seated } from './rooms';
-import { createRoomSchema, joinRoomSchema, readySchema, rejoinRoomSchema } from './schemas';
+import {
+  chatSchema,
+  createRoomSchema,
+  emptySchema,
+  joinRoomSchema,
+  placeSchema,
+  rejoinRoomSchema,
+  rerollSchema,
+} from './schemas';
 
 export type GameServer = Server<ClientToServer, ServerToClient>;
 type GameSocket = Socket<ClientToServer, ServerToClient>;
@@ -41,6 +56,8 @@ const joined = ({ room, player }: Seated): JoinResult => ({
   token: player.token,
 });
 
+const OK: AckResult = { ok: true };
+
 export function registerHandlers(io: GameServer, rooms: RoomManager): void {
   io.on('connection', (socket: GameSocket) => {
     /** Wraps a handler so a bug answers `bad-request` instead of crashing the process. */
@@ -59,6 +76,26 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
         }
       }) as never);
     };
+
+    /**
+     * An event from a seated player: parse with Zod, run `handle`, and broadcast fresh
+     * views when it succeeds. A failure changes nothing.
+     */
+    const onSeated = <S extends z.ZodType>(
+      event: keyof ClientToServer,
+      schema: S,
+      handle: (data: z.output<S>, seated: Seated) => AckResult,
+    ) =>
+      on<AckResult>(event, (payload, reply) => {
+        const parsed = schema.safeParse(payload);
+        if (!parsed.success) return reply({ ok: false, error: 'bad-request' });
+        const seated = rooms.bySocket(socket.id);
+        if (!seated) return reply({ ok: false, error: 'not-in-room' });
+        const result = handle(parsed.data, seated);
+        if (result.ok) rooms.touch(seated.room);
+        reply(result);
+        if (result.ok) broadcastRoom(io, rooms, seated.room);
+      });
 
     on('room:create', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(createRoomSchema, payload);
@@ -96,24 +133,61 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
       broadcastRoom(io, rooms, result.value.room);
     });
 
-    on('game:ready', (payload, reply: (r: AckResult) => void) => {
-      if (!readySchema.safeParse(payload).success) {
-        return reply({ ok: false, error: 'bad-request' });
-      }
-      const seated = rooms.bySocket(socket.id);
-      if (!seated) return reply({ ok: false, error: 'not-in-room' });
-      const { room, player } = seated;
-      if (room.game.phase !== 'strategy') return reply({ ok: false, error: 'not-strategy' });
-
+    onSeated('game:ready', emptySchema, (_data, { room, player }) => {
+      if (room.game.phase !== 'strategy') return { ok: false, error: 'not-strategy' };
       player.ready = true;
-      rooms.touch(room);
-      const allReady = SEATS.every((seat) => room.players[seat]?.ready);
-      if (allReady) {
+      if (SEATS.every((seat) => room.players[seat]?.ready)) {
         room.game = rollDice(room.game);
         for (const seat of SEATS) room.players[seat]!.ready = false;
       }
-      reply({ ok: true });
-      broadcastRoom(io, rooms, room);
+      return OK;
+    });
+
+    onSeated('game:place', placeSchema, (intent, { room, player }) => {
+      const check = canPlaceDie(room.game, player.seat, intent);
+      if (!check.ok) return { ok: false, error: check.reason };
+      // Axis, engines and the end of the round (landing included) resolve inside placeDie.
+      room.game = placeDie(room.game, player.seat, intent);
+      return OK;
+    });
+
+    onSeated('game:spend-reroll', emptySchema, (_data, { room, player }) => {
+      const check = canSpendReroll(room.game);
+      if (!check.ok) return { ok: false, error: check.reason };
+      room.game = spendReroll(room.game, player.seat);
+      return OK;
+    });
+
+    onSeated('game:reroll', rerollSchema, ({ dieIds }, { room, player }) => {
+      const check = canRerollDice(room.game, player.seat, dieIds);
+      if (!check.ok) return { ok: false, error: check.reason };
+      room.game = rerollDice(room.game, player.seat, dieIds);
+      return OK;
+    });
+
+    onSeated('game:rematch', emptySchema, (_data, { room }) => {
+      if (!isGameOver(room.game)) return { ok: false, error: 'game-not-over' };
+      rooms.rematch(room);
+      return OK;
+    });
+
+    // Chat is not game state: no fresh views, just the message to both players.
+    on<AckResult>('chat:send', (payload, reply) => {
+      const data = parse(chatSchema, payload);
+      if (!data) return reply({ ok: false, error: 'bad-request' });
+      const seated = rooms.bySocket(socket.id);
+      if (!seated) return reply({ ok: false, error: 'not-in-room' });
+      const { room, player } = seated;
+      // The no-talking rule: silence from the roll until the round ends.
+      if (room.game.phase === 'placing') return reply({ ok: false, error: 'chat-locked' });
+      rooms.touch(room);
+      reply(OK);
+      io.to(room.code).emit('chat:message', {
+        seat: player.seat,
+        name: player.name,
+        text: data.text,
+        at: Date.now(),
+      });
     });
 
     socket.on('disconnect', () => {

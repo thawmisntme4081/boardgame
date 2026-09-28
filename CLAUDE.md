@@ -34,9 +34,18 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - Phase 9: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios).
 - Exact rule numbers must be checked against the rulebooks; the numbers in the plan are a starting model. Ask the user when a rule is unclear instead of guessing.
 
+## Workflow
+
+When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm build` passing):
+
+- Tick that phase's checklist in `docs/PLAN.md`. Leave unfinished items unticked and say why. Add a "✅ Verified <date>" note to its "Done when" line.
+- Update the docs so they match the code: the relevant `docs/PLAN.md` sections (protocol table, game state and rules, assumptions, later phases affected by work pulled forward) and this file (stack, commands, rules) when they changed.
+
 ## Commands
 
 - `pnpm dev` — server + Vite together
 - `pnpm test` — Vitest
 - `pnpm e2e` — Playwright
 - `pnpm -r build` — production build
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI
+- `pnpm --filter @sky/shared random-play [games] [firstSeed]` — play random games and print how they ended

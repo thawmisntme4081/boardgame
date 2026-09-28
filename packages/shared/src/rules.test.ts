@@ -107,6 +107,11 @@ describe('turn order and placement basics', () => {
     );
     expect(legalMoves(s, 'pilot').every((m) => m.coffeeDelta === 0)).toBe(true);
   });
+
+  it('never produces a -0 coffee delta (it would not survive JSON)', () => {
+    const s = setupRound({ pilot: [3, 3], copilot: [3, 3] });
+    expect(legalMoves(s, 'pilot').some((m) => Object.is(m.coffeeDelta, -0))).toBe(false);
+  });
 });
 
 describe('axis', () => {

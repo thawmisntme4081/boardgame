@@ -93,7 +93,8 @@ export function legalMoves(state: GameState, seat: Seat): PlaceIntent[] {
   const moves: PlaceIntent[] = [];
   for (const die of state.dice[seat]) {
     for (const slot of SLOT_IDS) {
-      for (let coffeeDelta = -state.coffee; coffeeDelta <= state.coffee; coffeeDelta++) {
+      // `0 - coffee` rather than `-coffee`: never a -0 delta, which JSON would turn into 0.
+      for (let coffeeDelta = 0 - state.coffee; coffeeDelta <= state.coffee; coffeeDelta++) {
         const intent = { dieId: die.id, slot, coffeeDelta };
         if (checkPlacement(state, seat, intent).ok) moves.push(intent);
       }
@@ -105,7 +106,7 @@ export function legalMoves(state: GameState, seat: Seat): PlaceIntent[] {
 function hasLegalMove(state: GameState, seat: Seat): boolean {
   return state.dice[seat].some((die) =>
     SLOT_IDS.some((slot) => {
-      for (let coffeeDelta = -state.coffee; coffeeDelta <= state.coffee; coffeeDelta++) {
+      for (let coffeeDelta = 0 - state.coffee; coffeeDelta <= state.coffee; coffeeDelta++) {
         if (checkPlacement(state, seat, { dieId: die.id, slot, coffeeDelta }).ok) return true;
       }
       return false;
