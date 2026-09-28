@@ -1,0 +1,142 @@
+// Everything that talks to the server. Components call these; only the server changes the game.
+import type { AckResult, JoinResult, SlotId } from '@sky/shared';
+import { toast } from 'sonner';
+import { errorText } from './messages';
+import { inviteUrl, saveSession } from './session';
+import { socket } from './socket';
+import { useGame } from './store';
+
+const ACK_TIMEOUT_MS = 5000;
+
+async function withTimeout<R>(request: () => Promise<R>): Promise<R | null> {
+  try {
+    return await request();
+  } catch {
+    toast.error('The server did not answer. Check your connection.');
+    return null;
+  }
+}
+
+const emit = () => socket.timeout(ACK_TIMEOUT_MS);
+
+/** Shows the error for a failed ack; true when the server accepted the request. */
+async function run(request: () => Promise<AckResult>): Promise<boolean> {
+  const result = await withTimeout(request);
+  if (result && !result.ok) toast.error(errorText(result.error));
+  return result?.ok ?? false;
+}
+
+function setUrl(path: string): void {
+  if (window.location.pathname !== path) window.history.replaceState(null, '', path);
+}
+
+let started = false;
+
+/** Wires socket events into the store and connects. Safe to call more than once. */
+export function startConnection(): void {
+  if (started) return;
+  started = true;
+  const store = useGame.getState;
+
+  socket.on('connect', () => {
+    store().setConnection('online');
+    void rejoin();
+  });
+  socket.on('disconnect', () => store().setConnection('offline'));
+  socket.io.on('reconnect_attempt', () => store().setConnection('connecting'));
+  socket.on('game:view', (view) => store().setView(view));
+  socket.on('room:presence', (presence) => store().setPresence(presence));
+
+  // Phones pause background tabs; when ours comes back, reconnect or resync the seat.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (socket.connected) void rejoin();
+    else socket.connect();
+  });
+
+  socket.connect();
+}
+
+/** Takes the saved seat back after a reload, a reconnect or the tab returning. */
+async function rejoin(): Promise<void> {
+  const session = useGame.getState().session;
+  if (!session) return;
+  const result = await withTimeout(() =>
+    emit().emitWithAck('room:rejoin', { code: session.code, token: session.token }),
+  );
+  if (result && !result.ok) {
+    toast.error(errorText(result.error));
+    forgetSession();
+  }
+}
+
+function onJoined(result: JoinResult | null, name: string): boolean {
+  if (!result) return false;
+  if (!result.ok) {
+    toast.error(errorText(result.error));
+    return false;
+  }
+  const session = { code: result.code, token: result.token, seat: result.seat, name };
+  saveSession(session);
+  useGame.getState().setSession(session);
+  setUrl(`/r/${result.code}`);
+  return true;
+}
+
+export async function createRoom(name: string): Promise<boolean> {
+  const result = await withTimeout(() => emit().emitWithAck('room:create', { name }));
+  return onJoined(result, name);
+}
+
+export async function joinRoom(code: string, name: string): Promise<boolean> {
+  const result = await withTimeout(() => emit().emitWithAck('room:join', { code, name }));
+  return onJoined(result, name);
+}
+
+export const ready = () => run(() => emit().emitWithAck('game:ready', {}));
+
+/** Places the selected die, with its draft coffee, on `slot`. */
+export async function placeSelected(slot: SlotId): Promise<boolean> {
+  const { selectedDieId, coffeeDelta } = useGame.getState();
+  if (!selectedDieId) return false;
+  return run(() => emit().emitWithAck('game:place', { dieId: selectedDieId, slot, coffeeDelta }));
+}
+
+export const spendReroll = () => run(() => emit().emitWithAck('game:spend-reroll', {}));
+
+export function reroll(dieIds: string[]): Promise<boolean> {
+  return run(() => emit().emitWithAck('game:reroll', { dieIds }));
+}
+
+export const rematch = () => run(() => emit().emitWithAck('game:rematch', {}));
+
+function forgetSession(): void {
+  saveSession(null);
+  useGame.getState().leave();
+  setUrl('/');
+}
+
+/** Back to the lobby. The server keeps the seat until the room is cleaned up (Phase 5). */
+export function leaveGame(): void {
+  forgetSession();
+  // A fresh connection so this browser no longer counts as seated.
+  socket.disconnect().connect();
+}
+
+export async function shareInvite(code: string): Promise<void> {
+  const url = inviteUrl(code);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Sky Team', text: 'Fly with me in Sky Team', url });
+      return;
+    } catch {
+      // Cancelled or unsupported: fall back to copying.
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success('Invite link copied');
+  } catch {
+    toast.message(url);
+  }
+}

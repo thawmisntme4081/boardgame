@@ -4,7 +4,6 @@ import {
   viewFor,
   YUL,
   type AckResult,
-  type ChatMessage,
   type DieValue,
   type GameState,
   type JoinResult,
@@ -287,46 +286,6 @@ describe('rerolls over sockets', () => {
     expect(
       await clients.copilot.emitWithAck('game:reroll', { dieIds: ['a', 'b', 'c', 'd', 'e'] }),
     ).toEqual({ ok: false, error: 'bad-request' });
-  });
-});
-
-describe('chat', () => {
-  it('delivers messages to both players during the strategy phase', async () => {
-    const { clients } = await seatedRoom();
-    const received = next(clients.copilot, 'chat:message');
-    const echoed = next(clients.pilot, 'chat:message');
-    expectOk(await clients.pilot.emitWithAck('chat:send', { text: '  clear the planes first ' }));
-    const message: ChatMessage = await received;
-    expect(message).toMatchObject({ seat: 'pilot', name: 'Ana', text: 'clear the planes first' });
-    expect(typeof message.at).toBe('number');
-    expect(await echoed).toEqual(message);
-  });
-
-  it('is locked from the roll until the round ends', async () => {
-    const { clients } = await seatedRoom();
-    await bothReady(clients);
-    let leaked = false;
-    clients.copilot.on('chat:message', () => (leaked = true));
-    expect(await clients.pilot.emitWithAck('chat:send', { text: 'put a 6 on the axis' })).toEqual({
-      ok: false,
-      error: 'chat-locked',
-    });
-    expect(leaked).toBe(false);
-  });
-
-  it('rejects empty, oversized and seatless messages', async () => {
-    const { clients } = await seatedRoom();
-    for (const text of ['', '   ', 'x'.repeat(201)]) {
-      expect(await clients.pilot.emitWithAck('chat:send', { text })).toEqual({
-        ok: false,
-        error: 'bad-request',
-      });
-    }
-    const stranger = await server!.connect();
-    expect(await stranger.emitWithAck('chat:send', { text: 'hi' })).toEqual({
-      ok: false,
-      error: 'not-in-room',
-    });
   });
 });
 

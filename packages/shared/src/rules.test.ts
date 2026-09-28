@@ -5,6 +5,7 @@ import {
   canRerollDice,
   canSpendReroll,
   checkLanding,
+  coffeeRange,
   legalMoves,
   placeDie,
   RuleError,
@@ -106,6 +107,14 @@ describe('turn order and placement basics', () => {
       ]),
     );
     expect(legalMoves(s, 'pilot').every((m) => m.coffeeDelta === 0)).toBe(true);
+  });
+
+  it('gives the coffee range a die can take', () => {
+    expect(coffeeRange(0, 3)).toEqual({ min: 0, max: 0 });
+    expect(coffeeRange(2, 3)).toEqual({ min: -2, max: 2 });
+    expect(coffeeRange(3, 1)).toEqual({ min: 0, max: 3 });
+    expect(coffeeRange(3, 5)).toEqual({ min: -3, max: 1 });
+    expect(Object.is(coffeeRange(0, 4).min, -0)).toBe(false);
   });
 
   it('never produces a -0 coffee delta (it would not survive JSON)', () => {

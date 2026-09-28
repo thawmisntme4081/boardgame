@@ -1,4 +1,4 @@
-import { CHAT_MAX_LENGTH, DICE_PER_SEAT, MAX_COFFEE, SLOT_IDS } from '@sky/shared';
+import { DICE_PER_SEAT, MAX_COFFEE, SLOT_IDS } from '@sky/shared';
 import { z } from 'zod';
 
 export const ROOM_CODE_LENGTH = 4;
@@ -23,4 +23,3 @@ export const placeSchema = z.object({
   coffeeDelta: z.number().int().min(-MAX_COFFEE).max(MAX_COFFEE),
 });
 export const rerollSchema = z.object({ dieIds: z.array(dieId).max(DICE_PER_SEAT) });
-export const chatSchema = z.object({ text: z.string().trim().min(1).max(CHAT_MAX_LENGTH) });

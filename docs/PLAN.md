@@ -16,7 +16,7 @@ Build an online, 2-player version of Sky Team where the Node server is the refer
 | Monorepo | pnpm workspaces | One repo, `shared` imported by both sides |
 | Server | Node 20+, Express, Socket.IO | Rooms, acks and reconnection built in |
 | Client | React + Vite | Fast dev server, simple static build; Tailwind CSS v4 for styling |
-| UI components | shadcn/ui (lobby, dialogs, drawer, toasts only) | Accessible pieces copied into the repo; the board stays custom |
+| UI components | shadcn/ui (lobby, dialogs, toasts only) | Accessible pieces copied into the repo; the board stays custom |
 | Client state | Zustand (or React context) | Holds the latest server view, nothing else |
 | Validation | Zod | Checks every incoming socket payload |
 | Unit/integration tests | Vitest | Same runner for shared, server and client |
@@ -73,8 +73,13 @@ sky-team/
 │           ├── main.tsx
 │           ├── socket.ts       # typed socket instance
 │           ├── store.ts        # Zustand store for the view
-│           ├── screens/        # Lobby, Game, GameOver
-│           └── components/     # Board, DiceTray, Slot, Tracks (+ components/ui from shadcn)
+│           ├── api.ts          # socket events → store; actions (create, join, place, …)
+│           ├── session.ts      # saved seat token, invite links
+│           ├── screens/        # Lobby (+ waiting room), Game
+│           ├── components/     # Cockpit, Slot, DiceTray, StatusBar, GameOverDialog
+│           │                   # (+ components/ui from shadcn)
+│           └── svgs/           # one SVG drawing per file: DieFace, AxisDial, SpeedGauge,
+│                               # AltitudeTrack, ApproachTrack, Plane, Switch
 ├── e2e/                        # Playwright tests
 └── .github/workflows/ci.yml
 ```
@@ -93,7 +98,7 @@ Implemented in Phase 1 (`packages/shared/src`):
 | `state.ts` | `createGame(scenario, seed)` |
 | `rules.ts` | `rollDice`, `canPlaceDie`, `placeDie`, `legalMoves`, `resolveRound`, `checkLanding`, `spendReroll`, `rerollDice` |
 | `rng.ts` | mulberry32; `rngSeed` + `rngState` live in the state, so `rngSeed` + `log` replay a game |
-| `views.ts` | `PlayerView` and `viewFor(state, seat)` |
+| `views.ts` | `PlayerView`, `viewFor(state, seat)`, and `canPlaceInView` (the client’s `canPlaceDie`: the same `checkPlacement`, read from the view) |
 | `events.ts` | Socket.IO protocol types (see below) |
 | `random-play.ts` | Random agent (`createRandomAgent`, `applyAgentAction`) and `playRandomGame`, imported as `@sky/shared/random-play`; used by fuzzing, the socket full-game test and `pnpm --filter @sky/shared random-play` |
 
@@ -132,13 +137,11 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 | Client → Server | `game:place` | `{ dieId, slot, coffeeDelta }` | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
 | Client → Server | `game:spend-reroll` | `{}` | ack; both players may then reroll once |
 | Client → Server | `game:reroll` | `{ dieIds }` | ack; rerolls your chosen dice (may be none) |
-| Client → Server | `chat:send` | `{ text }` (1–200 chars) | ack; `chat-locked` during `placing` |
 | Client → Server | `game:rematch` | `{}` | ack; new game, same room and seats; `game-not-over` otherwise |
 | Server → Client | `game:view` | `PlayerView` | to each seat after every change |
 | Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready/every change |
-| Server → Client | `chat:message` | `{ seat, name, text, at }` | to both players |
 
-Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room error (`bad-request`, `not-in-room`, `chat-locked`, …) or the `MoveError` from the shared rules. Types live in `packages/shared/src/events.ts` (`ClientToServer`, `ServerToClient`).
+Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room error (`bad-request`, `not-in-room`, `game-not-over`, …) or the `MoveError` from the shared rules. Types live in `packages/shared/src/events.ts` (`ClientToServer`, `ServerToClient`).
 
 **Hidden information.** `viewFor(state, seat)` is the only way state leaves the server:
 
@@ -147,7 +150,7 @@ Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room e
 - Placed dice, tracks, coffee, altitude: public.
 - `rngSeed` and the log's future rolls: never sent.
 
-**No-talking rule in code.** Chat is open in the `strategy` phase between rounds and locked from the moment dice are rolled, mirroring the table rule.
+**No-talking rule.** There is no in-game chat (removed Sep 28, 2026): players talk outside the app (in person or a call) during the `strategy` phase, and each presses "Ready to roll" when the discussion is over. From the roll until the round ends they stay silent by agreement, as at the table.
 
 **Server handler pattern** (`onSeated` in `handlers.ts`): parse payload with Zod → find the socket's seat → `canPlaceDie` → `placeDie` (which resolves axis, engines, the end of the round and landing) → `broadcastRoom` sends presence and each seat's `viewFor`. Any failure returns `{ ok:false, error }` and changes nothing.
 
@@ -156,17 +159,17 @@ Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room e
 Design mobile-first: a phone in portrait (360–430 px wide) is the hardest screen, so build it first and let larger screens spread the same components out.
 
 ```
-Phone portrait (< 600 px)        Desktop (>= 1024 px)
-+----------------------+         +------------------------------------------+
-| Status bar           |         | Status bar                               |
-+----------------------+         +--------+----------------------+----------+
-| Tracks strip         |         | Tracks | Cockpit board        | Chat +   |
-+----------------------+         |        | (all slots visible)  | log      |
-| Cockpit panel        |         |        |                      |          |
-| (scrolls; your slots |         |        +----------------------+          |
-|  first; chat = sheet)|         |        | Dice tray            |          |
-+----------------------+         +--------+----------------------+----------+
-| Dice tray (fixed)    |
+Phone portrait (< 600 px)        Desktop (>= 1024 px, centred container, max 72rem)
++----------------------+            +--------------------------------------+
+| Status bar           |            | Status bar                           |
++----------------------+            +--------------------------------------+
+| Tracks strip         |            |   Altitude track   Approach track    |
++----------------------+            +--------------------------------------+
+| Cockpit panel        |            | Cockpit board (panels in 3 columns,  |
+| (scrolls; your slots |            | scrolls)                             |
+|  first)              |            +--------------------------------------+
++----------------------+            | Dice tray                            |
+| Dice tray (fixed)    |            +--------------------------------------+
 +----------------------+
 ```
 
@@ -174,16 +177,16 @@ The same React components rearrange through CSS Grid areas; only the layout chan
 
 | Screen | Width | Layout |
 | --- | --- | --- |
-| Phone portrait | under 600 px | Stacked: status bar, tracks strip, scrolling cockpit, dice tray fixed at bottom; chat in a bottom sheet |
-| Phone landscape / tablet | 600–1023 px | Two columns: tracks + cockpit left, dice tray + chat right |
-| Desktop | 1024 px and up | Three columns: tracks, cockpit board, chat + log; dice tray under the board |
+| Phone portrait | under 600 px | Stacked: status bar, tracks strip, scrolling cockpit, dice tray fixed at bottom |
+| Phone landscape / tablet | 600–1023 px | Two columns: tracks + cockpit left, dice tray right |
+| Desktop | 1024 px and up | One centred container (max 72rem): status bar, both tracks side by side, cockpit board, dice tray. In the cockpit, equal 16% side columns: pilot radio above landing gear on the left (switch right of each slot), co-pilot radio above flaps on the right (switch left of each slot); axis, engines, brakes and concentration in the centre |
 
 **Layout and styling**
 
 - Tailwind CSS v4, with design tokens (colors, spacing, fonts) defined once in `@theme`, so they work as utility classes and as CSS variables for the SVG board. Keep long class lists readable by extracting small components (Slot, Die, Panel) rather than using `@apply` everywhere.
-- shadcn/ui for the lobby (Button, Input, Card), Dialog, Drawer (phone bottom sheet), toasts, Tooltip/Popover, Select/Tabs. Build the cockpit, dice, tracks and alarm board yourself.
+- shadcn/ui for the lobby (Button, Input, Card), Dialog, toasts, Tooltip/Popover, Select/Tabs. Build the cockpit, dice, tracks and alarm board yourself.
 - CSS Grid with named `grid-template-areas` per breakpoint; container queries for the cockpit so it adapts to its column, not the window.
-- Fluid sizes with `clamp()`; draw the board and tracks as SVG with a `viewBox` so they scale without blurring.
+- Draw the gauges, dice and tracks as SVG with a `viewBox` so they scale without blurring; slots are real buttons so they stay accessible and easy to tap.
 - Use `100dvh` (not `100vh`) and `env(safe-area-inset-*)` so the dice tray clears the iPhone home bar and notches.
 
 **Touch interaction**
@@ -250,7 +253,7 @@ Setup notes: pnpm 12 via corepack (esbuild approved in `allowBuilds`); TypeScrip
 
 - [x] `game:place` handler using the shared rules (rule reasons returned in the ack; illegal moves change nothing)
 - [x] `viewFor` filtering, emitted to each seat after every change
-- [x] Chat locked during `placing` (`chat:send` / `chat:message`; open in strategy, between rounds and after the game)
+- [x] ~~Chat locked during `placing`~~ Built, then removed Sep 28, 2026 at your request: players talk outside the app
 - [x] Round resolution and game over broadcast (every view carries `phase`, `endReason`, `landingFailures`)
 - [x] Reroll events: `game:spend-reroll`, `game:reroll`
 - [x] `game:rematch`: fresh game in the same room once the game is over (either player can start it)
@@ -261,22 +264,25 @@ Notes: the in-process vs. socket comparison found a `-0` coffee delta from `lega
 
 ### Phase 4: React client
 
-- [ ] Typed socket singleton + Zustand store holding the latest `PlayerView`
-- [ ] Mobile-first layout shell: CSS Grid areas for phone, tablet and desktop (see Responsive UI)
-- [ ] Lobby screen: create game, join by code, copy invite link (`/r/ABCD`), Web Share on phones
-- [ ] Board: axis, engines, radio, gear, flaps, brakes, concentration, altitude and approach tracks, drawn as scalable SVG
-- [ ] Dice tray: tap a die, then tap a slot; valid slots highlighted via shared `canPlaceDie`
-- [ ] Coffee ± control, turn indicator, round and altitude display, all with 44 px touch targets
-- [ ] Strategy-phase chat panel (bottom sheet on phones), locked state while placing
-- [ ] Reconnect on `visibilitychange` when a phone brings the tab back
-- [ ] Game over screen with reason and rematch
+- [x] Typed socket singleton + Zustand store holding the latest `PlayerView` (plus UI-only state: selected die, draft coffee, reroll picks)
+- [x] Mobile-first layout shell: CSS Grid areas for phone, tablet and desktop (`.game-grid` in `index.css`, using `@variant tablet/desktop`)
+- [x] Lobby screen: create game, join by code, copy invite link (`/r/ABCD`), Web Share on phones; waiting room with the code
+- [x] Board: axis, engines, radio, gear, flaps, brakes, concentration, altitude and approach tracks. Gauges and tracks are SVG with a `viewBox`; slots are 48 px buttons (accessible, easy to tap)
+- [x] Dice tray: tap a die, then tap a slot; valid slots highlighted via the shared rules (`canPlaceInView`, same check as the server's `canPlaceDie`); the radio target shows on the approach track
+- [x] Coffee ± control, turn indicator, round and altitude display, all with 44 px touch targets
+- [x] ~~Strategy-phase chat panel~~ Built, then removed Sep 28, 2026 (no in-game chat)
+- [x] Reconnect on `visibilitychange` when a phone brings the tab back (also on reload, from the saved session)
+- [x] Game over screen with reason (every failed landing condition) and rematch
+- [x] Reroll flow: spend a token, tick dice, reroll or keep all
 
-**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario.
+**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ⏳ Automated check passed Sep 28, 2026: Playwright drove a desktop Chromium pilot and an iPhone 13 (emulated) co-pilot through lobby → invite link → strategy → placing → game over → rematch with no console errors, plus a tablet-size layout check. **Still to do by you:** the real two-device LAN game (`pnpm --filter @sky/client dev --host`).
+
+Notes: `canPlaceDie` was split so the client runs the same check (`checkPlacement` takes a `PlacementContext`, which both `GameState` and `PlayerView` provide; a test compares both on 100,000+ moves). 131 tests pass, including React Testing Library tests for slots, dice tray, coffee, rerolls, game over and the lobby. The game screen is lazy-loaded (58 kB chunk since chat was removed).
 
 ### Phase 5: Robustness
 
-- [ ] Reconnect: token in `localStorage`, `room:rejoin` restores the seat
-- [ ] Presence indicator when the partner drops
+- [ ] Reconnect: token in `localStorage`, `room:rejoin` restores the seat (built in Phase 4: `session.ts` + `api.ts`; needs the reload test below)
+- [ ] Presence indicator when the partner drops (status bar shows online/offline since Phase 4; add a toast)
 - [ ] Idempotent moves (ignore duplicate `game:place` from double clicks)
 - [ ] Room cleanup after 30 minutes idle; limit rooms per IP
 - [ ] Handle one or both players leaving mid-game
@@ -336,7 +342,7 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 | Unit | Vitest | Every rule in `rules.ts`, `viewFor`, scenarios | Every save, every push |
 | Property / fuzz | Vitest + fast-check | Random legal games never throw; axis and coffee stay in range; dice never leak | Every push |
 | Integration | Vitest + `socket.io-client` | Real server on a random port, two clients: join, play, reconnect, illegal moves rejected | Every push |
-| Component | React Testing Library | Dice tray selection, valid-slot highlighting, locked chat | Every push |
+| Component | React Testing Library | Dice tray selection, valid-slot highlighting, rerolls, game over | Every push |
 | End-to-end | Playwright | Two browser contexts play the base scenario to a win and to a crash | Every push to `main`, before deploy |
 | Manual | Two machines | Latency, reconnects on mobile data, UX feel | Before each release |
 

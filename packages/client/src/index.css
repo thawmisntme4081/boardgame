@@ -8,10 +8,57 @@
 @theme {
   --breakpoint-tablet: 600px;
   --breakpoint-desktop: 1024px;
+
+  /* Seat colours and cockpit lights, usable as utilities and as SVG fills. */
+  --color-pilot: oklch(0.55 0.17 255);
+  --color-pilot-soft: oklch(0.93 0.04 255);
+  --color-copilot: oklch(0.7 0.17 55);
+  --color-copilot-soft: oklch(0.95 0.05 70);
+  --color-light-on: oklch(0.72 0.19 145);
+  --color-light-off: oklch(0.85 0 0);
+  --color-danger: oklch(0.6 0.22 25);
+  --color-plane: oklch(0.45 0.02 260);
 }
 
 html {
   touch-action: manipulation;
+}
+
+/* Desktop cockpit: landing gear down the left, flaps down the right, the rest in the middle.
+   Smaller screens keep the seat-ordered grid from the Cockpit component. */
+.cockpit-grid {
+  @variant desktop {
+    /* Equal side columns (radio above gear/flaps); the centre takes the rest. */
+    grid-template-columns: 16% minmax(0, 1fr) minmax(0, 1fr) 16%;
+    grid-template-areas:
+      'radioPilot axis axis radioCopilot'
+      'gear engines engines flaps'
+      'gear brakes concentration flaps';
+  }
+}
+
+/* Mobile-first game layout; the same components move between grid areas. */
+.game-grid {
+  display: grid;
+  height: 100dvh;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'status' 'tracks' 'cockpit' 'tray';
+
+  @variant tablet {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas: 'status status' 'tracks tray' 'cockpit tray';
+  }
+
+  /* One centred column in a container: tracks above the cockpit, dice tray below. */
+  @variant desktop {
+    max-width: 72rem;
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: 'status' 'tracks' 'cockpit' 'tray';
+  }
 }
 
 @theme inline {

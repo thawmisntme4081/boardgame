@@ -18,7 +18,6 @@ import type { Server, Socket } from 'socket.io';
 import type { z } from 'zod';
 import type { Room, RoomManager, Seated } from './rooms';
 import {
-  chatSchema,
   createRoomSchema,
   emptySchema,
   joinRoomSchema,
@@ -169,25 +168,6 @@ export function registerHandlers(io: GameServer, rooms: RoomManager): void {
       if (!isGameOver(room.game)) return { ok: false, error: 'game-not-over' };
       rooms.rematch(room);
       return OK;
-    });
-
-    // Chat is not game state: no fresh views, just the message to both players.
-    on<AckResult>('chat:send', (payload, reply) => {
-      const data = parse(chatSchema, payload);
-      if (!data) return reply({ ok: false, error: 'bad-request' });
-      const seated = rooms.bySocket(socket.id);
-      if (!seated) return reply({ ok: false, error: 'not-in-room' });
-      const { room, player } = seated;
-      // The no-talking rule: silence from the roll until the round ends.
-      if (room.game.phase === 'placing') return reply({ ok: false, error: 'chat-locked' });
-      rooms.touch(room);
-      reply(OK);
-      io.to(room.code).emit('chat:message', {
-        seat: player.seat,
-        name: player.name,
-        text: data.text,
-        at: Date.now(),
-      });
     });
 
     socket.on('disconnect', () => {

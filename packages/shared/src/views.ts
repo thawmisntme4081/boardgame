@@ -1,5 +1,16 @@
-import { currentAltitude, isFinalRound, otherSeat } from './rules';
-import type { Die, EndReason, GameState, Phase, PlacedDie, Scenario, Seat, SlotId } from './types';
+import { checkPlacement, checkTurn, currentAltitude, isFinalRound, otherSeat } from './rules';
+import type {
+  Die,
+  EndReason,
+  GameState,
+  MoveCheck,
+  Phase,
+  PlaceIntent,
+  PlacedDie,
+  Scenario,
+  Seat,
+  SlotId,
+} from './types';
 
 /** Everything one player may see. Built only by `viewFor`. */
 export interface PlayerView {
@@ -63,4 +74,10 @@ export function viewFor(state: GameState, seat: Seat): PlayerView {
   if (state.endReason) view.endReason = state.endReason;
   if (state.landingFailures) view.landingFailures = [...state.landingFailures];
   return view;
+}
+
+/** The client's copy of `canPlaceDie`: same rules, read from the player's own view. */
+export function canPlaceInView(view: PlayerView, intent: PlaceIntent): MoveCheck {
+  const turn = checkTurn(view.phase, view.currentSeat, view.seat);
+  return turn.ok ? checkPlacement(view, intent) : turn;
 }

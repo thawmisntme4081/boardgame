@@ -1,28 +1,33 @@
-import { useEffect, useState } from 'react';
-import { SEATS } from '@sky/shared';
-import { Button } from '@/components/ui/button';
+import { lazy, Suspense, useEffect } from 'react';
+import { startConnection } from '@/api';
+import { Toaster } from '@/components/ui/sonner';
+import { Connecting, Lobby, WaitingRoom } from '@/screens/Lobby';
+import { useGame } from '@/store';
+
+// The board is the heavy part; the lobby loads without it.
+const Game = lazy(() => import('@/screens/Game'));
+
+function Screen() {
+  const session = useGame((s) => s.session);
+  const view = useGame((s) => s.view);
+  const presence = useGame((s) => s.presence);
+
+  if (!session) return <Lobby />;
+  if (!view) return <Connecting />;
+  if (!presence?.pilot || !presence.copilot) return <WaitingRoom code={session.code} />;
+  return (
+    <Suspense fallback={<Connecting />}>
+      <Game view={view} presence={presence} />
+    </Suspense>
+  );
+}
 
 export function App() {
-  const [serverOk, setServerOk] = useState<boolean | null>(null);
-
-  const checkServer = () => {
-    fetch('/health')
-      .then((res) => setServerOk(res.ok))
-      .catch(() => setServerOk(false));
-  };
-
-  useEffect(checkServer, []);
-
+  useEffect(startConnection, []);
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 p-4 text-center">
-      <h1 className="text-2xl font-semibold">Sky Team Online</h1>
-      <p className="text-sm text-muted-foreground">Seats: {SEATS.join(' + ')}</p>
-      <p className="text-sm">
-        Server: {serverOk === null ? 'checking…' : serverOk ? 'online' : 'offline'}
-      </p>
-      <Button size="lg" onClick={checkServer}>
-        Check server
-      </Button>
-    </main>
+    <>
+      <Screen />
+      <Toaster position="top-center" />
+    </>
   );
 }

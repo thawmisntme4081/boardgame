@@ -8,7 +8,9 @@ import type {
   GameState,
   MoveCheck,
   MoveError,
+  Phase,
   PlaceIntent,
+  PlacedDie,
   Seat,
   SlotId,
 } from './types';
@@ -41,7 +43,7 @@ export const isFinalRound = (state: GameState): boolean =>
 
 export const airportIndex = (state: GameState): number => state.approachPlanes.length - 1;
 
-export const isGameOver = (state: GameState): boolean =>
+export const isGameOver = (state: Pick<GameState, 'phase'>): boolean =>
   state.phase === 'won' || state.phase === 'lost';
 
 /** How many spaces the Approach Track advances for a given speed: 0, 1 or 2. */
@@ -57,46 +59,81 @@ export const brakeThreshold = (brakes: number): number =>
 const fail = (reason: MoveError): MoveCheck => ({ ok: false, reason });
 const OK: MoveCheck = { ok: true };
 
+/**
+ * What a placement check reads. The server builds it from `GameState`; a client's
+ * `PlayerView` already has this shape, so both sides run the exact same rule.
+ */
+export interface PlacementContext {
+  seat: Seat;
+  myDice: readonly Die[];
+  placed: Partial<Record<SlotId, PlacedDie>>;
+  coffee: number;
+  flaps: readonly boolean[];
+  brakes: number;
+}
+
+export const placementContext = (state: GameState, seat: Seat): PlacementContext => ({
+  seat,
+  myDice: state.dice[seat],
+  placed: state.placed,
+  coffee: state.coffee,
+  flaps: state.flaps,
+  brakes: state.brakes,
+});
+
 /** Colour, number, order and coffee checks, ignoring phase and turn. */
-function checkPlacement(state: GameState, seat: Seat, intent: PlaceIntent): MoveCheck {
-  const die = state.dice[seat].find((d) => d.id === intent.dieId);
+export function checkPlacement(ctx: PlacementContext, intent: PlaceIntent): MoveCheck {
+  const die = ctx.myDice.find((d) => d.id === intent.dieId);
   if (!die) return fail('unknown-die');
   const def = SLOTS[intent.slot];
   if (!def) return fail('unknown-slot');
-  if (state.placed[intent.slot]) return fail('slot-taken');
-  if (!def.seats.includes(seat)) return fail('wrong-seat');
+  if (ctx.placed[intent.slot]) return fail('slot-taken');
+  if (!def.seats.includes(ctx.seat)) return fail('wrong-seat');
 
   const { coffeeDelta } = intent;
   if (!Number.isInteger(coffeeDelta)) return fail('bad-coffee');
-  if (Math.abs(coffeeDelta) > state.coffee) return fail('not-enough-coffee');
+  if (Math.abs(coffeeDelta) > ctx.coffee) return fail('not-enough-coffee');
   const value = die.value + coffeeDelta;
   if (value < 1 || value > 6) return fail('value-out-of-range');
   if (def.values && !def.values.includes(value as DieValue)) return fail('value-not-allowed');
 
-  if (def.group === 'flaps' && !state.flaps.slice(0, def.index).every(Boolean)) {
+  if (def.group === 'flaps' && !ctx.flaps.slice(0, def.index).every(Boolean)) {
     return fail('out-of-order');
   }
-  if (def.group === 'brakes' && state.brakes < def.index) return fail('out-of-order');
+  if (def.group === 'brakes' && ctx.brakes < def.index) return fail('out-of-order');
+  return OK;
+}
+
+/** Phase and turn checks shared by `canPlaceDie` and the client's `canPlaceInView`. */
+export function checkTurn(phase: Phase, currentSeat: Seat | null, seat: Seat): MoveCheck {
+  if (phase === 'won' || phase === 'lost') return fail('game-over');
+  if (phase !== 'placing') return fail('not-placing');
+  if (currentSeat !== seat) return fail('not-your-turn');
   return OK;
 }
 
 export function canPlaceDie(state: GameState, seat: Seat, intent: PlaceIntent): MoveCheck {
-  if (isGameOver(state)) return fail('game-over');
-  if (state.phase !== 'placing') return fail('not-placing');
-  if (state.currentSeat !== seat) return fail('not-your-turn');
-  return checkPlacement(state, seat, intent);
+  const turn = checkTurn(state.phase, state.currentSeat, seat);
+  return turn.ok ? checkPlacement(placementContext(state, seat), intent) : turn;
+}
+
+/** Coffee modifiers a die can take: at most one token each way per coffee, staying in 1..6. */
+export function coffeeRange(coffee: number, value: DieValue): { min: number; max: number } {
+  // `0 - x` rather than `-x`: never a -0 delta, which JSON would turn into 0.
+  return { min: Math.max(0 - coffee, 1 - value), max: Math.min(coffee, 6 - value) };
 }
 
 /** Every legal placement for `seat`'s dice, ignoring whose turn it is. */
 export function legalMoves(state: GameState, seat: Seat): PlaceIntent[] {
   if (state.phase !== 'placing') return [];
+  const ctx = placementContext(state, seat);
   const moves: PlaceIntent[] = [];
-  for (const die of state.dice[seat]) {
+  for (const die of ctx.myDice) {
+    const { min, max } = coffeeRange(ctx.coffee, die.value);
     for (const slot of SLOT_IDS) {
-      // `0 - coffee` rather than `-coffee`: never a -0 delta, which JSON would turn into 0.
-      for (let coffeeDelta = 0 - state.coffee; coffeeDelta <= state.coffee; coffeeDelta++) {
+      for (let coffeeDelta = min; coffeeDelta <= max; coffeeDelta++) {
         const intent = { dieId: die.id, slot, coffeeDelta };
-        if (checkPlacement(state, seat, intent).ok) moves.push(intent);
+        if (checkPlacement(ctx, intent).ok) moves.push(intent);
       }
     }
   }
@@ -104,14 +141,16 @@ export function legalMoves(state: GameState, seat: Seat): PlaceIntent[] {
 }
 
 function hasLegalMove(state: GameState, seat: Seat): boolean {
-  return state.dice[seat].some((die) =>
-    SLOT_IDS.some((slot) => {
-      for (let coffeeDelta = 0 - state.coffee; coffeeDelta <= state.coffee; coffeeDelta++) {
-        if (checkPlacement(state, seat, { dieId: die.id, slot, coffeeDelta }).ok) return true;
+  const ctx = placementContext(state, seat);
+  return ctx.myDice.some((die) => {
+    const { min, max } = coffeeRange(ctx.coffee, die.value);
+    return SLOT_IDS.some((slot) => {
+      for (let coffeeDelta = min; coffeeDelta <= max; coffeeDelta++) {
+        if (checkPlacement(ctx, { dieId: die.id, slot, coffeeDelta }).ok) return true;
       }
       return false;
-    }),
-  );
+    });
+  });
 }
 
 function rollFor(state: GameState, ids: string[]): Die[] {
@@ -310,7 +349,9 @@ export function resolveRound(state: GameState): GameState {
   return s;
 }
 
-export function canSpendReroll(state: GameState): MoveCheck {
+export function canSpendReroll(
+  state: Pick<GameState, 'phase' | 'rerolls' | 'rerollPending'>,
+): MoveCheck {
   if (isGameOver(state)) return fail('game-over');
   if (state.phase !== 'placing') return fail('not-placing');
   if (state.rerolls < 1) return fail('no-reroll');

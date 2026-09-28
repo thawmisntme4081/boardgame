@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { placeDie, rollDice } from './rules';
+import { playRandomGame } from './random-play';
+import { canPlaceDie, otherSeat, placeDie, rollDice } from './rules';
 import { YUL } from './scenarios';
+import { SLOT_IDS } from './slots';
 import { createGame } from './state';
-import { viewFor } from './views';
+import { SEATS } from './types';
+import { canPlaceInView, viewFor } from './views';
 
 describe('viewFor', () => {
   const game = rollDice(createGame(YUL, 7));
@@ -63,5 +66,39 @@ describe('viewFor', () => {
     expect(game.dice.pilot).toHaveLength(4);
     expect(game.approachPlanes).toEqual(YUL.approach);
     expect(game.gear[0]).toBe(false);
+  });
+});
+
+describe('canPlaceInView', () => {
+  it('agrees with canPlaceDie on every move, for both seats, across random games', () => {
+    // Plain comparisons: over 100,000 `expect` calls would be far too slow.
+    const reason = (c: { ok: boolean; reason?: string }) => (c.ok ? 'ok' : c.reason);
+    const mismatches: string[] = [];
+    let checked = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      playRandomGame(seed, YUL, (state) => {
+        for (const seat of SEATS) {
+          const view = viewFor(state, seat);
+          const ids = [...state.dice[seat], ...state.dice[otherSeat(seat)]].map((d) => d.id);
+          for (const dieId of ids) {
+            for (const slot of SLOT_IDS) {
+              for (let coffeeDelta = -3; coffeeDelta <= 3; coffeeDelta++) {
+                const intent = { dieId, slot, coffeeDelta };
+                const fromView = reason(canPlaceInView(view, intent));
+                const fromState = reason(canPlaceDie(state, seat, intent));
+                if (fromView !== fromState) {
+                  mismatches.push(
+                    `${seed} ${seat} ${JSON.stringify(intent)}: ${fromView} vs ${fromState}`,
+                  );
+                }
+                checked++;
+              }
+            }
+          }
+        }
+      });
+    }
+    expect(mismatches.slice(0, 5)).toEqual([]);
+    expect(checked).toBeGreaterThan(100_000);
   });
 });

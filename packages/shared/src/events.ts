@@ -10,7 +10,6 @@ export type ErrorCode =
   | 'not-in-room'
   | 'already-in-room'
   | 'not-strategy'
-  | 'chat-locked'
   | 'game-not-over';
 
 export type JoinResult =
@@ -29,16 +28,6 @@ export interface PlayerInfo {
 /** Who sits in each seat; `null` while the seat is empty. */
 export type Presence = Record<Seat, PlayerInfo | null>;
 
-export interface ChatMessage {
-  seat: Seat;
-  name: string;
-  text: string;
-  /** Server time, ms since epoch. */
-  at: number;
-}
-
-export const CHAT_MAX_LENGTH = 200;
-
 export interface CreateRoomPayload {
   name: string;
 }
@@ -53,9 +42,6 @@ export interface RejoinRoomPayload {
 export interface RerollPayload {
   dieIds: string[];
 }
-export interface ChatPayload {
-  text: string;
-}
 type Empty = Record<string, never>;
 
 export interface ClientToServer {
@@ -68,11 +54,9 @@ export interface ClientToServer {
   'game:spend-reroll': (payload: Empty, ack: (result: AckResult) => void) => void;
   'game:reroll': (payload: RerollPayload, ack: (result: AckResult) => void) => void;
   'game:rematch': (payload: Empty, ack: (result: AckResult) => void) => void;
-  'chat:send': (payload: ChatPayload, ack: (result: AckResult) => void) => void;
 }
 
 export interface ServerToClient {
   'game:view': (view: PlayerView) => void;
   'room:presence': (presence: Presence) => void;
-  'chat:message': (message: ChatMessage) => void;
 }
