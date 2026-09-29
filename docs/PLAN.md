@@ -295,10 +295,10 @@ Notes: `canPlaceDie` was split so the client runs the same check (`checkPlacemen
 - [x] Unit, property, integration and component suites (Vitest): 159 tests
 - [x] Playwright E2E in `e2e/` against the production build (the server serves `client/dist`), on Desktop Chrome, iPhone 13 (WebKit) and Pixel 7: lobby, invite link, unknown code, a full game to a crash + "Fly again", a landing from a prepared final round, refreshing either tab mid-round, leaving and a newcomer joining, and one desktop + phone game
 - [x] CI workflow: job `check` (typecheck, lint, format, Vitest, build) on every push to `main` and every PR; job `e2e` after it installs Chromium + WebKit and runs `pnpm e2e`, uploading the report on failure
-- [ ] Suites green in GitHub Actions: the repo is private, so the result has to be read on GitHub (Actions tab); not confirmed yet
+- [x] Suites green in GitHub Actions (both jobs: `check`, and `e2e` with Playwright + Lighthouse), confirmed Sep 29, 2026
 - [x] Lighthouse mobile audit in CI (`pnpm lighthouse`, `lighthouserc.cjs`): lobby and invite page on a throttled mid-range phone; fails below 90 accessibility or on small touch targets (`target-size`), warns below 80 performance / 90 best practices. Local run Sep 29: accessibility 100, best practices 100, touch targets pass, performance 87. `lhci` cannot clean up after itself on Windows (EPERM on its temp folder), so it runs in CI (Linux) only
 
-**Done when:** unit, integration and Playwright suites are green in GitHub Actions. ⏳ Everything passes locally Sep 29, 2026 (Vitest 159/159; Playwright 22/22 on three consecutive runs, 2 skips by design); the Actions run happens on your next push.
+**Done when:** unit, integration and Playwright suites are green in GitHub Actions. ✅ Verified Sep 29, 2026: both CI jobs green on GitHub; locally Vitest 159/159, Playwright 22/22 (three consecutive runs, 2 skips by design), Lighthouse mobile: accessibility 100, best practices 100, touch targets pass, performance 87.
 
 E2E setup: `pnpm e2e` builds the app and starts `node packages/server/dist/index.js` on port 3100 with `GAME_SEED=1` (same dice every game, so runs repeat), `E2E_HOOKS=1` (a test-only `POST /__e2e/rooms/:code/game` that sets up a game state; used for the landing test, since a random win through the UI is unreliable) and `ROOMS_PER_IP=1000`. Both `GAME_SEED` and `E2E_HOOKS` are ignored when `NODE_ENV=production`.
 
@@ -333,7 +333,6 @@ The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky
 ### Phase 9: Extras
 
 - [ ] Redis or SQLite persistence so games survive restarts
-- [ ] Animations, sound, drag-and-drop on desktop
 - [ ] Accounts and game history
 
 ### Phase 10: Deploy (last)

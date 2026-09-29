@@ -3,7 +3,8 @@ import { bothReady, deviceOptions, playOneDie, playToTheEnd, setGame, startGame 
 
 test.describe('a two-player game', () => {
   test('plays the base scenario to a crash, then flies again', async ({ browser }, testInfo) => {
-    test.setTimeout(120_000);
+    // The longest test: a whole game through the UI (slow on WebKit when run in parallel).
+    test.setTimeout(180_000);
     const players = await startGame(browser, deviceOptions(testInfo.project.use));
     await bothReady(players);
     await playToTheEnd(players);

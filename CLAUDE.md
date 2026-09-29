@@ -26,8 +26,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 ## UI rules
 
 - Mobile-first. Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
-- Phone portrait: status bar, tracks strip, scrolling cockpit, dice tray fixed at bottom. Tablet: two columns (tracks + cockpit / dice tray). Desktop: one centred container (max 72rem): tracks side by side above the cockpit, dice tray below; not full width. Desktop cockpit: equal side columns (16%): pilot radio + landing gear on the left (switch right of slot), co-pilot radio + flaps on the right (switch left of slot); axis, engines, brakes, concentration in the centre. Below desktop, radio is still two panels (pilot, co-pilot). Gear, flaps and brakes show a toggle `Switch` (svgs/Switch.tsx), not a light.
-- Tap a die, then tap a slot (no required drag-and-drop). Touch targets >= 44px. Use `100dvh` and safe-area insets. No hover-only info.
+- Phone portrait: status bar, tracks strip, scrolling cockpit, dice tray fixed at bottom. Tablet: two columns (tracks + cockpit / dice tray). Desktop: one centred container (max 72rem): tracks side by side above the cockpit, dice tray below; not full width. Desktop cockpit: equal side columns (16%): pilot radio + landing gear on the left (switch right of slot), co-pilot radio + flaps on the right (switch left of slot); axis, engines, brakes, concentration in the centre. Below desktop the cockpit order is fixed: Axis, Engines, Landing gear, Flaps, Radio (one panel; on desktop its wrapper is `display: contents` so the pilot/co-pilot halves take their own areas), Brakes, Concentration; Radio and Brakes share a row only when the cockpit is at least 28rem wide (they wrap on phones). Column spans use `max-desktop:` so they never fight the desktop grid areas. Ordered switches (flaps, brakes) show arrows between slots. Concentration slots (either player) are half blue, half orange (`.slot-shared`). Gear, flaps and brakes show a toggle `Switch` (svgs/Switch.tsx), not a light.
 - On `visibilitychange` to visible: reconnect and `room:rejoin` with the saved token.
 
 ## Scope
@@ -35,7 +34,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - v1: base game, one airport, responsive UI, reconnection. Public deploy is the last phase (Phase 10); until then play locally or share a temporary tunnel.
 - Phase 7: remaining base-box airports/modules via a module hook system.
 - Phase 8: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios).
-- Phase 9: extras (persistence, animations/sound, accounts). Phase 10: deploy.
+- Phase 9: extras (persistence, accounts). Phase 10: deploy.
 - Exact rule numbers must be checked against the rulebooks; the numbers in the plan are a starting model. Ask the user when a rule is unclear instead of guessing.
 
 ## Workflow

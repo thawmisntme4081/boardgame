@@ -24,6 +24,20 @@ html {
   touch-action: manipulation;
 }
 
+/* A space either player can use (concentration): half pilot blue, half co-pilot orange,
+   fill and border. Two background layers, because a border cannot have two colours. */
+.slot-shared {
+  border-color: transparent;
+  background:
+    linear-gradient(90deg, var(--color-pilot-soft) 50%, var(--color-copilot-soft) 50%) padding-box,
+    linear-gradient(
+        90deg,
+        color-mix(in oklch, var(--color-pilot) 60%, transparent) 50%,
+        color-mix(in oklch, var(--color-copilot) 70%, transparent) 50%
+      )
+      border-box;
+}
+
 /* Desktop cockpit: landing gear down the left, flaps down the right, the rest in the middle.
    Smaller screens keep the seat-ordered grid from the Cockpit component. */
 .cockpit-grid {

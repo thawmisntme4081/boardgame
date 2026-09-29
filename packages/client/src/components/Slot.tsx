@@ -42,7 +42,7 @@ export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
       className={cn(
         'relative grid size-12 shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold transition',
         both
-          ? 'border-dashed border-muted-foreground/50 bg-muted'
+          ? 'slot-shared'
           : seat === 'pilot'
             ? 'border-pilot/60 bg-pilot-soft text-pilot'
             : 'border-copilot/70 bg-copilot-soft text-copilot',

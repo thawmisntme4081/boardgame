@@ -1,4 +1,4 @@
-import type { PlayerView, Seat, SlotId } from '@sky/shared';
+import type { PlayerView, SlotId } from '@sky/shared';
 import { ChevronDown, ChevronRight, Coffee } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -7,51 +7,74 @@ import { SpeedGauge } from '@/svgs/SpeedGauge';
 import { Switch } from '@/svgs/Switch';
 import { Slot } from './Slot';
 
-type Section =
-  | 'axis'
-  | 'engines'
-  | 'radioPilot'
-  | 'radioCopilot'
-  | 'gear'
-  | 'flaps'
-  | 'brakes'
-  | 'concentration';
+type Section = 'axis' | 'engines' | 'gear' | 'flaps' | 'radio' | 'brakes' | 'concentration';
 
-/** Your own controls come first, so phones show them without scrolling. */
-const ORDER: Record<Seat, Section[]> = {
-  pilot: [
-    'axis',
-    'engines',
-    'radioPilot',
-    'gear',
-    'brakes',
-    'concentration',
-    'radioCopilot',
-    'flaps',
-  ],
-  copilot: [
-    'axis',
-    'engines',
-    'radioCopilot',
-    'flaps',
-    'concentration',
-    'radioPilot',
-    'gear',
-    'brakes',
-  ],
+/** Top to bottom below desktop; radio and brakes share a row when there is room. */
+const ORDER: Section[] = ['axis', 'engines', 'gear', 'flaps', 'radio', 'brakes', 'concentration'];
+
+/**
+ * Below desktop only (`max-desktop:`, so the desktop grid areas are untouched): two
+ * columns, panels full width on phones and two per row once the cockpit is wide. Radio and
+ * brakes share a row from 28rem, where three slots and two arrows fit without wrapping.
+ */
+const SPAN: Record<Section, string> = {
+  axis: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
+  engines: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
+  gear: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
+  flaps: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
+  radio: 'max-desktop:col-span-2 @md:max-desktop:col-span-1',
+  brakes: 'max-desktop:col-span-2 @md:max-desktop:col-span-1',
+  concentration: 'max-desktop:col-span-2',
 };
 
-/** Desktop places each panel by name (see `.cockpit-grid`): pilot radio and gear left, co-pilot radio and flaps right. */
+/**
+ * Desktop places each panel by name (see `.cockpit-grid`): pilot radio and gear left,
+ * co-pilot radio and flaps right. Radio is one panel below desktop; on desktop its wrapper
+ * steps aside (`contents`) so its pilot and co-pilot halves take their own areas.
+ */
 const AREA: Record<Section, string> = {
   axis: 'desktop:[grid-area:axis]',
   engines: 'desktop:[grid-area:engines]',
-  radioPilot: 'desktop:[grid-area:radioPilot]',
-  radioCopilot: 'desktop:[grid-area:radioCopilot]',
+  radio: 'desktop:contents',
   brakes: 'desktop:[grid-area:brakes]',
   concentration: 'desktop:[grid-area:concentration]',
   gear: 'desktop:[grid-area:gear]',
   flaps: 'desktop:[grid-area:flaps]',
 };
+
+const PANEL = 'flex h-full flex-col gap-2 rounded-2xl border bg-card p-3';
+/** The same panel look, applied only on desktop (the two radio halves). */
+const DESKTOP_PANEL =
+  'desktop:flex desktop:h-full desktop:flex-col desktop:gap-2 desktop:rounded-2xl desktop:border desktop:bg-card desktop:p-3';
+
+function PanelHeader({
+  title,
+  hint,
+  side,
+  className,
+}: {
+  title: string;
+  hint?: string;
+  side?: boolean;
+  className?: string;
+}) {
+  return (
+    <header
+      className={cn(
+        'flex items-baseline justify-between gap-2',
+        side && 'desktop:flex-col desktop:items-start desktop:gap-0',
+        className,
+      )}
+    >
+      <h2 className="text-sm font-semibold">{title}</h2>
+      {hint && (
+        <p className={cn('text-right text-xs text-muted-foreground', side && 'desktop:text-left')}>
+          {hint}
+        </p>
+      )}
+    </header>
+  );
+}
 
 function Panel({
   title,
@@ -67,25 +90,8 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section
-      className={cn('flex h-full flex-col gap-2 rounded-2xl border bg-card p-3', className)}
-      aria-label={title}
-    >
-      <header
-        className={cn(
-          'flex items-baseline justify-between gap-2',
-          side && 'desktop:flex-col desktop:items-start desktop:gap-0',
-        )}
-      >
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {hint && (
-          <p
-            className={cn('text-right text-xs text-muted-foreground', side && 'desktop:text-left')}
-          >
-            {hint}
-          </p>
-        )}
-      </header>
+    <section className={cn(PANEL, className)} aria-label={title}>
+      <PanelHeader title={title} hint={hint} side={side} />
       {children}
     </section>
   );
@@ -181,15 +187,30 @@ export function Cockpit({ view }: { view: PlayerView }) {
         </div>
       </Panel>
     ),
-    radioPilot: (
-      <Panel title="Radio" hint="Pilot · N clears a plane N−1 ahead" side>
-        <Slots ids={['radioPilot']} view={view} />
-      </Panel>
-    ),
-    radioCopilot: (
-      <Panel title="Radio" hint="Co-pilot · N clears a plane N−1 ahead" side>
-        <Slots ids={['radioCopilot1', 'radioCopilot2']} view={view} />
-      </Panel>
+    radio: (
+      <section aria-label="Radio" className={cn(PANEL, 'desktop:contents')}>
+        <PanelHeader title="Radio" hint="N clears a plane N−1 ahead" className="desktop:hidden" />
+        <div className="flex flex-wrap items-end gap-2 desktop:contents">
+          <div className={cn('desktop:[grid-area:radioPilot]', DESKTOP_PANEL)}>
+            <PanelHeader
+              title="Radio"
+              hint="Pilot · N clears a plane N−1 ahead"
+              side
+              className="hidden desktop:flex"
+            />
+            <Slots ids={['radioPilot']} view={view} />
+          </div>
+          <div className={cn('desktop:[grid-area:radioCopilot]', DESKTOP_PANEL)}>
+            <PanelHeader
+              title="Radio"
+              hint="Co-pilot · N clears a plane N−1 ahead"
+              side
+              className="hidden desktop:flex"
+            />
+            <Slots ids={['radioCopilot1', 'radioCopilot2']} view={view} />
+          </div>
+        </div>
+      </section>
     ),
     gear: (
       <Panel title="Landing gear" hint="Pilot · any order" side>
@@ -218,6 +239,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
           ids={['brakes1', 'brakes2', 'brakes3']}
           view={view}
           switches={[0, 1, 2].map((i) => view.brakes > i)}
+          ordered
         />
       </Panel>
     ),
@@ -243,10 +265,10 @@ export function Cockpit({ view }: { view: PlayerView }) {
 
   return (
     <div className="@container">
-      <div className="cockpit-grid grid grid-cols-1 gap-3 @xl:grid-cols-2 @5xl:grid-cols-3">
-        {ORDER[view.seat].map((id) => (
+      <div className="cockpit-grid grid grid-cols-2 gap-3">
+        {ORDER.map((id) => (
           // Grid items stretch by default, and Panel is h-full, so every panel fills its row.
-          <div key={id} className={AREA[id]}>
+          <div key={id} className={cn(SPAN[id], AREA[id])}>
             {sections[id]}
           </div>
         ))}
