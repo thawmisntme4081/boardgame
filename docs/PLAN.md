@@ -6,7 +6,7 @@ Sep 28, 2026 · exported from the Claude doc (the live version may be newer)
 
 Build an online, 2-player version of Sky Team where the Node server is the referee: it holds the real game state, validates every move, and sends each player only what they may see.
 
-**Scope for v1:** room codes, pilot/co-pilot seats, the base airport scenario, dice placement on all cockpit systems, coffee tokens, win/crash detection, reconnection, a responsive UI for phones, tablets and desktop, and a public deploy. Extra airports and modules come after v1.
+**Scope for v1:** room codes, pilot/co-pilot seats, the base airport scenario, dice placement on all cockpit systems, coffee tokens, win/crash detection, reconnection, and a responsive UI for phones, tablets and desktop. Extra airports and modules come next; the public deploy is the last phase (Phase 10).
 
 **Key principle:** never trust the client. The browser only sends intents ("place die 2 on the axis slot"); the server checks the rules and broadcasts the result.
 
@@ -276,7 +276,7 @@ Notes: the in-process vs. socket comparison found a `-0` coffee delta from `lega
 - [x] Game over screen with reason (every failed landing condition) and rematch
 - [x] Reroll flow: spend a token, tick dice, reroll or keep all
 
-**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ⏳ Automated check passed Sep 28, 2026: Playwright drove a desktop Chromium pilot and an iPhone 13 (emulated) co-pilot through lobby → invite link → strategy → placing → game over → rematch with no console errors, plus a tablet-size layout check. **Still to do by you:** the real two-device LAN game (`pnpm --filter @sky/client dev --host`).
+**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ⏳ Automated check passed Sep 28, 2026: Playwright drove a desktop Chromium pilot and an iPhone 13 (emulated) co-pilot through lobby → invite link → strategy → placing → game over → rematch with no console errors, plus a tablet-size layout check. Sep 29: a full game also ran through the LAN address and through a public Cloudflare tunnel (desktop + emulated phone, reload mid-round, rematch; no errors). **Still to do by you:** one game on a real phone (`pnpm dev:lan`, then open the Network URL Vite prints).
 
 Notes: `canPlaceDie` was split so the client runs the same check (`checkPlacement` takes a `PlacementContext`, which both `GameState` and `PlayerView` provide; a test compares both on 100,000+ moves). 131 tests pass, including React Testing Library tests for slots, dice tray, coffee, rerolls, game over and the lobby. The game screen is lazy-loaded (58 kB chunk since chat was removed).
 
@@ -295,20 +295,14 @@ Notes: `canPlaceDie` was split so the client runs the same check (`checkPlacemen
 - [x] Unit, property, integration and component suites (Vitest): 159 tests
 - [x] Playwright E2E in `e2e/` against the production build (the server serves `client/dist`), on Desktop Chrome, iPhone 13 (WebKit) and Pixel 7: lobby, invite link, unknown code, a full game to a crash + "Fly again", a landing from a prepared final round, refreshing either tab mid-round, leaving and a newcomer joining, and one desktop + phone game
 - [x] CI workflow: job `check` (typecheck, lint, format, Vitest, build) on every push to `main` and every PR; job `e2e` after it installs Chromium + WebKit and runs `pnpm e2e`, uploading the report on failure
-- [ ] Suites green in GitHub Actions (needs a push; not run yet)
-- [ ] Lighthouse mobile audit in CI (not added)
+- [ ] Suites green in GitHub Actions: the repo is private, so the result has to be read on GitHub (Actions tab); not confirmed yet
+- [x] Lighthouse mobile audit in CI (`pnpm lighthouse`, `lighthouserc.cjs`): lobby and invite page on a throttled mid-range phone; fails below 90 accessibility or on small touch targets (`target-size`), warns below 80 performance / 90 best practices. Local run Sep 29: accessibility 100, best practices 100, touch targets pass, performance 87. `lhci` cannot clean up after itself on Windows (EPERM on its temp folder), so it runs in CI (Linux) only
 
 **Done when:** unit, integration and Playwright suites are green in GitHub Actions. ⏳ Everything passes locally Sep 29, 2026 (Vitest 159/159; Playwright 22/22 on three consecutive runs, 2 skips by design); the Actions run happens on your next push.
 
 E2E setup: `pnpm e2e` builds the app and starts `node packages/server/dist/index.js` on port 3100 with `GAME_SEED=1` (same dice every game, so runs repeat), `E2E_HOOKS=1` (a test-only `POST /__e2e/rooms/:code/game` that sets up a game state; used for the landing test, since a random win through the UI is unreliable) and `ROOMS_PER_IP=1000`. Both `GAME_SEED` and `E2E_HOOKS` are ignored when `NODE_ENV=production`.
 
-### Phase 7: Deploy
-
-- [ ] Production build and hosting (see Deployment)
-
-**Done when:** a friend in another city plays a full game on the public URL.
-
-### Phase 8: Base game airports and modules
+### Phase 7: Base game airports and modules
 
 v1 ships one airport; this phase fills in the rest of the base box and builds the module system the expansion needs.
 
@@ -320,9 +314,9 @@ v1 ships one airport; this phase fills in the rest of the base box and builds th
 
 **Done when:** every base scenario plays end to end and random-play fuzzing passes on all of them.
 
-### Phase 9: Turbulence expansion
+### Phase 8: Turbulence expansion
 
-The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky-team-turbulence)) adds 10 destinations, 20 harder scenarios and new modules including Turbulence, Low Visibility and Alarms; it needs Phase 8's module system.
+The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky-team-turbulence)) adds 10 destinations, 20 harder scenarios and new modules including Turbulence, Low Visibility and Alarms; it needs Phase 7's module system.
 
 - [ ] Read the expansion rulebook and list every new rule as a test case before coding
 - [ ] Add the new approach and altitude tracks and the 20 scenarios as scenario data, tagged `expansion: 'turbulence'`
@@ -336,11 +330,20 @@ The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky
 
 **Done when:** all 20 expansion scenarios play end to end on phone and desktop with tests green.
 
-### Phase 10: Extras
+### Phase 9: Extras
 
 - [ ] Redis or SQLite persistence so games survive restarts
 - [ ] Animations, sound, drag-and-drop on desktop
 - [ ] Accounts and game history
+
+### Phase 10: Deploy (last)
+
+Moved to the end on Sep 29, 2026: the game is played locally (or shared with a temporary tunnel) until everything else is built.
+
+- [x] The server serves the built client (`client/dist`) with an `index.html` fallback for `/r/:code` links (done in Phase 6 for the E2E tests)
+- [ ] Production build and hosting (see Deployment)
+
+**Done when:** a friend in another city plays a full game on the public URL.
 
 ## Testing
 
@@ -377,7 +380,7 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 - One E2E game with a desktop player and a phone player.
 - Real devices on your LAN: `vite --host`, open your computer's IP on the phone; debug iOS with Safari Web Inspector and Android with `chrome://inspect`.
 - Test backgrounding: switch apps mid-round on a phone and confirm the game resumes.
-- Lighthouse mobile audit in CI for performance and tap-target size.
+- Lighthouse mobile audit in CI for performance and tap-target size (`pnpm lighthouse`, in the `e2e` job).
 
 ## Deployment
 

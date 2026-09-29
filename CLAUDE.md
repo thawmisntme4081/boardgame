@@ -32,9 +32,10 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 ## Scope
 
-- v1: base game, one airport, responsive UI, reconnection, public deploy.
-- Phase 8: remaining base-box airports/modules via a module hook system.
-- Phase 9: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios).
+- v1: base game, one airport, responsive UI, reconnection. Public deploy is the last phase (Phase 10); until then play locally or share a temporary tunnel.
+- Phase 7: remaining base-box airports/modules via a module hook system.
+- Phase 8: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios).
+- Phase 9: extras (persistence, animations/sound, accounts). Phase 10: deploy.
 - Exact rule numbers must be checked against the rulebooks; the numbers in the plan are a starting model. Ask the user when a rule is unclear instead of guessing.
 
 ## Workflow
@@ -50,6 +51,7 @@ When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm ty
 - `pnpm test` — Vitest
 - `pnpm e2e` — Playwright: builds, starts the production server on port 3100 (`GAME_SEED=1`, `E2E_HOOKS=1`) and runs `e2e/` on Desktop Chrome, iPhone 13 (WebKit), Pixel 7; `pnpm exec playwright test -g "<name>" --project "Desktop Chrome"` for one test
 - `pnpm -r build` — production build
+- `pnpm lighthouse` — mobile Lighthouse audit of the build (Lighthouse CI; runs in CI on Linux, fails on Windows cleanup)
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI
 - `pnpm --filter @sky/shared random-play [games] [firstSeed]` — play random games and print how they ended
 - `pnpm dev:lan` — like `pnpm dev`, but Vite listens on the LAN so a phone can open the Network URL it prints

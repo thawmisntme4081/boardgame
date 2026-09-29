@@ -22,6 +22,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // CommonJS config files (e.g. lighthouserc.cjs).
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+  },
+  {
     files: ['packages/client/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
     plugins: {

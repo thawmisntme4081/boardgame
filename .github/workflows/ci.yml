@@ -24,7 +24,7 @@ jobs:
       - run: pnpm build
 
   e2e:
-    name: Playwright (Desktop Chrome, iPhone 13, Pixel 7)
+    name: Playwright (Desktop Chrome, iPhone 13, Pixel 7) + Lighthouse (mobile)
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -40,12 +40,15 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium webkit
       # Builds the app and starts the production server itself (see playwright.config.ts).
       - run: pnpm e2e
-      - name: Upload report
+      # Mobile Lighthouse audit of the build e2e just made (see lighthouserc.cjs).
+      - run: pnpm lighthouse
+      - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: test-reports
           path: |
             playwright-report/
             test-results/
+            .lighthouseci/
           retention-days: 7
