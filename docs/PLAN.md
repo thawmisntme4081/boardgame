@@ -119,6 +119,8 @@ Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { d
 | Altitude | 7 rounds, 6000 → 0; first player alternates (pilot at 6000); reroll tokens at 6000 and 2000 |
 | Collision / overshoot | Advancing with planes in the current position, or from the airport, loses |
 
+**Optional round timer** (not in the board game; an online extra): the game creator can turn on a timer in the lobby (off by default). From the roll until the round's last die is placed the players have `ROUND_TIMER_MS` (3 minutes); if it runs out, the game is lost (`endReason: 'time-up'`). `GameState.timerMs` holds the setting and `deadline` the running round's end; `startRoundTimer(state, now)` starts it after `rollDice`, `expireRoundTimer(state, now)` ends the game once `now` reaches the deadline, and ending the round or the game clears it. The server keeps one timeout per room (`syncRoundTimer`) and also checks the deadline before every move, so a late move finds the game already lost. Views carry `timerMs` and `roundTimeLeftMs` (relative, so a wrong device clock does not matter).
+
 **Assumptions to revisit:**
 
 - If the seat on turn has no legal placement, the turn passes to the partner; if neither can place, the leftover dice are lost and the round ends (the rulebook does not cover this).
@@ -130,7 +132,7 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 
 | Direction | Event | Payload | Server response |
 | --- | --- | --- | --- |
-| Client → Server | `room:create` | `{ name }` | ack `{ ok, code, seat, token }` |
+| Client → Server | `room:create` | `{ name, timer? }` (`timer: true` for a timed game) | ack `{ ok, code, seat, token }` |
 | Client → Server | `room:join` | `{ code, name }` | ack `{ ok, code, seat, token }` or `{ ok:false, error }` |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, partner's game restarts; empty room deleted |
@@ -333,6 +335,8 @@ The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky
 ### Phase 9: Extras
 
 - [ ] Redis or SQLite persistence so games survive restarts
+- [x] Optional round timer (Sep 29, 2026): lobby switch (off by default), 3 minutes per round from the roll, countdown next to the turn label (red for the last 30 s), time up = game lost; enforced by the server; kept on rematch. Tests: shared rules, server (expiry for both players, late move refused, stopping when the last die is placed, rematch), client (lobby switch, countdown), Playwright (a timed game running out)
+- [x] "Next turn in 5s" pause (Sep 29, 2026): after each round's last die (not at game over), a green countdown sits next to the turn label for 5 s, in every game. Display only (client): players still talk strategy and press "Ready to roll"; the status-bar actions wrap on phones so everything fits
 - [ ] Accounts and game history
 
 ### Phase 10: Deploy (last)
@@ -381,6 +385,42 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 - Test backgrounding: switch apps mid-round on a phone and confirm the game resumes.
 - Lighthouse mobile audit in CI for performance and tap-target size (`pnpm lighthouse`, in the `e2e` job).
 
+## Sharing a local game (Cloudflare tunnel)
+
+Until the game is deployed (Phase 10), you can play with a friend anywhere by running the production build on your computer and opening a temporary public link to it. In Claude Code, just say **"run tunnel"** (and **"stop sharing"** when done).
+
+**Run it yourself** (two PowerShell terminals in the project folder):
+
+Terminal 1, the game server:
+
+```powershell
+pnpm build
+$env:NODE_ENV = 'production'
+$env:TRUST_PROXY = '1'
+pnpm start
+```
+
+Wait for `server listening on http://localhost:3000`.
+
+Terminal 2, the tunnel:
+
+```powershell
+cloudflared tunnel --url http://localhost:3000
+```
+
+It prints a line with `https://<random-words>.trycloudflare.com`: that is the link. If `cloudflared` is not found, open a new terminal or use `& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000`. (Install once with `winget install Cloudflare.cloudflared`.)
+
+**Play:** open the link yourself (not `localhost`) and create the game, so **Share invite** gives the public address; send it, or just the 4-letter code.
+
+**Stop:** Ctrl+C in both terminals.
+
+Good to know:
+
+- `pnpm build` is only needed again after the code changes.
+- The `$env:` lines last for that terminal window only. `NODE_ENV=production` keeps the test-only settings (`GAME_SEED`, `E2E_HOOKS`) off; `TRUST_PROXY=1` makes the 5-rooms-per-address limit count each player's real address instead of everyone arriving through the tunnel as one.
+- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress (they are kept in memory).
+- Quick tunnels are free, need no account and have no uptime guarantee: fine for an evening of games, not a permanent address.
+
 ## Deployment
 
 Ship one Docker image running one Node process that serves the built React files and Socket.IO on the same port; run a single instance while game state lives in memory.
@@ -416,7 +456,7 @@ CMD ["node", "packages/server/dist/index.js"]
 
 Check each host's current pricing and sleep rules before choosing; a sleeping or restarting free instance drops live games.
 
-**Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
+**Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `ROUND_TIMER_SECONDS` (dev/tests only: shortens timed rounds; ignored in production), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
 
 **CI/CD with GitHub Actions**
 

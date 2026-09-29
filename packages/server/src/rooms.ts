@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import {
   createGame,
+  ROUND_TIMER_MS,
   SEATS,
   YUL,
   type ErrorCode,
@@ -29,6 +30,8 @@ export interface Room {
   creatorIp: string;
   createdAt: number;
   lastActivity: number;
+  /** The pending "time ran out" check of a timed round (see `syncRoundTimer`). */
+  roundTimer?: ReturnType<typeof setTimeout>;
 }
 
 export interface RoomOptions {
@@ -38,6 +41,8 @@ export interface RoomOptions {
   idleTtlMs?: number;
   /** Live rooms one IP address may have created at once. */
   maxRoomsPerIp?: number;
+  /** Length of a timed round (tests and dev shorten it). */
+  roundTimerMs?: number;
 }
 
 export const DEFAULT_IDLE_TTL_MS = 30 * 60_000;
@@ -62,12 +67,14 @@ export class RoomManager {
   private readonly newSeed: () => number;
   private readonly idleTtlMs: number;
   private readonly maxRoomsPerIp: number;
+  private readonly roundTimerMs: number;
 
   constructor(options: RoomOptions = {}) {
     this.now = options.now ?? Date.now;
     this.newSeed = options.seed ?? (() => randomInt(2 ** 31));
     this.idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_TTL_MS;
     this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
+    this.roundTimerMs = options.roundTimerMs ?? ROUND_TIMER_MS;
   }
 
   get size(): number {
@@ -85,8 +92,13 @@ export class RoomManager {
     return room && player ? { room, player } : undefined;
   }
 
-  /** The creator takes the pilot seat. */
-  create(name: string, socketId: string, ip = 'unknown'): Result<Seated> {
+  /** The creator takes the pilot seat and chooses whether the game is timed. */
+  create(
+    name: string,
+    socketId: string,
+    ip = 'unknown',
+    { timer = false }: { timer?: boolean } = {},
+  ): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const fromIp = [...this.rooms.values()].filter((r) => r.creatorIp === ip).length;
     if (fromIp >= this.maxRoomsPerIp) return err('too-many-rooms');
@@ -94,7 +106,7 @@ export class RoomManager {
     const room: Room = {
       code,
       players: {},
-      game: createGame(YUL, this.newSeed()),
+      game: createGame(YUL, this.newSeed(), { timerMs: timer ? this.roundTimerMs : null }),
       creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
@@ -183,7 +195,8 @@ export class RoomManager {
 
   /** Same room and seats, fresh game. */
   rematch(room: Room): void {
-    room.game = createGame(room.game.scenario, this.newSeed());
+    // A rematch (or a restart after someone leaves) keeps the timed/untimed choice.
+    room.game = createGame(room.game.scenario, this.newSeed(), { timerMs: room.game.timerMs });
     for (const seat of SEATS) {
       const player = room.players[seat];
       if (player) player.ready = false;

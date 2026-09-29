@@ -11,7 +11,7 @@ const code = z
   .transform((c) => c.toUpperCase());
 const dieId = z.string().min(1).max(20);
 
-export const createRoomSchema = z.object({ name });
+export const createRoomSchema = z.object({ name, timer: z.boolean().optional() });
 export const joinRoomSchema = z.object({ code, name });
 export const rejoinRoomSchema = z.object({ code, token: z.uuid() });
 /** Events without data: `{}` or nothing. */

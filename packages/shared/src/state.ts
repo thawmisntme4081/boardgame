@@ -5,7 +5,19 @@ export const AERO_BLUE_START = 4;
 /** Orange Aerodynamics marker starts between 8 and 9. */
 export const AERO_ORANGE_START = 8;
 
-export function createGame(scenario: Scenario, seed: number): GameState {
+/** Default length of a timed round: from the roll until the last die is placed. */
+export const ROUND_TIMER_MS = 3 * 60_000;
+
+export interface GameOptions {
+  /** Round timer in ms, or `null` (the default) for an untimed game. */
+  timerMs?: number | null;
+}
+
+export function createGame(
+  scenario: Scenario,
+  seed: number,
+  { timerMs = null }: GameOptions = {},
+): GameState {
   const first = scenario.altitudes[0];
   if (!first) throw new Error(`scenario ${scenario.id} has no altitudes`);
   if (scenario.approach.length < 2) throw new Error(`scenario ${scenario.id} approach too short`);
@@ -33,5 +45,7 @@ export function createGame(scenario: Scenario, seed: number): GameState {
     rngSeed: seed,
     rngState: seed,
     log: [],
+    timerMs,
+    deadline: null,
   };
 }

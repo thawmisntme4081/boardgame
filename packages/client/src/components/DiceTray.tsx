@@ -13,16 +13,24 @@ import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
 import { useGame } from '@/store';
 import { DieFace } from '@/svgs/DieFace';
+import { formatClock } from '@/lib/clock';
 
 const partnerName = (view: PlayerView, presence: Presence | null) =>
   presence?.[otherSeat(view.seat)]?.name ?? seatName[otherSeat(view.seat)];
 
-function StrategyTray() {
+function StrategyTray({ view }: { view: PlayerView }) {
   return (
-    <p className="text-sm">
-      Talk strategy now, then press “Ready to roll”. Once the dice are rolled, no talking until the
-      round ends.
-    </p>
+    <div className="flex flex-col gap-1">
+      <p className="text-sm">
+        Talk strategy now, then press “Ready to roll”. Once the dice are rolled, no talking until
+        the round ends.
+      </p>
+      {view.timerMs !== null && (
+        <p className="text-sm font-medium">
+          Timed game: {formatClock(view.timerMs)} to place all the dice once you roll, or you lose.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -172,7 +180,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
 }
 
 export function DiceTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
-  if (view.phase === 'strategy') return <StrategyTray />;
+  if (view.phase === 'strategy') return <StrategyTray view={view} />;
   if (view.phase !== 'placing') return null;
   if (view.rerollPending[view.seat]) return <RerollTray view={view} />;
   return <PlacingTray view={view} presence={presence} />;

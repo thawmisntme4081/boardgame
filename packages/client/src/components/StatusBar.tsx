@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
+import { NextTurnCountdown } from './NextTurnCountdown';
+import { RoundCountdown } from './RoundCountdown';
 import type { Connection } from '@/store';
 
 function turnText(view: PlayerView, partner: string): string {
@@ -127,7 +129,7 @@ export function StatusBar({
             </span>
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <p
             role="status"
             className={cn(
@@ -141,6 +143,8 @@ export function StatusBar({
           >
             {turnText(view, partnerName)}
           </p>
+          {view.phase === 'placing' && <RoundCountdown />}
+          {view.phase === 'strategy' && <NextTurnCountdown />}
           {view.phase === 'strategy' && (
             <ReadyButton ready={presence?.[view.seat]?.ready ?? false} partnerName={partnerName} />
           )}

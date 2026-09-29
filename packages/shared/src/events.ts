@@ -31,6 +31,8 @@ export type Presence = Record<Seat, PlayerInfo | null>;
 
 export interface CreateRoomPayload {
   name: string;
+  /** Timed game: each round must be placed within the round timer (default off). */
+  timer?: boolean;
 }
 export interface JoinRoomPayload {
   code: string;

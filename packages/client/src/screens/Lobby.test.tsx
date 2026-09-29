@@ -22,7 +22,19 @@ describe('Lobby', () => {
     expect(create).toBeDisabled();
     await userEvent.type(screen.getByLabelText('Your name'), '  Ana ');
     await userEvent.click(create);
-    expect(api.createRoom).toHaveBeenCalledWith('Ana');
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', false);
+  });
+
+  it('offers a round timer, off by default', async () => {
+    render(<Lobby />);
+    const timer = screen.getByRole('switch', { name: /Round timer/ });
+    expect(timer).not.toBeChecked();
+    expect(screen.getByText(/3:00 to place all the dice each round/)).toBeInTheDocument();
+    await userEvent.click(timer);
+    expect(timer).toBeChecked();
+    await userEvent.type(screen.getByLabelText('Your name'), 'Ana');
+    await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', true);
   });
 
   it('joins by code, uppercasing and dropping anything but letters', async () => {
@@ -53,8 +65,9 @@ describe('WaitingRoom', () => {
 
 describe('WaitingRoom after a partner left', () => {
   it('names the missing seat', () => {
-    render(<WaitingRoom code="QRST" missing="pilot" />);
+    render(<WaitingRoom code="QRST" missing="pilot" timerMs={180_000} />);
     expect(screen.getByText('Waiting for your pilot')).toBeInTheDocument();
+    expect(screen.getByText(/Timed game: 3:00 per round/)).toBeInTheDocument();
   });
 });
 

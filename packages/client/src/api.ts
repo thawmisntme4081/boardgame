@@ -98,8 +98,9 @@ function onJoined(result: JoinResult | null, name: string): boolean {
   return true;
 }
 
-export async function createRoom(name: string): Promise<boolean> {
-  const result = await withTimeout(() => emit().emitWithAck('room:create', { name }));
+/** Creates a game; `timer` makes every round a countdown (lose when it runs out). */
+export async function createRoom(name: string, timer = false): Promise<boolean> {
+  const result = await withTimeout(() => emit().emitWithAck('room:create', { name, timer }));
   return onJoined(result, name);
 }
 

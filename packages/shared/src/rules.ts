@@ -164,9 +164,36 @@ function rollFor(state: GameState, ids: string[]): Die[] {
 const endGame = (state: GameState, result: 'won' | 'lost', reason?: EndReason): void => {
   state.phase = result;
   state.currentSeat = null;
+  state.deadline = null;
   if (reason) state.endReason = reason;
   state.log.push({ type: 'game-end', round: state.round, result, ...(reason && { reason }) });
 };
+
+/**
+ * Timed games: starts the round's countdown at `now` (call right after `rollDice`).
+ * Untimed games, and states that are not placing, come back unchanged.
+ */
+export function startRoundTimer(state: GameState, now: number): GameState {
+  if (state.timerMs === null || state.phase !== 'placing') return state;
+  return { ...state, deadline: now + state.timerMs };
+}
+
+/** Time left in the current timed round, or `null` when no countdown is running. */
+export function roundTimeLeft(state: GameState, now: number): number | null {
+  if (state.phase !== 'placing' || state.deadline === null) return null;
+  return Math.max(0, state.deadline - now);
+}
+
+/**
+ * If the round's time has run out at `now`, the players lose ('time-up'). Otherwise the
+ * same state object comes back, so callers can tell nothing changed.
+ */
+export function expireRoundTimer(state: GameState, now: number): GameState {
+  if (roundTimeLeft(state, now) !== 0) return state;
+  const s = structuredClone(state);
+  endGame(s, 'lost', 'time-up');
+  return s;
+}
 
 /** Strategy phase is over: both players roll 4 dice behind their screens. */
 export function rollDice(state: GameState): GameState {
@@ -316,7 +343,8 @@ function endRound(state: GameState): void {
     return endGame(state, 'lost', failures[0]);
   }
 
-  // Descend 1000 feet and get ready for the next strategy discussion.
+  // Descend 1000 feet and get ready for the next strategy discussion; the round timer stops.
+  state.deadline = null;
   state.round++;
   state.placed = {};
   state.dice = { pilot: [], copilot: [] };

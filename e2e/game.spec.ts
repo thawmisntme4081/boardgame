@@ -133,3 +133,39 @@ test.describe('mixed devices', () => {
     await expect(players.copilot.getByText(/Round 2\/7|The plane went down/).first()).toBeVisible();
   });
 });
+
+test.describe('round timer', () => {
+  test('a timed game counts down each round and is lost when time runs out', async ({
+    browser,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'Desktop Chrome', 'one browser is enough');
+    const device = deviceOptions(testInfo.project.use);
+    const pilot = await (await browser.newContext(device)).newPage();
+    const copilot = await (await browser.newContext(device)).newPage();
+
+    await pilot.goto('/');
+    await pilot.getByLabel('Your name').fill('Ana');
+    await pilot.getByRole('switch', { name: /Round timer/ }).click();
+    await pilot.getByRole('button', { name: 'Create a game' }).click();
+    await expect(pilot.getByText(/Timed game: 0:05 per round/)).toBeVisible();
+    const code = (await pilot.getByLabel(/^Game code/).textContent())!.trim();
+
+    await copilot.goto(`/r/${code}`);
+    await copilot.getByLabel('Your name').fill('Ben');
+    await copilot.getByRole('button', { name: 'Join' }).click();
+    await expect(copilot.getByText(/Timed game: 0:05 to place all the dice/)).toBeVisible();
+    await expect(copilot.getByRole('timer')).toHaveCount(0); // not before the roll
+
+    await bothReady({ pilot, copilot, code });
+    for (const page of [pilot, copilot]) {
+      await expect(page.getByRole('timer')).toBeVisible();
+    }
+
+    // Nobody places a die: both lose when the 5 seconds are up.
+    for (const page of [pilot, copilot]) {
+      await expect(page.getByText('Time ran out before all the dice were placed.')).toBeVisible({
+        timeout: 10_000,
+      });
+    }
+  });
+});

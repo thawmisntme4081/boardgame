@@ -10,11 +10,14 @@ const roomsPerIp = Number(process.env.ROOMS_PER_IP);
 // Fixed dice and test routes are for development and E2E tests only.
 const gameSeed = production ? NaN : Number(process.env.GAME_SEED);
 const e2eHooks = !production && process.env.E2E_HOOKS === '1';
+// A short round timer, to try timed games without waiting 3 minutes (never in production).
+const roundTimerSeconds = production ? NaN : Number(process.env.ROUND_TIMER_SECONDS);
 
 const rooms = new RoomManager({
   idleTtlMs: ttlMinutes > 0 ? ttlMinutes * 60_000 : DEFAULT_IDLE_TTL_MS,
   maxRoomsPerIp: roomsPerIp > 0 ? roomsPerIp : DEFAULT_MAX_ROOMS_PER_IP,
   ...(Number.isInteger(gameSeed) && { seed: () => gameSeed }),
+  ...(roundTimerSeconds > 0 && { roundTimerMs: roundTimerSeconds * 1000 }),
 });
 
 // Same path from src/ (tsx) and dist/ (built): packages/client/dist.
@@ -30,4 +33,5 @@ httpServer.listen(PORT, () => {
   console.log(`server listening on http://localhost:${PORT}`);
   if (e2eHooks) console.log('E2E test routes are ON (never in production)');
   if (Number.isInteger(gameSeed)) console.log(`every game uses seed ${gameSeed}`);
+  if (roundTimerSeconds > 0) console.log(`timed rounds last ${roundTimerSeconds} s`);
 });

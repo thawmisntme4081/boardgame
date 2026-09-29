@@ -2,6 +2,9 @@ import type { PlayerView, Presence } from '@sky/shared';
 import { create } from 'zustand';
 import { loadSession, type Session } from './session';
 
+/** The green pause shown after each round (display only). */
+export const NEXT_TURN_PAUSE_MS = 5_000;
+
 export type Connection = 'connecting' | 'online' | 'offline';
 
 /**
@@ -19,6 +22,13 @@ export interface GameStore {
   coffeeDelta: number;
   /** Dice ticked for a reroll. */
   rerollPick: string[];
+  /**
+   * Timed games: when this round's time runs out, on this device's clock (set from the
+   * view's time left when it arrives), or `null`.
+   */
+  roundDeadline: number | null;
+  /** When the green "Next turn in 5s" after a round's last die ends (this device's clock). */
+  nextTurnAt: number | null;
 
   setConnection: (connection: Connection) => void;
   setSession: (session: Session | null) => void;
@@ -38,6 +48,8 @@ export const useGame = create<GameStore>()((set) => ({
   selectedDieId: null,
   coffeeDelta: 0,
   rerollPick: [],
+  roundDeadline: null,
+  nextTurnAt: null,
 
   setConnection: (connection) => set({ connection }),
   setSession: (session) => set({ session }),
@@ -51,6 +63,14 @@ export const useGame = create<GameStore>()((set) => ({
         selectedDieId: keepSelection ? s.selectedDieId : null,
         coffeeDelta: keepSelection && view.coffee >= Math.abs(s.coffeeDelta) ? s.coffeeDelta : 0,
         rerollPick: view.rerollPending[view.seat] ? s.rerollPick.filter((id) => ids.has(id)) : [],
+        roundDeadline: view.roundTimeLeftMs === null ? null : Date.now() + view.roundTimeLeftMs,
+        // The round's last die was just placed and the game goes on: a 5 s breather.
+        nextTurnAt:
+          view.phase !== 'strategy'
+            ? null
+            : s.view && view.round > s.view.round
+              ? Date.now() + NEXT_TURN_PAUSE_MS
+              : s.nextTurnAt,
       };
     }),
   setPresence: (presence) => set({ presence }),
@@ -74,5 +94,7 @@ export const useGame = create<GameStore>()((set) => ({
       selectedDieId: null,
       coffeeDelta: 0,
       rerollPick: [],
+      roundDeadline: null,
+      nextTurnAt: null,
     }),
 }));

@@ -5,7 +5,9 @@ import {
   isGameOver,
   placeDie,
   rerollDice,
+  expireRoundTimer,
   rollDice,
+  startRoundTimer,
   SEATS,
   spendReroll,
   viewFor,
@@ -36,6 +38,32 @@ export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): v
     const socketId = room.players[seat]?.socketId;
     if (socketId) io.to(socketId).emit('game:view', viewFor(room.game, seat));
   }
+}
+
+/**
+ * Keeps one timeout per room in step with its round deadline: when a timed round runs out,
+ * the players lose and everyone gets fresh views. Call after anything that changes the game.
+ */
+export function syncRoundTimer(io: GameServer, rooms: RoomManager, room: Room): void {
+  clearTimeout(room.roundTimer);
+  room.roundTimer = undefined;
+  const { phase, deadline } = room.game;
+  if (phase !== 'placing' || deadline === null) return;
+  room.roundTimer = setTimeout(
+    () => {
+      room.roundTimer = undefined;
+      if (rooms.get(room.code) !== room) return; // the room was closed meanwhile
+      const next = expireRoundTimer(room.game, Date.now());
+      if (next !== room.game) {
+        room.game = next;
+        broadcastRoom(io, rooms, room);
+      } else {
+        syncRoundTimer(io, rooms, room); // woke a moment early: wait again
+      }
+    },
+    Math.max(0, deadline - Date.now()),
+  );
+  room.roundTimer.unref?.();
 }
 
 /** Clients may omit the ack or send junk; never let that throw. */
@@ -110,8 +138,18 @@ export function registerHandlers(
         if (!parsed.success) return reply({ ok: false, error: 'bad-request' });
         const seated = rooms.bySocket(socket.id);
         if (!seated) return reply({ ok: false, error: 'not-in-room' });
+        // A move that arrives after the round's time ran out finds the game already lost.
+        const expired = expireRoundTimer(seated.room.game, Date.now());
+        if (expired !== seated.room.game) {
+          seated.room.game = expired;
+          syncRoundTimer(io, rooms, seated.room);
+          broadcastRoom(io, rooms, seated.room);
+        }
         const result = handle(parsed.data, seated);
-        if (result.ok) rooms.touch(seated.room);
+        if (result.ok) {
+          rooms.touch(seated.room);
+          syncRoundTimer(io, rooms, seated.room);
+        }
         reply(result);
         if (result.ok) broadcastRoom(io, rooms, seated.room);
       });
@@ -119,7 +157,9 @@ export function registerHandlers(
     on('room:create', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(createRoomSchema, payload);
       if (!data) return reply({ ok: false, error: 'bad-request' });
-      const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy));
+      const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy), {
+        timer: data.timer ?? false,
+      });
       if (!result.ok) return reply(result);
       void socket.join(result.value.room.code);
       reply(joined(result.value));
@@ -160,6 +200,7 @@ export function registerHandlers(
       if (!left) return reply({ ok: false, error: 'not-in-room' });
       void socket.leave(left.room.code);
       reply(OK);
+      syncRoundTimer(io, rooms, left.room); // the game restarted (or the room closed)
       // The partner sees the empty seat and a fresh game, ready for someone new.
       if (!left.closed) broadcastRoom(io, rooms, left.room);
     });
@@ -168,7 +209,8 @@ export function registerHandlers(
       if (room.game.phase !== 'strategy') return { ok: false, error: 'not-strategy' };
       player.ready = true;
       if (SEATS.every((seat) => room.players[seat]?.ready)) {
-        room.game = rollDice(room.game);
+        // Timed games: the round countdown starts with the roll.
+        room.game = startRoundTimer(rollDice(room.game), Date.now());
         for (const seat of SEATS) room.players[seat]!.ready = false;
       }
       return OK;

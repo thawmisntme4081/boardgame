@@ -1,4 +1,4 @@
-import type { Seat } from '@sky/shared';
+import { ROUND_TIMER_MS, type Seat } from '@sky/shared';
 import { Plane, Share2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { createRoom, joinRoom, leaveGame, shareInvite } from '@/api';
@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { formatClock } from '@/lib/clock';
 import { codeFromPath, inviteUrl, loadName } from '@/session';
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -21,6 +23,7 @@ export function Lobby() {
   const [name, setName] = useState(loadName);
   const [code, setCode] = useState(() => codeFromPath(window.location.pathname));
   const [busy, setBusy] = useState(false);
+  const [timer, setTimer] = useState(false);
   const invited = codeFromPath(window.location.pathname) !== '';
   const nameOk = name.trim().length > 0;
 
@@ -88,11 +91,21 @@ export function Lobby() {
                 <span className="h-px flex-1 bg-border" /> or{' '}
                 <span className="h-px flex-1 bg-border" />
               </div>
+              {/* The whole row is the label, so it is an easy target on a phone. */}
+              <Label htmlFor="timer" className="flex min-h-11 cursor-pointer items-center gap-3">
+                <span className="flex flex-1 flex-col gap-0.5">
+                  <span>Round timer</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {formatClock(ROUND_TIMER_MS)} to place all the dice each round, or you lose
+                  </span>
+                </span>
+                <Switch id="timer" checked={timer} onCheckedChange={setTimer} />
+              </Label>
               <Button
                 variant="secondary"
                 className="h-11"
                 disabled={busy || !nameOk}
-                onClick={() => void run(() => createRoom(name.trim()))}
+                onClick={() => void run(() => createRoom(name.trim(), timer))}
               >
                 Create a game
               </Button>
@@ -105,7 +118,16 @@ export function Lobby() {
 }
 
 /** Waiting for the empty seat to be filled: after creating a game, or after a partner left. */
-export function WaitingRoom({ code, missing = 'copilot' }: { code: string; missing?: Seat }) {
+export function WaitingRoom({
+  code,
+  missing = 'copilot',
+  timerMs = null,
+}: {
+  code: string;
+  missing?: Seat;
+  /** Timed game: shown so whoever joins knows before they start. */
+  timerMs?: number | null;
+}) {
   return (
     <Shell>
       <Card>
@@ -113,7 +135,10 @@ export function WaitingRoom({ code, missing = 'copilot' }: { code: string; missi
           <CardTitle className="text-xl">
             Waiting for your {missing === 'pilot' ? 'pilot' : 'co-pilot'}
           </CardTitle>
-          <CardDescription>Send them this code or the invite link.</CardDescription>
+          <CardDescription>
+            Send them this code or the invite link.
+            {timerMs !== null && ` Timed game: ${formatClock(timerMs)} per round.`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p

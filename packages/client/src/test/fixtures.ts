@@ -46,5 +46,7 @@ export function resetStore(): void {
     selectedDieId: null,
     coffeeDelta: 0,
     rerollPick: [],
+    roundDeadline: null,
+    nextTurnAt: null,
   });
 }

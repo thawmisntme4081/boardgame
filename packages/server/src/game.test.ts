@@ -430,3 +430,83 @@ describe('robustness', () => {
     });
   });
 });
+
+describe('round timer', () => {
+  /** A room created with or without the timer, both players seated, views recorded. */
+  async function timedRoom(timer: boolean, roundTimerMs: number) {
+    server = await startTestServer(new RoomManager({ seed: () => 1, roundTimerMs }));
+    const pilot = await server.connect();
+    const copilot = await server.connect();
+    const views: Record<Seat, PlayerView[]> = { pilot: [], copilot: [] };
+    pilot.on('game:view', (v) => views.pilot.push(v));
+    copilot.on('game:view', (v) => views.copilot.push(v));
+    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana', timer }));
+    joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
+    const clients = { pilot, copilot };
+    return { clients, views, room: () => server!.rooms.get(code)!, code };
+  }
+
+  it('is off by default: no countdown after the roll', async () => {
+    const { clients, views } = await timedRoom(false, 5_000);
+    await bothReady(clients);
+    expect(views.pilot.at(-1)).toMatchObject({ timerMs: null, roundTimeLeftMs: null });
+  });
+
+  it('starts when both are ready and ends the game for both when time runs out', async () => {
+    const { clients, views, room } = await timedRoom(true, 300);
+    expect(views.pilot.at(-1)).toMatchObject({ timerMs: 300, roundTimeLeftMs: null });
+    await bothReady(clients);
+    const rolled = views.copilot.at(-1)!;
+    expect(rolled.roundTimeLeftMs).toBeGreaterThan(0);
+    expect(rolled.roundTimeLeftMs).toBeLessThanOrEqual(300);
+
+    await waitFor(() => views.pilot.at(-1)?.phase === 'lost', 'time-up view (pilot)');
+    await waitFor(() => views.copilot.at(-1)?.phase === 'lost', 'time-up view (copilot)');
+    expect(views.pilot.at(-1)).toMatchObject({ endReason: 'time-up', roundTimeLeftMs: null });
+    expect(room().game).toMatchObject({ phase: 'lost', endReason: 'time-up', deadline: null });
+
+    // A move that arrives too late is refused; a rematch keeps the game timed.
+    expect(
+      await clients.pilot.emitWithAck('game:place', {
+        dieId: 'r1-p1',
+        slot: 'axisPilot',
+        coffeeDelta: 0,
+      }),
+    ).toEqual({ ok: false, error: 'game-over' });
+    expectOk(await clients.pilot.emitWithAck('game:rematch', {}));
+    expect(room().game).toMatchObject({ timerMs: 300, deadline: null, phase: 'strategy' });
+  });
+
+  it('stops when the last die of the round is placed in time', async () => {
+    const { clients, room } = await timedRoom(true, 1_500);
+    await bothReady(clients);
+    // Known dice for a quick, harmless round (level axis, speed 4).
+    const values = [2, 2, 3, 3] as const;
+    room().game = {
+      ...room().game,
+      dice: {
+        pilot: values.map((value, i) => ({ id: `r1-p${i + 1}`, value })),
+        copilot: values.map((value, i) => ({ id: `r1-c${i + 1}`, value })),
+      },
+    };
+    const place = (seat: Seat, n: number, slot: string) =>
+      clients[seat].emitWithAck('game:place', {
+        dieId: `r1-${seat === 'pilot' ? 'p' : 'c'}${n}`,
+        slot,
+        coffeeDelta: 0,
+      } as never);
+    expectOk(await place('pilot', 1, 'axisPilot'));
+    expectOk(await place('copilot', 1, 'axisCopilot'));
+    expectOk(await place('pilot', 2, 'enginePilot'));
+    expectOk(await place('copilot', 2, 'engineCopilot'));
+    expectOk(await place('pilot', 3, 'concentration1'));
+    expectOk(await place('copilot', 3, 'concentration2'));
+    expectOk(await place('pilot', 4, 'radioPilot'));
+    expectOk(await place('copilot', 4, 'radioCopilot1'));
+
+    expect(room().game).toMatchObject({ phase: 'strategy', round: 2, deadline: null });
+    await new Promise((r) => setTimeout(r, 1_700)); // past the old deadline
+    expect(room().game).toMatchObject({ phase: 'strategy', round: 2 });
+    expect(room().roundTimer).toBeUndefined();
+  });
+});

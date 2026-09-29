@@ -44,4 +44,5 @@ export const endReasonText: Record<EndReason, string> = {
   'landing-flaps': 'Not all the flaps were deployed.',
   'landing-axis': 'The plane was not level.',
   'landing-brakes': 'Your speed was too high for the brakes.',
+  'time-up': 'Time ran out before all the dice were placed.',
 };

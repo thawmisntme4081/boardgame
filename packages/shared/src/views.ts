@@ -1,4 +1,11 @@
-import { checkPlacement, checkTurn, currentAltitude, isFinalRound, otherSeat } from './rules';
+import {
+  checkPlacement,
+  checkTurn,
+  currentAltitude,
+  isFinalRound,
+  otherSeat,
+  roundTimeLeft,
+} from './rules';
 import type {
   Die,
   EndReason,
@@ -40,13 +47,15 @@ export interface PlayerView {
   speed: number | null;
   endReason?: EndReason;
   landingFailures?: EndReason[];
+  timerMs: number | null;
+  roundTimeLeftMs: number | null;
 }
 
 /**
  * The only way game state leaves the server. Never includes the partner's die values,
  * the RNG seed or state, or the move log (which records every roll).
  */
-export function viewFor(state: GameState, seat: Seat): PlayerView {
+export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerView {
   const view: PlayerView = {
     seat,
     scenario: structuredClone(state.scenario),
@@ -70,6 +79,8 @@ export function viewFor(state: GameState, seat: Seat): PlayerView {
     rerolls: state.rerolls,
     rerollPending: { ...state.rerollPending },
     speed: state.speed,
+    timerMs: state.timerMs,
+    roundTimeLeftMs: roundTimeLeft(state, now),
   };
   if (state.endReason) view.endReason = state.endReason;
   if (state.landingFailures) view.landingFailures = [...state.landingFailures];

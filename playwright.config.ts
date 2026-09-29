@@ -28,6 +28,8 @@ export default defineConfig({
       GAME_SEED: '1',
       // Every test creates rooms from 127.0.0.1.
       ROOMS_PER_IP: '1000',
+      // Timed games run out in 5 s here, so the timer test does not wait 3 minutes.
+      ROUND_TIMER_SECONDS: '5',
     },
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

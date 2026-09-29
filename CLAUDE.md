@@ -19,7 +19,8 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - Seedable RNG; tests use fixed seeds. Log every accepted move for replay.
 - No in-game chat (removed at the user's request): players talk outside the app in the strategy phase and press "Ready to roll"; do not add chat back unless asked.
 - Game state is in memory for v1: run a single server instance.
-- `GAME_SEED` (fixed dice) and `E2E_HOOKS` (test-only `POST /__e2e/rooms/:code/game`) exist for tests and are ignored when `NODE_ENV=production`; never enable them on a public server.
+- `GAME_SEED` (fixed dice), `E2E_HOOKS` (test-only `POST /__e2e/rooms/:code/game`) and `ROUND_TIMER_SECONDS` (short timed rounds) exist for tests and dev and are ignored when `NODE_ENV=production`; never enable them on a public server.
+- Optional round timer (creator's choice in the lobby, off by default, 3 min): the rules own it (`startRoundTimer`, `expireRoundTimer`, `roundTimeLeft`; the deadline clears when a round or the game ends) and the server enforces it (`syncRoundTimer` timeout per room, plus a deadline check before every move). Views send the time left, never the absolute deadline; the client countdown is display only.
 - Closing a tab only marks a player offline (seat kept); `room:leave` gives the seat up. Rooms nobody is connected to are swept after `ROOM_TTL_MINUTES` (30) idle; `ROOMS_PER_IP` (5) caps live rooms per creator IP (`TRUST_PROXY=1` behind a proxy).
 - Repeated requests must be harmless: a duplicate `game:place` for an already-placed die is accepted as a no-op, a second rematch on a fresh game is OK, and the client never sends the same request twice while one is pending.
 
@@ -27,6 +28,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 - Mobile-first. Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 - Phone portrait: status bar, tracks strip, scrolling cockpit, dice tray fixed at bottom. Tablet: two columns (tracks + cockpit / dice tray). Desktop: one centred container (max 72rem): tracks side by side above the cockpit, dice tray below; not full width. Desktop cockpit: equal side columns (16%): pilot radio + landing gear on the left (switch right of slot), co-pilot radio + flaps on the right (switch left of slot); axis, engines, brakes, concentration in the centre. Below desktop the cockpit order is fixed: Axis, Engines, Landing gear, Flaps, Radio (one panel; on desktop its wrapper is `display: contents` so the pilot/co-pilot halves take their own areas), Brakes, Concentration; Radio and Brakes share a row only when the cockpit is at least 28rem wide (they wrap on phones). Column spans use `max-desktop:` so they never fight the desktop grid areas. Ordered switches (flaps, brakes) show arrows between slots. Concentration slots (either player) are half blue, half orange (`.slot-shared`). Gear, flaps and brakes show a toggle `Switch` (svgs/Switch.tsx), not a light.
+- After each round's last die (game not over), a green "Next turn in 5s" countdown shows next to the turn label in every game: display only (`nextTurnAt` in the store, `NextTurnCountdown`), it does not block "Ready to roll". Countdowns share `useNow`.
 - On `visibilitychange` to visible: reconnect and `room:rejoin` with the saved token.
 
 ## Scope
@@ -55,3 +57,13 @@ When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm ty
 - `pnpm --filter @sky/shared random-play [games] [firstSeed]` — play random games and print how they ended
 - `pnpm dev:lan` — like `pnpm dev`, but Vite listens on the LAN so a phone can open the Network URL it prints
 - `pnpm exec playwright install chromium` — one-time browser download for Playwright
+
+## Shortcuts
+
+- **"run tunnel"**: share the current build on a public link (manual steps for the user: `docs/PLAN.md`, "Sharing a local game").
+  1. Check port 3000 is free; if something is listening there, say what and ask before touching it.
+  2. `pnpm build`.
+  3. In the background: `NODE_ENV=production TRUST_PROXY=1 PORT=3000 node packages/server/dist/index.js`; wait until `http://localhost:3000/health` answers.
+  4. In the background: `"C:/Program Files (x86)/cloudflared/cloudflared.exe" tunnel --no-autoupdate --url http://localhost:3000`; read the `https://*.trycloudflare.com` URL from its output.
+  5. Check `<url>/health` and `<url>/` answer through the tunnel, then give the user the link and remind them to create the game from that link (not localhost). Never set `GAME_SEED` or `E2E_HOOKS` for a tunnel.
+- **"stop sharing"**: stop both background tasks, then make sure nothing is left on Windows: kill whatever listens on port 3000 (with its process tree, `taskkill /T /F`) and any `cloudflared` process; confirm port 3000 is free and no `cloudflared` runs.

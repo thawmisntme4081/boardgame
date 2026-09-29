@@ -4,7 +4,13 @@ import path from 'node:path';
 import type { GameState } from '@sky/shared';
 import express from 'express';
 import { Server } from 'socket.io';
-import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
+import {
+  broadcastRoom,
+  registerHandlers,
+  syncRoundTimer,
+  type GameServer,
+  type HandlerOptions,
+} from './handlers';
 import { RoomManager } from './rooms';
 
 export interface ServerOptions extends HandlerOptions {
@@ -37,6 +43,7 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
       const room = rooms.get(req.params.code);
       if (!room) return void res.status(404).json({ ok: false });
       room.game = { ...room.game, ...(req.body as Partial<GameState>) };
+      syncRoundTimer(io, rooms, room);
       broadcastRoom(io, rooms, room);
       res.json({ ok: true });
     });

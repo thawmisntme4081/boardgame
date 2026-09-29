@@ -44,7 +44,8 @@ export type EndReason =
   | 'landing-gear' // not all landing gear deployed
   | 'landing-flaps' // not all flaps deployed
   | 'landing-axis' // plane not level
-  | 'landing-brakes'; // final speed not below the brakes
+  | 'landing-brakes' // final speed not below the brakes
+  | 'time-up'; // a timed game's round ran out of time before all dice were placed
 
 export interface PlacedDie {
   seat: Seat;
@@ -124,6 +125,10 @@ export interface GameState {
   speed: number | null;
   rngSeed: number;
   rngState: number;
+  /** Timed games: how long each round's dice placement may take; `null` for no timer. */
+  timerMs: number | null;
+  /** When the current round's time runs out (ms since epoch), while a timed round is placing. */
+  deadline: number | null;
   log: GameEvent[];
   endReason?: EndReason;
   /** Every failed landing condition when the final round is lost. */
