@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SCENARIO_LIST, type Scenario } from '@sky/shared';
 import { resolveSetup, ROOM_CODE_ALPHABET, RoomManager } from './rooms';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -159,30 +160,39 @@ describe('RoomManager', () => {
   });
 });
 
+/** The first active scenario that matches: tests don't depend on which ones scenarios.ts lists. */
+function pick(match: (s: Scenario) => boolean): Scenario {
+  const found = SCENARIO_LIST.find(match);
+  if (!found) throw new Error('no active scenario matches this test');
+  return found;
+}
+
 describe('resolveSetup', () => {
+  const two = () => pick((s) => s.abilities === 2);
+  const one = () => pick((s) => s.abilities === 1);
+  const realTime = () => pick((s) => s.modules.includes('real-time'));
+
   it('defaults to YUL, and to the first abilities the scenario allows', () => {
     expect(resolveSetup({})).toMatchObject({ scenario: { id: 'yul-green' }, abilities: [] });
-    expect(resolveSetup({ scenario: 'prg-green' })).toMatchObject({
+    expect(resolveSetup({ scenario: two().id })).toMatchObject({
       abilities: ['adaptation', 'anticipation'],
     });
   });
 
   it('needs a known scenario and exactly its number of distinct abilities', () => {
     expect(resolveSetup({ scenario: 'mars' })).toBeUndefined();
-    expect(resolveSetup({ scenario: 'gig-yellow', abilities: [] })).toBeUndefined();
-    expect(resolveSetup({ scenario: 'gig-yellow', abilities: ['control'] })).toMatchObject({
-      scenario: { id: 'gig-yellow' },
+    expect(resolveSetup({ scenario: one().id, abilities: [] })).toBeUndefined();
+    expect(resolveSetup({ scenario: one().id, abilities: ['control'] })).toMatchObject({
+      scenario: { id: one().id },
       abilities: ['control'],
     });
-    expect(
-      resolveSetup({ scenario: 'pbh-red', abilities: ['control', 'control'] }),
-    ).toBeUndefined();
+    expect(resolveSetup({ scenario: two().id, abilities: ['control', 'control'] })).toBeUndefined();
   });
 
   it('keeps the lobby timer choice across rematches, even after a Real-time scenario', () => {
     const rooms = new RoomManager();
     const { room } = unwrap(
-      rooms.create('Ana', 's1', 'ip', { setup: resolveSetup({ scenario: 'pbh-red' })! }),
+      rooms.create('Ana', 's1', 'ip', { setup: resolveSetup({ scenario: realTime().id })! }),
     );
     expect(room.game.timerMs).toBe(60_000);
     rooms.rematch(room, resolveSetup({})!);

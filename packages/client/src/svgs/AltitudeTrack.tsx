@@ -10,12 +10,6 @@ const CELL = CARD_W + GAP;
 const HEIGHT = CARD_H + GAP;
 const LANDING_ICON = 18;
 
-/**
- * Altitude track: current altitude, who plays first each round, reroll tokens still to collect.
- * The current-round outline is one piece that slides to the next card each round, passed
- * cards fade, and a reroll token lifts and fades out when it is collected (it stays in the
- * SVG, hidden, so it can animate).
- */
 export function AltitudeTrack({ view }: { view: PlayerView }) {
   const spaces = view.scenario.altitudes;
   const current = view.round - 1;

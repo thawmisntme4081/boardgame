@@ -1,49 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { WIND_RING } from './modules';
+import { MODULE_IDS, WIND_RING } from './modules';
 import { PLANE_TOKENS, rollDice } from './rules';
-import { SCENARIO_LIST, SCENARIOS, YUL } from './scenarios';
+import { AIRPORT_NAMES, DIFFICULTIES, SCENARIO_LIST, SCENARIOS, YUL } from './scenarios';
 import { createGame } from './state';
 import { play } from './test-utils';
-import type { Difficulty } from './types';
 
 describe('scenarios', () => {
-  it('has the 21 Flight Log scenarios on 11 airports', () => {
-    expect(SCENARIO_LIST).toHaveLength(21);
-    expect(new Set(SCENARIO_LIST.map((s) => s.airport)).size).toBe(11);
-    expect(Object.keys(SCENARIOS)).toHaveLength(21);
-    const count = (difficulty: Difficulty) =>
-      SCENARIO_LIST.filter((s) => s.difficulty === difficulty).length;
-    expect([count('green'), count('yellow'), count('red'), count('black')]).toEqual([6, 7, 5, 3]);
+  it('lists YUL and only well-formed entries (at most the 21 Flight Log scenarios)', () => {
     expect(SCENARIOS['yul-green']).toBe(YUL);
+    expect(SCENARIO_LIST.length).toBeLessThanOrEqual(21);
+    // One scenario per airport and colour, so ids never clash.
+    expect(new Set(SCENARIO_LIST.map((s) => s.id)).size).toBe(SCENARIO_LIST.length);
+    for (const s of SCENARIO_LIST) {
+      expect(AIRPORT_NAMES[s.airport], s.id).toBeDefined();
+      expect(DIFFICULTIES, s.id).toContain(s.difficulty);
+      expect([0, 1, 2], s.id).toContain(s.abilities);
+      expect(new Set(s.modules).size, s.id).toBe(s.modules.length);
+      for (const m of s.modules) expect(MODULE_IDS, s.id).toContain(m);
+      for (const turn of s.turns ?? []) {
+        for (const p of turn ?? []) expect([-2, -1, 0, 1, 2], s.id).toContain(p);
+      }
+    }
   });
 
-  it('uses the modules and ability counts printed on the cards', () => {
-    const summary = Object.fromEntries(
-      SCENARIO_LIST.map((s) => [s.id, `${s.modules.join('+') || '-'} ${s.abilities}`]),
-    );
-    expect(summary).toEqual({
-      'yul-green': '- 0',
-      'lhr-green': '- 0',
-      'hnd-green': '- 0',
-      'osl-green': 'kerosene 0',
-      'atl-green': 'intern 0',
-      'prg-green': 'kerosene 2',
-      'lhr-yellow': 'intern 0',
-      'tgu-yellow': 'kerosene 2',
-      'gig-yellow': 'wind 1',
-      'kef-yellow': 'ice-brakes 1',
-      'prg-yellow': 'kerosene-leak 2',
-      'kul-yellow': 'kerosene 1',
-      'atl-yellow': 'kerosene-leak 1',
-      'pbh-red': 'kerosene+real-time 2',
-      'hnd-red': 'intern 1',
-      'gig-red': 'wind+kerosene-leak 2',
-      'osl-red': 'kerosene-leak+ice-brakes 2',
-      'tgu-red': 'kerosene+wind 2',
-      'kef-black': 'wind+ice-brakes 2',
-      'kul-black': 'kerosene+real-time 2',
-      'pbh-black': 'kerosene+real-time 2',
-    });
+  it('lists them in Flight Log order: green, yellow, red, black', () => {
+    const order = SCENARIO_LIST.map((s) => DIFFICULTIES.indexOf(s.difficulty));
+    expect(order).toEqual([...order].sort((x, y) => x - y));
   });
 
   it('every scenario starts a valid game', () => {

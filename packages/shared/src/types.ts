@@ -203,6 +203,8 @@ export interface GameState {
   rerollPending: Record<Seat, boolean>;
   /** Engine sum this round, once both engine dice are placed. */
   speed: number | null;
+  /** The finished round's board (dice and speed), kept until the next roll so players can look back. */
+  lastRound: { placed: Partial<Record<SlotId, PlacedDie>>; speed: number | null } | null;
   rngSeed: number;
   rngState: number;
   /** Special Ability cards in play, chosen when the game is created. */

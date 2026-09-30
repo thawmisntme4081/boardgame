@@ -68,6 +68,7 @@ export function createGame(
     rerolls: first.reroll ? 1 : 0,
     rerollPending: { pilot: false, copilot: false },
     speed: null,
+    lastRound: null,
     rngSeed: seed,
     rngState: seed,
     abilities: [...abilities],

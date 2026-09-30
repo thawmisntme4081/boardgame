@@ -49,7 +49,7 @@ export function PanelHeader({
   className,
 }: {
   title: string;
-  hint?: string;
+  hint?: ReactNode;
   side?: boolean;
   mandatory?: boolean;
   className?: string;
@@ -84,7 +84,7 @@ export function Panel({
   children,
 }: {
   title: string;
-  hint?: string;
+  hint?: ReactNode;
   side?: boolean;
   mandatory?: boolean;
   className?: string;

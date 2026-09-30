@@ -202,3 +202,18 @@ html {
     @apply font-sans;
   }
 }
+
+/* Kerosene burned: the "−N" rises and fades over the gauge. */
+@keyframes kerosene-burn {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}

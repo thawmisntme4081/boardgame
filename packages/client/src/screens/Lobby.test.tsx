@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SCENARIOS } from '@sky/shared';
+import { DIFFICULTY_NAMES } from '@sky/shared';
+import { scenarioSummary } from '@/lib/setup';
 import { codeFromPath } from '@/session';
+import { catalogScenario } from '@/test/fixtures';
 import { Lobby, WaitingRoom } from './Lobby';
 
 vi.mock('@/api', () => ({
@@ -45,15 +47,16 @@ describe('Lobby', () => {
   });
 
   it('picks a scenario, then exactly as many special abilities as it allows', async () => {
+    const two = catalogScenario((s) => s.abilities === 2);
     render(<Lobby />);
     expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent('YUL');
     expect(screen.queryByText(/Choose .* special/)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Scenario' }));
     await userEvent.click(
-      screen.getByRole('option', { name: 'PRG Václav Havel, Routine landing' }),
+      screen.getByRole('option', { name: `${two.name}, ${DIFFICULTY_NAMES[two.difficulty]}` }),
     );
-    expect(screen.getByText('Routine landing · Kerosene · 2 abilities')).toBeInTheDocument();
+    expect(screen.getByText(scenarioSummary(two))).toBeInTheDocument();
     expect(screen.getByText('Choose 2 special abilities')).toBeInTheDocument();
     const pressed = () =>
       screen.getAllByRole('button', { pressed: true }).map((b) => b.textContent);
@@ -65,7 +68,7 @@ describe('Lobby', () => {
     await userEvent.type(screen.getByLabelText('Your name'), 'Ana');
     await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
     expect(api.createRoom).toHaveBeenCalledWith('Ana', false, {
-      scenario: 'prg-green',
+      scenario: two.id,
       abilities: ['anticipation', 'control'],
     });
   });
@@ -104,11 +107,10 @@ describe('WaitingRoom after a partner left', () => {
   });
 
   it('shows the scenario so whoever joins knows what they fly', () => {
-    render(<WaitingRoom code="QRST" scenario={SCENARIOS['pbh-red']} />);
-    expect(screen.getByText('PBH Paro')).toBeInTheDocument();
-    expect(
-      screen.getByText('Elite pilots only · Kerosene · Real-time · 2 abilities'),
-    ).toBeInTheDocument();
+    const scenario = catalogScenario((s) => s.modules.length > 0);
+    render(<WaitingRoom code="QRST" scenario={scenario} />);
+    expect(screen.getByText(scenario.name)).toBeInTheDocument();
+    expect(screen.getByText(scenarioSummary(scenario))).toBeInTheDocument();
   });
 });
 

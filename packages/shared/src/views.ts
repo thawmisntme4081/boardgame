@@ -51,6 +51,8 @@ export interface PlayerView {
   rerolls: number;
   rerollPending: Record<Seat, boolean>;
   speed: number | null;
+  /** The finished round's dice and speed, until the next roll. */
+  lastRound: GameState['lastRound'];
   endReason?: EndReason;
   landingFailures?: EndReason[];
   timerMs: number | null;
@@ -97,6 +99,7 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     rerolls: state.rerolls,
     rerollPending: { ...state.rerollPending },
     speed: state.speed,
+    lastRound: structuredClone(state.lastRound),
     timerMs: state.timerMs,
     roundTimeLeftMs: roundTimeLeft(state, now),
     abilities: [...state.abilities],

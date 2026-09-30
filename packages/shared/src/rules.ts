@@ -306,6 +306,7 @@ export function rollDice(state: GameState): GameState {
     ),
   };
   s.phase = 'placing';
+  s.lastRound = null;
   s.currentSeat = currentAltitude(s).first;
   s.log.push({ type: 'roll', round: s.round, dice: structuredClone(s.dice) });
   return s;
@@ -531,6 +532,7 @@ function endRound(state: GameState): void {
   }
 
   // Descend 1000 feet and get ready for the next strategy discussion; the round timer stops.
+  state.lastRound = { placed: state.placed, speed: state.speed };
   state.deadline = null;
   state.round++;
   state.placed = {};

@@ -1,5 +1,5 @@
 import { SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/shared';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Cockpit } from '@/components/Cockpit';
 import { DiceTray } from '@/components/DiceTray';
 import { GameOverDialog } from '@/components/GameOverDialog';
@@ -33,8 +33,31 @@ function useTurnBuzz(view: PlayerView): void {
   }, [myTurn]);
 }
 
+/** Whether the green "Next turn in 5s" pause is running; a timer marks when it ends. */
+function useNextTurnPause(): boolean {
+  const nextTurnAt = useGame((s) => s.nextTurnAt);
+  const [endedFor, setEndedFor] = useState<number | null>(null);
+  useEffect(() => {
+    if (nextTurnAt === null) return;
+    const timer = setTimeout(() => setEndedFor(nextTurnAt), Math.max(0, nextTurnAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [nextTurnAt]);
+  return nextTurnAt !== null && endedFor !== nextTurnAt;
+}
+
+/**
+ * During the pause after a round's last die, the cockpit keeps showing that round's dice and
+ * speed; the board resets when the pause ends (or as soon as the next dice are rolled).
+ */
+function useShownView(view: PlayerView): PlayerView {
+  const paused = useNextTurnPause();
+  if (!paused || view.phase !== 'strategy' || !view.lastRound) return view;
+  return { ...view, placed: view.lastRound.placed, speed: view.lastRound.speed };
+}
+
 export default function Game({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const connection = useGame((s) => s.connection);
+  const shown = useShownView(view);
   const radioTarget = useRadioTarget(view);
   useTurnBuzz(view);
 
@@ -53,7 +76,7 @@ export default function Game({ view, presence }: { view: PlayerView; presence: P
         </div>
 
         <main className="min-h-0 overflow-y-auto bg-muted/40 p-3 [grid-area:cockpit]">
-          <Cockpit view={view} />
+          <Cockpit view={shown} />
         </main>
 
         <section

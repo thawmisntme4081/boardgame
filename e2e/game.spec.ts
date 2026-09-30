@@ -1,4 +1,6 @@
 import { devices, expect, test } from '@playwright/test';
+import { DIFFICULTY_NAMES, SCENARIO_LIST } from '../packages/shared/src/scenarios';
+import type { Scenario } from '../packages/shared/src/types';
 import { bothReady, deviceOptions, playOneDie, playToTheEnd, setGame, startGame } from './helpers';
 
 test.describe('a two-player game', () => {
@@ -10,7 +12,7 @@ test.describe('a two-player game', () => {
     await playToTheEnd(players);
 
     for (const page of [players.pilot, players.copilot]) {
-      const dialog = page.getByRole('dialog', { name: 'The plane went down' });
+      const dialog = page.getByRole('dialog', { name: 'Crashed' });
       await expect(dialog).toBeVisible();
       await expect(dialog.getByRole('listitem').first()).toBeVisible();
     }
@@ -130,7 +132,7 @@ test.describe('mixed devices', () => {
       if (await players.pilot.getByRole('dialog').isVisible()) break;
     }
     // Either the round ended (next strategy phase) or the plane went down: both agree.
-    await expect(players.copilot.getByText(/Round 2\/7|The plane went down/).first()).toBeVisible();
+    await expect(players.copilot.getByText(/Round 2\/7|Crashed/).first()).toBeVisible();
   });
 });
 
@@ -170,11 +172,27 @@ test.describe('round timer', () => {
   });
 });
 
+/** The first active scenario that matches (scenarios.ts decides which exist). */
+function pick(match: (s: Scenario) => boolean): Scenario {
+  const found = SCENARIO_LIST.find(match);
+  if (!found) throw new Error('no active scenario matches this test');
+  return found;
+}
+
+/** The scenario's option in the lobby list: "LHR Heathrow, Exceptional conditions". */
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const option = (s: Scenario) =>
+  new RegExp(`^${escape(s.name)}\\s*,\\s*${escape(DIFFICULTY_NAMES[s.difficulty])}`);
+
 test.describe('Flight Log scenarios', () => {
   test('burns kerosene with a die on the Kerosene space', async ({ browser }, testInfo) => {
     const device = deviceOptions(testInfo.project.use);
-    const players = await startGame(browser, device, device, /^OSL Gardermoen.*Routine/);
-    await expect(players.copilot.getByText('OSL Gardermoen')).toBeVisible();
+    // Kerosene without Real-time, so the 60-second rounds cannot interfere.
+    const scenario = pick(
+      (s) => s.modules.includes('kerosene') && !s.modules.includes('real-time'),
+    );
+    const players = await startGame(browser, device, device, option(scenario));
+    await expect(players.copilot.getByText(scenario.name).first()).toBeVisible();
     await bothReady(players);
     const { pilot, copilot } = players;
     const die = pilot.getByRole('button', { name: /^Your die/ }).first();
@@ -193,13 +211,19 @@ test.describe('Flight Log scenarios', () => {
     browser,
   }, testInfo) => {
     const device = deviceOptions(testInfo.project.use);
-    const players = await startGame(browser, device, device, /^ATL Hartsfield-Jackson.*Routine/);
+    const scenario = pick((s) => s.modules.includes('intern') && !s.modules.includes('real-time'));
+    const players = await startGame(browser, device, device, option(scenario));
     await bothReady(players);
     const { pilot, copilot } = players;
-    // The traffic die rolled twice on the first space before the game started.
-    await expect(
-      pilot.getByRole('img', { name: /Current space: traffic die 2× each round here/ }),
-    ).toBeVisible();
+    // Traffic icons on the first space: the die rolled before the game started.
+    const icons = scenario.traffic?.[0] ?? 0;
+    if (icons > 0) {
+      await expect(
+        pilot.getByRole('img', {
+          name: new RegExp(`Current space: traffic die ${icons}× each round here`),
+        }),
+      ).toBeVisible();
+    }
 
     const dice = pilot.getByRole('button', { name: /^Your die/ });
     const intern = pilot.getByRole('button', { name: 'Intern 1 (pilot)' });

@@ -1,6 +1,8 @@
 import {
+  ABILITY_IDS,
   createGame,
   isGameOver,
+  SCENARIO_LIST,
   viewFor,
   YUL,
   type AckResult,
@@ -8,6 +10,7 @@ import {
   type GameState,
   type JoinResult,
   type PlayerView,
+  type Scenario,
   type Seat,
 } from '@sky/shared';
 import { applyAgentAction, createRandomAgent, playRandomGame } from '@sky/shared/random-play';
@@ -366,6 +369,28 @@ describe('robustness', () => {
     ).toEqual({ ok: false, error: 'not-your-turn' });
   });
 
+  it('treats a new game whose traffic die already rolled as fresh: both "Fly again" are OK', async () => {
+    const traffic = pick((s) => (s.traffic?.[0] ?? 0) > 0);
+    server = await startTestServer(new RoomManager({ seed: () => 1 }));
+    const pilot = await server.connect();
+    const copilot = await server.connect();
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', {
+        name: 'Ana',
+        scenario: traffic.id,
+        abilities: ABILITY_IDS.slice(0, traffic.abilities),
+      }),
+    );
+    joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
+    const room = server.rooms.get(code)!;
+    room.game = { ...room.game, phase: 'lost', endReason: 'spin' };
+    expectOk(await pilot.emitWithAck('game:rematch', {}));
+    const fresh = room.game;
+    expect(fresh.log.map((e) => e.type)).toEqual(['traffic']);
+    expectOk(await copilot.emitWithAck('game:rematch', {}));
+    expect(room.game).toBe(fresh);
+  });
+
   it('starts one new game when both players press "Fly again"', async () => {
     let seeds = 0;
     server = await startTestServer(new RoomManager({ seed: () => ++seeds }));
@@ -511,28 +536,39 @@ describe('round timer', () => {
   });
 });
 
+/** The first active scenario that matches: tests don't depend on which ones scenarios.ts lists. */
+function pick(match: (s: Scenario) => boolean): Scenario {
+  const found = SCENARIO_LIST.find(match);
+  if (!found) throw new Error('no active scenario matches this test');
+  return found;
+}
+
 describe('scenarios and special abilities', () => {
+  const kerosene = () => pick((s) => s.modules.includes('kerosene') && s.abilities === 2);
+  const oneAbility = () => pick((s) => s.abilities === 1);
+  const noAbility = () => pick((s) => s.abilities === 0 && s.id !== 'yul-green');
+
   it('creates the chosen scenario with the chosen abilities and refuses bad setups', async () => {
     server = await startTestServer(new RoomManager({ seed: () => 1 }));
     const a = await server.connect();
     const { code } = joined(
       await a.emitWithAck('room:create', {
         name: 'Ana',
-        scenario: 'prg-green',
+        scenario: kerosene().id,
         abilities: ['control', 'working-together'],
       }),
     );
     const game = server.rooms.get(code)!.game;
-    expect(game.scenario.id).toBe('prg-green');
+    expect(game.scenario.id).toBe(kerosene().id);
     expect(game.abilities).toEqual(['control', 'working-together']);
     expect(game.kerosene).toBe(20);
 
     for (const payload of [
       { name: 'Ben', scenario: 'nowhere' },
-      { name: 'Ben', scenario: 'prg-green', abilities: ['control'] },
-      { name: 'Ben', scenario: 'prg-green', abilities: ['control', 'control'] },
+      { name: 'Ben', scenario: kerosene().id, abilities: ['control'] },
+      { name: 'Ben', scenario: kerosene().id, abilities: ['control', 'control'] },
       { name: 'Ben', scenario: 'yul-green', abilities: ['mastery'] },
-      { name: 'Ben', scenario: 'kef-yellow', abilities: ['flying'] },
+      { name: 'Ben', scenario: oneAbility().id, abilities: ['flying'] },
     ]) {
       const b = await server.connect();
       expect(await b.emitWithAck('room:create', payload as never)).toEqual({
@@ -551,7 +587,7 @@ describe('scenarios and special abilities', () => {
     const { code } = joined(
       await clients.pilot.emitWithAck('room:create', {
         name: 'Ana',
-        scenario: 'kef-yellow',
+        scenario: oneAbility().id,
         abilities: ['working-together'],
       }),
     );
@@ -593,15 +629,15 @@ describe('scenarios and special abilities', () => {
   it('switches scenario on a rematch, or before the first roll', async () => {
     const { clients, room } = await seatedRoom();
     const switched = next(clients.copilot, 'game:view');
-    expectOk(await clients.pilot.emitWithAck('game:rematch', { scenario: 'osl-green' }));
-    expect((await switched).scenario.id).toBe('osl-green');
+    expectOk(await clients.pilot.emitWithAck('game:rematch', { scenario: noAbility().id }));
+    expect((await switched).scenario.id).toBe(noAbility().id);
     const before = room().game;
     // The partner's identical request finds the new game and changes nothing.
-    expectOk(await clients.copilot.emitWithAck('game:rematch', { scenario: 'osl-green' }));
+    expectOk(await clients.copilot.emitWithAck('game:rematch', { scenario: noAbility().id }));
     expect(room().game).toBe(before);
     expect(
       await clients.pilot.emitWithAck('game:rematch', {
-        scenario: 'prg-green',
+        scenario: kerosene().id,
         abilities: ['control'],
       }),
     ).toEqual({
@@ -617,16 +653,16 @@ describe('scenarios and special abilities', () => {
     room().game = { ...room().game, phase: 'lost', endReason: 'kerosene' };
     expectOk(
       await clients.copilot.emitWithAck('game:rematch', {
-        scenario: 'gig-yellow',
+        scenario: oneAbility().id,
         abilities: ['mastery'],
       }),
     );
-    expect(room().game.scenario.id).toBe('gig-yellow');
+    expect(room().game.scenario.id).toBe(oneAbility().id);
     expect(room().game.abilities).toEqual(['mastery']);
     // No setup: the same scenario again.
     room().game = { ...room().game, phase: 'lost', endReason: 'spin' };
     expectOk(await clients.copilot.emitWithAck('game:rematch', {}));
-    expect(room().game.scenario.id).toBe('gig-yellow');
+    expect(room().game.scenario.id).toBe(oneAbility().id);
     expect(room().game.phase).toBe('strategy');
   });
 });

@@ -10,6 +10,7 @@ import {
   placeDie,
   RuleError,
   rerollDice,
+  rollDice,
   resolveRound,
   spendReroll,
 } from './rules';
@@ -487,6 +488,22 @@ function copilotFirst(moves: typeof QUIET_ROUND): typeof QUIET_ROUND {
   for (let i = 0; i < moves.length; i += 2) out.push(moves[i + 1]!, moves[i]!);
   return out;
 }
+
+describe('the finished round (lastRound)', () => {
+  it('keeps the round’s dice and speed after it ends, until the next roll', () => {
+    const played = play(setupRound(QUIET_DICE), QUIET_ROUND);
+    expect(played.round).toBe(2);
+    expect(played.placed).toEqual({});
+    expect(played.lastRound?.speed).toBe(4);
+    expect(Object.keys(played.lastRound!.placed)).toHaveLength(8);
+    expect(played.lastRound!.placed.axisPilot).toEqual({ seat: 'pilot', dieId: 'p1', value: 2 });
+    expect(rollDice(played).lastRound).toBeNull();
+  });
+
+  it('is empty in a new game', () => {
+    expect(createGame(testScenario(), 1).lastRound).toBeNull();
+  });
+});
 
 describe('final round and landing', () => {
   const ready: Partial<GameState> = {

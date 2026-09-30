@@ -3,6 +3,8 @@ import { ChevronDown, ChevronRight, Coffee } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { AxisDial } from '@/svgs/AxisDial';
+import { AeroMarkerIcon } from '@/svgs/AeroMarker';
+import { BrakeMarkerIcon } from '@/svgs/BrakeMarker';
 import { SpeedGauge } from '@/svgs/SpeedGauge';
 import { Switch } from '@/svgs/Switch';
 import { IceBrakesPanel, ModulePanels } from './ModulePanels';
@@ -158,7 +160,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
           <div className={cn('desktop:[grid-area:radioPilot]', DESKTOP_PANEL)}>
             <PanelHeader
               title="Radio"
-              hint="Pilot · N clears a plane N−1 ahead"
+              hint="N clears a plane N−1 ahead"
               side
               className="hidden desktop:flex"
             />
@@ -167,7 +169,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
           <div className={cn('desktop:[grid-area:radioCopilot]', DESKTOP_PANEL)}>
             <PanelHeader
               title="Radio"
-              hint="Co-pilot · N clears a plane N−1 ahead"
+              hint="N clears a plane N−1 ahead"
               side
               className="hidden desktop:flex"
             />
@@ -177,7 +179,16 @@ export function Cockpit({ view }: { view: PlayerView }) {
       </section>
     ),
     gear: (
-      <Panel title="Landing gear" hint="Pilot · any order" side>
+      <Panel
+        title="Landing gear"
+        hint={
+          <span className="inline-flex items-center gap-1">
+            <AeroMarkerIcon marker="blue" />
+            <span className="sr-only">Blue aerodynamics marker</span> +1
+          </span>
+        }
+        side
+      >
         <Slots
           ids={['gear1', 'gear2', 'gear3']}
           view={view}
@@ -187,7 +198,16 @@ export function Cockpit({ view }: { view: PlayerView }) {
       </Panel>
     ),
     flaps: (
-      <Panel title="Flaps" hint="Co-pilot · top to bottom" side>
+      <Panel
+        title="Flaps"
+        hint={
+          <span className="inline-flex items-center gap-1">
+            <AeroMarkerIcon marker="orange" />
+            <span className="sr-only">Orange aerodynamics marker</span> +1
+          </span>
+        }
+        side
+      >
         <Slots
           ids={['flaps1', 'flaps2', 'flaps3', 'flaps4']}
           view={view}
@@ -200,7 +220,16 @@ export function Cockpit({ view }: { view: PlayerView }) {
     brakes: ice ? (
       <IceBrakesPanel view={view} />
     ) : (
-      <Panel title="Brakes" hint="Pilot · 2, then 4, then 6" className="justify-between">
+      <Panel
+        title="Brakes"
+        hint={
+          <span className="inline-flex items-center gap-1">
+            <BrakeMarkerIcon />
+            <span className="sr-only">Brake marker</span> +2
+          </span>
+        }
+        className="justify-between"
+      >
         <Slots
           ids={['brakes1', 'brakes2', 'brakes3']}
           view={view}
@@ -233,7 +262,6 @@ export function Cockpit({ view }: { view: PlayerView }) {
     <div className="@container">
       <div className="cockpit-grid grid grid-cols-2 gap-3">
         {ORDER.map((id) => (
-          // Grid items stretch by default, and Panel is h-full, so every panel fills its row.
           <div key={id} className={cn(span(id), AREA[id])}>
             {sections[id]}
           </div>

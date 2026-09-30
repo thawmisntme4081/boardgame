@@ -1,5 +1,7 @@
 import { brakeThreshold, type PlayerView } from '@sky/shared';
 import { cn } from '@/lib/utils';
+import { AeroMarker } from './AeroMarker';
+import { BrakeMarker } from './BrakeMarker';
 
 const SPEED_MIN = 2;
 const SPEED_MAX = 12;
@@ -78,14 +80,9 @@ export function SpeedGauge({ view, className }: { view: PlayerView; className?: 
           {v}
         </text>
       ))}
-      <path d="M 0 18 l -6 -12 h 12 z" style={at(blue)} className={cn('fill-pilot', SLIDE)} />
-      <path d="M 0 18 l -6 -12 h 12 z" style={at(orange)} className={cn('fill-copilot', SLIDE)} />
-      <g style={at(speedX(brake))} className={cn('fill-danger', SLIDE)}>
-        <path d="M 0 58 l -6 12 h 12 z" />
-        <text x="9" y="80" className="text-[10px]">
-          brakes
-        </text>
-      </g>
+      <AeroMarker marker="blue" style={at(blue)} className={SLIDE} />
+      <AeroMarker marker="orange" style={at(orange)} className={SLIDE} />
+      <BrakeMarker style={at(speedX(brake))} className={SLIDE} />
       <circle
         cy="28"
         r="7"

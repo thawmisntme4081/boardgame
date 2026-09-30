@@ -107,7 +107,10 @@ const sameSetup = (room: Room, setup: Setup) =>
 
 /** A game that has not started: the rematch someone else already asked for. */
 const isFresh = (room: Room) =>
-  room.game.phase === 'strategy' && room.game.round === 1 && room.game.log.length === 0;
+  room.game.phase === 'strategy' &&
+  room.game.round === 1 &&
+  // The traffic die may already have rolled when the game was created; nothing else has.
+  room.game.log.every((event) => event.type === 'traffic');
 
 export function registerHandlers(
   io: GameServer,

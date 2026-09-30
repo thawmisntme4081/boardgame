@@ -1,10 +1,12 @@
 import {
   createGame,
   rollDice,
+  SCENARIO_LIST,
   SCENARIOS,
   viewFor,
   YUL,
   type AbilityId,
+  type Scenario,
   type DieValue,
   type GameState,
   type PlayerView,
@@ -13,7 +15,6 @@ import {
 } from '@sky/shared';
 import { useGame } from '@/store';
 
-/** A real game state turned into a player's view, with fixed dice. */
 export function makeView(
   seat: Seat,
   opts: {
@@ -21,12 +22,18 @@ export function makeView(
     copilot?: DieValue[];
     patch?: Partial<GameState>;
     rolled?: boolean;
-    /** Scenario id; YUL by default. */
-    scenario?: string;
+    /** A scenario id, or YUL with these fields replaced (e.g. `{ modules: ['intern'] }`). */
+    scenario?: string | Partial<Scenario>;
     abilities?: AbilityId[];
   } = {},
 ): PlayerView {
-  let state = createGame(opts.scenario ? SCENARIOS[opts.scenario]! : YUL, 1, {
+  const scenario =
+    typeof opts.scenario === 'string'
+      ? SCENARIOS[opts.scenario]!
+      : opts.scenario
+        ? { ...YUL, id: 'test', ...opts.scenario }
+        : YUL;
+  let state = createGame(scenario, 1, {
     abilities: opts.abilities ?? [],
   });
   if (opts.rolled !== false) {
@@ -37,6 +44,13 @@ export function makeView(
     };
   }
   return viewFor({ ...state, ...opts.patch }, seat);
+}
+
+/** The first active scenario that matches, for tests that need a real (selectable) one. */
+export function catalogScenario(match: (s: Scenario) => boolean): Scenario {
+  const found = SCENARIO_LIST.find(match);
+  if (!found) throw new Error('no active scenario matches this test');
+  return found;
 }
 
 export const presence = (pilotReady = false, copilotReady = false): Presence => ({

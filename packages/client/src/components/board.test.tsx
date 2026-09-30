@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGame } from '@/store';
-import { makeView, presence, resetStore } from '@/test/fixtures';
+import { catalogScenario, makeView, presence, resetStore } from '@/test/fixtures';
 import { Cockpit } from './Cockpit';
 import { DiceTray } from './DiceTray';
 import { GameOverDialog } from './GameOverDialog';
@@ -139,7 +139,7 @@ describe('GameOverDialog', () => {
       },
     });
     render(<GameOverDialog view={view} />);
-    const dialog = screen.getByRole('dialog', { name: 'The plane went down' });
+    const dialog = screen.getByRole('dialog', { name: 'Crashed' });
     expect(within(dialog).getByText('Not all the landing gear was down.')).toBeInTheDocument();
     expect(within(dialog).getByText('Your speed was too high for the brakes.')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Fly again' }));
@@ -147,16 +147,17 @@ describe('GameOverDialog', () => {
   });
 
   it('flies again on the same scenario and abilities by default', async () => {
+    const ice = catalogScenario((s) => s.modules.includes('ice-brakes') && s.abilities === 1);
     const view = makeView('pilot', {
-      scenario: 'kef-yellow',
+      scenario: ice.id,
       abilities: ['mastery'],
       patch: { phase: 'lost', endReason: 'landing-ice-brakes' },
     });
     render(<GameOverDialog view={view} />);
     expect(screen.getByText('The ice brakes were not fully deployed.')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent('KEF Keflavík');
+    expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent(ice.name);
     await userEvent.click(screen.getByRole('button', { name: 'Fly again' }));
-    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'kef-yellow', abilities: ['mastery'] });
+    expect(api.rematch).toHaveBeenCalledWith({ scenario: ice.id, abilities: ['mastery'] });
   });
 
   it('celebrates a landing and stays closed during play', () => {
@@ -180,7 +181,7 @@ describe('ApproachTrack', () => {
 
 describe('module panels', () => {
   it('show kerosene with its space, only for the Kerosene module', () => {
-    render(<Cockpit view={makeView('pilot', { scenario: 'osl-green' })} />);
+    render(<Cockpit view={makeView('pilot', { scenario: { modules: ['kerosene'] } })} />);
     const panel = screen.getByRole('region', { name: 'Kerosene' });
     expect(within(panel).getByRole('meter', { name: 'Kerosene' })).toHaveAttribute(
       'aria-valuenow',
@@ -192,13 +193,17 @@ describe('module panels', () => {
   });
 
   it('show the leak without a space to play on', () => {
-    render(<Cockpit view={makeView('pilot', { scenario: 'prg-yellow' })} />);
+    render(<Cockpit view={makeView('pilot', { scenario: { modules: ['kerosene-leak'] } })} />);
     const panel = screen.getByRole('region', { name: 'Kerosene leak' });
     expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('replace the brakes with the ice brakes', () => {
-    render(<Cockpit view={makeView('pilot', { scenario: 'kef-yellow', patch: { brakes: 1 } })} />);
+    render(
+      <Cockpit
+        view={makeView('pilot', { scenario: { modules: ['ice-brakes'] }, patch: { brakes: 1 } })}
+      />,
+    );
     expect(screen.queryByRole('region', { name: 'Brakes' })).not.toBeInTheDocument();
     const ice = screen.getByRole('region', { name: 'Ice brakes' });
     expect(
@@ -212,7 +217,9 @@ describe('module panels', () => {
   });
 
   it('show the wind speed the ring points at', () => {
-    render(<Cockpit view={makeView('pilot', { scenario: 'gig-yellow', patch: { wind: 2 } })} />);
+    render(
+      <Cockpit view={makeView('pilot', { scenario: { modules: ['wind'] }, patch: { wind: 2 } })} />,
+    );
     const speed = WIND_RING[2]!;
     expect(
       screen.getByRole('img', {
@@ -223,7 +230,7 @@ describe('module panels', () => {
 
   it('train the intern in two taps: the Intern space, then where the token goes', async () => {
     const view = makeView('pilot', {
-      scenario: 'atl-green',
+      scenario: { modules: ['intern'] },
       pilot: [5, 1, 6, 2],
       patch: { intern: [2, 6, 4, 3, 5, 1] },
     });
@@ -248,7 +255,7 @@ describe('module panels', () => {
 
   it('refuse a die showing the next intern token', () => {
     const view = makeView('pilot', {
-      scenario: 'atl-green',
+      scenario: { modules: ['intern'] },
       pilot: [2, 1, 6, 2],
       patch: { intern: [2, 6, 4, 3, 5, 1] },
     });
@@ -334,7 +341,10 @@ describe('approach effects', () => {
   it('describe the traffic die and the turn on the current space', () => {
     render(
       <ApproachTrack
-        view={makeView('pilot', { scenario: 'pbh-red', patch: { approachIndex: 1 } })}
+        view={makeView('pilot', {
+          scenario: { turns: [null, [-2, -1], null, null, null, null, null] },
+          patch: { approachIndex: 1 },
+        })}
       />,
     );
     expect(
@@ -381,5 +391,62 @@ describe('Leave game', () => {
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Leave game' }),
     );
     expect(api.leaveGame).toHaveBeenCalled();
+  });
+});
+
+describe('game over: a win and a loss look different', () => {
+  it('shows a landing with where and when, and a green "Fly again"', () => {
+    render(<GameOverDialog view={makeView('pilot', { patch: { phase: 'won', round: 7 } })} />);
+    const dialog = screen.getByRole('dialog', { name: 'Smooth landing!' });
+    expect(within(dialog).getByText('You landed at YUL in round 7.')).toBeInTheDocument();
+    expect(
+      within(dialog).getByText('YUL Montréal-Trudeau', { selector: 'span.font-medium' }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Fly again' })).toHaveClass('bg-emerald-600');
+  });
+
+  it('shows a crash with the round and altitude, and each reason', () => {
+    const view = makeView('pilot', { patch: { phase: 'lost', round: 3, endReason: 'spin' } });
+    render(<GameOverDialog view={view} />);
+    const dialog = screen.getByRole('dialog', { name: 'Crashed' });
+    expect(within(dialog).getByText('Round 3 · 4,000 ft')).toBeInTheDocument();
+    expect(within(dialog).getByRole('listitem')).toHaveTextContent('went into a spin');
+    expect(within(dialog).getByRole('button', { name: 'Fly again' })).not.toHaveClass(
+      'bg-emerald-600',
+    );
+  });
+});
+
+describe('cockpit hints and module details', () => {
+  it('name the marker each system moves', () => {
+    render(<Cockpit view={makeView('pilot')} />);
+    expect(screen.getByRole('region', { name: 'Brakes' })).toHaveTextContent('Brake marker +2');
+    expect(screen.getByRole('region', { name: 'Landing gear' })).toHaveTextContent(
+      'Blue aerodynamics marker +1',
+    );
+    expect(screen.getByRole('region', { name: 'Flaps' })).toHaveTextContent(
+      'Orange aerodynamics marker +1',
+    );
+  });
+
+  it('show the current space’s turn over the axis dial, not in the final round', () => {
+    const scenario = { turns: [[-2, -1], null, null, null, null, null, null] };
+    const { rerender } = render(<Cockpit view={makeView('pilot', { scenario })} />);
+    expect(
+      screen.getByRole('note', { name: 'Turn: to advance, the axis must be at −2 or −1' }),
+    ).toBeInTheDocument();
+    rerender(<Cockpit view={makeView('pilot', { scenario, patch: { round: 7 } })} />);
+    expect(screen.queryByRole('note', { name: /Turn/ })).not.toBeInTheDocument();
+    rerender(<Cockpit view={makeView('pilot', { scenario, patch: { approachIndex: 1 } })} />);
+    expect(screen.queryByRole('note', { name: /Turn/ })).not.toBeInTheDocument();
+  });
+
+  it('show how much kerosene each burn took', () => {
+    const scenario = { modules: ['kerosene' as const] };
+    const { rerender } = render(<Cockpit view={makeView('pilot', { scenario })} />);
+    expect(screen.queryByText(/^−\d/)).not.toBeInTheDocument();
+    rerender(<Cockpit view={makeView('pilot', { scenario, patch: { kerosene: 14 } })} />);
+    expect(screen.getByText('−6')).toBeInTheDocument();
+    expect(screen.getByRole('meter', { name: 'Kerosene' })).toHaveAttribute('aria-valuenow', '14');
   });
 });

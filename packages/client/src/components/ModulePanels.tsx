@@ -1,17 +1,35 @@
 // Panels for the Flight Log modules; the rules live in @sky/shared.
 import { KEROSENE_START, windSpeed, type PlayerView, type SlotId } from '@sky/shared';
-import { ChevronRight } from 'lucide-react';
-import { Fragment, type ReactNode } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { DieFace } from '@/svgs/DieFace';
 import { WindRing } from '@/svgs/WindRing';
 import { Panel } from './Panel';
 import { Slot } from './Slot';
 
+/**
+ * The kerosene track. When fuel burns, the bar slides down and a red "−N" floats up and fades
+ * (keyed per drop, so each burn replays it).
+ */
 function KeroseneGauge({ kerosene }: { kerosene: number }) {
   const low = kerosene <= 6;
+  // The last value seen and how much the latest burn took (state from the previous render).
+  const [seen, setSeen] = useState({ value: kerosene, drop: 0, burns: 0 });
+  if (kerosene !== seen.value) {
+    setSeen({ value: kerosene, drop: seen.value - kerosene, burns: seen.burns + 1 });
+  }
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1">
+    <div className="relative flex min-w-0 flex-1 flex-col gap-1">
+      {seen.drop > 0 && (
+        <span
+          key={seen.burns}
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-4 right-0 animate-[kerosene-burn_1.4s_ease-out_forwards] text-sm font-bold text-danger"
+        >
+          −{seen.drop}
+        </span>
+      )}
       <div
         role="meter"
         aria-label="Kerosene"
@@ -21,7 +39,10 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
         className="h-3 overflow-hidden rounded-full bg-muted"
       >
         <div
-          className={cn('h-full rounded-full', low ? 'bg-danger' : 'bg-light-on')}
+          className={cn(
+            'h-full rounded-full transition-[width,background-color] duration-700 ease-out',
+            low ? 'bg-danger' : 'bg-light-on',
+          )}
           style={{ width: `${(kerosene / KEROSENE_START) * 100}%` }}
         />
       </div>
@@ -65,6 +86,19 @@ function WindPanel({ view }: { view: PlayerView }) {
   );
 }
 
+/**
+ * Between two intern tokens: the pilot takes from the left (blue, pointing right) and the
+ * co-pilot from the right (orange, pointing left), as on the Intern board.
+ */
+function InternArrows() {
+  return (
+    <li aria-hidden="true" className="flex w-2 flex-col items-center justify-center">
+      <ChevronRight strokeWidth={3} className="-my-0.5 size-3 shrink-0 text-pilot" />
+      <ChevronLeft strokeWidth={3} className="-my-0.5 size-3 shrink-0 text-copilot" />
+    </li>
+  );
+}
+
 function InternPanel({ view }: { view: PlayerView }) {
   const tokens = view.intern ?? [];
   return (
@@ -72,15 +106,18 @@ function InternPanel({ view }: { view: PlayerView }) {
       <div className="flex flex-wrap items-center gap-1">
         <Slot slot="internPilot" view={view} />
         <ol
-          className="flex flex-1 items-center justify-center gap-1"
+          className="flex flex-1 items-center justify-center gap-0.5"
           aria-label={
             tokens.length > 0 ? `Intern tokens left: ${tokens.join(', ')}` : 'Intern fully trained'
           }
         >
           {tokens.map((value, i) => (
-            <li key={value} className={cn(i > 0 && i < tokens.length - 1 && 'opacity-70')}>
-              <DieFace value={value} seat="pilot" kind="intern" className="size-7" />
-            </li>
+            <Fragment key={value}>
+              {i > 0 && <InternArrows />}
+              <li className={cn(i > 0 && i < tokens.length - 1 && 'opacity-70')}>
+                <DieFace value={value} seat="pilot" kind="intern" className="size-[1.8rem]" />
+              </li>
+            </Fragment>
           ))}
           {tokens.length === 0 && <li className="text-xs text-muted-foreground">Trained!</li>}
         </ol>
