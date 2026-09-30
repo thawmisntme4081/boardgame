@@ -1,10 +1,10 @@
 import { AXIS_LIMIT } from '@sky/shared';
+import { cn } from '@/lib/utils';
 
 const DEG = Math.PI / 180;
 /** Degrees per axis mark on the dial. */
 const MARK_ANGLE = 25;
 
-/** Positive axis tilts toward the pilot, drawn on the left as on the real board. */
 function dialPoint(position: number, radius: number): [number, number] {
   const angle = -position * MARK_ANGLE * DEG;
   return [100 + radius * Math.sin(angle), 100 - radius * Math.cos(angle)];
@@ -13,7 +13,7 @@ function dialPoint(position: number, radius: number): [number, number] {
 export function AxisDial({ axis }: { axis: number }) {
   const marks = [];
   for (let p = -AXIS_LIMIT; p <= AXIS_LIMIT; p++) marks.push(p);
-  const [nx, ny] = dialPoint(Math.max(-AXIS_LIMIT, Math.min(AXIS_LIMIT, axis)), 70);
+  const needleAngle = -Math.max(-AXIS_LIMIT, Math.min(AXIS_LIMIT, axis)) * MARK_ANGLE;
   const level = axis === 0;
 
   return (
@@ -33,9 +33,9 @@ export function AxisDial({ axis }: { axis: number }) {
         strokeWidth="2"
       />
       {marks.map((p) => {
-        const [x1, y1] = dialPoint(p, 80);
-        const [x2, y2] = dialPoint(p, 92);
-        const [tx, ty] = dialPoint(p, 86);
+        const [x1, y1] = dialPoint(p, 82);
+        const [x2, y2] = dialPoint(p, 94);
+        const [tx, ty] = dialPoint(p, 88);
         return Math.abs(p) === AXIS_LIMIT ? (
           <text
             key={p}
@@ -67,13 +67,15 @@ export function AxisDial({ axis }: { axis: number }) {
       <line
         x1="100"
         y1="100"
-        x2={nx}
-        y2={ny}
+        x2="100"
+        y2="30"
         strokeWidth="5"
         strokeLinecap="round"
-        className={
-          level ? 'stroke-light-on' : Math.abs(axis) >= 2 ? 'stroke-danger' : 'stroke-foreground'
-        }
+        style={{ transform: `rotate(${needleAngle}deg)`, transformOrigin: '100px 100px' }}
+        className={cn(
+          'transition-[transform,stroke] duration-700 ease-[cubic-bezier(0.34,1.4,0.64,1)] motion-reduce:transition-none',
+          level ? 'stroke-light-on' : Math.abs(axis) >= 2 ? 'stroke-danger' : 'stroke-foreground',
+        )}
       />
       <circle cx="100" cy="100" r="7" className="fill-foreground" />
     </svg>
