@@ -1,5 +1,7 @@
 import {
   canPlaceDie,
+  canUseAbility,
+  useAbility,
   canRerollDice,
   canSpendReroll,
   isGameOver,
@@ -18,13 +20,15 @@ import {
 } from '@sky/shared';
 import type { Server, Socket } from 'socket.io';
 import type { z } from 'zod';
-import type { Room, RoomManager, Seated } from './rooms';
+import { resolveSetup, type Room, type RoomManager, type Seated, type Setup } from './rooms';
 import {
+  abilitySchema,
   createRoomSchema,
   emptySchema,
   joinRoomSchema,
   placeSchema,
   rejoinRoomSchema,
+  rematchSchema,
   rerollSchema,
 } from './schemas';
 
@@ -97,6 +101,10 @@ export function clientIp(socket: GameSocket, trustProxy = false): string {
   return (trustProxy && first) || socket.handshake.address || 'unknown';
 }
 
+const sameSetup = (room: Room, setup: Setup) =>
+  room.game.scenario.id === setup.scenario.id &&
+  room.game.abilities.join() === setup.abilities.join();
+
 /** A game that has not started: the rematch someone else already asked for. */
 const isFresh = (room: Room) =>
   room.game.phase === 'strategy' && room.game.round === 1 && room.game.log.length === 0;
@@ -156,9 +164,11 @@ export function registerHandlers(
 
     on('room:create', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(createRoomSchema, payload);
-      if (!data) return reply({ ok: false, error: 'bad-request' });
+      const setup = data && resolveSetup(data);
+      if (!data || !setup) return reply({ ok: false, error: 'bad-request' });
       const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy), {
         timer: data.timer ?? false,
+        setup,
       });
       if (!result.ok) return reply(result);
       void socket.join(result.value.room.code);
@@ -247,11 +257,25 @@ export function registerHandlers(
       return OK;
     });
 
-    onSeated('game:rematch', emptySchema, (_data, { room }) => {
-      // Both players often press "Fly again": the second press finds the new game.
-      if (isFresh(room)) return OK;
+    onSeated('game:ability', abilitySchema, (action, { room, player }) => {
+      const check = canUseAbility(room.game, player.seat, action);
+      if (!check.ok) return { ok: false, error: check.reason };
+      room.game = useAbility(room.game, player.seat, action);
+      return OK;
+    });
+
+    onSeated('game:rematch', rematchSchema, (data = {}, { room }) => {
+      const asked = data.scenario !== undefined || data.abilities !== undefined;
+      const setup = asked ? resolveSetup(data) : undefined;
+      if (asked && !setup) return { ok: false, error: 'bad-request' };
+      if (isFresh(room)) {
+        // Before the first roll the scenario may still change; the second "Fly again" of a
+        // pair finds the new game and changes nothing.
+        if (setup && !sameSetup(room, setup)) rooms.rematch(room, setup);
+        return OK;
+      }
       if (!isGameOver(room.game)) return { ok: false, error: 'game-not-over' };
-      rooms.rematch(room);
+      rooms.rematch(room, setup);
       return OK;
     });
 

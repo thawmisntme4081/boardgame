@@ -2,10 +2,23 @@
 import { placeDie, rollDice } from './rules';
 import { BASE_ALTITUDES } from './scenarios';
 import { createGame } from './state';
-import type { DieValue, GameState, Scenario, Seat, SlotId } from './types';
+import type { AbilityId, DieValue, GameState, Scenario, Seat, SlotId } from './types';
 
-export function testScenario(approach: number[] = [0, 0, 0, 0, 0, 0, 0]): Scenario {
-  return { id: 'test', name: 'Test', altitudes: BASE_ALTITUDES, approach };
+export function testScenario(
+  approach: number[] = [0, 0, 0, 0, 0, 0, 0],
+  extra: Partial<Scenario> = {},
+): Scenario {
+  return {
+    id: 'test',
+    airport: 'TST',
+    name: 'Test',
+    difficulty: 'green',
+    altitudes: BASE_ALTITUDES,
+    approach,
+    modules: [],
+    abilities: 0,
+    ...extra,
+  };
 }
 
 interface RoundSetup {
@@ -14,11 +27,21 @@ interface RoundSetup {
   approach?: number[];
   /** Applied before rolling, e.g. `{ round: 7, approachIndex: 6 }`. */
   patch?: Partial<GameState>;
+  /** Scenario fields on top of the test scenario, e.g. `{ modules: ['kerosene'] }`. */
+  scenario?: Partial<Scenario>;
+  abilities?: AbilityId[];
 }
 
 /** A game in the `placing` phase with fixed dice: pilot `p1..pN`, co-pilot `c1..cN`. */
-export function setupRound({ pilot, copilot, approach, patch }: RoundSetup): GameState {
-  const game = createGame(testScenario(approach), 42);
+export function setupRound({
+  pilot,
+  copilot,
+  approach,
+  patch,
+  scenario,
+  abilities,
+}: RoundSetup): GameState {
+  const game = createGame(testScenario(approach, scenario), 42, { abilities });
   const state = rollDice({ ...game, ...patch });
   state.dice = {
     pilot: pilot.map((value, i) => ({ id: `p${i + 1}`, value })),

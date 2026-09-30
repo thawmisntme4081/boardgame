@@ -1,4 +1,4 @@
-import { canPlaceInView, SLOT_IDS } from '@sky/shared';
+import { canPlaceInView, SLOT_IDS, WIND_RING } from '@sky/shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,6 +16,7 @@ vi.mock('@/api', () => ({
   reroll: vi.fn(async () => true),
   spendReroll: vi.fn(async () => true),
   rematch: vi.fn(async () => true),
+  playAbility: vi.fn(async () => true),
   leaveGame: vi.fn(),
 }));
 const api = await import('@/api');
@@ -142,7 +143,20 @@ describe('GameOverDialog', () => {
     expect(within(dialog).getByText('Not all the landing gear was down.')).toBeInTheDocument();
     expect(within(dialog).getByText('Your speed was too high for the brakes.')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Fly again' }));
-    expect(api.rematch).toHaveBeenCalled();
+    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'yul', abilities: [] });
+  });
+
+  it('flies again on the same scenario and abilities by default', async () => {
+    const view = makeView('pilot', {
+      scenario: 'kef-yellow',
+      abilities: ['mastery'],
+      patch: { phase: 'lost', endReason: 'landing-ice-brakes' },
+    });
+    render(<GameOverDialog view={view} />);
+    expect(screen.getByText('The ice brakes were not fully deployed.')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent('KEF Keflavík');
+    await userEvent.click(screen.getByRole('button', { name: 'Fly again' }));
+    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'kef-yellow', abilities: ['mastery'] });
   });
 
   it('celebrates a landing and stays closed during play', () => {
@@ -159,6 +173,147 @@ describe('ApproachTrack', () => {
     expect(
       screen.getByRole('img', {
         name: /4 spaces to the airport\. Planes per space from here: 1, 2, 1, 3, 2/,
+      }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('module panels', () => {
+  it('show kerosene with its space, only for the Kerosene module', () => {
+    render(<Cockpit view={makeView('pilot', { scenario: 'osl-green' })} />);
+    const panel = screen.getByRole('region', { name: 'Kerosene' });
+    expect(within(panel).getByRole('meter', { name: 'Kerosene' })).toHaveAttribute(
+      'aria-valuenow',
+      '20',
+    );
+    expect(
+      within(panel).getByRole('button', { name: 'Kerosene 1 (either player)' }),
+    ).toBeInTheDocument();
+  });
+
+  it('show the leak without a space to play on', () => {
+    render(<Cockpit view={makeView('pilot', { scenario: 'prg-yellow' })} />);
+    const panel = screen.getByRole('region', { name: 'Kerosene leak' });
+    expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('replace the brakes with the ice brakes', () => {
+    render(<Cockpit view={makeView('pilot', { scenario: 'kef-yellow', patch: { brakes: 1 } })} />);
+    expect(screen.queryByRole('region', { name: 'Brakes' })).not.toBeInTheDocument();
+    const ice = screen.getByRole('region', { name: 'Ice brakes' });
+    expect(
+      within(ice).getByRole('button', { name: 'Ice brakes 1 above (pilot, needs 2)' }),
+    ).toBeInTheDocument();
+    expect(
+      within(ice).getByRole('button', { name: 'Ice brakes 4 below (either player, needs 5)' }),
+    ).toBeInTheDocument();
+    expect(within(ice).getByRole('img', { name: 'Ice brake 2: deployed' })).toBeInTheDocument();
+    expect(within(ice).getByRole('img', { name: 'Ice brake 3: not deployed' })).toBeInTheDocument();
+  });
+
+  it('show the wind speed the ring points at', () => {
+    render(<Cockpit view={makeView('pilot', { scenario: 'gig-yellow', patch: { wind: 2 } })} />);
+    const speed = WIND_RING[2]!;
+    expect(
+      screen.getByRole('img', {
+        name: `Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('train the intern in two taps: the Intern space, then where the token goes', async () => {
+    const view = makeView('pilot', {
+      scenario: 'atl-green',
+      pilot: [5, 1, 6, 2],
+      patch: { intern: [2, 6, 4, 3, 5, 1] },
+    });
+    useGame.setState({ selectedDieId: 'p1' });
+    const { rerender } = render(<Cockpit view={view} />);
+    expect(screen.getByLabelText('Intern tokens left: 2, 6, 4, 3, 5, 1')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Intern 1 (pilot)' }));
+    expect(api.placeSelected).toHaveBeenCalledWith('internPilot');
+
+    // The token (a 2) goes wherever the pilot could put a 2, but not on Concentration.
+    useGame.setState({ internSlot: 'internPilot' });
+    rerender(<Cockpit view={view} />);
+    const expected = SLOT_IDS.filter(
+      (tokenSlot) =>
+        canPlaceInView(view, { dieId: 'p1', slot: 'internPilot', coffeeDelta: 0, tokenSlot }).ok,
+    );
+    expect(document.querySelectorAll('button[data-valid]')).toHaveLength(expected.length);
+    expect(validSlots()).toContain('Landing gear 1 (pilot, needs 1 or 2)');
+    expect(validSlots()).not.toContain('Concentration 1 (either player)');
+    expect(screen.getByRole('button', { name: 'Intern 1 (pilot)', pressed: true })).toBeDisabled();
+  });
+
+  it('refuse a die showing the next intern token', () => {
+    const view = makeView('pilot', {
+      scenario: 'atl-green',
+      pilot: [2, 1, 6, 2],
+      patch: { intern: [2, 6, 4, 3, 5, 1] },
+    });
+    useGame.setState({ selectedDieId: 'p1' });
+    render(<Cockpit view={view} />);
+    expect(validSlots()).not.toContain('Intern 1 (pilot)');
+  });
+});
+
+describe('special abilities in the tray', () => {
+  it('offers the abilities the rules allow for the selected die', async () => {
+    const view = makeView('pilot', { abilities: ['adaptation', 'working-together'] });
+    render(<DiceTray view={view} presence={presence()} />);
+    expect(screen.getByText('Adaptation')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Your die: 3' }));
+    await userEvent.click(screen.getByRole('button', { name: /Flip to 4/ }));
+    expect(api.playAbility).toHaveBeenCalledWith({ ability: 'adaptation', dieId: 'p2' });
+    await userEvent.click(screen.getByRole('button', { name: /Offer to swap/ }));
+    expect(api.playAbility).toHaveBeenLastCalledWith({ ability: 'working-together', dieId: 'p2' });
+  });
+
+  it('asks the partner to answer a Working Together offer', async () => {
+    const view = makeView('copilot', {
+      abilities: ['working-together'],
+      patch: { swap: { seat: 'pilot', dieId: 'p1', value: 2 } },
+    });
+    render(<DiceTray view={view} presence={presence()} />);
+    expect(
+      screen.getByText('Ana offers a 2 to swap: tap one of your dice, then Swap.'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Your die: 5' }));
+    await userEvent.click(screen.getByRole('button', { name: /Swap for the 2/ }));
+    expect(api.playAbility).toHaveBeenCalledWith({ ability: 'working-together', dieId: 'c4' });
+  });
+
+  it('hands the co-pilot the traffic die to place (Synchronisation)', async () => {
+    const bonus = { die: { id: 'r1-traffic', value: 4 as const }, after: 'copilot' as const };
+    const patch = { bonus, currentSeat: 'copilot' as const };
+    render(
+      <DiceTray
+        view={makeView('copilot', { abilities: ['synchronisation'], patch })}
+        presence={presence()}
+      />,
+    );
+    expect(
+      screen.getByText('Synchronisation: place the traffic die on any empty space.'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Traffic die: 4' }));
+    expect(useGame.getState().selectedDieId).toBe('r1-traffic');
+    render(<Cockpit view={makeView('copilot', { abilities: ['synchronisation'], patch })} />);
+    // Any colour: the pilot's axis too.
+    expect(validSlots()).toContain('Axis 1 (pilot)');
+  });
+});
+
+describe('approach effects', () => {
+  it('describe the traffic die and the turn on the current space', () => {
+    render(
+      <ApproachTrack
+        view={makeView('pilot', { scenario: 'pbh-red', patch: { approachIndex: 1 } })}
+      />,
+    );
+    expect(
+      screen.getByRole('img', {
+        name: /Current space: to advance, axis must be 1 toward the pilot or 2 toward the pilot/,
       }),
     ).toBeInTheDocument();
   });

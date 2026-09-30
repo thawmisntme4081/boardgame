@@ -1,18 +1,12 @@
 import type { PlayerView, SlotId } from '@sky/shared';
-import { ChevronDown, ChevronRight, CircleAlert, Coffee } from 'lucide-react';
+import { ChevronDown, ChevronRight, Coffee } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { AxisDial } from '@/svgs/AxisDial';
 import { SpeedGauge } from '@/svgs/SpeedGauge';
 import { Switch } from '@/svgs/Switch';
+import { IceBrakesPanel, ModulePanels } from './ModulePanels';
+import { DESKTOP_PANEL, Panel, PANEL, PanelHeader } from './Panel';
 import { Slot } from './Slot';
 
 type Section = 'axis' | 'engines' | 'gear' | 'flaps' | 'radio' | 'brakes' | 'concentration';
@@ -49,94 +43,6 @@ const AREA: Record<Section, string> = {
   gear: 'desktop:[grid-area:gear]',
   flaps: 'desktop:[grid-area:flaps]',
 };
-
-const PANEL = 'flex h-full flex-col gap-2 rounded-2xl border bg-card p-3';
-/** The same panel look, applied only on desktop (the two radio halves). */
-const DESKTOP_PANEL =
-  'desktop:flex desktop:h-full desktop:flex-col desktop:gap-2 desktop:rounded-2xl desktop:border desktop:bg-card desktop:p-3';
-
-/**
- * Marks a panel whose two dice must both be placed every round (axis, engines). Tap for
- * the reason (no hover-only info); the small icon gets a 44px touch area from `after:`.
- */
-function MandatoryMark({ title }: { title: string }) {
-  return (
-    <Popover>
-      <PopoverTrigger
-        aria-label={`${title} is mandatory`}
-        className="relative inline-grid place-items-center rounded-full text-danger outline-none after:absolute after:top-1/2 after:left-1/2 after:size-11 after:-translate-1/2 focus-visible:ring-3 focus-visible:ring-ring/50"
-      >
-        <CircleAlert aria-hidden="true" className="size-3.5" />
-      </PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-64">
-        <PopoverHeader>
-          <PopoverTitle>Mandatory</PopoverTitle>
-          <PopoverDescription>
-            Place both dice here every round. If a round ends without both axis and both engine
-            dice, the plane goes down.
-          </PopoverDescription>
-        </PopoverHeader>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function PanelHeader({
-  title,
-  hint,
-  side,
-  mandatory,
-  className,
-}: {
-  title: string;
-  hint?: string;
-  side?: boolean;
-  mandatory?: boolean;
-  className?: string;
-}) {
-  return (
-    <header
-      className={cn(
-        'flex items-baseline justify-between gap-2',
-        side && 'desktop:flex-col desktop:items-start desktop:gap-0',
-        className,
-      )}
-    >
-      <h2 className="flex items-center gap-1 text-sm font-semibold">
-        {title}
-        {mandatory && <MandatoryMark title={title} />}
-      </h2>
-      {hint && (
-        <p className={cn('text-right text-xs text-muted-foreground', side && 'desktop:text-left')}>
-          {hint}
-        </p>
-      )}
-    </header>
-  );
-}
-
-function Panel({
-  title,
-  hint,
-  side,
-  mandatory,
-  className,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  side?: boolean;
-  mandatory?: boolean;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className={cn(PANEL, className)} aria-label={title}>
-      <PanelHeader title={title} hint={hint} side={side} mandatory={mandatory} />
-      {children}
-    </section>
-  );
-}
 
 /** Arrow between ordered spaces: right in a row, down in a desktop column (under the slot). */
 function OrderArrow({ column }: { column: boolean }) {
@@ -201,7 +107,12 @@ function Slots({
   );
 }
 
+/** Ice brakes are wider than the brakes: radio and brakes then get a row each. */
+const ICE_SPAN = 'max-desktop:col-span-2';
+
 export function Cockpit({ view }: { view: PlayerView }) {
+  const ice = view.scenario.modules.includes('ice-brakes');
+  const span = (id: Section) => (ice && (id === 'radio' || id === 'brakes') ? ICE_SPAN : SPAN[id]);
   const sections: Record<Section, ReactNode> = {
     axis: (
       <Panel title="Axis" hint="Must be level to land" mandatory>
@@ -219,7 +130,9 @@ export function Cockpit({ view }: { view: PlayerView }) {
         hint={
           view.finalRound
             ? 'Final round: speed must be below the brakes'
-            : 'Sum sets how far you fly'
+            : view.wind !== null
+              ? 'Sum + wind sets how far you fly'
+              : 'Sum sets how far you fly'
         }
       >
         <div className="flex items-center justify-between gap-2 desktop:flex-1">
@@ -280,7 +193,9 @@ export function Cockpit({ view }: { view: PlayerView }) {
         />
       </Panel>
     ),
-    brakes: (
+    brakes: ice ? (
+      <IceBrakesPanel view={view} />
+    ) : (
       <Panel title="Brakes" hint="Pilot · 2, then 4, then 6" className="justify-between">
         <Slots
           ids={['brakes1', 'brakes2', 'brakes3']}
@@ -315,11 +230,12 @@ export function Cockpit({ view }: { view: PlayerView }) {
       <div className="cockpit-grid grid grid-cols-2 gap-3">
         {ORDER.map((id) => (
           // Grid items stretch by default, and Panel is h-full, so every panel fills its row.
-          <div key={id} className={cn(SPAN[id], AREA[id])}>
+          <div key={id} className={cn(span(id), AREA[id])}>
             {sections[id]}
           </div>
         ))}
       </div>
+      <ModulePanels view={view} />
     </div>
   );
 }

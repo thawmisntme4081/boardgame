@@ -20,6 +20,7 @@ function Screen() {
         code={session.code}
         missing={presence?.pilot ? 'copilot' : 'pilot'}
         timerMs={view.timerMs}
+        scenario={view.scenario}
       />
     );
   }

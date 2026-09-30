@@ -19,17 +19,25 @@ export interface Players {
   code: string;
 }
 
-/** Ana creates a game, Ben joins through the invite link; both reach the game screen. */
+/**
+ * Ana creates a game (on `scenario`, an option name in the lobby's scenario list, if
+ * given), Ben joins through the invite link; both reach the game screen.
+ */
 export async function startGame(
   browser: Browser,
   pilotDevice: BrowserContextOptions,
   copilotDevice: BrowserContextOptions = pilotDevice,
+  scenario?: RegExp,
 ): Promise<Players> {
   const pilot = await (await browser.newContext(pilotDevice)).newPage();
   const copilot = await (await browser.newContext(copilotDevice)).newPage();
 
   await pilot.goto('/');
   await pilot.getByLabel('Your name').fill('Ana');
+  if (scenario) {
+    await pilot.getByRole('combobox', { name: 'Scenario' }).click();
+    await pilot.getByRole('option', { name: scenario }).click();
+  }
   await pilot.getByRole('button', { name: 'Create a game' }).click();
   await expect(pilot.getByText('Waiting for your co-pilot')).toBeVisible();
   const code = (await pilot.getByLabel(/^Game code/).textContent())!.trim();

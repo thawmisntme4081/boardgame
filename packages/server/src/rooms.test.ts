@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROOM_CODE_ALPHABET, RoomManager } from './rooms';
+import { resolveSetup, ROOM_CODE_ALPHABET, RoomManager } from './rooms';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -156,5 +156,36 @@ describe('RoomManager', () => {
     expect(rooms.get(recent.code)).toBeDefined();
     now = 1900;
     expect(rooms.sweep()).toEqual([recent.code]);
+  });
+});
+
+describe('resolveSetup', () => {
+  it('defaults to YUL, and to the first abilities the scenario allows', () => {
+    expect(resolveSetup({})).toMatchObject({ scenario: { id: 'yul' }, abilities: [] });
+    expect(resolveSetup({ scenario: 'prg-green' })).toMatchObject({
+      abilities: ['adaptation', 'anticipation'],
+    });
+  });
+
+  it('needs a known scenario and exactly its number of distinct abilities', () => {
+    expect(resolveSetup({ scenario: 'mars' })).toBeUndefined();
+    expect(resolveSetup({ scenario: 'gig-yellow', abilities: [] })).toBeUndefined();
+    expect(resolveSetup({ scenario: 'gig-yellow', abilities: ['control'] })).toMatchObject({
+      scenario: { id: 'gig-yellow' },
+      abilities: ['control'],
+    });
+    expect(
+      resolveSetup({ scenario: 'pbh-red', abilities: ['control', 'control'] }),
+    ).toBeUndefined();
+  });
+
+  it('keeps the lobby timer choice across rematches, even after a Real-time scenario', () => {
+    const rooms = new RoomManager();
+    const { room } = unwrap(
+      rooms.create('Ana', 's1', 'ip', { setup: resolveSetup({ scenario: 'pbh-red' })! }),
+    );
+    expect(room.game.timerMs).toBe(60_000);
+    rooms.rematch(room, resolveSetup({})!);
+    expect(room.game.timerMs).toBeNull();
   });
 });

@@ -1,7 +1,10 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { ABILITY_IDS } from './abilities';
+import { INTERN_TOKENS, WIND_RING } from './modules';
 import { playRandomGame } from './random-play';
-import { AXIS_LIMIT, MAX_COFFEE } from './rules';
+import { AXIS_LIMIT, MAX_COFFEE, PLANE_TOKENS } from './rules';
+import { SCENARIO_LIST } from './scenarios';
 import type { GameState } from './types';
 
 /** Plain checks (not `expect`) so they stay cheap across thousands of steps. */
@@ -13,7 +16,16 @@ function checkInvariants(s: GameState): void {
   check(s.endReason === 'spin' || Math.abs(s.axis) < AXIS_LIMIT, `axis ${s.axis}`);
   check(s.aeroBlue === 4 + s.gear.filter(Boolean).length, `aeroBlue ${s.aeroBlue}`);
   check(s.aeroOrange === 8 + s.flaps.filter(Boolean).length, `aeroOrange ${s.aeroOrange}`);
-  check(s.brakes >= 0 && s.brakes <= 3, `brakes ${s.brakes}`);
+  const maxBrakes = s.scenario.modules.includes('ice-brakes') ? 4 : 3;
+  check(s.brakes >= 0 && s.brakes <= maxBrakes, `brakes ${s.brakes}`);
+  check(
+    s.planeSupply + s.approachPlanes.reduce((a, b) => a + b, 0) === PLANE_TOKENS,
+    `planes ${s.planeSupply} in the box`,
+  );
+  check(s.kerosene === null || s.kerosene >= 0, `kerosene ${s.kerosene}`);
+  check(s.intern === null || s.intern.length <= INTERN_TOKENS.length, 'intern tokens');
+  check(s.wind === null || (s.wind >= 0 && s.wind < WIND_RING.length), `wind ${s.wind}`);
+  check(!s.bonus || s.currentSeat === 'copilot', 'traffic die waiting for the pilot');
   check(
     s.approachIndex >= 0 && s.approachIndex < s.approachPlanes.length,
     `approachIndex ${s.approachIndex}`,
@@ -45,6 +57,27 @@ describe('random play', () => {
       { numRuns: 1000 },
     );
   }, 60_000);
+
+  it('random games on every scenario finish and keep invariants', () => {
+    for (const scenario of SCENARIO_LIST) {
+      fc.assert(
+        fc.property(
+          fc.integer(),
+          fc.boolean(),
+          fc.shuffledSubarray([...ABILITY_IDS], {
+            minLength: scenario.abilities,
+            maxLength: scenario.abilities,
+          }),
+          (seed, careful, abilities) => {
+            const end = playRandomGame(seed, scenario, checkInvariants, careful, abilities);
+            expect(['won', 'lost']).toContain(end.phase);
+            if (end.phase === 'lost') expect(end.endReason).toBeDefined();
+          },
+        ),
+        { numRuns: 100 },
+      );
+    }
+  }, 120_000);
 
   it('replays exactly from the same seed', () => {
     expect(playRandomGame(2024)).toEqual(playRandomGame(2024));

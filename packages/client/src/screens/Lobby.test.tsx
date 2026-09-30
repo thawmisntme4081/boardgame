@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SCENARIOS } from '@sky/shared';
 import { codeFromPath } from '@/session';
 import { Lobby, WaitingRoom } from './Lobby';
 
@@ -22,7 +23,7 @@ describe('Lobby', () => {
     expect(create).toBeDisabled();
     await userEvent.type(screen.getByLabelText('Your name'), '  Ana ');
     await userEvent.click(create);
-    expect(api.createRoom).toHaveBeenCalledWith('Ana', false);
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', false, { scenario: 'yul', abilities: [] });
   });
 
   it('offers a round timer, off by default', async () => {
@@ -34,7 +35,33 @@ describe('Lobby', () => {
     expect(timer).toBeChecked();
     await userEvent.type(screen.getByLabelText('Your name'), 'Ana');
     await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
-    expect(api.createRoom).toHaveBeenCalledWith('Ana', true);
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', true, { scenario: 'yul', abilities: [] });
+  });
+
+  it('picks a scenario, then exactly as many special abilities as it allows', async () => {
+    render(<Lobby />);
+    expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent('YUL');
+    expect(screen.queryByText(/Choose .* special/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Scenario' }));
+    await userEvent.click(
+      screen.getByRole('option', { name: 'PRG Václav Havel, Routine landing' }),
+    );
+    expect(screen.getByText('Routine landing · Kerosene · 2 abilities')).toBeInTheDocument();
+    expect(screen.getByText('Choose 2 special abilities')).toBeInTheDocument();
+    const pressed = () =>
+      screen.getAllByRole('button', { pressed: true }).map((b) => b.textContent);
+    expect(pressed()).toEqual(['Adaptation', 'Anticipation']);
+    // A third choice drops the oldest.
+    await userEvent.click(screen.getByRole('button', { name: 'Control' }));
+    expect(pressed()).toEqual(['Anticipation', 'Control']);
+
+    await userEvent.type(screen.getByLabelText('Your name'), 'Ana');
+    await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', false, {
+      scenario: 'prg-green',
+      abilities: ['anticipation', 'control'],
+    });
   });
 
   it('joins by code, uppercasing and dropping anything but letters', async () => {
@@ -68,6 +95,14 @@ describe('WaitingRoom after a partner left', () => {
     render(<WaitingRoom code="QRST" missing="pilot" timerMs={180_000} />);
     expect(screen.getByText('Waiting for your pilot')).toBeInTheDocument();
     expect(screen.getByText(/Timed game: 3:00 per round/)).toBeInTheDocument();
+  });
+
+  it('shows the scenario so whoever joins knows what they fly', () => {
+    render(<WaitingRoom code="QRST" scenario={SCENARIOS['pbh-red']} />);
+    expect(screen.getByText('PBH Paro')).toBeInTheDocument();
+    expect(
+      screen.getByText('Elite pilots only · Kerosene · Real-time · 2 abilities'),
+    ).toBeInTheDocument();
   });
 });
 

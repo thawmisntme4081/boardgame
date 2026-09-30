@@ -29,7 +29,28 @@ export type SlotId =
   | 'flaps4'
   | 'concentration1'
   | 'concentration2'
-  | 'concentration3';
+  | 'concentration3'
+  // Module slots: only in scenarios with that module (see `SlotDef.module`).
+  | 'kerosene'
+  | 'internPilot'
+  | 'internCopilot'
+  | 'ice2Top'
+  | 'ice2Bottom'
+  | 'ice3Top'
+  | 'ice3Bottom'
+  | 'ice4Top'
+  | 'ice4Bottom'
+  | 'ice5Top'
+  | 'ice5Bottom';
+
+/** Scenario colour in the Flight Log: Routine, Exceptional, Elite, Heroic. */
+export type Difficulty = 'green' | 'yellow' | 'red' | 'black';
+
+export type ModuleId =
+  'kerosene' | 'kerosene-leak' | 'intern' | 'wind' | 'real-time' | 'ice-brakes';
+
+export type AbilityId =
+  'adaptation' | 'anticipation' | 'control' | 'mastery' | 'synchronisation' | 'working-together';
 
 /** `strategy`: talking allowed, dice not rolled yet. `placing`: dice rolled, silence. */
 export type Phase = 'strategy' | 'placing' | 'won' | 'lost';
@@ -45,13 +66,19 @@ export type EndReason =
   | 'landing-flaps' // not all flaps deployed
   | 'landing-axis' // plane not level
   | 'landing-brakes' // final speed not below the brakes
-  | 'time-up'; // a timed game's round ran out of time before all dice were placed
+  | 'time-up' // a timed game's round ran out of time before all dice were placed
+  | 'kerosene' // the kerosene marker reached the X
+  | 'turn' // advanced with the axis outside a turn's permitted positions
+  | 'landing-intern' // intern tokens left on the board
+  | 'landing-ice-brakes'; // ice brakes not deployed past the 5
 
 export interface PlacedDie {
   seat: Seat;
   dieId: string;
   /** Value after coffee modifiers. */
   value: DieValue;
+  /** Not one of the seat's own dice: an Intern token or the Synchronisation traffic die. */
+  source?: 'intern' | 'traffic';
 }
 
 export interface AltitudeSpace {
@@ -62,12 +89,28 @@ export interface AltitudeSpace {
 }
 
 export interface Scenario {
+  /** `yul`, `lhr-green`, `lhr-yellow`, … */
   id: string;
+  /** International code, e.g. `LHR`. */
+  airport: string;
   name: string;
+  difficulty: Difficulty;
   /** One space per round, top (first round) to bottom (final round). */
   altitudes: AltitudeSpace[];
   /** Airplane tokens per approach space; index 0 is the start, the last index is the airport. */
   approach: number[];
+  /** Traffic die icons per approach space (absent: none). */
+  traffic?: number[];
+  /**
+   * Turns: the axis positions allowed when the approach track advances from each space
+   * (`null` or absent: any position).
+   */
+  turns?: (readonly number[] | null)[];
+  modules: ModuleId[];
+  /** How many Special Ability cards the players choose (0, 1 or 2). */
+  abilities: number;
+  /** Track values not yet checked against the printed tiles. */
+  placeholder?: boolean;
 }
 
 /** What a client sends to place a die. */
@@ -76,6 +119,22 @@ export interface PlaceIntent {
   slot: SlotId;
   /** Net coffee modifier; each token spent is +1 or -1. */
   coffeeDelta: number;
+  /** Intern: where the token taken from the Intern board goes. */
+  tokenSlot?: SlotId;
+}
+
+/** A special ability a player uses (the automatic ones need no action). */
+export interface AbilityAction {
+  ability: 'adaptation' | 'anticipation' | 'working-together';
+  dieId: string;
+}
+
+/** Special abilities used so far: per game (Adaptation) or this round (the rest). */
+export interface AbilityUse {
+  adaptation: Record<Seat, boolean>;
+  anticipation: boolean;
+  workingTogether: boolean;
+  synchronisation: boolean;
 }
 
 export type GameEvent =
@@ -88,9 +147,23 @@ export type GameEvent =
       slot: SlotId;
       coffeeDelta: number;
       value: DieValue;
+      tokenSlot?: SlotId;
     }
   | { type: 'reroll-spent'; round: number; seat: Seat }
   | { type: 'reroll'; round: number; seat: Seat; dice: Die[] }
+  /** Traffic die rolls at the start of a round; planes went to `approachIndex + roll - 1`. */
+  | { type: 'traffic'; round: number; rolls: number[] }
+  /** Synchronisation: the traffic die the co-pilot must place. */
+  | { type: 'bonus-die'; round: number; die: Die }
+  /** A die changed by an ability (flipped, rerolled or swapped); `value` is its new value. */
+  | {
+      type: 'ability';
+      round: number;
+      seat: Seat;
+      ability: AbilityId;
+      dieId: string;
+      value: DieValue;
+    }
   | { type: 'round-end'; round: number }
   | { type: 'game-end'; round: number; result: 'won' | 'lost'; reason?: EndReason };
 
@@ -125,6 +198,21 @@ export interface GameState {
   speed: number | null;
   rngSeed: number;
   rngState: number;
+  /** Special Ability cards in play, chosen when the game is created. */
+  abilities: AbilityId[];
+  abilityUse: AbilityUse;
+  /** Kerosene and Kerosene leak: fuel left (the X is 0); `null` without those modules. */
+  kerosene: number | null;
+  /** Intern: tokens still on the Intern board, pilot's end first; `null` without the module. */
+  intern: DieValue[] | null;
+  /** Wind: the Wind Ring space the blue airplane points at (0 is the white centre); `null` without the module. */
+  wind: number | null;
+  /** Airplane tokens left in the box, for the traffic die. */
+  planeSupply: number;
+  /** Synchronisation: the traffic die the co-pilot must place now, and whose turn it interrupted. */
+  bonus: { die: Die; after: Seat } | null;
+  /** Working Together: the die a player put on the card, waiting for the partner's die. */
+  swap: { seat: Seat; dieId: string; value: DieValue } | null;
   /** Timed games: how long each round's dice placement may take; `null` for no timer. */
   timerMs: number | null;
   /** When the current round's time runs out (ms since epoch), while a timed round is placing. */
@@ -152,6 +240,17 @@ export type MoveError =
   | 'no-reroll'
   | 'reroll-pending'
   | 'no-reroll-pending'
-  | 'bad-reroll';
+  | 'bad-reroll'
+  | 'slot-not-allowed'
+  | 'no-intern-token'
+  | 'intern-same-value'
+  | 'bad-token-slot'
+  | 'bonus-pending'
+  | 'swap-pending'
+  | 'ability-unavailable'
+  | 'ability-used'
+  | 'not-first-player'
+  | 'first-die-placed'
+  | 'no-partner-dice';
 
 export type MoveCheck = { ok: true } | { ok: false; reason: MoveError };

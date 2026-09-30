@@ -5,5 +5,7 @@ export * from './slots';
 export * from './scenarios';
 export * from './state';
 export * from './rules';
+export * from './abilities';
+export * from './modules';
 export * from './views';
 export * from './events';

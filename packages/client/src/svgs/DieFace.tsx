@@ -1,4 +1,4 @@
-import type { DieValue, Seat } from '@sky/shared';
+import type { DieValue, PlacedDie, Seat } from '@sky/shared';
 import { cn } from '@/lib/utils';
 
 const PIPS: Record<DieValue, [number, number][]> = {
@@ -38,11 +38,31 @@ const PIPS: Record<DieValue, [number, number][]> = {
 interface DieFaceProps {
   value: DieValue;
   seat: Seat;
+  /** The black traffic die (Synchronisation) or an Intern token, instead of a player's die. */
+  kind?: PlacedDie['source'];
   className?: string;
 }
 
-/** A die face as SVG, so it stays sharp at any size. */
-export function DieFace({ value, seat, className }: DieFaceProps) {
+/** A die face (or Intern token) as SVG, so it stays sharp at any size. */
+export function DieFace({ value, seat, kind, className }: DieFaceProps) {
+  if (kind === 'intern') {
+    return (
+      <svg viewBox="0 0 100 100" className={cn('block', className)} aria-hidden="true">
+        <rect
+          x="8"
+          y="8"
+          width="84"
+          height="84"
+          rx="14"
+          strokeWidth="8"
+          className="fill-card stroke-emerald-500"
+        />
+        <text x="50" y="68" textAnchor="middle" className="fill-foreground text-[52px] font-bold">
+          {value}
+        </text>
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 100 100" className={cn('block', className)} aria-hidden="true">
       <rect
@@ -51,7 +71,9 @@ export function DieFace({ value, seat, className }: DieFaceProps) {
         width="92"
         height="92"
         rx="18"
-        className={seat === 'pilot' ? 'fill-pilot' : 'fill-copilot'}
+        className={
+          kind === 'traffic' ? 'fill-neutral-900' : seat === 'pilot' ? 'fill-pilot' : 'fill-copilot'
+        }
       />
       {PIPS[value].map(([cx, cy]) => (
         <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="9" className="fill-white" />

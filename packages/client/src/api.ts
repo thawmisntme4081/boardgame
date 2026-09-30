@@ -1,5 +1,12 @@
 // Everything that talks to the server. Components call these; only the server changes the game.
-import type { AckResult, JoinResult, SlotId } from '@sky/shared';
+import {
+  SLOTS,
+  type AbilityAction,
+  type AckResult,
+  type GameSetup,
+  type JoinResult,
+  type SlotId,
+} from '@sky/shared';
 import { toast } from 'sonner';
 import { errorText } from './messages';
 import { createPartnerNotifier } from './partner';
@@ -98,9 +105,18 @@ function onJoined(result: JoinResult | null, name: string): boolean {
   return true;
 }
 
-/** Creates a game; `timer` makes every round a countdown (lose when it runs out). */
-export async function createRoom(name: string, timer = false): Promise<boolean> {
-  const result = await withTimeout(() => emit().emitWithAck('room:create', { name, timer }));
+/**
+ * Creates a game on the chosen scenario; `timer` makes every round a countdown (lose when
+ * it runs out).
+ */
+export async function createRoom(
+  name: string,
+  timer = false,
+  setup: GameSetup = {},
+): Promise<boolean> {
+  const result = await withTimeout(() =>
+    emit().emitWithAck('room:create', { name, timer, ...setup }),
+  );
   return onJoined(result, name);
 }
 
@@ -111,14 +127,26 @@ export async function joinRoom(code: string, name: string): Promise<boolean> {
 
 export const ready = () => run('ready', () => emit().emitWithAck('game:ready', {}));
 
-/** Places the selected die, with its draft coffee, on `slot`. */
+/**
+ * Places the selected die, with its draft coffee, on `slot`. An Intern space takes two
+ * taps: the first picks it, the second says where its token goes.
+ */
 export async function placeSelected(slot: SlotId): Promise<boolean> {
-  const { selectedDieId, coffeeDelta } = useGame.getState();
+  const { selectedDieId, coffeeDelta, internSlot, setInternSlot } = useGame.getState();
   if (!selectedDieId) return false;
-  return run('place', () =>
-    emit().emitWithAck('game:place', { dieId: selectedDieId, slot, coffeeDelta }),
-  );
+  if (!internSlot && SLOTS[slot].group === 'intern') {
+    setInternSlot(slot);
+    return true;
+  }
+  const intent = internSlot
+    ? { dieId: selectedDieId, slot: internSlot, coffeeDelta, tokenSlot: slot }
+    : { dieId: selectedDieId, slot, coffeeDelta };
+  return run('place', () => emit().emitWithAck('game:place', intent));
 }
+
+/** Adaptation, Anticipation or Working Together, on one of your dice. */
+export const playAbility = (action: AbilityAction) =>
+  run('ability', () => emit().emitWithAck('game:ability', action));
 
 export const spendReroll = () =>
   run('spend-reroll', () => emit().emitWithAck('game:spend-reroll', {}));
@@ -127,7 +155,9 @@ export function reroll(dieIds: string[]): Promise<boolean> {
   return run('reroll', () => emit().emitWithAck('game:reroll', { dieIds }));
 }
 
-export const rematch = () => run('rematch', () => emit().emitWithAck('game:rematch', {}));
+/** A new game in the same room: the same scenario, or the one in `setup`. */
+export const rematch = (setup: GameSetup = {}) =>
+  run('rematch', () => emit().emitWithAck('game:rematch', setup));
 
 function forgetSession(): void {
   saveSession(null);

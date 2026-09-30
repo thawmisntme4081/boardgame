@@ -169,3 +169,51 @@ test.describe('round timer', () => {
     }
   });
 });
+
+test.describe('Flight Log scenarios', () => {
+  test('burns kerosene with a die on the Kerosene space', async ({ browser }, testInfo) => {
+    const device = deviceOptions(testInfo.project.use);
+    const players = await startGame(browser, device, device, /^OSL Gardermoen.*Routine/);
+    await expect(players.copilot.getByText('OSL Gardermoen')).toBeVisible();
+    await bothReady(players);
+    const { pilot, copilot } = players;
+    const die = pilot.getByRole('button', { name: /^Your die/ }).first();
+    const value = Number((await die.getAttribute('aria-label'))!.replace(/\D/g, ''));
+    await die.click();
+    await pilot.getByRole('button', { name: 'Kerosene 1 (either player)' }).click();
+    for (const page of [pilot, copilot]) {
+      await expect(page.getByRole('meter', { name: 'Kerosene' })).toHaveAttribute(
+        'aria-valuenow',
+        String(20 - value),
+      );
+    }
+  });
+
+  test('trains the intern: a die on the Intern space, then its token on the board', async ({
+    browser,
+  }, testInfo) => {
+    const device = deviceOptions(testInfo.project.use);
+    const players = await startGame(browser, device, device, /^ATL Hartsfield-Jackson.*Routine/);
+    await bothReady(players);
+    const { pilot, copilot } = players;
+    // The traffic die rolled twice on the first space before the game started.
+    await expect(
+      pilot.getByRole('img', { name: /Current space: traffic die 2× each round here/ }),
+    ).toBeVisible();
+
+    const dice = pilot.getByRole('button', { name: /^Your die/ });
+    const intern = pilot.getByRole('button', { name: 'Intern 1 (pilot)' });
+    for (let i = 0; i < (await dice.count()); i++) {
+      await dice.nth(i).click();
+      if (await intern.isEnabled()) break;
+      await dice.nth(i).click();
+    }
+    await intern.click();
+    await expect(pilot.getByText(/Intern token \d: tap a glowing space for it/)).toBeVisible();
+    await pilot.locator('button[data-valid]').first().click();
+    for (const page of [pilot, copilot]) {
+      await expect(page.getByLabel(/^Intern tokens left: \d(, \d){4}$/)).toBeAttached();
+    }
+    await expect(copilot.getByText('Your turn: tap a die')).toBeVisible();
+  });
+});

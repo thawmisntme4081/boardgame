@@ -18,7 +18,7 @@ const span = (x1: number, x2: number) => ({
 export function SpeedGauge({ view, className }: { view: PlayerView; className?: string }) {
   const blue = speedX(view.aeroBlue + 0.5);
   const orange = speedX(Math.min(view.aeroOrange + 0.5, SPEED_MAX + 0.5));
-  const brake = brakeThreshold(view.brakes) + 0.5;
+  const brake = brakeThreshold(view.brakes, view.scenario.modules) + 0.5;
   const ticks = [];
   for (let v = SPEED_MIN; v <= SPEED_MAX; v++) ticks.push(v);
   const speedDot = speedX(view.speed === null ? SPEED_MIN : Math.min(view.speed, SPEED_MAX));

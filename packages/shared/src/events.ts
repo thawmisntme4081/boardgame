@@ -1,5 +1,5 @@
 // Socket.IO protocol shared by server and client: a renamed event breaks the build.
-import type { MoveError, PlaceIntent, Seat } from './types';
+import type { AbilityAction, AbilityId, MoveError, PlaceIntent, Seat } from './types';
 import type { PlayerView } from './views';
 
 export type ErrorCode =
@@ -29,7 +29,15 @@ export interface PlayerInfo {
 /** Who sits in each seat; `null` while the seat is empty. */
 export type Presence = Record<Seat, PlayerInfo | null>;
 
-export interface CreateRoomPayload {
+/** Which Flight Log scenario to fly, and the Special Ability cards the players chose. */
+export interface GameSetup {
+  /** Scenario id (`SCENARIOS`); YUL when absent. */
+  scenario?: string;
+  /** Exactly as many as the scenario allows; the first ones of `ABILITY_IDS` when absent. */
+  abilities?: AbilityId[];
+}
+
+export interface CreateRoomPayload extends GameSetup {
   name: string;
   /** Timed game: each round must be placed within the round timer (default off). */
   timer?: boolean;
@@ -58,7 +66,13 @@ export interface ClientToServer {
   /** Spend a reroll token: both players may then reroll once. */
   'game:spend-reroll': (payload: Empty, ack: (result: AckResult) => void) => void;
   'game:reroll': (payload: RerollPayload, ack: (result: AckResult) => void) => void;
-  'game:rematch': (payload: Empty, ack: (result: AckResult) => void) => void;
+  /** Use Adaptation, Anticipation or Working Together (offer a die, or answer an offer). */
+  'game:ability': (payload: AbilityAction, ack: (result: AckResult) => void) => void;
+  /**
+   * New game in the same room once this one is over; may switch scenario. Before the first
+   * roll it just switches the scenario (a repeat of the current setup is accepted, no change).
+   */
+  'game:rematch': (payload: GameSetup, ack: (result: AckResult) => void) => void;
 }
 
 export interface ServerToClient {

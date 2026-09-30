@@ -1,4 +1,7 @@
-import type { GameState, Scenario } from './types';
+import { ABILITY_IDS, freshAbilityUse } from './abilities';
+import { modulesOf } from './modules';
+import { PLANE_TOKENS, rollTraffic } from './rules';
+import type { AbilityId, GameState, Scenario } from './types';
 
 /** Blue Aerodynamics marker starts between 4 and 5. */
 export const AERO_BLUE_START = 4;
@@ -11,18 +14,41 @@ export const ROUND_TIMER_MS = 3 * 60_000;
 export interface GameOptions {
   /** Round timer in ms, or `null` (the default) for an untimed game. */
   timerMs?: number | null;
+  /** Special Ability cards the players chose (the scenario says how many). */
+  abilities?: readonly AbilityId[];
+}
+
+function validateScenario(scenario: Scenario): void {
+  const first = scenario.altitudes[0];
+  if (!first) throw new Error(`scenario ${scenario.id} has no altitudes`);
+  const length = scenario.approach.length;
+  if (length < 2) throw new Error(`scenario ${scenario.id} approach too short`);
+  if (scenario.traffic && scenario.traffic.length !== length) {
+    throw new Error(`scenario ${scenario.id} traffic does not match the approach`);
+  }
+  if (scenario.turns && scenario.turns.length !== length) {
+    throw new Error(`scenario ${scenario.id} turns do not match the approach`);
+  }
+  if (scenario.approach.reduce((a, b) => a + b, 0) > PLANE_TOKENS) {
+    throw new Error(`scenario ${scenario.id} needs more than ${PLANE_TOKENS} planes`);
+  }
 }
 
 export function createGame(
   scenario: Scenario,
   seed: number,
-  { timerMs = null }: GameOptions = {},
+  { timerMs = null, abilities = [] }: GameOptions = {},
 ): GameState {
-  const first = scenario.altitudes[0];
-  if (!first) throw new Error(`scenario ${scenario.id} has no altitudes`);
-  if (scenario.approach.length < 2) throw new Error(`scenario ${scenario.id} approach too short`);
+  validateScenario(scenario);
+  if (
+    new Set(abilities).size !== abilities.length ||
+    abilities.some((a) => !ABILITY_IDS.includes(a))
+  ) {
+    throw new Error(`bad abilities: ${abilities.join(', ')}`);
+  }
+  const first = scenario.altitudes[0]!;
 
-  return {
+  const state: GameState = {
     scenario,
     phase: 'strategy',
     round: 1,
@@ -44,8 +70,19 @@ export function createGame(
     speed: null,
     rngSeed: seed,
     rngState: seed,
+    abilities: [...abilities],
+    abilityUse: freshAbilityUse(),
+    kerosene: null,
+    intern: null,
+    wind: null,
+    planeSupply: PLANE_TOKENS - scenario.approach.reduce((a, b) => a + b, 0),
+    bonus: null,
+    swap: null,
     log: [],
     timerMs,
     deadline: null,
   };
+  for (const module of modulesOf(scenario)) module.setup?.(state);
+  rollTraffic(state);
+  return state;
 }

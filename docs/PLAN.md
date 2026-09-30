@@ -61,6 +61,8 @@ sky-team/
 │   │       ├── rules.ts        # canPlaceDie, placeDie, endRound, checkLanding
 │   │       ├── views.ts        # viewFor(state, seat)
 │   │       ├── scenarios.ts    # airport configs as data
+│   │       ├── modules/        # Flight Log modules as rule hooks
+│   │       ├── abilities.ts    # Special Ability actions
 │   │       └── rng.ts          # seedable dice roller
 │   ├── server/
 │   │   └── src/
@@ -94,8 +96,10 @@ Implemented in Phase 1 (`packages/shared/src`):
 | --- | --- |
 | `types.ts` | `Seat`, `SlotId`, `Phase` (`strategy` → `placing` → … → `won` / `lost`), `EndReason`, `Scenario`, `PlaceIntent`, `GameEvent`, `GameState` |
 | `slots.ts` | Every slot's seat colours, allowed values and group; the 4 mandatory slots |
-| `scenarios.ts` | Altitude track and YUL scenario as data |
-| `state.ts` | `createGame(scenario, seed)` |
+| `scenarios.ts` | Both altitude track sides and the 21 Flight Log scenarios as data (`SCENARIO_LIST`, `SCENARIOS`) |
+| `state.ts` | `createGame(scenario, seed, { timerMs, abilities })`: runs each module's `setup` and the first traffic roll |
+| `modules/` | One file per Flight Log module, each a `RuleModule` of hooks (see below); `MODULES`, `modulesOf(scenario)` |
+| `abilities.ts` | Special Abilities: `ABILITY_IDS`, `canUseAbility` / `useAbility` (Adaptation, Anticipation, Working Together) |
 | `rules.ts` | `rollDice`, `canPlaceDie`, `placeDie`, `legalMoves`, `resolveRound`, `checkLanding`, `spendReroll`, `rerollDice` |
 | `rng.ts` | mulberry32; `rngSeed` + `rngState` live in the state, so `rngSeed` + `log` replay a game |
 | `views.ts` | `PlayerView`, `viewFor(state, seat)`, and `canPlaceInView` (the client’s `canPlaceDie`: the same `checkPlacement`, read from the view) |
@@ -121,8 +125,29 @@ Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { d
 
 **Optional round timer** (not in the board game; an online extra): the game creator can turn on a timer in the lobby (off by default). From the roll until the round's last die is placed the players have `ROUND_TIMER_MS` (3 minutes); if it runs out, the game is lost (`endReason: 'time-up'`). `GameState.timerMs` holds the setting and `deadline` the running round's end; `startRoundTimer(state, now)` starts it after `rollDice`, `expireRoundTimer(state, now)` ends the game once `now` reaches the deadline, and ending the round or the game clears it. The server keeps one timeout per room (`syncRoundTimer`) and also checks the deadline before every move, so a late move finds the game already lost. Views carry `timerMs` and `roundTimeLeftMs` (relative, so a wrong device clock does not matter).
 
+**Flight Log scenarios and modules** (Phase 7). A `Scenario` has an airport, a colour (`green` Routine, `yellow` Exceptional, `red` Elite, `black` Heroic), its altitude track (green/yellow or red/black side), its approach track (`approach` planes, optional `traffic` icons and `turns`), its `modules` and how many Special Ability cards the players choose. Modules are `RuleModule` objects in `packages/shared/src/modules`; the rules call their hooks at fixed points (`setup`, `checkSlot`, `checkMove`, `place`, `afterAxis`, `speedBonus`, `endOfRound`, `landing`, `brakeThresholds`, `timeUpEndsRound`) and a module only reacts to its own slots (`SlotDef.module`; `coveredBy` hides the brakes under the ice brakes). Module state lives in `GameState` (`kerosene`, `intern`, `wind`) and is public in the view.
+
+| Module / effect | Rule as implemented |
+| --- | --- |
+| Kerosene | Marker starts at 20. A die of any value on the Kerosene space (either player) burns its value; a round without one burns 6 at the very end of the round. Reaching 0 (the X) at any time loses (`kerosene`) |
+| Kerosene leak | Same track, no Kerosene space; each round burns \|pilot engine − co-pilot engine\| + 1 |
+| Intern | Six tokens 1–6 in a seeded random order. A die (any value, but not the next token's) on your Intern space takes the token nearest your side; the token goes on a space you could fill, as a die of its number (no coffee, not Concentration). One move: `game:place { …, tokenSlot }`. Tokens left at landing lose (`landing-intern`) |
+| Wind | The blue airplane starts at the ring's white centre (index 0). After each Axis phase it turns as many spaces as the axis is off centre (toward the pilot = left), even if the axis did not move; its wind speed is added to the engines every round, the last one included |
+| Real-time | 60 s from the roll (`REAL_TIME_MS`, overrides the lobby timer); when it runs out the round ends and unplaced dice are lost; missing axis/engine dice lose as usual |
+| Ice brakes | Replace the brakes: columns 2, 3, 4, 5, each needing two dice of that value in one round, above (pilot) and below (either player), left to right; the marker may pass several columns in a round. A lone die is lost at the round's end. Landing needs the marker past 5 (`landing-ice-brakes`) and speed ≤ 5 |
+| Traffic die | At the start of each round (round 1 included), one roll of the traffic die (2, 3, 3, 4, 4, 5) per icon on the current space adds a plane that many spaces ahead, counting the current one (beyond the track: the airport), while the box (12 planes) has any. Radio-cleared planes go back to the box |
+| Turns | Every space the plane flies out of when the track advances checks the axis against its permitted positions; outside them loses (`turn`). No advance, no check |
+
+Special Abilities (the lobby picks as many as the scenario allows): **Control** (two equal Axis dice: +1 coffee) and **Mastery** (two equal Engine dice: +1 reroll token if one of the 3 is still in the box, not on the altitude track or in the supply) trigger by themselves; **Synchronisation** rolls the traffic die once per round when that round has dice on both Landing Gear and Flaps, and the co-pilot must place it at once on any empty Control Panel space, any colour, no coffee (an extra action; the turn then continues as before); **Adaptation** (once per game each, flip one of your dice to its opposite side), **Anticipation** (each round the first player may reroll one die before placing their first) and **Working Together** (once per round: offer a die; the partner must answer with one; the values swap; nobody places meanwhile) are `game:ability` actions.
+
+**Placeholder data** (not printed in the Flight Log, marked `placeholder: true` / `PLACEHOLDER`): the approach tracks of the 20 non-YUL scenarios (planes, traffic icons, turns; shaped after each card's story), the Wind Ring values (`WIND_RING`; the booklet only shows a +2 space), and the red/black altitude track (`HARD_ALTITUDES`, assumed like the green side with one reroll at 6000). Modules, ability counts and colours come from the cards.
+
 **Assumptions to revisit:**
 
+- Turns check the space the plane flies out of (both spaces when advancing 2), not the one it arrives on.
+- Synchronisation triggers once per round, the traffic die cannot take coffee and cannot go on the Kerosene or Intern boards.
+- Abilities are chosen by whoever creates the game (or presses "Fly again"); Adaptation may be used at any time while dice are being placed.
+- Radio-cleared planes return to the box, so the traffic die can reuse them.
 - If the seat on turn has no legal placement, the turn passes to the partner; if neither can place, the leftover dice are lost and the round ends (the rulebook does not cover this).
 - Placing on a flap or brake that is already deployed is allowed and has no effect (the rulebook says so for landing gear).
 
@@ -132,15 +157,16 @@ All events are typed once in `shared` and used by both `Server<...>` and `Socket
 
 | Direction | Event | Payload | Server response |
 | --- | --- | --- | --- |
-| Client → Server | `room:create` | `{ name, timer? }` (`timer: true` for a timed game) | ack `{ ok, code, seat, token }` |
+| Client → Server | `room:create` | `{ name, timer?, scenario?, abilities? }` (`timer: true` for a timed game; scenario id, YUL by default; exactly the scenario's number of abilities, or the first ones by default) | ack `{ ok, code, seat, token }` |
 | Client → Server | `room:join` | `{ code, name }` | ack `{ ok, code, seat, token }` or `{ ok:false, error }` |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, partner's game restarts; empty room deleted |
 | Client → Server | `game:ready` | `{}` | ack; rolls dice when both are ready |
-| Client → Server | `game:place` | `{ dieId, slot, coffeeDelta }` | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
+| Client → Server | `game:place` | `{ dieId, slot, coffeeDelta, tokenSlot? }` (`tokenSlot`: where an Intern token goes; the Synchronisation traffic die uses its own `dieId`) | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
+| Client → Server | `game:ability` | `{ ability: 'adaptation' \| 'anticipation' \| 'working-together', dieId }` | ack; Working Together: the first call offers a die, the partner's call answers |
 | Client → Server | `game:spend-reroll` | `{}` | ack; both players may then reroll once |
 | Client → Server | `game:reroll` | `{ dieIds }` | ack; rerolls your chosen dice (may be none) |
-| Client → Server | `game:rematch` | `{}` | ack; new game, same room and seats; `game-not-over` otherwise |
+| Client → Server | `game:rematch` | `{ scenario?, abilities? }` | ack; new game, same room and seats (same scenario unless given); before the first roll it only switches the scenario; `game-not-over` otherwise |
 | Server → Client | `game:view` | `PlayerView` | to each seat after every change |
 | Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready/every change |
 
@@ -151,6 +177,7 @@ Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room e
 - Your own unplaced dice: full values.
 - Partner's unplaced dice: a count only (`partnerDiceLeft: 3`).
 - Placed dice, tracks, coffee, altitude: public.
+- Module state (kerosene, intern tokens, wind), the Synchronisation traffic die and the die offered for Working Together: public (face up at the table).
 - `rngSeed` and the log's future rolls: never sent.
 
 **No-talking rule.** There is no in-game chat (removed Sep 28, 2026): players talk outside the app (in person or a call) during the `strategy` phase, and each presses "Ready to roll" when the discussion is over. From the roll until the round ends they stay silent by agreement, as at the table.
@@ -308,17 +335,18 @@ E2E setup: `pnpm e2e` builds the app and starts `node packages/server/dist/index
 
 v1 ships one airport; this phase fills in the rest of the base box and builds the module system the expansion needs.
 
-- [ ] Module hook system: a scenario lists its active modules; each module adds its own state and hooks into rolling, `canPlaceDie`, `placeDie` and `resolveRound`
-- [ ] Remaining base-box airports and scenarios as scenario data (11 airports, 21 scenarios)
-- [ ] Base modules (wind, kerosene, traffic, ice, intern and the rest) as rule hooks, one at a time, each with tests
-- [ ] Scenario picker in the lobby, with difficulty shown
-- [ ] UI slots and tracks for each module, placed for phone and desktop layouts
+- [x] Module hook system: a scenario lists its active modules; each module is a `RuleModule` (`packages/shared/src/modules`) with its own state and hooks into setup, placement checks, slot effects, the axis and engines, the end of the round, landing and the round timer
+- [x] Remaining base-box airports and scenarios as scenario data (11 airports, 21 scenarios): colours, modules and ability counts from the Flight Log cards
+- [ ] Replace the placeholder data with the printed values: the approach tracks of the 20 non-YUL scenarios (planes, traffic icons, turns), the Wind Ring values and the red/black altitude track. They are not in the Flight Log or online, so they need reading off the physical tiles
+- [x] Base modules as rule hooks, each with tests: Kerosene, Kerosene leak, Intern, Wind, Real-time, Ice brakes; approach effects Traffic die and Turns; the six Special Abilities (Control, Mastery, Synchronisation automatic; Adaptation, Anticipation, Working Together via `game:ability`)
+- [x] Scenario picker in the lobby (shadcn Select grouped by colour, modules explained, ability chips), shown in the waiting room, and again after a game ("Fly again" may switch scenario)
+- [x] UI for each module on phone and desktop: Kerosene, Wind (ring) and Intern panels below the cockpit, Ice brakes in place of the brakes, traffic and turn marks on the approach track, the black traffic die in the co-pilot's tray, ability buttons under the selected die
 
-**Done when:** every base scenario plays end to end and random-play fuzzing passes on all of them.
+**Done when:** every base scenario plays end to end and random-play fuzzing passes on all of them. ✅ Verified Sep 30, 2026 (with the placeholder tracks above): 100 fuzzed games per scenario in Vitest (2,100 in all, random abilities; plus 300 per scenario via `random-play … all`), every scenario won from a prepared final round with its module landing conditions, 252 Vitest tests in all; Playwright 29 passed (4 skipped by design), including a Kerosene and an Intern game on Desktop Chrome, iPhone 13 and Pixel 7; checked by hand in Chromium on desktop and Pixel 7 (TGU red, OSL red, ATL green).
 
 ### Phase 8: Turbulence expansion
 
-The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky-team-turbulence)) adds 10 destinations, 20 harder scenarios and new modules including Turbulence, Low Visibility and Alarms; it needs Phase 7's module system.
+The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky-team-turbulence)) adds 10 destinations, 20 harder scenarios and new modules including Turbulence, Low Visibility and Alarms; it builds on Phase 7's module system: each new module is another `RuleModule` in `packages/shared/src/modules` (add hook points there if a module needs one), and new slots declare their `module` in `slots.ts`.
 
 - [ ] Read the expansion rulebook and list every new rule as a test case before coding
 - [ ] Add the new approach and altitude tracks and the 20 scenarios as scenario data, tagged `expansion: 'turbulence'`

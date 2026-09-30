@@ -1,6 +1,8 @@
 // Plays whole games with random legal moves, for fuzz tests and the random-play script.
+import { canUseAbility, useAbility } from './abilities';
 import { nextRandom } from './rng';
 import {
+  canPlaceDie,
   canSpendReroll,
   isGameOver,
   legalMoves,
@@ -15,6 +17,8 @@ import { MANDATORY_SLOTS, SLOTS } from './slots';
 import { createGame } from './state';
 import {
   SEATS,
+  type AbilityAction,
+  type AbilityId,
   type GameState,
   type PlaceIntent,
   type Scenario,
@@ -43,7 +47,7 @@ function carefulMoves(state: GameState, moves: PlaceIntent[]): PlaceIntent[] {
   const safeMandatory = pool.filter((m) => {
     if (!MANDATORY_SLOTS.includes(m.slot)) return false;
     const after = placeDie(state, seat, m);
-    return after.phase !== 'lost' && partnerCanAnswer(after, seat, m.slot);
+    return after.phase !== 'lost' && counterpartCanAnswer(after, m.slot);
   });
   if (safeMandatory.length > 0) return safeMandatory;
   const others = pool.filter((m) => !MANDATORY_SLOTS.includes(m.slot));
@@ -57,23 +61,35 @@ const COUNTERPART: Partial<Record<SlotId, SlotId>> = {
   engineCopilot: 'enginePilot',
 };
 
-/** The agent sees both hands: after a first axis/engine die, can the partner reply without losing? */
-function partnerCanAnswer(after: GameState, seat: Seat, slot: SlotId): boolean {
+/**
+ * The agent sees both hands: after a first axis/engine die, can the other space's owner
+ * reply without losing? (Usually the partner; the traffic die can fill either colour.)
+ */
+function counterpartCanAnswer(after: GameState, slot: SlotId): boolean {
   const counterpart = COUNTERPART[slot];
-  if (after.phase !== 'placing' || !counterpart || after.placed[counterpart]) return true;
-  const partner = otherSeat(seat);
-  const probe: GameState = { ...after, currentSeat: partner };
-  return after.dice[partner].some(
-    (d) =>
-      placeDie(probe, partner, { dieId: d.id, slot: counterpart, coffeeDelta: 0 }).phase !== 'lost',
-  );
+  if (after.phase !== 'placing' || !counterpart || after.placed[counterpart] || after.bonus) {
+    return true;
+  }
+  const owner = SLOTS[counterpart].seats[0]!;
+  const probe: GameState = { ...after, currentSeat: owner };
+  return after.dice[owner].some((d) => {
+    const reply = { dieId: d.id, slot: counterpart, coffeeDelta: 0 };
+    return canPlaceDie(probe, owner, reply).ok && placeDie(probe, owner, reply).phase !== 'lost';
+  });
 }
 
 export type AgentAction =
   | { type: 'roll' }
   | { type: 'spend-reroll'; seat: Seat }
   | { type: 'reroll'; seat: Seat; dieIds: string[] }
-  | { type: 'place'; seat: Seat; intent: PlaceIntent };
+  | { type: 'place'; seat: Seat; intent: PlaceIntent }
+  | { type: 'ability'; seat: Seat; action: AbilityAction };
+
+const ACTION_ABILITIES: readonly AbilityAction['ability'][] = [
+  'adaptation',
+  'anticipation',
+  'working-together',
+];
 
 /**
  * A random player for both seats. It sees the whole state (it is a test tool), and its
@@ -96,6 +112,24 @@ export function createRandomAgent(seed: number, careful = true) {
       const dieIds = state.dice[pending].filter(() => rand() < 0.5).map((d) => d.id);
       return { type: 'reroll', seat: pending, dieIds };
     }
+    if (state.swap) {
+      // Working Together: the partner must answer with one of their dice.
+      const seat = otherSeat(state.swap.seat);
+      const dieId = pick(state.dice[seat]).id;
+      return { type: 'ability', seat, action: { ability: 'working-together', dieId } };
+    }
+    // Abilities are only considered when some are in play, so base games keep their RNG stream.
+    if (
+      state.abilities.some((a) => ACTION_ABILITIES.includes(a as AbilityAction['ability'])) &&
+      rand() < 0.1
+    ) {
+      const seat = pick([...SEATS]);
+      const ability = pick([...ACTION_ABILITIES]);
+      const die = state.dice[seat][0];
+      if (die && canUseAbility(state, seat, { ability, dieId: die.id }).ok) {
+        return { type: 'ability', seat, action: { ability, dieId: die.id } };
+      }
+    }
     if (canSpendReroll(state).ok && rand() < 0.1) {
       return { type: 'spend-reroll', seat: pick([...SEATS]) };
     }
@@ -117,6 +151,8 @@ export function applyAgentAction(state: GameState, action: AgentAction): GameSta
       return rerollDice(state, action.seat, action.dieIds);
     case 'place':
       return placeDie(state, action.seat, action.intent);
+    case 'ability':
+      return useAbility(state, action.seat, action.action);
   }
 }
 
@@ -125,9 +161,10 @@ export function playRandomGame(
   scenario: Scenario = YUL,
   onStep?: (state: GameState) => void,
   careful = true,
+  abilities: readonly AbilityId[] = [],
 ): GameState {
   const agent = createRandomAgent(seed, careful);
-  let state = createGame(scenario, seed);
+  let state = createGame(scenario, seed, { abilities });
   for (let step = 0; step < MAX_STEPS; step++) {
     onStep?.(state);
     if (isGameOver(state)) return state;

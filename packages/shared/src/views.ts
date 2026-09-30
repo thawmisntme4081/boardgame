@@ -1,3 +1,4 @@
+import { checkAbility, type AbilityContext } from './abilities';
 import {
   checkPlacement,
   checkTurn,
@@ -7,7 +8,11 @@ import {
   roundTimeLeft,
 } from './rules';
 import type {
+  AbilityAction,
+  AbilityId,
+  AbilityUse,
   Die,
+  DieValue,
   EndReason,
   GameState,
   MoveCheck,
@@ -49,6 +54,16 @@ export interface PlayerView {
   landingFailures?: EndReason[];
   timerMs: number | null;
   roundTimeLeftMs: number | null;
+  abilities: AbilityId[];
+  abilityUse: AbilityUse;
+  kerosene: number | null;
+  intern: DieValue[] | null;
+  wind: number | null;
+  planeSupply: number;
+  /** Synchronisation's traffic die (rolled in the open) waiting for the co-pilot. */
+  bonus: { die: Die } | null;
+  /** Working Together: the die on the card is face up, so both players see its value. */
+  swap: { seat: Seat; value: DieValue } | null;
 }
 
 /**
@@ -81,6 +96,14 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     speed: state.speed,
     timerMs: state.timerMs,
     roundTimeLeftMs: roundTimeLeft(state, now),
+    abilities: [...state.abilities],
+    abilityUse: structuredClone(state.abilityUse),
+    kerosene: state.kerosene,
+    intern: state.intern && [...state.intern],
+    wind: state.wind,
+    planeSupply: state.planeSupply,
+    bonus: state.bonus && { die: { ...state.bonus.die } },
+    swap: state.swap && { seat: state.swap.seat, value: state.swap.value },
   };
   if (state.endReason) view.endReason = state.endReason;
   if (state.landingFailures) view.landingFailures = [...state.landingFailures];
@@ -92,3 +115,12 @@ export function canPlaceInView(view: PlayerView, intent: PlaceIntent): MoveCheck
   const turn = checkTurn(view.phase, view.currentSeat, view.seat);
   return turn.ok ? checkPlacement(view, intent) : turn;
 }
+
+const abilityContextOfView = (view: PlayerView): AbilityContext => ({
+  ...view,
+  firstSeat: currentAltitude(view).first,
+});
+
+/** The client's copy of `canUseAbility`, read from the player's own view. */
+export const canUseAbilityInView = (view: PlayerView, action: AbilityAction): MoveCheck =>
+  checkAbility(abilityContextOfView(view), action);

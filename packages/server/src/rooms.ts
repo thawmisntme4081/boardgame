@@ -1,12 +1,17 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import {
+  ABILITY_IDS,
   createGame,
   ROUND_TIMER_MS,
+  SCENARIOS,
   SEATS,
   YUL,
+  type AbilityId,
   type ErrorCode,
+  type GameSetup,
   type GameState,
   type Presence,
+  type Scenario,
   type Seat,
 } from '@sky/shared';
 import { ROOM_CODE_LENGTH } from './schemas';
@@ -30,6 +35,8 @@ export interface Room {
   creatorIp: string;
   createdAt: number;
   lastActivity: number;
+  /** The creator turned the round timer on in the lobby. */
+  timed: boolean;
   /** The pending "time ran out" check of a timed round (see `syncRoundTimer`). */
   roundTimer?: ReturnType<typeof setTimeout>;
 }
@@ -44,6 +51,31 @@ export interface RoomOptions {
   /** Length of a timed round (tests and dev shorten it). */
   roundTimerMs?: number;
 }
+
+/** A scenario and its abilities, checked: `resolveSetup` turns a request into one. */
+export interface Setup {
+  scenario: Scenario;
+  abilities: AbilityId[];
+}
+
+/**
+ * Checks a requested scenario and Special Abilities: a known scenario (YUL by default) and
+ * exactly as many distinct abilities as it allows (the first ones by default).
+ */
+export function resolveSetup({ scenario: id, abilities }: GameSetup): Setup | undefined {
+  const scenario = id === undefined ? YUL : SCENARIOS[id];
+  if (!scenario) return undefined;
+  const chosen = abilities ?? ABILITY_IDS.slice(0, scenario.abilities);
+  if (chosen.length !== scenario.abilities || new Set(chosen).size !== chosen.length) {
+    return undefined;
+  }
+  return { scenario, abilities: [...chosen] };
+}
+
+const setupOf = (game: GameState): Setup => ({
+  scenario: game.scenario,
+  abilities: game.abilities,
+});
 
 export const DEFAULT_IDLE_TTL_MS = 30 * 60_000;
 export const DEFAULT_MAX_ROOMS_PER_IP = 5;
@@ -92,12 +124,15 @@ export class RoomManager {
     return room && player ? { room, player } : undefined;
   }
 
-  /** The creator takes the pilot seat and chooses whether the game is timed. */
+  /** The creator takes the pilot seat and chooses the scenario and whether the game is timed. */
   create(
     name: string,
     socketId: string,
     ip = 'unknown',
-    { timer = false }: { timer?: boolean } = {},
+    {
+      timer = false,
+      setup = { scenario: YUL, abilities: [] },
+    }: { timer?: boolean; setup?: Setup } = {},
   ): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const fromIp = [...this.rooms.values()].filter((r) => r.creatorIp === ip).length;
@@ -106,7 +141,11 @@ export class RoomManager {
     const room: Room = {
       code,
       players: {},
-      game: createGame(YUL, this.newSeed(), { timerMs: timer ? this.roundTimerMs : null }),
+      game: createGame(setup.scenario, this.newSeed(), {
+        timerMs: timer ? this.roundTimerMs : null,
+        abilities: setup.abilities,
+      }),
+      timed: timer,
       creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
@@ -193,10 +232,14 @@ export class RoomManager {
     return SEATS.every((seat) => room.players[seat]);
   }
 
-  /** Same room and seats, fresh game. */
-  rematch(room: Room): void {
-    // A rematch (or a restart after someone leaves) keeps the timed/untimed choice.
-    room.game = createGame(room.game.scenario, this.newSeed(), { timerMs: room.game.timerMs });
+  /** Same room and seats, fresh game: the same scenario unless `setup` picks another. */
+  rematch(room: Room, setup: Setup = setupOf(room.game)): void {
+    // A rematch (or a restart after someone leaves) keeps the timed/untimed choice; a
+    // Real-time scenario sets its own timer, so the room remembers the lobby choice.
+    room.game = createGame(setup.scenario, this.newSeed(), {
+      timerMs: room.timed ? this.roundTimerMs : null,
+      abilities: setup.abilities,
+    });
     for (const seat of SEATS) {
       const player = room.players[seat];
       if (player) player.ready = false;

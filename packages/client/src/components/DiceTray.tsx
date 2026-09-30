@@ -1,22 +1,44 @@
 import {
   canSpendReroll,
+  canUseAbilityInView,
   coffeeRange,
+  nextInternToken,
   otherSeat,
+  REAL_TIME_MS,
+  type AbilityAction,
   type DieValue,
   type PlayerView,
   type Presence,
 } from '@sky/shared';
-import { Coffee, Minus, Plus, RotateCcw } from 'lucide-react';
-import { reroll, spendReroll } from '@/api';
+import { ArrowLeftRight, Coffee, FlipVertical2, Minus, Plus, RotateCcw, X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { playAbility, reroll, spendReroll } from '@/api';
 import { Button } from '@/components/ui/button';
+import { formatClock } from '@/lib/clock';
 import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
+import { ABILITY_TEXT } from '@/scenarioText';
 import { useGame } from '@/store';
 import { DieFace } from '@/svgs/DieFace';
-import { formatClock } from '@/lib/clock';
 
 const partnerName = (view: PlayerView, presence: Presence | null) =>
   presence?.[otherSeat(view.seat)]?.name ?? seatName[otherSeat(view.seat)];
+
+/** The Special Ability cards in play, with their rules on hover. */
+function AbilityList({ view }: { view: PlayerView }) {
+  if (view.abilities.length === 0) return null;
+  return (
+    <p className="text-xs text-muted-foreground">
+      Abilities:{' '}
+      {view.abilities.map((ability, i) => (
+        <span key={ability} title={ABILITY_TEXT[ability].rule}>
+          {i > 0 && ' · '}
+          <span className="font-medium text-foreground">{ABILITY_TEXT[ability].name}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
 
 function StrategyTray({ view }: { view: PlayerView }) {
   return (
@@ -25,11 +47,20 @@ function StrategyTray({ view }: { view: PlayerView }) {
         Talk strategy now, then press “Ready to roll”. Once the dice are rolled, no talking until
         the round ends.
       </p>
-      {view.timerMs !== null && (
+      {view.scenario.modules.includes('real-time') ? (
         <p className="text-sm font-medium">
-          Timed game: {formatClock(view.timerMs)} to place all the dice once you roll, or you lose.
+          Real-time: {formatClock(REAL_TIME_MS)} to place the dice once you roll; dice not placed by
+          then are lost.
         </p>
+      ) : (
+        view.timerMs !== null && (
+          <p className="text-sm font-medium">
+            Timed game: {formatClock(view.timerMs)} to place all the dice once you roll, or you
+            lose.
+          </p>
+        )
       )}
+      <AbilityList view={view} />
     </div>
   );
 }
@@ -108,14 +139,79 @@ function CoffeeControl({ view, value }: { view: PlayerView; value: DieValue }) {
   );
 }
 
+type ActionAbility = AbilityAction['ability'];
+
+/** Adaptation, Anticipation and Working Together for the selected die, when the rules allow. */
+function AbilityActions({
+  view,
+  dieId,
+  value,
+}: {
+  view: PlayerView;
+  dieId: string;
+  value: DieValue;
+}) {
+  const buttons: { ability: ActionAbility; label: string; icon: ReactNode }[] = [
+    { ability: 'adaptation', label: `Flip to ${7 - value}`, icon: <FlipVertical2 /> },
+    { ability: 'anticipation', label: 'Reroll this die', icon: <RotateCcw /> },
+    {
+      ability: 'working-together',
+      label: view.swap ? `Swap for the ${view.swap.value}` : 'Offer to swap',
+      icon: <ArrowLeftRight />,
+    },
+  ];
+  const usable = buttons.filter(({ ability }) => canUseAbilityInView(view, { ability, dieId }).ok);
+  if (usable.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {usable.map(({ ability, label, icon }) => (
+        <Button
+          key={ability}
+          variant="outline"
+          className="h-11"
+          title={ABILITY_TEXT[ability].rule}
+          onClick={() => void playAbility({ ability, dieId })}
+        >
+          {icon} {label}
+          <span className="sr-only"> ({ABILITY_TEXT[ability].name})</span>
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+function placingText(view: PlayerView, partner: string, placingToken: boolean): string {
+  if (view.swap) {
+    return view.swap.seat === view.seat
+      ? `Working Together: waiting for ${partner} to swap with your ${view.swap.value}.`
+      : `${partner} offers a ${view.swap.value} to swap: tap one of your dice, then Swap.`;
+  }
+  if (view.bonus) {
+    return view.seat === 'copilot'
+      ? 'Synchronisation: place the traffic die on any empty space.'
+      : `${partner} is placing the traffic die…`;
+  }
+  if (placingToken) {
+    return `Intern token ${nextInternToken(view.intern, view.seat)}: tap a glowing space for it.`;
+  }
+  if (view.currentSeat !== view.seat) return `${partner} is placing a die…`;
+  return view.myDice.length > 0
+    ? 'Your turn: tap a die, then a glowing space.'
+    : 'Your dice are all placed.';
+}
+
 function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const selectedDieId = useGame((s) => s.selectedDieId);
   const coffeeDelta = useGame((s) => s.coffeeDelta);
   const selectDie = useGame((s) => s.selectDie);
+  const internSlot = useGame((s) => s.internSlot);
+  const setInternSlot = useGame((s) => s.setInternSlot);
   const myTurn = view.currentSeat === view.seat;
   const partner = partnerName(view, presence);
   const selected = view.myDice.find((d) => d.id === selectedDieId);
   const canSpend = canSpendReroll(view).ok;
+  // Synchronisation: the co-pilot holds the black traffic die until it is placed.
+  const trafficDie = view.seat === 'copilot' ? view.bonus?.die : undefined;
 
   return (
     <div className="flex flex-col gap-3">
@@ -126,13 +222,23 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
         )}
         role="status"
       >
-        {myTurn
-          ? view.myDice.length > 0
-            ? 'Your turn: tap a die, then a glowing space.'
-            : 'Your dice are all placed.'
-          : `${partner} is placing a die…`}
+        {placingText(view, partner, internSlot !== null)}
       </p>
       <div className="flex flex-wrap items-center gap-2">
+        {trafficDie && (
+          <button
+            type="button"
+            aria-pressed={trafficDie.id === selectedDieId}
+            aria-label={`Traffic die: ${trafficDie.value}`}
+            onClick={() => selectDie(trafficDie.id)}
+            className={cn(
+              'rounded-xl p-0.5 transition',
+              trafficDie.id === selectedDieId && '-translate-y-1 ring-4 ring-foreground',
+            )}
+          >
+            <DieFace value={trafficDie.value} seat="copilot" kind="traffic" className="size-11" />
+          </button>
+        )}
         {view.myDice.map((die) => {
           const isSelected = die.id === selectedDieId;
           const shown = (isSelected ? die.value + coffeeDelta : die.value) as DieValue;
@@ -152,12 +258,20 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
             </button>
           );
         })}
-        {view.myDice.length === 0 && (
+        {view.myDice.length === 0 && !trafficDie && (
           <span className="text-sm text-muted-foreground">No dice left</span>
         )}
       </div>
+      {selected && !internSlot && (
+        <AbilityActions view={view} dieId={selected.id} value={selected.value} />
+      )}
+      {internSlot && (
+        <Button variant="outline" className="h-11 self-start" onClick={() => setInternSlot(null)}>
+          <X /> Cancel the intern
+        </Button>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {selected ? <CoffeeControl view={view} value={selected.value} /> : <span />}
+        {selected && !internSlot ? <CoffeeControl view={view} value={selected.value} /> : <span />}
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span aria-label={`${partner} has ${view.partnerDiceLeft} dice left`}>
             {partner}: {view.partnerDiceLeft} {view.partnerDiceLeft === 1 ? 'die' : 'dice'}
@@ -175,6 +289,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
           )}
         </div>
       </div>
+      <AbilityList view={view} />
     </div>
   );
 }

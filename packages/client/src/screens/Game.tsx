@@ -1,25 +1,26 @@
-import { canPlaceInView, SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/shared';
+import { SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/shared';
 import { useEffect, useRef } from 'react';
 import { Cockpit } from '@/components/Cockpit';
 import { DiceTray } from '@/components/DiceTray';
 import { GameOverDialog } from '@/components/GameOverDialog';
 import { StatusBar } from '@/components/StatusBar';
+import { placingValue, slotValid } from '@/lib/moves';
 import { AltitudeTrack } from '@/svgs/AltitudeTrack';
 import { ApproachTrack } from '@/svgs/ApproachTrack';
 import { useGame } from '@/store';
 
-/** The approach space the selected die would clear on the radio, if it can go there. */
+/** The approach space the selected die (or intern token) would clear on the radio, if it can go there. */
 function useRadioTarget(view: PlayerView): number | undefined {
   const selectedDieId = useGame((s) => s.selectedDieId);
   const coffeeDelta = useGame((s) => s.coffeeDelta);
-  const die = view.myDice.find((d) => d.id === selectedDieId);
-  if (!die) return undefined;
+  const internSlot = useGame((s) => s.internSlot);
+  const selection = { selectedDieId, coffeeDelta, internSlot };
+  const value = placingValue(view, selection);
+  if (value === undefined) return undefined;
   const radioOk = SLOT_IDS.some(
-    (slot) =>
-      SLOTS[slot].group === 'radio' &&
-      canPlaceInView(view, { dieId: die.id, slot, coffeeDelta }).ok,
+    (slot) => SLOTS[slot].group === 'radio' && slotValid(view, selection, slot),
   );
-  return radioOk ? view.approachIndex + die.value + coffeeDelta - 1 : undefined;
+  return radioOk ? view.approachIndex + value - 1 : undefined;
 }
 
 /** A short buzz on Android when it becomes your turn. */

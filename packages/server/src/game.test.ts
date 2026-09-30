@@ -510,3 +510,123 @@ describe('round timer', () => {
     expect(room().roundTimer).toBeUndefined();
   });
 });
+
+describe('scenarios and special abilities', () => {
+  it('creates the chosen scenario with the chosen abilities and refuses bad setups', async () => {
+    server = await startTestServer(new RoomManager({ seed: () => 1 }));
+    const a = await server.connect();
+    const { code } = joined(
+      await a.emitWithAck('room:create', {
+        name: 'Ana',
+        scenario: 'prg-green',
+        abilities: ['control', 'working-together'],
+      }),
+    );
+    const game = server.rooms.get(code)!.game;
+    expect(game.scenario.id).toBe('prg-green');
+    expect(game.abilities).toEqual(['control', 'working-together']);
+    expect(game.kerosene).toBe(20);
+
+    for (const payload of [
+      { name: 'Ben', scenario: 'nowhere' },
+      { name: 'Ben', scenario: 'prg-green', abilities: ['control'] },
+      { name: 'Ben', scenario: 'prg-green', abilities: ['control', 'control'] },
+      { name: 'Ben', scenario: 'yul', abilities: ['mastery'] },
+      { name: 'Ben', scenario: 'kef-yellow', abilities: ['flying'] },
+    ]) {
+      const b = await server.connect();
+      expect(await b.emitWithAck('room:create', payload as never)).toEqual({
+        ok: false,
+        error: 'bad-request',
+      });
+    }
+  });
+
+  it('plays abilities over sockets: a Working Together swap', async () => {
+    server = await startTestServer(new RoomManager({ seed: () => 1 }));
+    const clients: Record<Seat, Client> = {
+      pilot: await server.connect(),
+      copilot: await server.connect(),
+    };
+    const { code } = joined(
+      await clients.pilot.emitWithAck('room:create', {
+        name: 'Ana',
+        scenario: 'kef-yellow',
+        abilities: ['working-together'],
+      }),
+    );
+    joined(await clients.copilot.emitWithAck('room:join', { code, name: 'Ben' }));
+    await bothReady(clients);
+    const room = server.rooms.get(code)!;
+    const [pilotDie] = room.game.dice.pilot;
+    const [copilotDie] = room.game.dice.copilot;
+
+    const offered = next(clients.copilot, 'game:view');
+    expectOk(
+      await clients.pilot.emitWithAck('game:ability', {
+        ability: 'working-together',
+        dieId: pilotDie!.id,
+      }),
+    );
+    expect((await offered).swap).toEqual({ seat: 'pilot', value: pilotDie!.value });
+    expect(
+      await clients.pilot.emitWithAck('game:ability', {
+        ability: 'adaptation',
+        dieId: pilotDie!.id,
+      }),
+    ).toEqual({ ok: false, error: 'ability-unavailable' });
+    expect(
+      await clients.pilot.emitWithAck('game:ability', { ability: 'control', dieId: 'x' } as never),
+    ).toEqual({ ok: false, error: 'bad-request' });
+
+    expectOk(
+      await clients.copilot.emitWithAck('game:ability', {
+        ability: 'working-together',
+        dieId: copilotDie!.id,
+      }),
+    );
+    expect(room.game.swap).toBeNull();
+    expect(room.game.dice.pilot[0]!.value).toBe(copilotDie!.value);
+    expect(room.game.dice.copilot[0]!.value).toBe(pilotDie!.value);
+  });
+
+  it('switches scenario on a rematch, or before the first roll', async () => {
+    const { clients, room } = await seatedRoom();
+    const switched = next(clients.copilot, 'game:view');
+    expectOk(await clients.pilot.emitWithAck('game:rematch', { scenario: 'osl-green' }));
+    expect((await switched).scenario.id).toBe('osl-green');
+    const before = room().game;
+    // The partner's identical request finds the new game and changes nothing.
+    expectOk(await clients.copilot.emitWithAck('game:rematch', { scenario: 'osl-green' }));
+    expect(room().game).toBe(before);
+    expect(
+      await clients.pilot.emitWithAck('game:rematch', {
+        scenario: 'prg-green',
+        abilities: ['control'],
+      }),
+    ).toEqual({
+      ok: false,
+      error: 'bad-request',
+    });
+
+    await bothReady(clients);
+    expect(await clients.pilot.emitWithAck('game:rematch', { scenario: 'yul' })).toEqual({
+      ok: false,
+      error: 'game-not-over',
+    });
+    room().game = { ...room().game, phase: 'lost', endReason: 'kerosene' };
+    expectOk(
+      await clients.copilot.emitWithAck('game:rematch', {
+        scenario: 'gig-yellow',
+        abilities: ['mastery'],
+      }),
+    );
+    expect(room().game.scenario.id).toBe('gig-yellow');
+    expect(room().game.abilities).toEqual(['mastery']);
+    // No setup: the same scenario again.
+    room().game = { ...room().game, phase: 'lost', endReason: 'spin' };
+    expectOk(await clients.copilot.emitWithAck('game:rematch', {}));
+    expect(room().game.scenario.id).toBe('gig-yellow');
+    expect(room().game.phase).toBe('strategy');
+  });
+});

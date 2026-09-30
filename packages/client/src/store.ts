@@ -1,4 +1,4 @@
-import type { PlayerView, Presence } from '@sky/shared';
+import type { PlayerView, Presence, SlotId } from '@sky/shared';
 import { create } from 'zustand';
 import { loadSession, type Session } from './session';
 
@@ -20,6 +20,8 @@ export interface GameStore {
   selectedDieId: string | null;
   /** Draft coffee modifier for the selected die; sent with the move. */
   coffeeDelta: number;
+  /** Intern: the Intern space tapped for the selected die; the next tap places the token. */
+  internSlot: SlotId | null;
   /** Dice ticked for a reroll. */
   rerollPick: string[];
   /**
@@ -36,6 +38,7 @@ export interface GameStore {
   setPresence: (presence: Presence) => void;
   selectDie: (dieId: string | null) => void;
   setCoffeeDelta: (delta: number) => void;
+  setInternSlot: (slot: SlotId | null) => void;
   toggleRerollPick: (dieId: string) => void;
   leave: () => void;
 }
@@ -47,6 +50,7 @@ export const useGame = create<GameStore>()((set) => ({
   presence: null,
   selectedDieId: null,
   coffeeDelta: 0,
+  internSlot: null,
   rerollPick: [],
   roundDeadline: null,
   nextTurnAt: null,
@@ -56,12 +60,15 @@ export const useGame = create<GameStore>()((set) => ({
   setView: (view) =>
     set((s) => {
       const ids = new Set(view.myDice.map((d) => d.id));
+      // Synchronisation: the co-pilot may be holding the traffic die.
+      if (view.bonus && view.seat === 'copilot') ids.add(view.bonus.die.id);
       const keepSelection = s.selectedDieId !== null && ids.has(s.selectedDieId);
       return {
         view,
         // A placed or rerolled-away die can't stay selected; coffee may have changed too.
         selectedDieId: keepSelection ? s.selectedDieId : null,
         coffeeDelta: keepSelection && view.coffee >= Math.abs(s.coffeeDelta) ? s.coffeeDelta : 0,
+        internSlot: keepSelection && view.phase === 'placing' ? s.internSlot : null,
         rerollPick: view.rerollPending[view.seat] ? s.rerollPick.filter((id) => ids.has(id)) : [],
         roundDeadline: view.roundTimeLeftMs === null ? null : Date.now() + view.roundTimeLeftMs,
         // The round's last die was just placed and the game goes on: a 5 s breather.
@@ -78,8 +85,10 @@ export const useGame = create<GameStore>()((set) => ({
     set((s) => ({
       selectedDieId: s.selectedDieId === dieId ? null : dieId,
       coffeeDelta: 0,
+      internSlot: null,
     })),
-  setCoffeeDelta: (coffeeDelta) => set({ coffeeDelta }),
+  setCoffeeDelta: (coffeeDelta) => set({ coffeeDelta, internSlot: null }),
+  setInternSlot: (internSlot) => set({ internSlot }),
   toggleRerollPick: (dieId) =>
     set((s) => ({
       rerollPick: s.rerollPick.includes(dieId)
@@ -93,6 +102,7 @@ export const useGame = create<GameStore>()((set) => ({
       presence: null,
       selectedDieId: null,
       coffeeDelta: 0,
+      internSlot: null,
       rerollPick: [],
       roundDeadline: null,
       nextTurnAt: null,

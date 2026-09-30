@@ -1,8 +1,10 @@
 import {
   createGame,
   rollDice,
+  SCENARIOS,
   viewFor,
   YUL,
+  type AbilityId,
   type DieValue,
   type GameState,
   type PlayerView,
@@ -19,9 +21,14 @@ export function makeView(
     copilot?: DieValue[];
     patch?: Partial<GameState>;
     rolled?: boolean;
+    /** Scenario id; YUL by default. */
+    scenario?: string;
+    abilities?: AbilityId[];
   } = {},
 ): PlayerView {
-  let state = createGame(YUL, 1);
+  let state = createGame(opts.scenario ? SCENARIOS[opts.scenario]! : YUL, 1, {
+    abilities: opts.abilities ?? [],
+  });
   if (opts.rolled !== false) {
     state = rollDice(state);
     state.dice = {
@@ -45,6 +52,7 @@ export function resetStore(): void {
     presence: null,
     selectedDieId: null,
     coffeeDelta: 0,
+    internSlot: null,
     rerollPick: [],
     roundDeadline: null,
     nextTurnAt: null,

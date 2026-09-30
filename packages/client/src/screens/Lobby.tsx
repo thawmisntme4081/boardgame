@@ -1,13 +1,15 @@
-import { ROUND_TIMER_MS, type Seat } from '@sky/shared';
+import { ROUND_TIMER_MS, type Scenario, type Seat } from '@sky/shared';
 import { Plane, Share2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { createRoom, joinRoom, leaveGame, shareInvite } from '@/api';
 import { Button } from '@/components/ui/button';
+import { DifficultyDot, ScenarioPicker } from '@/components/ScenarioPicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { formatClock } from '@/lib/clock';
+import { DEFAULT_SETUP, scenarioSummary } from '@/lib/setup';
 import { codeFromPath, inviteUrl, loadName } from '@/session';
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -24,6 +26,7 @@ export function Lobby() {
   const [code, setCode] = useState(() => codeFromPath(window.location.pathname));
   const [busy, setBusy] = useState(false);
   const [timer, setTimer] = useState(false);
+  const [setup, setSetup] = useState(DEFAULT_SETUP);
   const invited = codeFromPath(window.location.pathname) !== '';
   const nameOk = name.trim().length > 0;
 
@@ -91,6 +94,7 @@ export function Lobby() {
                 <span className="h-px flex-1 bg-border" /> or{' '}
                 <span className="h-px flex-1 bg-border" />
               </div>
+              <ScenarioPicker id="lobby" value={setup} onChange={setSetup} />
               {/* The whole row is the label, so it is an easy target on a phone. */}
               <Label htmlFor="timer" className="flex min-h-11 cursor-pointer items-center gap-3">
                 <span className="flex flex-1 flex-col gap-0.5">
@@ -105,7 +109,7 @@ export function Lobby() {
                 variant="secondary"
                 className="h-11"
                 disabled={busy || !nameOk}
-                onClick={() => void run(() => createRoom(name.trim(), timer))}
+                onClick={() => void run(() => createRoom(name.trim(), timer, setup))}
               >
                 Create a game
               </Button>
@@ -122,11 +126,13 @@ export function WaitingRoom({
   code,
   missing = 'copilot',
   timerMs = null,
+  scenario,
 }: {
   code: string;
   missing?: Seat;
   /** Timed game: shown so whoever joins knows before they start. */
   timerMs?: number | null;
+  scenario?: Scenario;
 }) {
   return (
     <Shell>
@@ -141,6 +147,14 @@ export function WaitingRoom({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          {scenario && (
+            <div className="rounded-lg bg-muted/60 px-3 py-2">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <DifficultyDot scenario={scenario} /> {scenario.name}
+              </p>
+              <p className="text-xs text-muted-foreground">{scenarioSummary(scenario)}</p>
+            </div>
+          )}
           <p
             className="text-center font-mono text-5xl font-bold tracking-[0.3em]"
             aria-label={`Game code ${code.split('').join(' ')}`}

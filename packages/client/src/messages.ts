@@ -28,6 +28,17 @@ const errors: Record<ErrorCode | MoveError, string> = {
   'reroll-pending': 'A reroll is already under way.',
   'no-reroll-pending': 'You have no reroll to use.',
   'bad-reroll': 'Pick each die at most once.',
+  'slot-not-allowed': 'The traffic die goes on the control panel.',
+  'no-intern-token': 'The intern is fully trained.',
+  'intern-same-value': 'The die must not match the next intern token.',
+  'bad-token-slot': 'The intern token can’t go there.',
+  'bonus-pending': 'The co-pilot places the traffic die first.',
+  'swap-pending': 'Finish the Working Together swap first.',
+  'ability-unavailable': 'That ability is not in this game.',
+  'ability-used': 'That ability is already used.',
+  'not-first-player': 'Only the first player can use Anticipation.',
+  'first-die-placed': 'Anticipation comes before your first die.',
+  'no-partner-dice': 'Your partner has no dice left to swap.',
 };
 
 export const errorText = (code: string): string =>
@@ -45,4 +56,8 @@ export const endReasonText: Record<EndReason, string> = {
   'landing-axis': 'The plane was not level.',
   'landing-brakes': 'Your speed was too high for the brakes.',
   'time-up': 'Time ran out before all the dice were placed.',
+  kerosene: 'You ran out of kerosene.',
+  turn: 'The plane was not turned the right way on the approach.',
+  'landing-intern': 'The intern was not fully trained.',
+  'landing-ice-brakes': 'The ice brakes were not fully deployed.',
 };
