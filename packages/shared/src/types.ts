@@ -123,6 +123,13 @@ export interface PlaceIntent {
   tokenSlot?: SlotId;
 }
 
+/** One roll of the traffic die at the start of a round. */
+export interface TrafficRoll {
+  roll: DieValue;
+  /** Approach space that got the plane, or `null` when the box had none left. */
+  space: number | null;
+}
+
 /** A special ability a player uses (the automatic ones need no action). */
 export interface AbilityAction {
   ability: 'adaptation' | 'anticipation' | 'working-together';
@@ -177,7 +184,7 @@ export interface GameState {
   /** Unplaced dice behind each screen. Secret: never sent to the partner. */
   dice: Record<Seat, Die[]>;
   placed: Partial<Record<SlotId, PlacedDie>>;
-  /** Positive tilts toward the pilot, negative toward the co-pilot. */
+  /** Left to right -2 -1 0 1 2: negative tilts toward the pilot (left), positive toward the co-pilot. */
   axis: number;
   approachIndex: number;
   approachPlanes: number[];
@@ -209,6 +216,8 @@ export interface GameState {
   wind: number | null;
   /** Airplane tokens left in the box, for the traffic die. */
   planeSupply: number;
+  /** The traffic die rolls at the start of this round (empty when the space had no icon). */
+  traffic: TrafficRoll[];
   /** Synchronisation: the traffic die the co-pilot must place now, and whose turn it interrupted. */
   bonus: { die: Die; after: Seat } | null;
   /** Working Together: the die a player put on the card, waiting for the partner's die. */

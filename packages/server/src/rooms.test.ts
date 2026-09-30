@@ -161,7 +161,7 @@ describe('RoomManager', () => {
 
 describe('resolveSetup', () => {
   it('defaults to YUL, and to the first abilities the scenario allows', () => {
-    expect(resolveSetup({})).toMatchObject({ scenario: { id: 'yul' }, abilities: [] });
+    expect(resolveSetup({})).toMatchObject({ scenario: { id: 'yul-green' }, abilities: [] });
     expect(resolveSetup({ scenario: 'prg-green' })).toMatchObject({
       abilities: ['adaptation', 'anticipation'],
     });

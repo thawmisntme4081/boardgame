@@ -22,6 +22,7 @@ import type {
   Scenario,
   Seat,
   SlotId,
+  TrafficRoll,
 } from './types';
 
 /** Everything one player may see. Built only by `viewFor`. */
@@ -60,6 +61,8 @@ export interface PlayerView {
   intern: DieValue[] | null;
   wind: number | null;
   planeSupply: number;
+  /** The traffic die rolls that started this round (public: rolled in the open). */
+  traffic: TrafficRoll[];
   /** Synchronisation's traffic die (rolled in the open) waiting for the co-pilot. */
   bonus: { die: Die } | null;
   /** Working Together: the die on the card is face up, so both players see its value. */
@@ -102,6 +105,7 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     intern: state.intern && [...state.intern],
     wind: state.wind,
     planeSupply: state.planeSupply,
+    traffic: state.traffic.map((t) => ({ ...t })),
     bonus: state.bonus && { die: { ...state.bonus.die } },
     swap: state.swap && { seat: state.swap.seat, value: state.swap.value },
   };

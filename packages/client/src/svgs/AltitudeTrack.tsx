@@ -9,7 +9,6 @@ const GAP = 4;
 const CELL = CARD_W + GAP;
 const HEIGHT = CARD_H + GAP;
 const LANDING_ICON = 18;
-const MOTION = 'motion-reduce:transition-none';
 
 /**
  * Altitude track: current altitude, who plays first each round, reroll tokens still to collect.
@@ -36,7 +35,7 @@ export function AltitudeTrack({ view }: { view: PlayerView }) {
           return (
             <g
               key={space.altitude}
-              className={cn('transition-opacity duration-500', MOTION, i < current && 'opacity-35')}
+              className={cn('transition-opacity duration-500', i < current && 'opacity-35')}
             >
               <rect
                 x={x + GAP / 2}
@@ -58,7 +57,6 @@ export function AltitudeTrack({ view }: { view: PlayerView }) {
                   textAnchor="middle"
                   className={cn(
                     'fill-foreground text-[12px] transition-[opacity,translate] duration-500 ease-out',
-                    MOTION,
                     i <= current && '-translate-y-2 opacity-0',
                   )}
                 >
@@ -96,7 +94,6 @@ export function AltitudeTrack({ view }: { view: PlayerView }) {
           style={{ transform: `translateX(${current * CELL}px)` }}
           className={cn(
             'fill-none stroke-foreground transition-transform duration-700 ease-in-out',
-            MOTION,
           )}
         />
       </svg>

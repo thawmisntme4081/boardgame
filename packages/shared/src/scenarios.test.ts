@@ -14,7 +14,7 @@ describe('scenarios', () => {
     const count = (difficulty: Difficulty) =>
       SCENARIO_LIST.filter((s) => s.difficulty === difficulty).length;
     expect([count('green'), count('yellow'), count('red'), count('black')]).toEqual([6, 7, 5, 3]);
-    expect(SCENARIOS.yul).toBe(YUL);
+    expect(SCENARIOS['yul-green']).toBe(YUL);
   });
 
   it('uses the modules and ability counts printed on the cards', () => {
@@ -22,7 +22,7 @@ describe('scenarios', () => {
       SCENARIO_LIST.map((s) => [s.id, `${s.modules.join('+') || '-'} ${s.abilities}`]),
     );
     expect(summary).toEqual({
-      yul: '- 0',
+      'yul-green': '- 0',
       'lhr-green': '- 0',
       'hnd-green': '- 0',
       'osl-green': 'kerosene 0',

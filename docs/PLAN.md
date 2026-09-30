@@ -112,7 +112,7 @@ Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { d
 
 | Rule | Value |
 | --- | --- |
-| Axis | Tilts toward the higher die by the difference; not reset between rounds; lose on reaching 3 marks either way |
+| Axis | Tilts toward the higher die by the difference; not reset between rounds; lose on reaching 3 marks either way. Positions left to right -2 -1 0 1 2 (negative toward the pilot) |
 | Aerodynamics | Blue starts between 4–5 (+1 per landing gear, 7–8 when all down); orange between 8–9 (+1 per flap, just past 12) |
 | Speed | ≤ blue: 0 spaces; ≤ orange: 1 space; above: 2 spaces. Final round: compared with brakes instead |
 | Landing gear | 1/2, 3/4, 5/6, any order |
@@ -132,7 +132,7 @@ Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { d
 | Kerosene | Marker starts at 20. A die of any value on the Kerosene space (either player) burns its value; a round without one burns 6 at the very end of the round. Reaching 0 (the X) at any time loses (`kerosene`) |
 | Kerosene leak | Same track, no Kerosene space; each round burns \|pilot engine − co-pilot engine\| + 1 |
 | Intern | Six tokens 1–6 in a seeded random order. A die (any value, but not the next token's) on your Intern space takes the token nearest your side; the token goes on a space you could fill, as a die of its number (no coffee, not Concentration). One move: `game:place { …, tokenSlot }`. Tokens left at landing lose (`landing-intern`) |
-| Wind | The blue airplane starts at the ring's white centre (index 0). After each Axis phase it turns as many spaces as the axis is off centre (toward the pilot = left), even if the axis did not move; its wind speed is added to the engines every round, the last one included |
+| Wind | The blue airplane starts at the ring's white centre (index 0). After each Axis phase it turns as many spaces as the axis is off centre, to the side it tilts (negative, toward the pilot = left), even if the axis did not move; its wind speed is added to the engines every round, the last one included |
 | Real-time | 60 s from the roll (`REAL_TIME_MS`, overrides the lobby timer); when it runs out the round ends and unplaced dice are lost; missing axis/engine dice lose as usual |
 | Ice brakes | Replace the brakes: columns 2, 3, 4, 5, each needing two dice of that value in one round, above (pilot) and below (either player), left to right; the marker may pass several columns in a round. A lone die is lost at the round's end. Landing needs the marker past 5 (`landing-ice-brakes`) and speed ≤ 5 |
 | Traffic die | At the start of each round (round 1 included), one roll of the traffic die (2, 3, 3, 4, 4, 5) per icon on the current space adds a plane that many spaces ahead, counting the current one (beyond the track: the airport), while the box (12 planes) has any. Radio-cleared planes go back to the box |

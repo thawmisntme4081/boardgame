@@ -531,7 +531,7 @@ describe('scenarios and special abilities', () => {
       { name: 'Ben', scenario: 'nowhere' },
       { name: 'Ben', scenario: 'prg-green', abilities: ['control'] },
       { name: 'Ben', scenario: 'prg-green', abilities: ['control', 'control'] },
-      { name: 'Ben', scenario: 'yul', abilities: ['mastery'] },
+      { name: 'Ben', scenario: 'yul-green', abilities: ['mastery'] },
       { name: 'Ben', scenario: 'kef-yellow', abilities: ['flying'] },
     ]) {
       const b = await server.connect();
@@ -610,7 +610,7 @@ describe('scenarios and special abilities', () => {
     });
 
     await bothReady(clients);
-    expect(await clients.pilot.emitWithAck('game:rematch', { scenario: 'yul' })).toEqual({
+    expect(await clients.pilot.emitWithAck('game:rematch', { scenario: 'yul-green' })).toEqual({
       ok: false,
       error: 'game-not-over',
     });

@@ -245,18 +245,20 @@ const endGame = (state: GameState, result: 'won' | 'lost', reason?: EndReason): 
  * the airport), while the box has planes left. Called by `createGame` and between rounds.
  */
 export function rollTraffic(state: GameState): void {
+  state.traffic = [];
   const icons = state.scenario.traffic?.[state.approachIndex] ?? 0;
   if (icons === 0) return;
-  const rolls: number[] = [];
   for (let i = 0; i < icons; i++) {
     const roll = rollTrafficDie(state);
-    rolls.push(roll);
+    let space: number | null = null;
     if (state.planeSupply > 0) {
-      state.approachPlanes[Math.min(state.approachIndex + roll - 1, airportIndex(state))]!++;
+      space = Math.min(state.approachIndex + roll - 1, airportIndex(state));
+      state.approachPlanes[space]!++;
       state.planeSupply--;
     }
+    state.traffic.push({ roll, space });
   }
-  state.log.push({ type: 'traffic', round: state.round, rolls });
+  state.log.push({ type: 'traffic', round: state.round, rolls: state.traffic.map((t) => t.roll) });
 }
 
 /**
@@ -352,7 +354,7 @@ function applySlotEffect(
       const pilot = state.placed.axisPilot;
       const copilot = state.placed.axisCopilot;
       if (!pilot || !copilot) return;
-      state.axis += pilot.value - copilot.value;
+      state.axis += copilot.value - pilot.value;
       if (Math.abs(state.axis) >= AXIS_LIMIT) return endGame(state, 'lost', 'spin');
       for (const module of modulesOf(state.scenario)) module.afterAxis?.(state);
       // Control: two equal Axis dice earn a coffee.
@@ -546,6 +548,7 @@ function endRound(state: GameState): void {
   state.currentSeat = altitude.first;
   if (altitude.reroll) state.rerolls++;
 
+  state.traffic = [];
   if (isFinalRound(state) && state.approachIndex !== airportIndex(state)) {
     return endGame(state, 'lost', 'missed-airport');
   }

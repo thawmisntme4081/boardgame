@@ -76,6 +76,7 @@ export function createGame(
     intern: null,
     wind: null,
     planeSupply: PLANE_TOKENS - scenario.approach.reduce((a, b) => a + b, 0),
+    traffic: [],
     bonus: null,
     swap: null,
     log: [],

@@ -6,13 +6,12 @@ import { Plane } from './Plane';
 const CELL = 40;
 /** Planes drawn per space; more show as "+N". */
 const SHOWN = 3;
-const MOTION = 'motion-reduce:transition-none';
 /** Axis positions left to right as the players see them: the pilot sits on the left. */
-const TURN_POSITIONS = [2, 1, 0, -1, -2];
+const TURN_POSITIONS = [-2, -1, 0, 1, 2];
 
 const turnText = (allowed: readonly number[]) =>
   `axis must be ${allowed
-    .map((p) => (p === 0 ? 'level' : `${Math.abs(p)} toward the ${p > 0 ? 'pilot' : 'co-pilot'}`))
+    .map((p) => (p === 0 ? 'level' : `${Math.abs(p)} toward the ${p < 0 ? 'pilot' : 'co-pilot'}`))
     .join(' or ')}`;
 
 /** Traffic die icons: a black die, times the number of rolls. */
@@ -44,9 +43,7 @@ function Turn({ cx, y, allowed }: { cx: number; y: number; allowed: readonly num
           r="1.6"
           strokeWidth="0.8"
           className={
-            allowed.includes(p)
-              ? 'fill-foreground stroke-foreground'
-              : 'fill-none stroke-muted-foreground'
+            allowed.includes(p) ? 'fill-green-600 stroke-green-600' : 'fill-red-600 stroke-red-600'
           }
         />
       ))}
@@ -66,8 +63,7 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
   const airport = planes.length - 1;
   const here = view.approachIndex;
   const passed = (i: number) => i < here;
-  const fade = (i: number) =>
-    cn('transition-opacity duration-500', MOTION, passed(i) && 'opacity-30');
+  const fade = (i: number) => cn('transition-opacity duration-500', passed(i) && 'opacity-30');
   const effects = Boolean(scenario.traffic?.some(Boolean) || scenario.turns?.some(Boolean));
   const rowY = 51;
   const arrowY = effects ? 64 : 52;
@@ -133,7 +129,7 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
 
         <g
           style={{ transform: `translateX(${here * CELL}px)` }}
-          className={cn('transition-transform duration-700 ease-in-out', MOTION)}
+          className={cn('transition-transform duration-700 ease-in-out')}
         >
           <rect
             x="2"
@@ -146,6 +142,25 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
           />
           <path d={`M ${CELL / 2} ${arrowY} l -7 10 h 14 z`} className="fill-pilot" />
         </g>
+
+        {/* Planes the traffic die just added: marked until the dice are rolled. */}
+        {view.phase === 'strategy' &&
+          view.traffic.map(({ space }, i) =>
+            space === null ? null : (
+              <g key={`traffic-${i}`}>
+                <title>Added by the traffic die</title>
+                <rect
+                  x={space * CELL + 2}
+                  y="2"
+                  width={CELL - 4}
+                  height="46"
+                  rx="6"
+                  strokeWidth="2.5"
+                  className="animate-pulse fill-none stroke-neutral-900 dark:stroke-neutral-100"
+                />
+              </g>
+            ),
+          )}
 
         {radioTarget !== undefined && (
           <rect
@@ -167,7 +182,6 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
                 key={k}
                 className={cn(
                   'transition-[opacity,translate] duration-500 ease-out',
-                  MOTION,
                   k >= count && '-translate-y-3 opacity-0',
                 )}
               >

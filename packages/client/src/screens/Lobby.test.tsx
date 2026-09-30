@@ -23,7 +23,10 @@ describe('Lobby', () => {
     expect(create).toBeDisabled();
     await userEvent.type(screen.getByLabelText('Your name'), '  Ana ');
     await userEvent.click(create);
-    expect(api.createRoom).toHaveBeenCalledWith('Ana', false, { scenario: 'yul', abilities: [] });
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', false, {
+      scenario: 'yul-green',
+      abilities: [],
+    });
   });
 
   it('offers a round timer, off by default', async () => {
@@ -35,7 +38,10 @@ describe('Lobby', () => {
     expect(timer).toBeChecked();
     await userEvent.type(screen.getByLabelText('Your name'), 'Ana');
     await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
-    expect(api.createRoom).toHaveBeenCalledWith('Ana', true, { scenario: 'yul', abilities: [] });
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', true, {
+      scenario: 'yul-green',
+      abilities: [],
+    });
   });
 
   it('picks a scenario, then exactly as many special abilities as it allows', async () => {

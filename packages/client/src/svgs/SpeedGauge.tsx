@@ -7,7 +7,7 @@ const speedX = (v: number) => 16 + (v - SPEED_MIN) * 22;
 const LEFT = speedX(SPEED_MIN - 0.5);
 const RIGHT = speedX(SPEED_MAX + 0.5);
 
-const SLIDE = 'transition-[transform,opacity] duration-500 ease-out motion-reduce:transition-none';
+const SLIDE = 'transition-[transform,opacity] duration-500 ease-out';
 const at = (x: number) => ({ transform: `translateX(${x}px)` });
 /** A band from x1 to x2: a 1-unit rect stretched from the origin. */
 const span = (x1: number, x2: number) => ({

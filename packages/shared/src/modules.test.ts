@@ -165,7 +165,7 @@ describe('intern', () => {
     s = placeDie(s, 'copilot', train('c1', 'internCopilot', 'axisCopilot'));
     expect(s.intern).toEqual([2, 6, 4, 3, 5]);
     // Pilot 2, intern token 1: one mark toward the pilot.
-    expect(s.axis).toBe(1);
+    expect(s.axis).toBe(-1);
   });
 
   it('refuses a die showing the next token value; coffee can change the die, not the token', () => {
@@ -216,7 +216,7 @@ describe('wind', () => {
       ['copilot', 'c1', 'axisCopilot'],
     ]);
     // Two marks toward the pilot: two spaces to the left.
-    expect(s.axis).toBe(2);
+    expect(s.axis).toBe(-2);
     expect(s.wind).toBe(WIND_RING.length - 2);
     s = play(s, [
       ['pilot', 'p2', 'enginePilot'],
@@ -226,14 +226,14 @@ describe('wind', () => {
   });
 
   it('turns even when the axis did not move, and toward the co-pilot to the right', () => {
-    const toPilot = play(setupRound({ ...QUIET_DICE, scenario: WIND, patch: { axis: 1 } }), [
+    const toPilot = play(setupRound({ ...QUIET_DICE, scenario: WIND, patch: { axis: -1 } }), [
       ['pilot', 'p1', 'axisPilot'],
       ['copilot', 'c1', 'axisCopilot'],
     ]);
-    expect(toPilot.axis).toBe(1);
+    expect(toPilot.axis).toBe(-1);
     expect(toPilot.wind).toBe(WIND_RING.length - 1);
 
-    const toCopilot = play(setupRound({ ...QUIET_DICE, scenario: WIND, patch: { axis: -1 } }), [
+    const toCopilot = play(setupRound({ ...QUIET_DICE, scenario: WIND, patch: { axis: 1 } }), [
       ['pilot', 'p1', 'axisPilot'],
       ['copilot', 'c1', 'axisCopilot'],
     ]);
@@ -369,6 +369,31 @@ describe('traffic die (approach track effect)', () => {
     expect(s.planeSupply).toBe(PLANE_TOKENS - 2);
   });
 
+  it('keeps this round’s rolls and where each plane went, for the players to see', () => {
+    const s = createGame(
+      testScenario([0, 0, 0, 0, 0, 0, 0], { traffic: [2, 0, 0, 0, 0, 0, 0] }),
+      5,
+    );
+    const [event] = trafficEvents(s);
+    expect(s.traffic.map((t) => t.roll)).toEqual(event!.rolls);
+    for (const { roll, space } of s.traffic) expect(space).toBe(roll - 1);
+
+    const empty = createGame(testScenario([0, 4, 4, 4], { traffic: [1, 0, 0, 0] }), 3);
+    expect(empty.traffic).toEqual([{ roll: expect.any(Number), space: null }]);
+
+    // Next round on a space without icons: nothing new to show.
+    const next = play(
+      setupRound({
+        pilot: [2, 5, 3, 3],
+        copilot: [2, 5, 3, 3],
+        scenario: { traffic: [1, 0, 0, 0, 0, 0, 0] },
+      }),
+      QUIET_ROUND,
+    );
+    expect(next.round).toBe(2);
+    expect(next.traffic).toEqual([]);
+  });
+
   it('puts planes beyond the track on the airport', () => {
     for (let seed = 1; seed <= 20; seed++) {
       const s = createGame(testScenario([0, 0], { traffic: [1, 0] }), seed);
@@ -421,7 +446,7 @@ describe('turns (approach track effect)', () => {
       }),
       MANDATORY,
     );
-  const LEFT = [1, 2];
+  const LEFT = [-2, -1];
   const none = [null, null, null, null, null, null];
 
   it('loses when the track advances with the axis outside the permitted positions', () => {
@@ -431,7 +456,7 @@ describe('turns (approach track effect)', () => {
   });
 
   it('lets the plane through with the axis in a permitted position', () => {
-    const s = turn([LEFT, ...none], { axis: 1 }, [3, 3]);
+    const s = turn([LEFT, ...none], { axis: -1 }, [3, 3]);
     expect(s.phase).toBe('placing');
     expect(s.approachIndex).toBe(1);
   });

@@ -40,9 +40,42 @@ function AbilityList({ view }: { view: PlayerView }) {
   );
 }
 
+const spacesAhead = (view: PlayerView, space: number) => {
+  const ahead = space - view.approachIndex;
+  if (space === view.approachPlanes.length - 1) return 'on the airport';
+  if (ahead === 0) return 'on your space';
+  return `${ahead} ${ahead === 1 ? 'space' : 'spaces'} ahead`;
+};
+
+/** The traffic die rolled at the start of the round, and where each plane went. */
+function TrafficNews({ view }: { view: PlayerView }) {
+  if (view.traffic.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2" role="status">
+      <span className="flex gap-1">
+        {view.traffic.map(({ roll }, i) => (
+          <DieFace key={i} value={roll} seat="pilot" kind="traffic" className="size-8" />
+        ))}
+      </span>
+      <p className="text-sm">
+        <span className="font-medium">Traffic:</span>{' '}
+        {view.traffic
+          .map(({ roll, space }) =>
+            space === null
+              ? `rolled ${roll}, no planes left to add`
+              : `rolled ${roll}, a plane ${spacesAhead(view, space)}`,
+          )
+          .join('; ')}
+        .
+      </p>
+    </div>
+  );
+}
+
 function StrategyTray({ view }: { view: PlayerView }) {
   return (
     <div className="flex flex-col gap-1">
+      <TrafficNews view={view} />
       <p className="text-sm">
         Talk strategy now, then press “Ready to roll”. Once the dice are rolled, no talking until
         the round ends.

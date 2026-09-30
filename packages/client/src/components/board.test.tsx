@@ -143,7 +143,7 @@ describe('GameOverDialog', () => {
     expect(within(dialog).getByText('Not all the landing gear was down.')).toBeInTheDocument();
     expect(within(dialog).getByText('Your speed was too high for the brakes.')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Fly again' }));
-    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'yul', abilities: [] });
+    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'yul-green', abilities: [] });
   });
 
   it('flies again on the same scenario and abilities by default', async () => {
@@ -304,6 +304,32 @@ describe('special abilities in the tray', () => {
   });
 });
 
+describe('traffic die', () => {
+  it('shows the round’s rolls in the strategy tray and marks the new planes', () => {
+    const view = makeView('pilot', {
+      rolled: false,
+      patch: {
+        approachPlanes: [0, 0, 1, 3, 2, 3, 2],
+        traffic: [
+          { roll: 4, space: 3 },
+          { roll: 2, space: null },
+        ],
+      },
+    });
+    render(<DiceTray view={view} presence={presence()} />);
+    expect(
+      screen.getByText(/rolled 4, a plane 3 spaces ahead; rolled 2, no planes left to add/),
+    ).toBeInTheDocument();
+    render(<ApproachTrack view={view} />);
+    expect(screen.getAllByText('Added by the traffic die')).toHaveLength(1);
+  });
+
+  it('says nothing when no traffic die rolled', () => {
+    render(<DiceTray view={makeView('pilot', { rolled: false })} presence={presence()} />);
+    expect(screen.queryByText(/Traffic:/)).not.toBeInTheDocument();
+  });
+});
+
 describe('approach effects', () => {
   it('describe the traffic die and the turn on the current space', () => {
     render(
@@ -313,7 +339,7 @@ describe('approach effects', () => {
     );
     expect(
       screen.getByRole('img', {
-        name: /Current space: to advance, axis must be 1 toward the pilot or 2 toward the pilot/,
+        name: /Current space: to advance, axis must be 2 toward the pilot or 1 toward the pilot/,
       }),
     ).toBeInTheDocument();
   });

@@ -131,8 +131,8 @@ describe('axis', () => {
     ]);
 
   it('tilts toward the higher die by the difference', () => {
-    expect(axisAfter(5, 3).axis).toBe(2);
-    expect(axisAfter(3, 5).axis).toBe(-2);
+    expect(axisAfter(5, 3).axis).toBe(-2);
+    expect(axisAfter(3, 5).axis).toBe(2);
   });
 
   it('does not move on equal dice', () => {
@@ -140,8 +140,8 @@ describe('axis', () => {
   });
 
   it('is not reset between rounds', () => {
-    expect(axisAfter(3, 4, 1).axis).toBe(0);
-    expect(axisAfter(4, 3, 1).axis).toBe(2);
+    expect(axisAfter(3, 4, -1).axis).toBe(0);
+    expect(axisAfter(4, 3, -1).axis).toBe(-2);
   });
 
   it('only moves once both axis dice are placed', () => {
@@ -154,7 +154,7 @@ describe('axis', () => {
     const toPilot = axisAfter(6, 3);
     expect(toPilot.phase).toBe('lost');
     expect(toPilot.endReason).toBe('spin');
-    expect(axisAfter(1, 2, -2).endReason).toBe('spin');
+    expect(axisAfter(1, 2, 2).endReason).toBe('spin');
   });
 });
 

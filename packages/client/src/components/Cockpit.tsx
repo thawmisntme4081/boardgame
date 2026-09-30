@@ -118,7 +118,11 @@ export function Cockpit({ view }: { view: PlayerView }) {
       <Panel title="Axis" hint="Must be level to land" mandatory>
         <div className="flex items-center justify-between gap-2">
           <Slot slot="axisPilot" view={view} />
-          <AxisDial axis={view.axis} />
+          <AxisDial
+            axis={view.axis}
+            // Turns only matter while the track can still advance.
+            turn={view.finalRound ? null : view.scenario.turns?.[view.approachIndex]}
+          />
           <Slot slot="axisCopilot" view={view} />
         </div>
       </Panel>
