@@ -11,6 +11,7 @@ export const BASE_ALTITUDES: AltitudeSpace[] = [
   { altitude: 0, first: 'pilot', reroll: false },
 ];
 
+/** Red/black side (Elite and Heroic scenarios): the same, with a reroll only at 6000 (confirmed Oct 1, 2026). */
 export const HARD_ALTITUDES: AltitudeSpace[] = BASE_ALTITUDES.map((space) => ({
   ...space,
   reroll: space.altitude === 6000,

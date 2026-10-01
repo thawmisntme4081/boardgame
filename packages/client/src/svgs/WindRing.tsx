@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const C = 60;
-const R = 44;
+const R = 48;
+/** Space markers as big as the ring allows for its number of spaces (20 today). */
+const SPOT = Math.min(9, (Math.PI * R) / WIND_RING.length - 0.5);
 
 const point = (index: number, radius: number) => {
   // Index 0 (the white centre space) at the top, then clockwise.
@@ -41,7 +43,7 @@ export function WindRing({ wind, className }: { wind: number; className?: string
       role="img"
       aria-label={`Wind ${signed(speed)} added to the engines`}
     >
-      <circle cx={C} cy={C} r={R + 10} className="fill-muted" />
+      <circle cx={C} cy={C} r={R + SPOT + 2} className="fill-muted" />
       {WIND_RING.map((value, i) => {
         const { x, y } = point(i, R);
         const current = i === wind;
@@ -50,7 +52,7 @@ export function WindRing({ wind, className }: { wind: number; className?: string
             <circle
               cx={x}
               cy={y}
-              r="9"
+              r={SPOT}
               className={cn(
                 'transition-[fill] duration-500',
                 current ? 'fill-pilot' : i === 0 ? 'fill-card' : 'fill-background',
@@ -59,10 +61,11 @@ export function WindRing({ wind, className }: { wind: number; className?: string
             />
             <text
               x={x}
-              y={y + 3.5}
+              y={y + SPOT * 0.38}
               textAnchor="middle"
+              style={{ fontSize: SPOT * 1.05 }}
               className={cn(
-                'text-[10px] font-semibold transition-[fill] duration-500',
+                'font-semibold transition-[fill] duration-500',
                 current ? 'fill-white' : 'fill-foreground',
               )}
             >

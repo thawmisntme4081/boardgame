@@ -1,10 +1,8 @@
 import type { RuleModule } from './types';
 
-/**
- * Wind speed on each Wind Ring space, clockwise from the white centre (index 0).
- * PLACEHOLDER: the Flight Log only shows a +2 space; read the real values off the ring.
- */
-export const WIND_RING: readonly number[] = [3, 2, 2, 1, 1, 0, -1, 0, 1, 1, 2, 2];
+export const WIND_RING: readonly number[] = [
+  3, 3, 2, 2, 1, 0, -1, -2, -2, -3, -3, -3, -2, -2, -1, 0, 1, 2, 2, 3,
+];
 
 export const windSpeed = (wind: number | null): number => (wind === null ? 0 : WIND_RING[wind]!);
 

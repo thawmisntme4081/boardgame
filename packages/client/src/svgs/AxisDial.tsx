@@ -13,6 +13,24 @@ function dialPoint(position: number, radius: number): [number, number] {
 
 const TURN_POSITIONS = [-2, -1, 0, 1, 2];
 
+const ZONES: { position: number; color: string }[] = [
+  { position: -3, color: 'stroke-danger' },
+  { position: -2, color: 'stroke-amber-400' },
+  { position: -1, color: 'stroke-amber-400' },
+  { position: 0, color: 'stroke-emerald-600' },
+  { position: 1, color: 'stroke-amber-400' },
+  { position: 2, color: 'stroke-amber-400' },
+  { position: 3, color: 'stroke-danger' },
+];
+const BAND_R = 86;
+const ZONE_GAP = 0.03;
+
+function arc(from: number, to: number, radius: number): string {
+  const [x1, y1] = dialPoint(from, radius);
+  const [x2, y2] = dialPoint(to, radius);
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`;
+}
+
 const signed = (p: number) => (p > 0 ? `+${p}` : p < 0 ? `−${-p}` : '0');
 
 /**
@@ -21,8 +39,6 @@ const signed = (p: number) => (p > 0 ? `+${p}` : p < 0 ? `−${-p}` : '0');
  * (absolute, so the panel layout does not move).
  */
 export function AxisDial({ axis, turn }: { axis: number; turn?: readonly number[] | null }) {
-  const marks = [];
-  for (let p = -AXIS_LIMIT; p <= AXIS_LIMIT; p++) marks.push(p);
   const needleAngle = Math.max(-AXIS_LIMIT, Math.min(AXIS_LIMIT, axis)) * MARK_ANGLE;
   const level = axis === 0;
 
@@ -56,55 +72,23 @@ export function AxisDial({ axis, turn }: { axis: number; turn?: readonly number[
             : `Axis tilted ${Math.abs(axis)} toward the ${axis < 0 ? 'pilot' : 'co-pilot'}`
         }
       >
-        <path
-          d="M 12 100 A 88 88 0 0 1 188 100"
-          className="fill-none stroke-muted-foreground/30"
-          strokeWidth="2"
-        />
-        {marks.map((p) => {
-          const [x1, y1] = dialPoint(p, 82);
-          const [x2, y2] = dialPoint(p, 94);
-          const [tx, ty] = dialPoint(p, 88);
-          return Math.abs(p) === AXIS_LIMIT ? (
-            <text
-              key={p}
-              x={tx}
-              y={ty + 5}
-              textAnchor="middle"
-              className="fill-danger text-[16px] font-bold"
-            >
-              ✕
-            </text>
-          ) : (
-            <line
-              key={p}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              strokeWidth={p === 0 ? 4 : 2}
-              className={p === 0 ? 'stroke-foreground' : 'stroke-muted-foreground'}
-            />
-          );
-        })}
-        <text x="18" y="108" className="fill-pilot text-[12px] font-semibold">
-          Pilot
-        </text>
-        <text x="182" y="108" textAnchor="end" className="fill-copilot text-[12px] font-semibold">
-          Co-pilot
-        </text>
+        {ZONES.map(({ position, color }) => (
+          <path
+            key={position}
+            d={arc(position - 0.5 + ZONE_GAP, position + 0.5 - ZONE_GAP, BAND_R)}
+            strokeWidth="10"
+            className={cn('fill-none', color)}
+          />
+        ))}
         <line
           x1="100"
           y1="100"
           x2="100"
-          y2="30"
+          y2="34"
           strokeWidth="5"
           strokeLinecap="round"
           style={{ transform: `rotate(${needleAngle}deg)`, transformOrigin: '100px 100px' }}
-          className={cn(
-            'transition-[transform,stroke] duration-700 ease-[cubic-bezier(0.34,1.4,0.64,1)]',
-            level ? 'stroke-light-on' : Math.abs(axis) >= 2 ? 'stroke-danger' : 'stroke-foreground',
-          )}
+          className="stroke-foreground transition-transform duration-700 ease-[cubic-bezier(0.34,1.4,0.64,1)]"
         />
         <circle cx="100" cy="100" r="7" className="fill-foreground" />
       </svg>
