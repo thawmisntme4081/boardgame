@@ -267,7 +267,16 @@ describe('module panels', () => {
     });
     useGame.setState({ selectedDieId: 'p1' });
     const { rerender } = render(<Cockpit view={view} />);
-    expect(screen.getByLabelText('Intern tokens left: 2, 6, 4, 3, 5, 1')).toBeInTheDocument();
+    const tokens = screen.getByLabelText('Intern tokens left: 2, 6, 4, 3, 5, 1');
+    // Each token is a badge showing its number, in order (arrows between them are hidden).
+    expect([...tokens.querySelectorAll('svg text')].map((n) => n.textContent)).toEqual([
+      '2',
+      '6',
+      '4',
+      '3',
+      '5',
+      '1',
+    ]);
     await userEvent.click(screen.getByRole('button', { name: 'Intern 1 (pilot)' }));
     expect(api.placeSelected).toHaveBeenCalledWith('internPilot');
 
@@ -282,6 +291,11 @@ describe('module panels', () => {
     expect(validSlots()).toContain('Landing gear 1 (pilot, needs 1 or 2)');
     expect(validSlots()).not.toContain('Concentration 1 (either player)');
     expect(screen.getByRole('button', { name: 'Intern 1 (pilot)', pressed: true })).toBeDisabled();
+
+    // The tray holds the collected token; the die on the Intern space steps back.
+    render(<DiceTray view={view} presence={presence()} />);
+    expect(screen.getByRole('img', { name: 'Intern token: 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Your die: 5' })).toHaveClass('opacity-40');
   });
 
   it('refuse a die showing the next intern token', () => {

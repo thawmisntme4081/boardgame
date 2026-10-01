@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { DieFace } from '@/svgs/DieFace';
+import { InternBadge } from '@/svgs/InternBadge';
 import { WindRing } from '@/svgs/WindRing';
 import { Panel } from './Panel';
 import { Slot } from './Slot';
@@ -108,9 +108,9 @@ export function WindOnEngines({ wind }: { wind: number }) {
  */
 function InternArrows() {
   return (
-    <li aria-hidden="true" className="flex w-2 flex-col items-center justify-center">
-      <ChevronRight strokeWidth={3} className="-my-0.5 size-3 shrink-0 text-pilot" />
-      <ChevronLeft strokeWidth={3} className="-my-0.5 size-3 shrink-0 text-copilot" />
+    <li aria-hidden="true" className="flex w-3 flex-col items-center justify-center">
+      <ChevronRight strokeWidth={3} className="-my-0.5 size-4 shrink-0 text-pilot" />
+      <ChevronLeft strokeWidth={3} className="-my-0.5 size-4 shrink-0 text-copilot" />
     </li>
   );
 }
@@ -120,10 +120,10 @@ export function InternPanel({ view }: { view: PlayerView }) {
   const tokens = view.intern ?? [];
   return (
     <Panel title={t('modules.intern')} hint={t('modules.internHint')}>
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex items-center gap-1">
         <Slot slot="internPilot" view={view} />
         <ol
-          className="flex flex-1 items-center justify-center gap-0.5"
+          className="flex min-w-0 flex-1 items-center justify-center gap-1"
           aria-label={
             tokens.length > 0
               ? t('modules.internLeft', { tokens: tokens.join(', ') })
@@ -134,7 +134,7 @@ export function InternPanel({ view }: { view: PlayerView }) {
             <Fragment key={value}>
               {i > 0 && <InternArrows />}
               <li className={cn(i > 0 && i < tokens.length - 1 && 'opacity-70')}>
-                <DieFace value={value} seat="pilot" kind="intern" className="size-[1.8rem]" />
+                <InternBadge value={value} className="h-11" />
               </li>
             </Fragment>
           ))}

@@ -340,6 +340,8 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
   const canSpend = canSpendReroll(view).ok;
   // Synchronisation: the co-pilot holds the black traffic die until it is placed.
   const trafficDie = view.seat === 'copilot' ? view.bonus?.die : undefined;
+  // Training the intern: the token the die on the Intern space collects, waiting for a space.
+  const internToken = internSlot ? nextInternToken(view.intern, view.seat) : undefined;
 
   return (
     // Two columns (one in the narrow tablet side column): status and dice on the left;
@@ -356,6 +358,15 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
           {placingText(view, partner, internSlot !== null)}
         </p>
         <div className="flex flex-wrap items-center gap-2">
+          {internToken !== undefined && (
+            <span
+              role="img"
+              aria-label={t('tray.internTokenHeld', { value: internToken })}
+              className="-translate-y-1 rounded-xl p-0.5 ring-4 ring-foreground"
+            >
+              <DieFace value={internToken} seat={view.seat} kind="intern" className="size-11" />
+            </span>
+          )}
           {trafficDie && (
             <button
               type="button"
@@ -382,7 +393,9 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
                 onClick={() => selectDie(die.id)}
                 className={cn(
                   'rounded-xl p-0.5 transition',
-                  isSelected && '-translate-y-1 ring-4 ring-foreground',
+                  // Once on the Intern space, the die steps back for the token it collected.
+                  isSelected &&
+                    (internSlot ? 'opacity-40' : '-translate-y-1 ring-4 ring-foreground'),
                 )}
               >
                 <DieFace value={shown} seat={view.seat} className="size-11" />

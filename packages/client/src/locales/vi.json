@@ -106,7 +106,8 @@
     "spendReroll": "Dùng một lượt đổ lại (còn {{count}})",
     "rerollToken": "Đổ lại ({{count}})",
     "winConditions": "Điều kiện thắng",
-    "winConditionsIntro": "Hạ cánh ở vòng cuối, sau xúc xắc cuối cùng, khi:"
+    "winConditionsIntro": "Hạ cánh ở vòng cuối, sau xúc xắc cuối cùng, khi:",
+    "internTokenHeld": "Thẻ thực tập sinh: {{value}}"
   },
   "cockpit": {
     "axis": "Trục",

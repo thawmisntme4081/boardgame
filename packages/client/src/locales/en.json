@@ -111,7 +111,8 @@
     "spendReroll": "Spend a reroll token ({{count}} left)",
     "rerollToken": "Reroll ({{count}})",
     "winConditions": "Win conditions",
-    "winConditionsIntro": "Land in the final round, after the last die, with:"
+    "winConditionsIntro": "Land in the final round, after the last die, with:",
+    "internTokenHeld": "Intern token: {{value}}"
   },
   "cockpit": {
     "axis": "Axis",
