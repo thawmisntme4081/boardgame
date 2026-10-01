@@ -1,6 +1,7 @@
 import type { PlayerView, Seat, SlotId } from '@sky/shared';
 import { ChevronDown, ChevronRight, Coffee } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { AxisDial } from '@/svgs/AxisDial';
 import { AeroMarkerIcon } from '@/svgs/AeroMarker';
@@ -117,6 +118,7 @@ function Slots({
   /** Draw arrows between spaces that must be filled in order. */
   ordered?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -137,7 +139,7 @@ function Slots({
               column === 'switch-right' && 'desktop:flex-row-reverse desktop:gap-2',
             )}
           >
-            {switches && <Switch on={switches[i]!} label={`Switch ${i + 1}`} />}
+            {switches && <Switch on={switches[i]!} label={t('cockpit.switch', { n: i + 1 })} />}
             <Slot slot={id} view={view} />
           </div>
         </Fragment>
@@ -147,6 +149,7 @@ function Slots({
 }
 
 export function Cockpit({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   const ice = view.scenario.modules.includes('ice-brakes');
   const modules = view.scenario.modules;
   const leak = modules.includes('kerosene-leak');
@@ -166,7 +169,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <Panel title="Axis" hint="Must be level to land" mandatory>
+          <Panel title={t('cockpit.axis')} hint={t('cockpit.axisHint')} mandatory>
             <div className="flex items-center justify-between gap-2">
               <Slot slot="axisPilot" view={view} />
               <AxisDial
@@ -182,14 +185,14 @@ export function Cockpit({ view }: { view: PlayerView }) {
     ),
     engines: (
       <Panel
-        title="Engines"
+        title={t('cockpit.engines')}
         mandatory
         hint={
           view.finalRound
-            ? 'Final round: speed must be below the brakes'
+            ? t('cockpit.enginesFinal')
             : view.wind !== null
-              ? 'Sum + wind'
-              : 'Sum sets how far you fly'
+              ? t('cockpit.enginesWind')
+              : t('cockpit.enginesHint')
         }
       >
         <div className="flex items-center justify-between gap-2 desktop:flex-1">
@@ -206,13 +209,17 @@ export function Cockpit({ view }: { view: PlayerView }) {
       </Panel>
     ),
     radio: (
-      <section aria-label="Radio" className={cn(PANEL, 'desktop:contents')}>
-        <PanelHeader title="Radio" hint="N clears a plane N−1 ahead" className="desktop:hidden" />
+      <section aria-label={t('cockpit.radio')} className={cn(PANEL, 'desktop:contents')}>
+        <PanelHeader
+          title={t('cockpit.radio')}
+          hint={t('cockpit.radioHint')}
+          className="desktop:hidden"
+        />
         <div className="flex flex-wrap items-end gap-2 desktop:contents">
           <div className={cn('desktop:[grid-area:radioPilot]', DESKTOP_PANEL)}>
             <PanelHeader
-              title="Radio"
-              hint="N clears a plane N−1 ahead"
+              title={t('cockpit.radio')}
+              hint={t('cockpit.radioHint')}
               side
               className="hidden desktop:flex"
             />
@@ -220,8 +227,8 @@ export function Cockpit({ view }: { view: PlayerView }) {
           </div>
           <div className={cn('desktop:[grid-area:radioCopilot]', DESKTOP_PANEL)}>
             <PanelHeader
-              title="Radio"
-              hint="N clears a plane N−1 ahead"
+              title={t('cockpit.radio')}
+              hint={t('cockpit.radioHint')}
               side
               className="hidden desktop:flex"
             />
@@ -232,11 +239,11 @@ export function Cockpit({ view }: { view: PlayerView }) {
     ),
     gear: (
       <Panel
-        title="Landing gear"
+        title={t('cockpit.landingGear')}
         badge={
           <span className="inline-flex items-center gap-1">
             <AeroMarkerIcon marker="blue" />
-            <span className="sr-only">Blue aerodynamics marker</span> +1
+            <span className="sr-only">{t('cockpit.blueMarker')}</span> +1
           </span>
         }
         side
@@ -251,11 +258,11 @@ export function Cockpit({ view }: { view: PlayerView }) {
     ),
     flaps: (
       <Panel
-        title="Flaps"
+        title={t('cockpit.flaps')}
         badge={
           <span className="inline-flex items-center gap-1">
             <AeroMarkerIcon marker="orange" />
-            <span className="sr-only">Orange aerodynamics marker</span> +1
+            <span className="sr-only">{t('cockpit.orangeMarker')}</span> +1
           </span>
         }
         side
@@ -273,11 +280,11 @@ export function Cockpit({ view }: { view: PlayerView }) {
       <IceBrakesPanel view={view} />
     ) : (
       <Panel
-        title="Brakes"
+        title={t('cockpit.brakes')}
         badge={
           <span className="inline-flex items-center gap-1">
             <BrakeMarkerIcon />
-            <span className="sr-only">Brake marker</span> +2
+            <span className="sr-only">{t('cockpit.brakeMarker')}</span> +2
           </span>
         }
         className="justify-between"
@@ -291,10 +298,17 @@ export function Cockpit({ view }: { view: PlayerView }) {
       </Panel>
     ),
     concentration: (
-      <Panel title="Concentration" hint="Any die: +1 coffee (max 3)" className="justify-between">
+      <Panel
+        title={t('cockpit.concentration')}
+        hint={t('cockpit.concentrationHint')}
+        className="justify-between"
+      >
         <div className="flex items-center justify-between gap-2">
           <Slots ids={['concentration1', 'concentration2', 'concentration3']} view={view} />
-          <p className="flex items-center gap-1" aria-label={`${view.coffee} coffee`}>
+          <p
+            className="flex items-center gap-1"
+            aria-label={t('cockpit.coffeeCount', { count: view.coffee })}
+          >
             {[0, 1, 2].map((i) => (
               <Coffee
                 key={i}

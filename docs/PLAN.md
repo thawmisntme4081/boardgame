@@ -40,7 +40,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done (data entry open) | — |
 | 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | ⏳ Not started | High |
 | 9 | [Persistence](phases/phase-09-persistence.md) | M4 | ⏳ Not started | Medium-low |
-| 10 | [Internationalisation (EN + VI)](phases/phase-10-i18n.md) | M4 | ⏳ Not started | Medium |
+| 10 | [Internationalisation (EN + VI)](phases/phase-10-i18n.md) | M4 | ✅ Done | Medium |
 | 11 | [Game history and accounts](phases/phase-11-history-accounts.md) | M4 | ⏳ Not started | Low (local) / High (accounts) |
 | 12 | [Deploy](phases/phase-12-deploy.md) | M5 | ⏳ Not started | Medium |
 

@@ -1,13 +1,13 @@
 import {
   ABILITY_IDS,
   DIFFICULTIES,
-  DIFFICULTY_NAMES,
   SCENARIO_LIST,
   SCENARIOS,
   type AbilityId,
   type Scenario,
 } from '@sky/shared';
 import { fitAbilities, scenarioSummary, type SetupChoice } from '@/lib/setup';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { ABILITY_TEXT, DIFFICULTY_DOT, MODULE_TEXT } from '@/scenarioText';
+import { abilityText, DIFFICULTY_DOT, difficultyName, moduleText } from '@/scenarioText';
 
 export function DifficultyDot({ scenario }: { scenario: Scenario }) {
   return (
@@ -45,6 +45,7 @@ export function ScenarioPicker({
   value: SetupChoice;
   onChange: (choice: SetupChoice) => void;
 }) {
+  const { t } = useTranslation();
   const scenario = SCENARIOS[value.scenario] ?? SCENARIO_LIST[0]!;
   const count = scenario.abilities;
 
@@ -60,7 +61,7 @@ export function ScenarioPicker({
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={`${id}-scenario`}>Scenario</Label>
+      <Label htmlFor={`${id}-scenario`}>{t('scenario.label')}</Label>
       <Select value={scenario.id} onValueChange={pickScenario}>
         <SelectTrigger id={`${id}-scenario`} className="h-11 w-full text-base">
           <SelectValue />
@@ -68,12 +69,12 @@ export function ScenarioPicker({
         <SelectContent position="popper" className="max-h-80">
           {DIFFICULTIES.map((difficulty) => (
             <SelectGroup key={difficulty}>
-              <SelectLabel>{DIFFICULTY_NAMES[difficulty]}</SelectLabel>
+              <SelectLabel>{difficultyName(difficulty)}</SelectLabel>
               {SCENARIO_LIST.filter((s) => s.difficulty === difficulty).map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   <DifficultyDot scenario={s} />
                   {s.name}
-                  <span className="sr-only">, {DIFFICULTY_NAMES[s.difficulty]}</span>
+                  <span className="sr-only">, {difficultyName(s.difficulty)}</span>
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -85,8 +86,8 @@ export function ScenarioPicker({
         <ul className="list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
           {scenario.modules.map((m) => (
             <li key={m}>
-              <span className="font-medium text-foreground">{MODULE_TEXT[m].name}:</span>{' '}
-              {MODULE_TEXT[m].rule}
+              <span className="font-medium text-foreground">{moduleText(m).name}:</span>{' '}
+              {moduleText(m).rule}
             </li>
           ))}
         </ul>
@@ -94,7 +95,7 @@ export function ScenarioPicker({
       {count > 0 && (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">
-            Choose {count} special {count === 1 ? 'ability' : 'abilities'}
+            {t('scenario.chooseAbilities', { count })}
           </legend>
           <div className="flex flex-wrap gap-1.5">
             {ABILITY_IDS.map((ability) => {
@@ -106,11 +107,11 @@ export function ScenarioPicker({
                   size="sm"
                   variant={on ? 'default' : 'outline'}
                   aria-pressed={on}
-                  title={ABILITY_TEXT[ability].rule}
+                  title={abilityText(ability).rule}
                   className="h-9"
                   onClick={() => toggleAbility(ability)}
                 >
-                  {ABILITY_TEXT[ability].name}
+                  {abilityText(ability).name}
                 </Button>
               );
             })}
@@ -118,8 +119,8 @@ export function ScenarioPicker({
           <ul className="space-y-0.5 text-xs text-muted-foreground">
             {value.abilities.map((ability) => (
               <li key={ability}>
-                <span className="font-medium text-foreground">{ABILITY_TEXT[ability].name}:</span>{' '}
-                {ABILITY_TEXT[ability].rule}
+                <span className="font-medium text-foreground">{abilityText(ability).name}:</span>{' '}
+                {abilityText(ability).rule}
               </li>
             ))}
           </ul>

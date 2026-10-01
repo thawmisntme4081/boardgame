@@ -1,14 +1,16 @@
+import { useTranslation } from 'react-i18next';
 /**
  * A cockpit switch (landing gear, flaps, brakes). Like the board's slide switches: off
  * covers the light, on slides aside to show green.
  */
 export function Switch({ on, label }: { on: boolean; label: string }) {
+  const { t } = useTranslation();
   return (
     <svg
       viewBox="0 0 36 20"
       className="h-5 w-9 shrink-0"
       role="img"
-      aria-label={`${label}: ${on ? 'deployed' : 'not deployed'}`}
+      aria-label={on ? t('cockpit.deployed', { label }) : t('cockpit.notDeployed', { label })}
     >
       <rect
         x="1"

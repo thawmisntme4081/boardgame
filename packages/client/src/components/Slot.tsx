@@ -1,35 +1,38 @@
 import { SLOTS, type PlayerView, type SlotId } from '@sky/shared';
+import { useTranslation } from 'react-i18next';
 import { placeSelected } from '@/api';
+import { t } from '@/i18n';
 import { slotValid } from '@/lib/moves';
 import { cn } from '@/lib/utils';
 import { useGame } from '@/store';
 import { DieFace } from '@/svgs/DieFace';
 
-const GROUP_LABEL = {
-  axis: 'Axis',
-  engines: 'Engines',
-  radio: 'Radio',
-  gear: 'Landing gear',
-  flaps: 'Flaps',
-  brakes: 'Brakes',
-  concentration: 'Concentration',
-  kerosene: 'Kerosene',
-  intern: 'Intern',
-  iceBrakes: 'Ice brakes',
-} as const;
-
+/** "Landing gear 2 (pilot, needs 3 or 4)": what the space is, whose it is, what it takes. */
 function slotLabel(slot: SlotId): string {
   const def = SLOTS[slot];
-  const who = def.seats.length === 2 ? 'either player' : def.seats[0];
-  const values = def.values ? `, needs ${def.values.join(' or ')}` : '';
-  const row = def.group === 'iceBrakes' ? (slot.endsWith('Top') ? ' above' : ' below') : '';
-  return `${GROUP_LABEL[def.group]} ${def.index + 1}${row} (${who}${values})`;
+  const who =
+    def.seats.length === 2
+      ? t('seat.either')
+      : def.seats[0] === 'pilot'
+        ? t('seat.pilotLower')
+        : t('seat.copilotLower');
+  const needs = def.values ? t('slot.needs', { values: def.values.join(t('slot.or')) }) : '';
+  const row =
+    def.group === 'iceBrakes' ? (slot.endsWith('Top') ? t('slot.above') : t('slot.below')) : '';
+  return t('slot.label', {
+    group: t(`slot.group.${def.group}`),
+    n: def.index + 1,
+    row,
+    who,
+    needs,
+  });
 }
 
-const SOURCE_LABEL = { intern: ' (intern token)', traffic: ' (traffic die)' } as const;
+const SOURCE_KEY = { intern: 'slot.internToken', traffic: 'slot.trafficDie' } as const;
 
 /** A space on the control panel: shows its die, or lights up when the selected die fits. */
 export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
+  useTranslation(); // re-render when the language changes
   const selectedDieId = useGame((s) => s.selectedDieId);
   const coffeeDelta = useGame((s) => s.coffeeDelta);
   const internSlot = useGame((s) => s.internSlot);
@@ -45,7 +48,8 @@ export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
       type="button"
       aria-label={
         placed
-          ? `${slotLabel(slot)}: ${placed.value}${placed.source ? SOURCE_LABEL[placed.source] : ''}`
+          ? t('slot.placed', { label: slotLabel(slot), value: placed.value }) +
+            (placed.source ? t(SOURCE_KEY[placed.source]) : '')
           : slotLabel(slot)
       }
       aria-pressed={chosen || undefined}

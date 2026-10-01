@@ -1,5 +1,6 @@
 import { WIND_RING, windSpeed } from '@sky/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 const C = 60;
@@ -36,12 +37,13 @@ export function WindRing({ wind, className }: { wind: number; className?: string
   const nose = point(0, R - 16);
   const angle = useNeedleAngle(wind);
   const speed = windSpeed(wind);
+  const { t } = useTranslation();
   return (
     <svg
       viewBox="0 0 120 120"
       className={cn('size-28 shrink-0', className)}
       role="img"
-      aria-label={`Wind ${signed(speed)} added to the engines`}
+      aria-label={t('modules.windLabel', { speed: signed(speed) })}
     >
       <circle cx={C} cy={C} r={R + SPOT + 2} className="fill-muted" />
       {WIND_RING.map((value, i) => {

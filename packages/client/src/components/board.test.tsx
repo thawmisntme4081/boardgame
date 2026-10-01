@@ -211,7 +211,12 @@ describe('module panels', () => {
   it('show the leak without a space to play on', () => {
     render(<Cockpit view={makeView('pilot', { scenario: { modules: ['kerosene-leak'] } })} />);
     const panel = screen.getByRole('region', { name: 'Kerosene leak' });
-    expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
+    // Only the panel's info icon: no space to place a die.
+    expect(
+      within(panel)
+        .getAllByRole('button')
+        .map((b) => b.getAttribute('aria-label')),
+    ).toEqual(['About Kerosene leak']);
   });
 
   it('replace the brakes with the ice brakes', () => {
@@ -474,6 +479,50 @@ describe('cockpit hints and module details', () => {
     rerender(<Cockpit view={makeView('pilot', { scenario, patch: { kerosene: 14 } })} />);
     expect(screen.getByText('−6')).toBeInTheDocument();
     expect(screen.getByRole('meter', { name: 'Kerosene' })).toHaveAttribute('aria-valuenow', '14');
+  });
+});
+
+describe('panel hints', () => {
+  it('sit behind a gray info icon, and a red one on mandatory panels', async () => {
+    render(<Cockpit view={makeView('pilot')} />);
+    expect(screen.queryByText('Any die: +1 coffee (max 3)')).not.toBeInTheDocument();
+    const about = screen.getByRole('button', { name: 'About Concentration' });
+    expect(about).toHaveClass('text-muted-foreground');
+    await userEvent.click(about);
+    expect(await screen.findByText('Any die: +1 coffee (max 3)')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    const axis = screen.getByRole('button', { name: 'Axis is mandatory' });
+    expect(axis).toHaveClass('text-danger');
+    await userEvent.click(axis);
+    expect(await screen.findByText('Must be level to land')).toBeInTheDocument();
+    expect(screen.getByText('Mandatory')).toBeInTheDocument();
+  });
+
+  it('leave panels without a hint without an icon', () => {
+    render(<Cockpit view={makeView('pilot')} />);
+    const gear = screen.getByRole('region', { name: 'Landing gear' });
+    expect(within(gear).queryByRole('button', { name: /^About/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('approach markers', () => {
+  it('stack the traffic die above the turn dots on a space with both', () => {
+    const { container } = render(
+      <ApproachTrack
+        view={makeView('pilot', {
+          scenario: {
+            traffic: [0, 2, 0, 0, 0, 0, 0],
+            turns: [null, [-2, -1], null, null, null, null, null],
+          },
+        })}
+      />,
+    );
+    const die = container.querySelector('rect.fill-neutral-900')!;
+    const dot = container.querySelector('circle.fill-green-600')!;
+    expect(Number(dot.getAttribute('cy'))).toBeGreaterThan(
+      Number(die.getAttribute('y')) + Number(die.getAttribute('height')),
+    );
   });
 });
 

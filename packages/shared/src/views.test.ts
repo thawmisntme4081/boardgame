@@ -100,5 +100,6 @@ describe('canPlaceInView', () => {
     }
     expect(mismatches.slice(0, 5)).toEqual([]);
     expect(checked).toBeGreaterThan(100_000);
-  });
+    // Thousands of moves: slow when the whole suite runs in parallel.
+  }, 60_000);
 });

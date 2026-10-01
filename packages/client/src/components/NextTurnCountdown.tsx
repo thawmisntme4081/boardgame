@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useNow } from '@/lib/useNow';
 import { useGame } from '@/store';
 
@@ -6,6 +7,7 @@ import { useGame } from '@/store';
  * players still talk strategy and press "Roll dice" as usual. Gone once it reaches 0.
  */
 export function NextTurnCountdown() {
+  const { t } = useTranslation();
   const nextTurnAt = useGame((s) => s.nextTurnAt);
   const now = useNow();
   if (nextTurnAt === null || now >= nextTurnAt) return null;
@@ -13,10 +15,10 @@ export function NextTurnCountdown() {
   return (
     <p
       role="timer"
-      aria-label={`Next turn in ${seconds} seconds`}
+      aria-label={t('status.nextTurnLabel', { seconds })}
       className="rounded-full bg-light-on px-3 py-1 text-sm font-semibold whitespace-nowrap text-foreground tabular-nums"
     >
-      Next turn in {seconds}s
+      {t('status.nextTurn', { seconds })}
     </p>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from '@sky/shared';
 import { ArrowLeftRight, Coffee, FlipVertical2, Minus, Plus, RotateCcw, X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { playAbility, ready, reroll, spendReroll } from '@/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,34 +23,36 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { t as translate } from '@/i18n';
 import { formatClock } from '@/lib/clock';
 import { useNow } from '@/lib/useNow';
 import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
-import { ABILITY_TEXT } from '@/scenarioText';
+import { abilityText } from '@/scenarioText';
 import { useGame } from '@/store';
 import { DieFace } from '@/svgs/DieFace';
 
 const partnerName = (view: PlayerView, presence: Presence | null) =>
-  presence?.[otherSeat(view.seat)]?.name ?? seatName[otherSeat(view.seat)];
+  presence?.[otherSeat(view.seat)]?.name ?? seatName(otherSeat(view.seat));
 
 /** The Special Ability cards in play; tap one for its rule (no hover-only info on phones). */
 function AbilityList({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   if (view.abilities.length === 0) return null;
   return (
     <p className="text-xs text-muted-foreground">
-      Abilities:{' '}
+      {t('tray.abilities')}{' '}
       {view.abilities.map((ability, i) => (
         <span key={ability}>
           {i > 0 && ' · '}
           <Popover>
             <PopoverTrigger className="relative font-medium text-foreground underline decoration-dotted underline-offset-2 outline-none after:absolute after:top-1/2 after:left-1/2 after:h-11 after:w-full after:min-w-11 after:-translate-1/2 focus-visible:ring-3 focus-visible:ring-ring/50">
-              {ABILITY_TEXT[ability].name}
+              {abilityText(ability).name}
             </PopoverTrigger>
             <PopoverContent side="top" className="w-64">
               <PopoverHeader>
-                <PopoverTitle>{ABILITY_TEXT[ability].name}</PopoverTitle>
-                <PopoverDescription>{ABILITY_TEXT[ability].rule}</PopoverDescription>
+                <PopoverTitle>{abilityText(ability).name}</PopoverTitle>
+                <PopoverDescription>{abilityText(ability).rule}</PopoverDescription>
               </PopoverHeader>
             </PopoverContent>
           </Popover>
@@ -61,13 +64,14 @@ function AbilityList({ view }: { view: PlayerView }) {
 
 const spacesAhead = (view: PlayerView, space: number) => {
   const ahead = space - view.approachIndex;
-  if (space === view.approachPlanes.length - 1) return 'on the airport';
-  if (ahead === 0) return 'on your space';
-  return `${ahead} ${ahead === 1 ? 'space' : 'spaces'} ahead`;
+  if (space === view.approachPlanes.length - 1) return translate('tray.onAirport');
+  if (ahead === 0) return translate('tray.onYourSpace');
+  return translate('tray.spacesAhead', { count: ahead });
 };
 
 /** The traffic die rolled at the start of the round, and where each plane went. */
 function TrafficNews({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   if (view.traffic.length === 0) return null;
   return (
     <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2" role="status">
@@ -77,12 +81,12 @@ function TrafficNews({ view }: { view: PlayerView }) {
         ))}
       </span>
       <p className="text-sm">
-        <span className="font-medium">Traffic:</span>{' '}
+        <span className="font-medium">{t('tray.traffic')}</span>{' '}
         {view.traffic
           .map(({ roll, space }) =>
             space === null
-              ? `rolled ${roll}, no planes left to add`
-              : `rolled ${roll}, a plane ${spacesAhead(view, space)}`,
+              ? t('tray.trafficNoPlanes', { roll })
+              : t('tray.trafficRolled', { roll, where: spacesAhead(view, space) }),
           )
           .join('; ')}
         .
@@ -96,6 +100,7 @@ function TrafficNews({ view }: { view: PlayerView }) {
  * the green "Next turn in 5s" pause, so the finished round stays on screen for its 5 seconds.
  */
 function ReadyButton({ ready: isReady, partnerName }: { ready: boolean; partnerName: string }) {
+  const { t } = useTranslation();
   const nextTurnAt = useGame((s) => s.nextTurnAt);
   const now = useNow();
   const pausing = nextTurnAt !== null && now < nextTurnAt;
@@ -106,12 +111,13 @@ function ReadyButton({ ready: isReady, partnerName }: { ready: boolean; partnerN
       disabled={isReady || pausing}
       onClick={() => void ready()}
     >
-      {isReady ? `Waiting for ${partnerName}…` : 'Roll dice'}
+      {isReady ? t('tray.waitingFor', { name: partnerName }) : t('tray.rollDice')}
     </Button>
   );
 }
 
 function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
+  const { t } = useTranslation();
   return (
     // Notes on the left, "Roll dice" on the right (one column in the tablet side column).
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
@@ -119,14 +125,12 @@ function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence
         <TrafficNews view={view} />
         {view.scenario.modules.includes('real-time') ? (
           <p className="text-sm font-medium">
-            Real-time: {formatClock(REAL_TIME_MS)} to place the dice once you roll; dice not placed
-            by then are lost.
+            {t('tray.realTime', { time: formatClock(REAL_TIME_MS) })}
           </p>
         ) : (
           view.timerMs !== null && (
             <p className="text-sm font-medium">
-              Timed game: {formatClock(view.timerMs)} to place all the dice once you roll, or you
-              lose.
+              {t('tray.timedGame', { time: formatClock(view.timerMs) })}
             </p>
           )
         )}
@@ -143,18 +147,23 @@ function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence
 function RerollTray({ view }: { view: PlayerView }) {
   const pick = useGame((s) => s.rerollPick);
   const toggle = useGame((s) => s.toggleRerollPick);
+  const { t } = useTranslation();
   return (
     // Same two columns as the placing tray: text and dice left, the two buttons stacked right.
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-col gap-2">
-        <p className="text-sm font-medium">Reroll: tick the dice to roll again (once).</p>
+        <p className="text-sm font-medium">{t('tray.rerollIntro')}</p>
         <div className="flex flex-wrap gap-2">
           {view.myDice.map((die) => (
             <button
               key={die.id}
               type="button"
               aria-pressed={pick.includes(die.id)}
-              aria-label={`Die ${die.value}${pick.includes(die.id) ? ', will reroll' : ''}`}
+              aria-label={
+                pick.includes(die.id)
+                  ? t('tray.rerollDieChosen', { value: die.value })
+                  : t('tray.rerollDie', { value: die.value })
+              }
               onClick={() => toggle(die.id)}
               className={cn(
                 'rounded-xl p-0.5 transition',
@@ -168,10 +177,11 @@ function RerollTray({ view }: { view: PlayerView }) {
       </div>
       <div className="flex flex-col items-stretch gap-2">
         <Button className="h-11" disabled={pick.length === 0} onClick={() => void reroll(pick)}>
-          <RotateCcw /> Reroll {pick.length || ''}
+          <RotateCcw />{' '}
+          {pick.length > 0 ? t('tray.rerollButton', { count: pick.length }) : t('tray.rerollNone')}
         </Button>
         <Button variant="outline" className="h-11" onClick={() => void reroll([])}>
-          Keep all
+          {t('tray.keepAll')}
         </Button>
       </div>
     </div>
@@ -181,15 +191,16 @@ function RerollTray({ view }: { view: PlayerView }) {
 function CoffeeControl({ view, value }: { view: PlayerView; value: DieValue }) {
   const delta = useGame((s) => s.coffeeDelta);
   const setDelta = useGame((s) => s.setCoffeeDelta);
+  const { t } = useTranslation();
   const { min, max } = coffeeRange(view.coffee, value);
   if (view.coffee === 0) return null;
   return (
-    <div className="flex items-center gap-2" aria-label="Coffee">
+    <div className="flex items-center gap-2" aria-label={t('tray.coffee')}>
       <Button
         variant="outline"
         size="icon"
         className="size-11"
-        aria-label="Spend coffee: minus 1"
+        aria-label={t('tray.coffeeMinus')}
         disabled={delta <= min}
         onClick={() => setDelta(delta - 1)}
       >
@@ -203,7 +214,7 @@ function CoffeeControl({ view, value }: { view: PlayerView; value: DieValue }) {
         variant="outline"
         size="icon"
         className="size-11"
-        aria-label="Spend coffee: plus 1"
+        aria-label={t('tray.coffeePlus')}
         disabled={delta >= max}
         onClick={() => setDelta(delta + 1)}
       >
@@ -225,12 +236,17 @@ function AbilityActions({
   dieId: string;
   value: DieValue;
 }) {
+  const { t } = useTranslation();
   const buttons: { ability: ActionAbility; label: string; icon: ReactNode }[] = [
-    { ability: 'adaptation', label: `Flip to ${7 - value}`, icon: <FlipVertical2 /> },
-    { ability: 'anticipation', label: 'Reroll this die', icon: <RotateCcw /> },
+    {
+      ability: 'adaptation',
+      label: t('tray.flipTo', { value: 7 - value }),
+      icon: <FlipVertical2 />,
+    },
+    { ability: 'anticipation', label: t('tray.rerollThisDie'), icon: <RotateCcw /> },
     {
       ability: 'working-together',
-      label: view.swap ? `Swap for the ${view.swap.value}` : 'Offer to swap',
+      label: view.swap ? t('tray.swapFor', { value: view.swap.value }) : t('tray.offerSwap'),
       icon: <ArrowLeftRight />,
     },
   ];
@@ -242,12 +258,12 @@ function AbilityActions({
         <Button
           key={ability}
           variant="outline"
-          className="h-11"
-          title={ABILITY_TEXT[ability].rule}
+          className="h-auto min-h-11 max-w-full text-left whitespace-normal"
+          title={abilityText(ability).rule}
           onClick={() => void playAbility({ ability, dieId })}
         >
           {icon} {label}
-          <span className="sr-only"> ({ABILITY_TEXT[ability].name})</span>
+          <span className="sr-only"> ({abilityText(ability).name})</span>
         </Button>
       ))}
     </div>
@@ -257,25 +273,24 @@ function AbilityActions({
 function placingText(view: PlayerView, partner: string, placingToken: boolean): string {
   if (view.swap) {
     return view.swap.seat === view.seat
-      ? `Working Together: waiting for ${partner} to swap with your ${view.swap.value}.`
-      : `${partner} offers a ${view.swap.value} to swap: tap one of your dice, then Swap.`;
+      ? translate('tray.swapWaiting', { name: partner, value: view.swap.value })
+      : translate('tray.swapOffered', { name: partner, value: view.swap.value });
   }
   if (view.bonus) {
     return view.seat === 'copilot'
-      ? 'Synchronisation: place the traffic die on any empty space.'
-      : `${partner} is placing the traffic die…`;
+      ? translate('tray.syncPlace')
+      : translate('tray.syncPartner', { name: partner });
   }
   if (placingToken) {
-    return `Intern token ${nextInternToken(view.intern, view.seat)}: tap a glowing space for it.`;
+    return translate('tray.internToken', { value: nextInternToken(view.intern, view.seat) });
   }
   if (view.currentSeat !== view.seat) {
-    const left = view.partnerDiceLeft;
-    const rerolling = view.rerollPending[otherSeat(view.seat)] ? ', rerolling' : '';
-    return `${partner} is placing a die… (${left} ${left === 1 ? 'die' : 'dice'} left${rerolling})`;
+    const options = { name: partner, count: view.partnerDiceLeft };
+    return view.rerollPending[otherSeat(view.seat)]
+      ? translate('tray.partnerPlacingRerolling', options)
+      : translate('tray.partnerPlacing', options);
   }
-  return view.myDice.length > 0
-    ? 'Your turn: tap a die, then a glowing space.'
-    : 'Your dice are all placed.';
+  return view.myDice.length > 0 ? translate('tray.yourTurn') : translate('tray.allPlaced');
 }
 
 function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
@@ -284,6 +299,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
   const selectDie = useGame((s) => s.selectDie);
   const internSlot = useGame((s) => s.internSlot);
   const setInternSlot = useGame((s) => s.setInternSlot);
+  const { t } = useTranslation();
   const myTurn = view.currentSeat === view.seat;
   const partner = partnerName(view, presence);
   const selected = view.myDice.find((d) => d.id === selectedDieId);
@@ -294,7 +310,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
   return (
     // Two columns (one in the narrow tablet side column): status and dice on the left;
     // coffee, reroll, ability buttons and the abilities list on the right.
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="grid grid-cols-[minmax(13.5rem,1fr)_minmax(0,auto)] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-col gap-2">
         <p
           className={cn(
@@ -310,7 +326,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
             <button
               type="button"
               aria-pressed={trafficDie.id === selectedDieId}
-              aria-label={`Traffic die: ${trafficDie.value}`}
+              aria-label={t('tray.trafficDie', { value: trafficDie.value })}
               onClick={() => selectDie(trafficDie.id)}
               className={cn(
                 'rounded-xl p-0.5 transition',
@@ -328,7 +344,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
                 key={die.id}
                 type="button"
                 aria-pressed={isSelected}
-                aria-label={`Your die: ${shown}`}
+                aria-label={t('tray.yourDie', { value: shown })}
                 onClick={() => selectDie(die.id)}
                 className={cn(
                   'rounded-xl p-0.5 transition',
@@ -340,28 +356,28 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
             );
           })}
           {view.myDice.length === 0 && !trafficDie && (
-            <span className="text-sm text-muted-foreground">No dice left</span>
+            <span className="text-sm text-muted-foreground">{t('tray.noDiceLeft')}</span>
           )}
         </div>
       </div>
-      <div className="flex flex-col items-end gap-2 tablet:items-start desktop:items-end">
+      <div className="flex min-w-0 flex-col items-end gap-2 tablet:items-start desktop:items-end">
         {selected && !internSlot && <CoffeeControl view={view} value={selected.value} />}
         {selected && !internSlot && (
           <AbilityActions view={view} dieId={selected.id} value={selected.value} />
         )}
         {internSlot && (
           <Button variant="outline" className="h-11" onClick={() => setInternSlot(null)}>
-            <X /> Cancel the intern
+            <X /> {t('tray.cancelIntern')}
           </Button>
         )}
         {canSpend && (
           <Button
             variant="outline"
             className="h-11"
-            aria-label={`Spend a reroll token (${view.rerolls} left)`}
+            aria-label={t('tray.spendReroll', { count: view.rerolls })}
             onClick={() => void spendReroll()}
           >
-            <RotateCcw /> Reroll ({view.rerolls})
+            <RotateCcw /> {t('tray.rerollToken', { count: view.rerolls })}
           </Button>
         )}
         <AbilityList view={view} />

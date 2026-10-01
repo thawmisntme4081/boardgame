@@ -1,4 +1,5 @@
 import { Timer } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatClock } from '@/lib/clock';
 import { useNow } from '@/lib/useNow';
 import { cn } from '@/lib/utils';
@@ -12,6 +13,7 @@ const WARN_MS = 30_000;
  * decides when time is up. Renders nothing when no countdown is running.
  */
 export function RoundCountdown() {
+  const { t } = useTranslation();
   const deadline = useGame((s) => s.roundDeadline);
   const now = useNow();
 
@@ -20,7 +22,7 @@ export function RoundCountdown() {
   return (
     <p
       role="timer"
-      aria-label={`Time left this round: ${formatClock(left)}`}
+      aria-label={t('status.timeLeft', { time: formatClock(left) })}
       className={cn(
         'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap tabular-nums',
         left <= WARN_MS ? 'bg-danger text-white' : 'bg-muted',

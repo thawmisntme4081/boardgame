@@ -8,6 +8,7 @@ import {
   type SlotId,
 } from '@sky/shared';
 import { toast } from 'sonner';
+import { t } from './i18n';
 import { errorText } from './messages';
 import { createPartnerNotifier } from './partner';
 import { inviteUrl, saveSession } from './session';
@@ -20,7 +21,7 @@ async function withTimeout<R>(request: () => Promise<R>): Promise<R | null> {
   try {
     return await request();
   } catch {
-    toast.error('The server did not answer. Check your connection.');
+    toast.error(t('toast.noAnswer'));
     return null;
   }
 }
@@ -182,7 +183,7 @@ export async function shareInvite(code: string): Promise<void> {
   const url = inviteUrl(code);
   if (navigator.share) {
     try {
-      await navigator.share({ title: 'Sky Team', text: 'Fly with me in Sky Team', url });
+      await navigator.share({ title: 'Sky Team', text: t('toast.shareText'), url });
       return;
     } catch {
       // Cancelled or unsupported: fall back to copying.
@@ -190,7 +191,7 @@ export async function shareInvite(code: string): Promise<void> {
   }
   try {
     await navigator.clipboard.writeText(url);
-    toast.success('Invite link copied');
+    toast.success(t('toast.inviteCopied'));
   } catch {
     toast.message(url);
   }

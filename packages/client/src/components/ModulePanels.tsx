@@ -2,6 +2,7 @@
 import { KEROSENE_START, windSpeed, type PlayerView, type SlotId } from '@sky/shared';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { DieFace } from '@/svgs/DieFace';
 import { WindRing } from '@/svgs/WindRing';
@@ -13,6 +14,7 @@ import { Slot } from './Slot';
  * (keyed per drop, so each burn replays it).
  */
 function KeroseneGauge({ kerosene }: { kerosene: number }) {
+  const { t } = useTranslation();
   const low = kerosene <= 6;
   // The last value seen and how much the latest burn took (state from the previous render).
   const [seen, setSeen] = useState({ value: kerosene, drop: 0, burns: 0 });
@@ -32,7 +34,7 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
       )}
       <div
         role="meter"
-        aria-label="Kerosene"
+        aria-label={t('modules.kerosene')}
         aria-valuemin={0}
         aria-valuemax={KEROSENE_START}
         aria-valuenow={kerosene}
@@ -47,19 +49,19 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
         />
       </div>
       <p className={cn('text-xs tabular-nums', low && 'font-semibold text-danger')}>
-        {kerosene} / {KEROSENE_START} left{kerosene === 0 && ': empty'}
+        {t('modules.keroseneLeft', { left: kerosene, total: KEROSENE_START })}
+        {kerosene === 0 && t('modules.keroseneEmpty')}
       </p>
     </div>
   );
 }
 
 export function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean }) {
+  const { t } = useTranslation();
   return (
     <Panel
-      title={leak ? 'Kerosene leak' : 'Kerosene'}
-      hint={
-        leak ? 'Each round: engine difference + 1' : 'Either player · burns its value; none: −6'
-      }
+      title={leak ? t('modules.keroseneLeak') : t('modules.kerosene')}
+      hint={leak ? t('modules.keroseneLeakHint') : t('modules.keroseneHint')}
     >
       <div className="flex items-center gap-3">
         {!leak && <Slot slot="kerosene" view={view} />}
@@ -71,8 +73,9 @@ export function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean 
 
 /** Wind: shown with the axis (see Cockpit), since the axis turns the ring. */
 export function WindPanel({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   return (
-    <Panel title="Wind" hint="Turned by the axis">
+    <Panel title={t('modules.wind')} hint={t('modules.windHint')}>
       {/* Desktop: the ring fills the height left in the panel (set by the Axis panel beside it). */}
       <div className="flex justify-center desktop:relative desktop:min-h-28 desktop:flex-1">
         <WindRing
@@ -86,14 +89,15 @@ export function WindPanel({ view }: { view: PlayerView }) {
 
 /** "+N wind" floating over the speed gauge (absolute, like the turn dots over the axis dial). */
 export function WindOnEngines({ wind }: { wind: number }) {
+  const { t } = useTranslation();
   const speed = windSpeed(wind);
   return (
     <p
       role="note"
-      aria-label={`Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`}
+      aria-label={t('modules.windLabel', { speed: speed > 0 ? `+${speed}` : speed })}
       className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border bg-card px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums shadow-sm"
     >
-      {speed > 0 ? `+${speed}` : speed} wind
+      {t('modules.windOnEngines', { speed: speed > 0 ? `+${speed}` : speed })}
     </p>
   );
 }
@@ -112,15 +116,18 @@ function InternArrows() {
 }
 
 export function InternPanel({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   const tokens = view.intern ?? [];
   return (
-    <Panel title="Intern" hint="Die ≠ next token · the token goes on any of your spaces">
+    <Panel title={t('modules.intern')} hint={t('modules.internHint')}>
       <div className="flex flex-wrap items-center gap-1">
         <Slot slot="internPilot" view={view} />
         <ol
           className="flex flex-1 items-center justify-center gap-0.5"
           aria-label={
-            tokens.length > 0 ? `Intern tokens left: ${tokens.join(', ')}` : 'Intern fully trained'
+            tokens.length > 0
+              ? t('modules.internLeft', { tokens: tokens.join(', ') })
+              : t('modules.internTrained')
           }
         >
           {tokens.map((value, i) => (
@@ -131,7 +138,9 @@ export function InternPanel({ view }: { view: PlayerView }) {
               </li>
             </Fragment>
           ))}
-          {tokens.length === 0 && <li className="text-xs text-muted-foreground">Trained!</li>}
+          {tokens.length === 0 && (
+            <li className="text-xs text-muted-foreground">{t('modules.trained')}</li>
+          )}
         </ol>
         <Slot slot="internCopilot" view={view} />
       </div>
@@ -148,13 +157,18 @@ const ICE_COLUMNS: [SlotId, SlotId][] = [
 
 /** Ice brakes: a column of two dice per value, left to right; the marker must pass the 5. */
 export function IceBrakesPanel({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   const cell = (node: ReactNode, key: string) => (
     <div key={key} className="flex justify-center">
       {node}
     </div>
   );
   return (
-    <Panel title="Ice brakes" hint="Pairs: pilot above, either below" className="justify-between">
+    <Panel
+      title={t('modules.iceBrakes')}
+      hint={t('modules.iceBrakesHint')}
+      className="justify-between"
+    >
       <div className="grid grid-cols-[repeat(7,auto)] items-center justify-start gap-x-1 gap-y-1">
         {ICE_COLUMNS.map(([top], i) => (
           <Fragment key={top}>
@@ -168,7 +182,9 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
             {cell(
               <span
                 role="img"
-                aria-label={`Ice brake ${i + 2}: ${view.brakes > i ? 'deployed' : 'not deployed'}`}
+                aria-label={t(view.brakes > i ? 'cockpit.deployed' : 'cockpit.notDeployed', {
+                  label: t('modules.iceBrake', { n: i + 2 }),
+                })}
                 className="h-2 w-10 overflow-hidden rounded-full bg-muted-foreground/25"
               >
                 {/* The green fills in from the left when the pair is complete. */}

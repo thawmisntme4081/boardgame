@@ -1,4 +1,5 @@
 import { AXIS_LIMIT } from '@sky/shared';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 const DEG = Math.PI / 180;
@@ -39,6 +40,7 @@ const signed = (p: number) => (p > 0 ? `+${p}` : p < 0 ? `−${-p}` : '0');
  * (absolute, so the panel layout does not move).
  */
 export function AxisDial({ axis, turn }: { axis: number; turn?: readonly number[] | null }) {
+  const { t } = useTranslation();
   const needleAngle = Math.max(-AXIS_LIMIT, Math.min(AXIS_LIMIT, axis)) * MARK_ANGLE;
   const level = axis === 0;
 
@@ -47,7 +49,7 @@ export function AxisDial({ axis, turn }: { axis: number; turn?: readonly number[
       {turn && (
         <p
           role="note"
-          aria-label={`Turn: to advance, the axis must be at ${turn.map(signed).join(' or ')}`}
+          aria-label={t('tracks.axisTurn', { positions: turn.map(signed).join(t('slot.or')) })}
           className="absolute -top-4 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2"
         >
           {TURN_POSITIONS.map((p) => (
@@ -68,8 +70,10 @@ export function AxisDial({ axis, turn }: { axis: number; turn?: readonly number[
         role="img"
         aria-label={
           level
-            ? 'Axis level'
-            : `Axis tilted ${Math.abs(axis)} toward the ${axis < 0 ? 'pilot' : 'co-pilot'}`
+            ? t('tracks.axisLevel')
+            : t(axis < 0 ? 'tracks.axisTiltedPilot' : 'tracks.axisTiltedCopilot', {
+                count: Math.abs(axis),
+              })
         }
       >
         {ZONES.map(({ position, color }) => (

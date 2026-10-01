@@ -1,4 +1,6 @@
 import type { PlayerView } from '@sky/shared';
+import { useTranslation } from 'react-i18next';
+import { t } from '@/i18n';
 import { trackWidth } from '@/lib/trackRow';
 import { cn } from '@/lib/utils';
 import { DIFFICULTY_DOT } from '@/scenarioText';
@@ -10,16 +12,25 @@ const SHOWN = 3;
 /** Axis positions left to right as the players see them: the pilot sits on the left. */
 const TURN_POSITIONS = [-2, -1, 0, 1, 2];
 
+/** "axis must be 2 toward the pilot or level" */
 const turnText = (allowed: readonly number[]) =>
-  `axis must be ${allowed
-    .map((p) => (p === 0 ? 'level' : `${Math.abs(p)} toward the ${p < 0 ? 'pilot' : 'co-pilot'}`))
-    .join(' or ')}`;
+  t('tracks.turnMustBe', {
+    positions: allowed
+      .map((p) =>
+        p === 0
+          ? t('tracks.turnLevel')
+          : t(p < 0 ? 'tracks.turnTowardPilot' : 'tracks.turnTowardCopilot', {
+              count: Math.abs(p),
+            }),
+      )
+      .join(t('slot.or')),
+  });
 
 /** Traffic die icons: a black die, times the number of rolls. */
 function Traffic({ x, y, count }: { x: number; y: number; count: number }) {
   return (
     <g>
-      <title>{`Traffic: ${count} ${count === 1 ? 'roll' : 'rolls'} of the traffic die here`}</title>
+      <title>{t('tracks.trafficTitle', { count })}</title>
       <rect x={x} y={y} width="9" height="9" rx="2" className="fill-neutral-900" />
       <circle cx={x + 4.5} cy={y + 4.5} r="1.6" className="fill-white" />
       {count > 1 && (
@@ -35,7 +46,7 @@ function Traffic({ x, y, count }: { x: number; y: number; count: number }) {
 function Turn({ cx, y, allowed }: { cx: number; y: number; allowed: readonly number[] }) {
   return (
     <g>
-      <title>{`Turn: ${turnText(allowed)}`}</title>
+      <title>{t('tracks.turnTitle', { text: turnText(allowed) })}</title>
       {TURN_POSITIONS.map((p, k) => (
         <circle
           key={p}
@@ -59,6 +70,7 @@ function Turn({ cx, y, allowed }: { cx: number; y: number; allowed: readonly num
  * stay in the SVG, hidden, rather than being removed).
  */
 export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTarget?: number }) {
+  const { t } = useTranslation();
   const { scenario } = view;
   const planes = view.approachPlanes;
   const airport = planes.length - 1;
@@ -67,12 +79,14 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
   const fade = (i: number) => cn('transition-opacity duration-500', passed(i) && 'opacity-30');
   const effects = Boolean(scenario.traffic?.some(Boolean) || scenario.turns?.some(Boolean));
   const rowY = 51;
-  const height = effects ? 64 : 50;
+  // A space with both traffic and a turn stacks them: traffic die above, turn dots below.
+  const stacked = planes.some((_, i) => (scenario.traffic?.[i] ?? 0) > 0 && scenario.turns?.[i]);
+  const height = effects ? (stacked ? 72 : 64) : 50;
   const hereTraffic = scenario.traffic?.[here] ?? 0;
   const hereTurn = scenario.turns?.[here];
   const hereText = [
-    hereTraffic > 0 && `traffic die ${hereTraffic}× each round here`,
-    hereTurn && `to advance, ${turnText(hereTurn)}`,
+    hereTraffic > 0 && t('tracks.hereTraffic', { count: hereTraffic }),
+    hereTurn && t('tracks.hereTurn', { text: turnText(hereTurn) }),
   ]
     .filter(Boolean)
     .join('; ');
@@ -87,13 +101,18 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
             DIFFICULTY_DOT[scenario.difficulty],
           )}
         />
-        Approach · {scenario.name}
+        {t('tracks.approach', { name: scenario.name })}
       </figcaption>
       <svg
         viewBox={`0 0 ${planes.length * CELL} ${height}`}
         style={{ width: trackWidth(planes.length) }}
         role="img"
-        aria-label={`Approach: ${airport - here} spaces to the airport. Planes per space from here: ${planes.slice(here).join(', ')}${hereText ? `. Current space: ${hereText}` : ''}`}
+        aria-label={
+          t('tracks.approachLabel', {
+            spaces: airport - here,
+            planes: planes.slice(here).join(', '),
+          }) + (hereText ? t('tracks.currentSpace', { text: hereText }) : '')
+        }
       >
         {planes.map((_, i) => {
           const x = i * CELL;
@@ -120,9 +139,9 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
                   className="fill-muted-foreground/40"
                 />
               )}
-              {traffic > 0 && <Traffic x={turn ? x + 3 : x + 13} y={rowY} count={traffic} />}
+              {traffic > 0 && <Traffic x={x + 13} y={rowY} count={traffic} />}
               {turn && (
-                <Turn cx={traffic > 0 ? x + 28 : x + CELL / 2} y={rowY + 4.5} allowed={turn} />
+                <Turn cx={x + CELL / 2} y={traffic > 0 ? rowY + 15 : rowY + 4.5} allowed={turn} />
               )}
             </g>
           );
@@ -150,7 +169,7 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
           view.traffic.map(({ space }, i) =>
             space === null ? null : (
               <g key={`traffic-${i}`}>
-                <title>Added by the traffic die</title>
+                <title>{t('tracks.addedByTraffic')}</title>
                 <rect
                   x={space * CELL + 2}
                   y="2"

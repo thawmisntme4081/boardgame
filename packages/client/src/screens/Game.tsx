@@ -1,5 +1,6 @@
 import { SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/shared';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Cockpit } from '@/components/Cockpit';
 import { DiceTray } from '@/components/DiceTray';
 import { GameOverDialog } from '@/components/GameOverDialog';
@@ -70,6 +71,7 @@ function useHeight<T extends HTMLElement>() {
 }
 
 export default function Game({ view, presence }: { view: PlayerView; presence: Presence | null }) {
+  const { t } = useTranslation();
   const [statusRef, statusHeight] = useHeight<HTMLDivElement>();
   const connection = useGame((s) => s.connection);
   const shown = useShownView(view);
@@ -99,7 +101,7 @@ export default function Game({ view, presence }: { view: PlayerView; presence: P
         </main>
 
         <section
-          aria-label="Your dice"
+          aria-label={t('tray.yourDice')}
           className="sticky bottom-0 z-20 border-t bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [grid-area:tray] tablet:top-(--status-h) tablet:bottom-auto tablet:self-start tablet:border-t-0 tablet:border-l desktop:top-auto desktop:bottom-0 desktop:self-auto desktop:border-t desktop:border-l-0"
         >
           <DiceTray view={view} presence={presence} />

@@ -1,8 +1,10 @@
 import { ROUND_TIMER_MS, type Scenario, type Seat } from '@sky/shared';
 import { Plane, Share2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createRoom, joinRoom, leaveGame, shareInvite } from '@/api';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { DifficultyDot, ScenarioPicker } from '@/components/ScenarioPicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,6 +24,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 /** Create a game or join one by code; `/r/ABCD` links prefill the code. */
 export function Lobby() {
+  const { t } = useTranslation();
   const [name, setName] = useState(loadName);
   const [code, setCode] = useState(() => codeFromPath(window.location.pathname));
   const [busy, setBusy] = useState(false);
@@ -45,16 +48,17 @@ export function Lobby() {
     <Shell>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Plane className="size-5" aria-hidden="true" /> Sky Team Online
-          </CardTitle>
-          <CardDescription>
-            Land the plane together: one pilot, one co-pilot, no talking once the dice are rolled.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Plane className="size-5" aria-hidden="true" /> {t('app.title')}
+            </CardTitle>
+            <LanguageSwitch className="-mt-2 -mr-2" />
+          </div>
+          <CardDescription>{t('app.tagline')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Your name</Label>
+            <Label htmlFor="name">{t('lobby.yourName')}</Label>
             <Input
               id="name"
               value={name}
@@ -66,7 +70,7 @@ export function Lobby() {
           </div>
 
           <form onSubmit={onJoin} className="flex flex-col gap-2">
-            <Label htmlFor="code">Game code</Label>
+            <Label htmlFor="code">{t('lobby.gameCode')}</Label>
             <div className="flex gap-2">
               <Input
                 id="code"
@@ -83,7 +87,7 @@ export function Lobby() {
                 className="h-11"
                 disabled={busy || !nameOk || code.length !== 4}
               >
-                Join
+                {t('lobby.join')}
               </Button>
             </div>
           </form>
@@ -91,16 +95,16 @@ export function Lobby() {
           {!invited && (
             <>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="h-px flex-1 bg-border" /> or{' '}
+                <span className="h-px flex-1 bg-border" /> {t('lobby.or')}{' '}
                 <span className="h-px flex-1 bg-border" />
               </div>
               <ScenarioPicker id="lobby" value={setup} onChange={setSetup} />
               {/* The whole row is the label, so it is an easy target on a phone. */}
               <Label htmlFor="timer" className="flex min-h-11 cursor-pointer items-center gap-3">
                 <span className="flex flex-1 flex-col gap-0.5">
-                  <span>Round timer</span>
+                  <span>{t('lobby.roundTimer')}</span>
                   <span className="text-xs font-normal text-muted-foreground">
-                    {formatClock(ROUND_TIMER_MS)} to place all the dice each round, or you lose
+                    {t('lobby.roundTimerHint', { time: formatClock(ROUND_TIMER_MS) })}
                   </span>
                 </span>
                 <Switch id="timer" checked={timer} onCheckedChange={setTimer} />
@@ -111,7 +115,7 @@ export function Lobby() {
                 disabled={busy || !nameOk}
                 onClick={() => void run(() => createRoom(name.trim(), timer, setup))}
               >
-                Create a game
+                {t('lobby.create')}
               </Button>
             </>
           )}
@@ -134,16 +138,15 @@ export function WaitingRoom({
   timerMs?: number | null;
   scenario?: Scenario;
 }) {
+  const { t } = useTranslation();
   return (
     <Shell>
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">
-            Waiting for your {missing === 'pilot' ? 'pilot' : 'co-pilot'}
-          </CardTitle>
+          <CardTitle className="text-xl">{t('lobby.waitingFor', { context: missing })}</CardTitle>
           <CardDescription>
-            Send them this code or the invite link.
-            {timerMs !== null && ` Timed game: ${formatClock(timerMs)} per round.`}
+            {t('lobby.sendCode')}
+            {timerMs !== null && t('lobby.timedGame', { time: formatClock(timerMs) })}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -157,16 +160,16 @@ export function WaitingRoom({
           )}
           <p
             className="text-center font-mono text-5xl font-bold tracking-[0.3em]"
-            aria-label={`Game code ${code.split('').join(' ')}`}
+            aria-label={t('lobby.gameCodeLabel', { spelled: code.split('').join(' ') })}
           >
             {code}
           </p>
           <p className="truncate text-center text-sm text-muted-foreground">{inviteUrl(code)}</p>
           <Button className="h-11" onClick={() => void shareInvite(code)}>
-            <Share2 /> Share invite
+            <Share2 /> {t('lobby.shareInvite')}
           </Button>
           <Button variant="ghost" className="h-11" onClick={() => void leaveGame()}>
-            Cancel
+            {t('lobby.cancel')}
           </Button>
         </CardContent>
       </Card>
@@ -175,10 +178,11 @@ export function WaitingRoom({
 }
 
 export function Connecting() {
+  const { t } = useTranslation();
   return (
     <Shell>
       <p className="text-center text-sm text-muted-foreground" role="status">
-        Connecting to your game…
+        {t('lobby.connecting')}
       </p>
     </Shell>
   );

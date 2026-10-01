@@ -1,5 +1,7 @@
 import type { PlayerView } from '@sky/shared';
 import { PlaneLanding } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/i18n';
 import { trackWidth } from '@/lib/trackRow';
 import { cn } from '@/lib/utils';
 
@@ -12,18 +14,23 @@ const HEIGHT = CARD_H + GAP;
 const LANDING_ICON = 18;
 
 export function AltitudeTrack({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   const spaces = view.scenario.altitudes;
   const current = view.round - 1;
   return (
     <figure className="min-w-0">
       <figcaption className="mb-1 truncate text-xs font-medium text-muted-foreground">
-        Altitude ({view.altitude} ft)
+        {t('tracks.altitude', { altitude: formatNumber(view.altitude) })}
       </figcaption>
       <svg
         viewBox={`0 0 ${spaces.length * CELL} ${HEIGHT}`}
         style={{ width: trackWidth(spaces.length) }}
         role="img"
-        aria-label={`Altitude ${view.altitude} feet, round ${view.round} of ${spaces.length}`}
+        aria-label={t('tracks.altitudeLabel', {
+          altitude: formatNumber(view.altitude),
+          round: view.round,
+          rounds: spaces.length,
+        })}
       >
         {spaces.map((space, i) => {
           const x = i * CELL;

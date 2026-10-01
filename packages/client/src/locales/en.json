@@ -1,0 +1,332 @@
+{
+  "app": {
+    "title": "Sky Team Online",
+    "tagline": "Land the plane together: one pilot, one co-pilot, no talking once the dice are rolled.",
+    "language": "Language"
+  },
+  "seat": {
+    "pilot": "Pilot",
+    "copilot": "Co-pilot",
+    "pilotLower": "pilot",
+    "copilotLower": "co-pilot",
+    "either": "either player"
+  },
+  "lobby": {
+    "yourName": "Your name",
+    "gameCode": "Game code",
+    "join": "Join",
+    "or": "or",
+    "roundTimer": "Round timer",
+    "roundTimerHint": "{{time}} to place all the dice each round, or you lose",
+    "create": "Create a game",
+    "waitingFor_pilot": "Waiting for your pilot",
+    "waitingFor_copilot": "Waiting for your co-pilot",
+    "sendCode": "Send them this code or the invite link.",
+    "timedGame": " Timed game: {{time}} per round.",
+    "gameCodeLabel": "Game code {{spelled}}",
+    "shareInvite": "Share invite",
+    "cancel": "Cancel",
+    "connecting": "Connecting to your game…"
+  },
+  "scenario": {
+    "label": "Scenario",
+    "chooseAbilities_one": "Choose {{count}} special ability",
+    "chooseAbilities_other": "Choose {{count}} special abilities",
+    "abilityCount_one": "{{count}} ability",
+    "abilityCount_other": "{{count}} abilities"
+  },
+  "difficulty": {
+    "green": "Routine landing",
+    "yellow": "Exceptional conditions",
+    "red": "Elite pilots only",
+    "black": "Heroic landing"
+  },
+  "status": {
+    "round": "Round {{round}}/{{rounds}} · {{altitude}} ft",
+    "final": "Final",
+    "youAre": "You are the <seat>{{seat}}</seat>",
+    "partnerOnline": "{{name}} online",
+    "partnerOffline": "{{name}} offline",
+    "reconnecting": "Reconnecting…",
+    "offline": "Offline",
+    "strategy": "Strategy time",
+    "yourTurn": "Your turn",
+    "partnersTurn": "{{name}}’s turn",
+    "landed": "Landed!",
+    "crashed": "Crashed",
+    "noTalking": "No talking!!!",
+    "timeLeft": "Time left this round: {{time}}",
+    "nextTurn": "Next turn in {{seconds}}s",
+    "nextTurnLabel": "Next turn in {{seconds}} seconds"
+  },
+  "leave": {
+    "button": "Leave game",
+    "title": "Leave this game?",
+    "body": "Your seat is given up and {{name}}’s game restarts, waiting for a new partner. To pause instead, just close the tab: your seat is kept for 30 minutes.",
+    "stay": "Stay",
+    "confirm": "Leave game"
+  },
+  "tray": {
+    "yourDice": "Your dice",
+    "rollDice": "Roll dice",
+    "waitingFor": "Waiting for {{name}}…",
+    "realTime": "Real-time: {{time}} to place the dice once you roll; dice not placed by then are lost.",
+    "timedGame": "Timed game: {{time}} to place all the dice once you roll, or you lose.",
+    "abilities": "Abilities:",
+    "traffic": "Traffic:",
+    "trafficRolled": "rolled {{roll}}, a plane {{where}}",
+    "trafficNoPlanes": "rolled {{roll}}, no planes left to add",
+    "onAirport": "on the airport",
+    "onYourSpace": "on your space",
+    "spacesAhead_one": "{{count}} space ahead",
+    "spacesAhead_other": "{{count}} spaces ahead",
+    "rerollIntro": "Reroll: tick the dice to roll again (once).",
+    "rerollDie": "Die {{value}}",
+    "rerollDieChosen": "Die {{value}}, will reroll",
+    "rerollButton": "Reroll {{count}}",
+    "rerollNone": "Reroll",
+    "keepAll": "Keep all",
+    "coffee": "Coffee",
+    "coffeeMinus": "Spend coffee: minus 1",
+    "coffeePlus": "Spend coffee: plus 1",
+    "flipTo": "Flip to {{value}}",
+    "rerollThisDie": "Reroll this die",
+    "swapFor": "Swap for the {{value}}",
+    "offerSwap": "Offer to swap",
+    "swapWaiting": "Working Together: waiting for {{name}} to swap with your {{value}}.",
+    "swapOffered": "{{name}} offers a {{value}} to swap: tap one of your dice, then Swap.",
+    "syncPlace": "Synchronisation: place the traffic die on any empty space.",
+    "syncPartner": "{{name}} is placing the traffic die…",
+    "internToken": "Intern token {{value}}: tap a glowing space for it.",
+    "partnerPlacing_one": "{{name}} is placing a die… ({{count}} die left)",
+    "partnerPlacing_other": "{{name}} is placing a die… ({{count}} dice left)",
+    "partnerPlacingRerolling_one": "{{name}} is placing a die… ({{count}} die left, rerolling)",
+    "partnerPlacingRerolling_other": "{{name}} is placing a die… ({{count}} dice left, rerolling)",
+    "yourTurn": "Your turn: tap a die, then a glowing space.",
+    "allPlaced": "Your dice are all placed.",
+    "trafficDie": "Traffic die: {{value}}",
+    "yourDie": "Your die: {{value}}",
+    "noDiceLeft": "No dice left",
+    "cancelIntern": "Cancel the intern",
+    "spendReroll": "Spend a reroll token ({{count}} left)",
+    "rerollToken": "Reroll ({{count}})"
+  },
+  "cockpit": {
+    "axis": "Axis",
+    "axisHint": "Must be level to land",
+    "engines": "Engines",
+    "enginesFinal": "Final round: speed must be below the brakes",
+    "enginesWind": "Sum + wind",
+    "enginesHint": "Sum sets how far you fly",
+    "radio": "Radio",
+    "radioHint": "N clears a plane N−1 ahead",
+    "landingGear": "Landing gear",
+    "flaps": "Flaps",
+    "brakes": "Brakes",
+    "concentration": "Concentration",
+    "concentrationHint": "Any die: +1 coffee (max 3)",
+    "coffeeCount": "{{count}} coffee",
+    "brakeMarker": "Brake marker",
+    "blueMarker": "Blue aerodynamics marker",
+    "orangeMarker": "Orange aerodynamics marker",
+    "switch": "Switch {{n}}",
+    "deployed": "{{label}}: deployed",
+    "notDeployed": "{{label}}: not deployed",
+    "mandatory": "Mandatory",
+    "isMandatory": "{{title}} is mandatory",
+    "about": "About {{title}}",
+    "mandatoryBody": "Place both dice here every round. If a round ends without both axis and both engine dice, the plane goes down."
+  },
+  "slot": {
+    "group": {
+      "axis": "Axis",
+      "engines": "Engines",
+      "radio": "Radio",
+      "gear": "Landing gear",
+      "flaps": "Flaps",
+      "brakes": "Brakes",
+      "concentration": "Concentration",
+      "kerosene": "Kerosene",
+      "intern": "Intern",
+      "iceBrakes": "Ice brakes"
+    },
+    "above": " above",
+    "below": " below",
+    "needs": ", needs {{values}}",
+    "or": " or ",
+    "label": "{{group}} {{n}}{{row}} ({{who}}{{needs}})",
+    "placed": "{{label}}: {{value}}",
+    "internToken": " (intern token)",
+    "trafficDie": " (traffic die)"
+  },
+  "modules": {
+    "kerosene": "Kerosene",
+    "keroseneLeak": "Kerosene leak",
+    "keroseneLeakHint": "Each round: engine difference + 1",
+    "keroseneHint": "Either player · burns its value; none: −6",
+    "keroseneLeft": "{{left}} / {{total}} left",
+    "keroseneEmpty": ": empty",
+    "wind": "Wind",
+    "windHint": "Turned by the axis",
+    "windOnEngines": "{{speed}} wind",
+    "windLabel": "Wind {{speed}} added to the engines",
+    "intern": "Intern",
+    "internHint": "Die ≠ next token · the token goes on any of your spaces",
+    "internLeft": "Intern tokens left: {{tokens}}",
+    "internTrained": "Intern fully trained",
+    "trained": "Trained!",
+    "iceBrakes": "Ice brakes",
+    "iceBrakesHint": "Pairs: pilot above, either below",
+    "iceBrake": "Ice brake {{n}}"
+  },
+  "moduleText": {
+    "kerosene": {
+      "name": "Kerosene",
+      "rule": "A die on the Kerosene space burns its value; a round without one burns 6. Empty tank: you lose."
+    },
+    "kerosene-leak": {
+      "name": "Kerosene leak",
+      "rule": "No Kerosene space: each round burns the difference between the engine dice + 1."
+    },
+    "intern": {
+      "name": "Intern",
+      "rule": "A die (not the next token’s number) on your Intern space takes a token; place it like a die. Train all 6 before landing."
+    },
+    "wind": {
+      "name": "Wind",
+      "rule": "After the axis, the wind ring turns by the axis tilt; the wind speed adds to the engines."
+    },
+    "real-time": {
+      "name": "Real-time",
+      "rule": "60 seconds per round from the roll; unplaced dice are lost."
+    },
+    "ice-brakes": {
+      "name": "Ice brakes",
+      "rule": "Pairs of 2, 3, 4, 5 above and below the track, left to right, in one round. Pass the 5 to land."
+    }
+  },
+  "abilityText": {
+    "adaptation": {
+      "name": "Adaptation",
+      "rule": "Once per game each: turn one of your dice to its opposite side."
+    },
+    "anticipation": {
+      "name": "Anticipation",
+      "rule": "Each round the first player may reroll one die before placing their first."
+    },
+    "control": {
+      "name": "Control",
+      "rule": "Two equal Axis dice: gain a coffee."
+    },
+    "mastery": {
+      "name": "Mastery",
+      "rule": "Two equal Engine dice: gain a reroll token, if one is left."
+    },
+    "synchronisation": {
+      "name": "Synchronisation",
+      "rule": "Dice on Landing Gear and Flaps in a round: the co-pilot places the traffic die on any space."
+    },
+    "working-together": {
+      "name": "Working Together",
+      "rule": "Once per round: each player puts a die on the card and the two swap values."
+    }
+  },
+  "tracks": {
+    "altitude": "Altitude ({{altitude}} ft)",
+    "altitudeLabel": "Altitude {{altitude}} feet, round {{round}} of {{rounds}}",
+    "approach": "Approach · {{name}}",
+    "approachLabel": "Approach: {{spaces}} spaces to the airport. Planes per space from here: {{planes}}",
+    "currentSpace": ". Current space: {{text}}",
+    "hereTraffic": "traffic die {{count}}× each round here",
+    "hereTurn": "to advance, {{text}}",
+    "trafficTitle_one": "Traffic: {{count}} roll of the traffic die here",
+    "trafficTitle_other": "Traffic: {{count}} rolls of the traffic die here",
+    "turnTitle": "Turn: {{text}}",
+    "turnMustBe": "axis must be {{positions}}",
+    "turnLevel": "level",
+    "turnTowardPilot": "{{count}} toward the pilot",
+    "turnTowardCopilot": "{{count}} toward the co-pilot",
+    "addedByTraffic": "Added by the traffic die",
+    "axisLevel": "Axis level",
+    "axisTiltedPilot": "Axis tilted {{count}} toward the pilot",
+    "axisTiltedCopilot": "Axis tilted {{count}} toward the co-pilot",
+    "axisTurn": "Turn: to advance, the axis must be at {{positions}}",
+    "speedLabel": "Speed {{speed}}. Below {{blue}}: stay; up to {{orange}}: 1 space; above: 2 spaces. Brakes stop speeds up to {{brake}}.",
+    "speedNotSet": "not set",
+    "speedTitle": "Speed {{speed}}"
+  },
+  "gameOver": {
+    "landed": "Smooth landing!",
+    "crashed": "Crashed",
+    "landedAt": "You landed at {{airport}} in round {{round}}.",
+    "crashedAt": "Round {{round}} · {{altitude}} ft",
+    "done": "done",
+    "leave": "Leave",
+    "flyAgain": "Fly again"
+  },
+  "toast": {
+    "noAnswer": "The server did not answer. Check your connection.",
+    "inviteCopied": "Invite link copied",
+    "shareText": "Fly with me in Sky Team",
+    "partnerLeft": "{{name}} left the game. Share the code to fly with someone else.",
+    "partnerJoined": "{{name}} joined the game.",
+    "partnerOffline": "{{name}} lost connection. Their seat is kept for them.",
+    "partnerBack": "{{name}} is back."
+  },
+  "errors": {
+    "unknown": "Something went wrong.",
+    "bad-request": "That request was not understood.",
+    "room-not-found": "No game with that code.",
+    "room-full": "That game already has two players.",
+    "bad-token": "Your seat could not be restored.",
+    "not-in-room": "You are not in a game.",
+    "already-in-room": "You are already in a game.",
+    "not-strategy": "Dice are already rolled.",
+    "game-not-over": "The game is not over yet.",
+    "too-many-rooms": "You have too many open games. Finish or leave one first.",
+    "game-over": "The game is over.",
+    "not-placing": "Dice are not rolled yet.",
+    "not-your-turn": "Wait for your partner to place a die.",
+    "unknown-die": "That die is not yours.",
+    "unknown-slot": "That space does not exist.",
+    "slot-taken": "That space is taken.",
+    "wrong-seat": "That space is your partner’s.",
+    "bad-coffee": "Invalid coffee amount.",
+    "not-enough-coffee": "Not enough coffee.",
+    "value-out-of-range": "A die must stay between 1 and 6.",
+    "value-not-allowed": "That space needs a different number.",
+    "out-of-order": "Deploy these in order.",
+    "no-reroll": "No reroll tokens left.",
+    "reroll-pending": "A reroll is already under way.",
+    "no-reroll-pending": "You have no reroll to use.",
+    "bad-reroll": "Pick each die at most once.",
+    "slot-not-allowed": "The traffic die goes on the control panel.",
+    "no-intern-token": "The intern is fully trained.",
+    "intern-same-value": "The die must not match the next intern token.",
+    "bad-token-slot": "The intern token can’t go there.",
+    "bonus-pending": "The co-pilot places the traffic die first.",
+    "swap-pending": "Finish the Working Together swap first.",
+    "ability-unavailable": "That ability is not in this game.",
+    "ability-used": "That ability is already used.",
+    "not-first-player": "Only the first player can use Anticipation.",
+    "first-die-placed": "Anticipation comes before your first die.",
+    "no-partner-dice": "Your partner has no dice left to swap."
+  },
+  "endReasons": {
+    "spin": "The axis tipped too far: the plane went into a spin.",
+    "collision": "You flew into another plane on the approach.",
+    "overshoot": "You overshot the airport.",
+    "missed-airport": "You ran out of altitude before reaching the airport.",
+    "mandatory-missing": "A round ended without both axis and both engine dice.",
+    "landing-traffic": "There were still planes on the approach.",
+    "landing-gear": "Not all the landing gear was down.",
+    "landing-flaps": "Not all the flaps were deployed.",
+    "landing-axis": "The plane was not level.",
+    "landing-brakes": "Your speed was too high for the brakes.",
+    "time-up": "Time ran out before all the dice were placed.",
+    "kerosene": "You ran out of kerosene.",
+    "turn": "The plane was not turned the right way on the approach.",
+    "landing-intern": "The intern was not fully trained.",
+    "landing-ice-brakes": "The ice brakes were not fully deployed."
+  }
+}

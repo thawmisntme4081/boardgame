@@ -1,6 +1,7 @@
-import { DIFFICULTY_NAMES, type PlayerView } from '@sky/shared';
+import type { PlayerView } from '@sky/shared';
 import { CircleCheck, CircleX, OctagonAlert, PlaneLanding } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { leaveGame, rematch } from '@/api';
 import { DifficultyDot, ScenarioPicker } from '@/components/ScenarioPicker';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { formatNumber } from '@/i18n';
 import { endReasonText } from '@/messages';
+import { difficultyName } from '@/scenarioText';
 
 /** "Fly again" on the same scenario, or pick the next one. */
 function RematchForm({ view, won }: { view: PlayerView; won: boolean }) {
+  const { t } = useTranslation();
   const [setup, setSetup] = useState({
     scenario: view.scenario.id,
     abilities: view.abilities,
@@ -26,13 +30,13 @@ function RematchForm({ view, won }: { view: PlayerView; won: boolean }) {
       <ScenarioPicker id="rematch" value={setup} onChange={setSetup} />
       <DialogFooter className="gap-2">
         <Button variant="outline" className="h-11" onClick={() => void leaveGame()}>
-          Leave
+          {t('gameOver.leave')}
         </Button>
         <Button
           className={cn('h-11', won && 'bg-emerald-600 text-white hover:bg-emerald-700')}
           onClick={() => void rematch(setup)}
         >
-          Fly again
+          {t('gameOver.flyAgain')}
         </Button>
       </DialogFooter>
     </>
@@ -44,6 +48,7 @@ function RematchForm({ view, won }: { view: PlayerView; won: boolean }) {
  * landing plane, or a red band with an alert, and a matching border.
  */
 export function GameOverDialog({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
   const over = view.phase === 'won' || view.phase === 'lost';
   const won = view.phase === 'won';
   const reasons = view.landingFailures ?? (view.endReason ? [view.endReason] : []);
@@ -68,12 +73,15 @@ export function GameOverDialog({ view }: { view: PlayerView }) {
           <Icon aria-hidden="true" className="size-10 shrink-0" />
           <div className="flex min-w-0 flex-col gap-0.5 text-left">
             <DialogTitle className="text-2xl font-bold text-white">
-              {won ? 'Smooth landing!' : 'Crashed'}
+              {won ? t('gameOver.landed') : t('gameOver.crashed')}
             </DialogTitle>
             <DialogDescription className="text-white/90">
               {won
-                ? `You landed at ${view.scenario.airport} in round ${view.round}.`
-                : `Round ${view.round} · ${view.altitude.toLocaleString()} ft`}
+                ? t('gameOver.landedAt', { airport: view.scenario.airport, round: view.round })
+                : t('gameOver.crashedAt', {
+                    round: view.round,
+                    altitude: formatNumber(view.altitude),
+                  })}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -84,16 +92,16 @@ export function GameOverDialog({ view }: { view: PlayerView }) {
               <DifficultyDot scenario={view.scenario} />
               <span className="font-medium">{view.scenario.name}</span>
               <span className="text-muted-foreground">
-                · {DIFFICULTY_NAMES[view.scenario.difficulty]}
+                · {difficultyName(view.scenario.difficulty)}
               </span>
-              <CircleCheck aria-label="done" className="size-4 text-emerald-600" />
+              <CircleCheck aria-label={t('gameOver.done')} className="size-4 text-emerald-600" />
             </p>
           ) : (
             <ul className="space-y-1.5 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm">
               {reasons.map((reason) => (
                 <li key={reason} className="flex items-start gap-2">
                   <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-danger" />
-                  {endReasonText[reason]}
+                  {endReasonText(reason)}
                 </li>
               ))}
             </ul>

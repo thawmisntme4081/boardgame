@@ -1,4 +1,5 @@
 import { brakeThreshold, type PlayerView } from '@sky/shared';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { AeroMarker } from './AeroMarker';
 import { BrakeMarker } from './BrakeMarker';
@@ -18,6 +19,7 @@ const span = (x1: number, x2: number) => ({
 });
 
 export function SpeedGauge({ view, className }: { view: PlayerView; className?: string }) {
+  const { t } = useTranslation();
   const blue = speedX(view.aeroBlue + 0.5);
   const orange = speedX(Math.min(view.aeroOrange + 0.5, SPEED_MAX + 0.5));
   const brake = brakeThreshold(view.brakes, view.scenario.modules) + 0.5;
@@ -30,7 +32,12 @@ export function SpeedGauge({ view, className }: { view: PlayerView; className?: 
       viewBox="0 0 256 84"
       className={cn('w-full max-w-72', className)}
       role="img"
-      aria-label={`Speed ${view.speed ?? 'not set'}. Below ${Math.ceil(view.aeroBlue + 0.5)}: stay; up to ${view.aeroOrange}: 1 space; above: 2 spaces. Brakes stop speeds up to ${Math.floor(brake)}.`}
+      aria-label={t('tracks.speedLabel', {
+        speed: view.speed ?? t('tracks.speedNotSet'),
+        blue: Math.ceil(view.aeroBlue + 0.5),
+        orange: view.aeroOrange,
+        brake: Math.floor(brake),
+      })}
     >
       <rect
         y="20"
@@ -94,7 +101,7 @@ export function SpeedGauge({ view, className }: { view: PlayerView; className?: 
         )}
         strokeWidth="2"
       >
-        {view.speed !== null && <title>{`Speed ${view.speed}`}</title>}
+        {view.speed !== null && <title>{t('tracks.speedTitle', { speed: view.speed })}</title>}
       </circle>
     </svg>
   );

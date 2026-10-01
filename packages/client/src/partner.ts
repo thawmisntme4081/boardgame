@@ -1,4 +1,5 @@
 import { otherSeat, type Presence, type Seat } from '@sky/shared';
+import { t } from '@/i18n';
 
 export type PartnerChange =
   | { kind: 'offline'; text: string }
@@ -19,15 +20,15 @@ export function partnerChange(
   if (was && !now) {
     return {
       kind: 'left',
-      text: `${was.name} left the game. Share the code to fly with someone else.`,
+      text: t('toast.partnerLeft', { name: was.name }),
     };
   }
-  if (!was && now) return { kind: 'joined', text: `${now.name} joined the game.` };
+  if (!was && now) return { kind: 'joined', text: t('toast.partnerJoined', { name: now.name }) };
   if (was && now && was.online && !now.online) {
-    return { kind: 'offline', text: `${now.name} lost connection. Their seat is kept for them.` };
+    return { kind: 'offline', text: t('toast.partnerOffline', { name: now.name }) };
   }
   if (was && now && !was.online && now.online)
-    return { kind: 'back', text: `${now.name} is back.` };
+    return { kind: 'back', text: t('toast.partnerBack', { name: now.name }) };
   return null;
 }
 
