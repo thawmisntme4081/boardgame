@@ -41,8 +41,8 @@ const ice = (index: number, value: DieValue, row: 'top' | 'bottom'): SlotDef => 
 export const SLOTS: Record<SlotId, SlotDef> = {
   axisPilot: { group: 'axis', index: 0, seats: PILOT },
   axisCopilot: { group: 'axis', index: 1, seats: COPILOT },
-  enginePilot: { group: 'engines', index: 0, seats: PILOT },
-  engineCopilot: { group: 'engines', index: 1, seats: COPILOT },
+  enginePilot: { group: 'engines', index: 0, seats: PILOT, coveredBy: 'engines-out' },
+  engineCopilot: { group: 'engines', index: 1, seats: COPILOT, coveredBy: 'engines-out' },
   radioPilot: { group: 'radio', index: 0, seats: PILOT },
   radioCopilot1: { group: 'radio', index: 1, seats: COPILOT },
   radioCopilot2: { group: 'radio', index: 2, seats: COPILOT },
@@ -98,7 +98,7 @@ export const ICE_OPPOSITE: Partial<Record<SlotId, SlotId>> = {
   ice5Bottom: 'ice5Top',
 };
 
-/** Each player must have a die here at the end of every round. */
+/** Each player must have a die here at the end of every round (when the slot is in play). */
 export const MANDATORY_SLOTS: readonly SlotId[] = [
   'axisPilot',
   'axisCopilot',

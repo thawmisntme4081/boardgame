@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "concurrently -k -n server,client -c blue,magenta \"pnpm --filter @sky/server dev\" \"pnpm --filter @sky/client dev\"",
+    "dev:lan": "concurrently -k -n server,client -c blue,magenta \"pnpm --filter @sky/server dev\" \"pnpm --filter @sky/client dev --host\"",
     "build": "pnpm -r build",
     "start": "pnpm --filter @sky/server start",
     "test": "vitest run",

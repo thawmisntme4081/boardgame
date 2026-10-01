@@ -2,6 +2,8 @@ import {
   canSpendReroll,
   canUseAbilityInView,
   coffeeRange,
+  dicePerRound,
+  diceToPlace,
   landingConditions,
   nextInternToken,
   otherSeat,
@@ -319,12 +321,19 @@ function placingText(view: PlayerView, partner: string, placingToken: boolean): 
     return translate('tray.internToken', { value: nextInternToken(view.intern, view.seat) });
   }
   if (view.currentSeat !== view.seat) {
-    const options = { name: partner, count: view.partnerDiceLeft };
+    const partnerSeat = otherSeat(view.seat);
+    const count = diceToPlace(view.placed, view.scenario, partnerSeat, view.partnerDiceLeft);
+    const options = { name: partner, count };
     return view.rerollPending[otherSeat(view.seat)]
       ? translate('tray.partnerPlacingRerolling', options)
       : translate('tray.partnerPlacing', options);
   }
-  return view.myDice.length > 0 ? translate('tray.yourTurn') : translate('tray.allPlaced');
+  if (view.myDice.length === 0) return translate('tray.allPlaced');
+  // Engines out: the dice beyond the round's limit stay in the tray, unused.
+  if (diceToPlace(view.placed, view.scenario, view.seat, view.myDice.length) === 0) {
+    return translate('tray.diceDone', { count: dicePerRound(view.scenario) });
+  }
+  return translate('tray.yourTurn');
 }
 
 function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
@@ -342,6 +351,8 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
   const trafficDie = view.seat === 'copilot' ? view.bonus?.die : undefined;
   // Training the intern: the token the die on the Intern space collects, waiting for a space.
   const internToken = internSlot ? nextInternToken(view.intern, view.seat) : undefined;
+  // Engines out: once a player has placed their 3 dice, the 4th is a spare.
+  const spare = diceToPlace(view.placed, view.scenario, view.seat, view.myDice.length) === 0;
 
   return (
     // Two columns (one in the narrow tablet side column): status and dice on the left;
@@ -390,9 +401,11 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
                 type="button"
                 aria-pressed={isSelected}
                 aria-label={t('tray.yourDie', { value: shown })}
+                disabled={spare}
                 onClick={() => selectDie(die.id)}
                 className={cn(
                   'rounded-xl p-0.5 transition',
+                  spare && 'opacity-40',
                   // Once on the Intern space, the die steps back for the token it collected.
                   isSelected &&
                     (internSlot ? 'opacity-40' : '-translate-y-1 ring-4 ring-foreground'),

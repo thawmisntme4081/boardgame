@@ -1,5 +1,11 @@
 // Panels for the Flight Log modules; the rules live in @sky/shared.
-import { KEROSENE_START, windSpeed, type PlayerView, type SlotId } from '@sky/shared';
+import {
+  KEROSENE_START,
+  WIND_REVERSED_START,
+  windSpeed,
+  type PlayerView,
+  type SlotId,
+} from '@sky/shared';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -80,6 +86,7 @@ export function WindPanel({ view }: { view: PlayerView }) {
       <div className="flex justify-center desktop:relative desktop:min-h-28 desktop:flex-1">
         <WindRing
           wind={view.wind ?? 0}
+          start={view.scenario.modules.includes('wind-reversed') ? WIND_REVERSED_START : 0}
           className="size-44 desktop:absolute desktop:inset-0 desktop:size-full"
         />
       </div>

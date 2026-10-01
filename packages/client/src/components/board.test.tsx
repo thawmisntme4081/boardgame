@@ -1,4 +1,4 @@
-import { canPlaceInView, SLOT_IDS, WIND_RING } from '@sky/shared';
+import { canPlaceInView, SLOT_IDS, WIND_REVERSED_START, WIND_RING } from '@sky/shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -195,6 +195,54 @@ describe('ApproachTrack', () => {
   });
 });
 
+describe('engines out', () => {
+  const placedThree = {
+    axisPilot: { seat: 'pilot', dieId: 'x1', value: 3 },
+    concentration1: { seat: 'pilot', dieId: 'x2', value: 3 },
+    radioPilot: { seat: 'pilot', dieId: 'x3', value: 3 },
+  } as const;
+
+  it('hide the Engines panel and its speed gauge', () => {
+    render(<Cockpit view={makeView('pilot', { scenario: { modules: ['engines-out'] } })} />);
+    expect(screen.queryByRole('region', { name: 'Engines' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Axis' })).toBeInTheDocument();
+  });
+
+  it('leave the fourth die unused once three are placed', () => {
+    render(
+      <DiceTray
+        view={makeView('pilot', {
+          scenario: { modules: ['engines-out'] },
+          pilot: [5],
+          patch: { placed: placedThree, currentSeat: 'pilot' },
+        })}
+        presence={presence()}
+      />,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'You have placed your 3 dice; the rest are not used this round.',
+    );
+    expect(screen.getByRole('button', { name: 'Your die: 5' })).toBeDisabled();
+  });
+
+  it('count only the dice the partner can still place', () => {
+    render(
+      <DiceTray
+        view={makeView('copilot', {
+          scenario: { modules: ['engines-out'] },
+          patch: {
+            placed: { axisPilot: { seat: 'pilot', dieId: 'p1', value: 2 } },
+            currentSeat: 'pilot',
+          },
+        })}
+        presence={presence()}
+      />,
+    );
+    // Four dice in hand, but only two more of the pilot's three may be placed.
+    expect(screen.getByRole('status')).toHaveTextContent('Ana is placing a die… (2 dice left)');
+  });
+});
+
 describe('module panels', () => {
   it('show kerosene with its space, only for the Kerosene module', () => {
     render(<Cockpit view={makeView('pilot', { scenario: { modules: ['kerosene'] } })} />);
@@ -257,6 +305,23 @@ describe('module panels', () => {
     expect(screen.getByRole('region', { name: 'Wind' }).parentElement?.parentElement).toBe(
       screen.getByRole('region', { name: 'Axis' }).parentElement?.parentElement,
     );
+  });
+
+  it('turn the wind ring upside down: the airplane starts at the top on a headwind', () => {
+    render(
+      <Cockpit
+        view={makeView('pilot', {
+          scenario: { modules: ['wind-reversed'] },
+          patch: { wind: WIND_REVERSED_START },
+        })}
+      />,
+    );
+    const ring = screen.getByRole('img', { name: 'Wind -3 added to the engines' });
+    // The airplane's space (the highlighted one) is drawn at the top of the ring.
+    const spots = [...ring.querySelectorAll('circle.stroke-border')];
+    const top = Math.min(...spots.map((c) => Number(c.getAttribute('cy'))));
+    expect(spots[WIND_REVERSED_START]).toHaveClass('fill-pilot');
+    expect(Number(spots[WIND_REVERSED_START]!.getAttribute('cy'))).toBe(top);
   });
 
   it('train the intern in two taps: the Intern space, then where the token goes', async () => {

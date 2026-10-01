@@ -24,3 +24,19 @@ export const wind: RuleModule = {
     return windSpeed(state.wind);
   },
 };
+
+/** Where the airplane starts on the ring when the Wind module is placed upside down. */
+export const WIND_REVERSED_START = WIND_RING.length / 2;
+
+/**
+ * Wind upside down (Turbulence, NZIR): the Wind module is placed the other way round, so the
+ * airplane starts on the opposite side of the ring. The ring is symmetric (the opposite space
+ * holds the negated value), so every wind speed is reversed: tailwinds become headwinds.
+ */
+export const windReversed: RuleModule = {
+  ...wind,
+  id: 'wind-reversed',
+  setup(state) {
+    state.wind = WIND_REVERSED_START;
+  },
+};

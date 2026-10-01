@@ -38,6 +38,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 - v1 (milestone M1, phases 0–6): base game, one airport, responsive UI, reconnection. Public deploy is the last phase (Phase 12); until then play locally or share a temporary tunnel.
 - Phase 7 (done): the 21 Flight Log scenarios on 11 airports (`scenarios.ts`), modules as `RuleModule` hooks (`packages/shared/src/modules`: Kerosene, Kerosene leak, Intern, Wind, Real-time, Ice brakes), traffic die and turns on the approach track, and the six Special Abilities (`abilities.ts`). Scenario tracks are entered from the physical tiles in `scenarios.ts` (commented entries are not yet verified); `WIND_RING` (20 spaces) and `HARD_ALTITUDES` (red/black side: reroll only at 6000) are confirmed from the physical pieces; don't present unverified data as official.
+- Modules pulled forward from Turbulence: `altitude-5000` (BUD red; the `altitudes` hook drops the 6000 space in `createGame`) and `wind-reversed` (NZIR red and black; the airplane starts on the opposite ring space, `WIND_REVERSED_START`; `WindRing` draws that space at the top); `engines-out` (TER yellow and black: Engine spaces covered and the Engines panel hidden, 3 of 4 dice per player, glide one space at the end of every round but the final one, landing without a speed check).
 - Phase 8: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios); needs the rulebook first.
 - Phase 9: persistence (SQLite or Redis). Phase 10 (done): i18n, English + Vietnamese (glossary and `vi.json` reviewed by the user). Phase 11: game history (local first, accounts optional). Phase 12: deploy.
 - Exact rule numbers must be checked against the rulebooks; the numbers in the plan are a starting model. Ask the user when a rule is unclear instead of guessing.
@@ -51,15 +52,20 @@ When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm ty
 
 ## Commands
 
-- `pnpm dev` — server + Vite together
-- `pnpm test` — Vitest
+- `pnpm dev` — server (port 3000, `tsx watch`) + Vite together; Vite proxies `/socket.io` and `/health` to the server
+- `pnpm dev:lan` — like `pnpm dev`, but Vite listens on the LAN (`--host`) so a phone can open the Network URL it prints
+- `pnpm build` — production build of every package (`pnpm -r build`: shared `tsc`, server `tsup`, client `tsc -b && vite build`)
+- `pnpm start` — run the built server (`packages/server/dist/index.js`), which also serves the built client; set `NODE_ENV=production` for anything shared
+- `pnpm test` — Vitest, all packages; `pnpm test:watch` to re-run on change
 - `pnpm e2e` — Playwright: builds, starts the production server on port 3100 (`GAME_SEED=1`, `E2E_HOOKS=1`) and runs `e2e/` on Desktop Chrome, iPhone 13 (WebKit), Pixel 7; `pnpm exec playwright test -g "<name>" --project "Desktop Chrome"` for one test
-- `pnpm -r build` — production build
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI; `pnpm format` fixes formatting
 - `pnpm lighthouse` — mobile Lighthouse audit of the build (Lighthouse CI; runs in CI on Linux, fails on Windows cleanup)
-- `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI
 - `pnpm --filter @sky/shared random-play [games] [firstSeed] [scenario id | all]` — play random games (YUL by default) and print how they ended
-- `pnpm dev:lan` — like `pnpm dev`, but Vite listens on the LAN so a phone can open the Network URL it prints
+- `pnpm --filter @sky/client preview` — serve the built client alone with Vite (no game server)
 - `pnpm exec playwright install chromium` — one-time browser download for Playwright
+- Cloudflare tunnel by hand (two PowerShell terminals; details in `docs/reference/sharing-and-deployment.md`):
+  - Terminal 1: `pnpm build; $env:NODE_ENV = 'production'; $env:TRUST_PROXY = '1'; pnpm start` — wait for `server listening on http://localhost:3000`
+  - Terminal 2: `cloudflared tunnel --url http://localhost:3000` (or `& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000`) — the `https://*.trycloudflare.com` line is the link; Ctrl+C in both to stop
 
 ## Shortcuts
 

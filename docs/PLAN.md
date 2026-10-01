@@ -22,7 +22,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | --- | --- | --- | --- |
 | **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Built (Sep 30, 2026); last scenario tracks being entered |
-| **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | ⏳ Not started (needs the rulebook) |
+| **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | 🚧 In progress (rulebook studied) |
 | **M4 — Platform features** | Games survive restarts, Vietnamese language, game history (accounts optional) | 9–11 | ⏳ Not started |
 | **M5 — Public launch** | The game on a public URL, monitored | 12 | ⏳ Not started |
 
@@ -38,7 +38,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 5 | [Robustness](phases/phase-05-robustness.md) | M1 | ✅ Done | — |
 | 6 | [Tests and CI](phases/phase-06-tests-ci.md) | M1 | ✅ Done | — |
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done (data entry open) | — |
-| 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | ⏳ Not started | High |
+| 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | 🚧 In progress (rulebook studied, questions open) | High |
 | 9 | [Persistence](phases/phase-09-persistence.md) | M4 | ⏳ Not started | Medium-low |
 | 10 | [Internationalisation (EN + VI)](phases/phase-10-i18n.md) | M4 | ✅ Done | Medium |
 | 11 | [Game history and accounts](phases/phase-11-history-accounts.md) | M4 | ⏳ Not started | Low (local) / High (accounts) |

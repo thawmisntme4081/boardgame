@@ -153,10 +153,13 @@ export function Cockpit({ view }: { view: PlayerView }) {
   const ice = view.scenario.modules.includes('ice-brakes');
   const modules = view.scenario.modules;
   const leak = modules.includes('kerosene-leak');
+  // Engines out (TER): no Engine spaces, so no Engines panel.
+  const enginesOut = modules.includes('engines-out');
   const shown = sectionOrder(view.seat, ice).filter(
     (id) =>
       (id !== 'kerosene' || leak || modules.includes('kerosene')) &&
-      (id !== 'intern' || modules.includes('intern')),
+      (id !== 'intern' || modules.includes('intern')) &&
+      (id !== 'engines' || !enginesOut),
   );
   const sections: Record<Section, ReactNode> = {
     kerosene: <KerosenePanel view={view} leak={leak} />,
@@ -326,7 +329,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
 
   return (
     <div className="@container">
-      <div className="cockpit-grid grid grid-cols-2 gap-3">
+      <div className={cn('cockpit-grid grid grid-cols-2 gap-3', enginesOut && 'no-engines')}>
         {shown.map((id) => (
           <div key={id} className={cn(SPAN, AREA[id])}>
             {sections[id]}

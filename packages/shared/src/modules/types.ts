@@ -1,5 +1,6 @@
 import type { PlacementContext } from '../rules';
 import type {
+  AltitudeSpace,
   DieValue,
   EndReason,
   GameState,
@@ -35,6 +36,8 @@ export type Resolver = (
  */
 export interface RuleModule {
   id: ModuleId;
+  /** Changes the scenario's altitude track before the game starts; called by `createGame`. */
+  altitudes?(altitudes: AltitudeSpace[]): AltitudeSpace[];
   /** Sets the module's starting state; called by `createGame`. */
   setup?(state: GameState): void;
   /** Extra rule for anything placed on one of the module's slots (die, token or bonus die). */
@@ -66,6 +69,12 @@ export interface RuleModule {
   landingConditions?: readonly Extract<EndReason, `landing-${string}`>[];
   /** Brake marker positions when the module replaces the brakes (landing speed must not exceed). */
   brakeThresholds?: readonly number[];
+  /** How many of their dice each player may place per round (the rest are lost). */
+  dicePerRound?: number;
+  /** The Approach Track advances this many spaces at the end of every round but the final one. */
+  approachPerRound?: number;
+  /** No speed: landing skips the speed-against-brakes check. */
+  noSpeed?: boolean;
   /** Real-time: when the round's time runs out, the round ends (instead of the game). */
   timeUpEndsRound?: boolean;
 }

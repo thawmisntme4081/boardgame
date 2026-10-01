@@ -129,6 +129,22 @@ export function checkSlot(
 /** The traffic die goes on any empty Control Panel space, not the side boards. */
 const OFF_PANEL: readonly SlotGroup[] = ['kerosene', 'intern'];
 
+/** How many of their own dice each player may place per round (4, or less with a module). */
+export const dicePerRound = (scenario: Pick<Scenario, 'modules'>): number =>
+  Math.min(DICE_PER_SEAT, ...modulesOf(scenario).map((m) => m.dicePerRound ?? DICE_PER_SEAT));
+
+/** Dice `seat` has placed this round (Intern tokens and the traffic die not counted). */
+const diesPlayed = (ctx: Pick<PlacementContext, 'placed'>, seat: Seat): number =>
+  Object.values(ctx.placed).filter((p) => p && p.seat === seat && !p.source).length;
+
+/** How many of the `inHand` dice `seat` may still place this round. */
+export const diceToPlace = (
+  placed: PlacementContext['placed'],
+  scenario: Pick<Scenario, 'modules'>,
+  seat: Seat,
+  inHand: number,
+): number => Math.max(0, Math.min(inHand, dicePerRound(scenario) - diesPlayed({ placed }, seat)));
+
 /** Colour, number, order and coffee checks, ignoring phase and turn. */
 export function checkPlacement(ctx: PlacementContext, intent: PlaceIntent): MoveCheck {
   if (ctx.swap) return fail('swap-pending');
@@ -140,6 +156,11 @@ export function checkPlacement(ctx: PlacementContext, intent: PlaceIntent): Move
       : undefined
     : ctx.myDice.find((d) => d.id === intent.dieId);
   if (!die) return fail('unknown-die');
+  // Only a module's limit (Engines out: 3) is checked; normally every die can be placed.
+  const limit = dicePerRound(ctx.scenario);
+  if (!bonus && limit < DICE_PER_SEAT && diesPlayed(ctx, ctx.seat) >= limit) {
+    return fail('dice-limit');
+  }
   const def = SLOTS[intent.slot];
   if (!def || !slotActive(ctx.scenario.modules, intent.slot)) return fail('unknown-slot');
   if (ctx.placed[intent.slot]) return fail('slot-taken');
@@ -507,7 +528,7 @@ export function landingConditions(scenario: Pick<Scenario, 'modules'>): LandingR
     'landing-gear',
     'landing-flaps',
     'landing-axis',
-    'landing-brakes',
+    ...(modulesOf(scenario).some((m) => m.noSpeed) ? [] : (['landing-brakes'] as const)),
     ...modulesOf(scenario).flatMap((module) => module.landingConditions ?? []),
   ];
 }
@@ -518,7 +539,11 @@ export function checkLanding(state: GameState): EndReason[] {
   if (!state.gear.every(Boolean)) failures.push('landing-gear');
   if (!state.flaps.every(Boolean)) failures.push('landing-flaps');
   if (state.axis !== 0) failures.push('landing-axis');
-  if (state.speed === null || state.speed > brakeThreshold(state.brakes, state.scenario.modules)) {
+  const noSpeed = modulesOf(state.scenario).some((m) => m.noSpeed);
+  if (
+    !noSpeed &&
+    (state.speed === null || state.speed > brakeThreshold(state.brakes, state.scenario.modules))
+  ) {
     failures.push('landing-brakes');
   }
   for (const module of modulesOf(state.scenario)) failures.push(...(module.landing?.(state) ?? []));
@@ -530,12 +555,21 @@ function endRound(state: GameState): void {
   state.bonus = null;
   state.swap = null;
 
-  if (MANDATORY_SLOTS.some((slot) => !state.placed[slot])) {
+  const modules = state.scenario.modules;
+  if (MANDATORY_SLOTS.some((slot) => slotActive(modules, slot) && !state.placed[slot])) {
     return endGame(state, 'lost', 'mandatory-missing');
   }
   for (const module of modulesOf(state.scenario)) {
     const reason = module.endOfRound?.(state);
     if (reason) return endGame(state, 'lost', reason);
+  }
+
+  // Gliding (Engines out): the plane advances a set number of spaces instead of by speed.
+  if (!isFinalRound(state)) {
+    for (const module of modulesOf(state.scenario)) {
+      if (module.approachPerRound) advanceApproach(state, module.approachPerRound);
+      if (state.phase === 'lost') return;
+    }
   }
 
   if (isFinalRound(state)) {

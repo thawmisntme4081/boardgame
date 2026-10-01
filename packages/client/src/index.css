@@ -51,6 +51,15 @@ html {
   }
 }
 
+/* Engines out (TER): no Engines panel, so brakes and concentration sit beside gear and flaps. */
+.cockpit-grid.no-engines {
+  @variant desktop {
+    grid-template-areas:
+      'radioPilot axis axis radioCopilot'
+      'gear brakes concentration flaps';
+  }
+}
+
 /*
  * Mobile-first game layout; the same components move between grid areas. The page scrolls
  * normally; the status bar and dice tray are sticky (see Game.tsx), so no viewport height is

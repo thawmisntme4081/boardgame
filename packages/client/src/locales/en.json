@@ -112,7 +112,9 @@
     "rerollToken": "Reroll ({{count}})",
     "winConditions": "Win conditions",
     "winConditionsIntro": "Land in the final round, after the last die, with:",
-    "internTokenHeld": "Intern token: {{value}}"
+    "internTokenHeld": "Intern token: {{value}}",
+    "diceDone_one": "You have placed your {{count}} die; the rest are not used this round.",
+    "diceDone_other": "You have placed your {{count}} dice; the rest are not used this round."
   },
   "cockpit": {
     "axis": "Axis",
@@ -206,6 +208,18 @@
     "ice-brakes": {
       "name": "Ice brakes",
       "rule": "Pairs of 2, 3, 4, 5 above and below the track, left to right, in one round. Pass the 5 to land."
+    },
+    "wind-reversed": {
+      "name": "Wind upside down",
+      "rule": "The Wind module is placed the other way round: the airplane starts on the opposite side of the ring, so every wind speed is reversed (headwinds)."
+    },
+    "altitude-5000": {
+      "name": "Start at 5000 ft",
+      "rule": "The game starts at 5000 ft instead of 6000: no starting reroll token and one round fewer."
+    },
+    "engines-out": {
+      "name": "Engines out",
+      "rule": "No engines: each player rolls 4 dice but places only 3, and the plane glides one space at the end of every round. Land with the ice brakes past 5 (no speed check)."
     }
   },
   "abilityText": {
@@ -313,7 +327,8 @@
     "ability-used": "That ability is already used.",
     "not-first-player": "Only the first player can use Anticipation.",
     "first-die-placed": "Anticipation comes before your first die.",
-    "no-partner-dice": "Your partner has no dice left to swap."
+    "no-partner-dice": "Your partner has no dice left to swap.",
+    "dice-limit": "You have already placed your 3 dice this round."
   },
   "endReasons": {
     "spin": "The axis tipped too far: the plane went into a spin.",

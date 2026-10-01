@@ -47,7 +47,15 @@ export type SlotId =
 export type Difficulty = 'green' | 'yellow' | 'red' | 'black';
 
 export type ModuleId =
-  'kerosene' | 'kerosene-leak' | 'intern' | 'wind' | 'real-time' | 'ice-brakes';
+  | 'kerosene'
+  | 'kerosene-leak'
+  | 'intern'
+  | 'wind'
+  | 'wind-reversed'
+  | 'real-time'
+  | 'ice-brakes'
+  | 'altitude-5000'
+  | 'engines-out';
 
 export type AbilityId =
   'adaptation' | 'anticipation' | 'control' | 'mastery' | 'synchronisation' | 'working-together';
@@ -262,6 +270,7 @@ export type MoveError =
   | 'ability-used'
   | 'not-first-player'
   | 'first-die-placed'
-  | 'no-partner-dice';
+  | 'no-partner-dice'
+  | 'dice-limit';
 
 export type MoveCheck = { ok: true } | { ok: false; reason: MoveError };

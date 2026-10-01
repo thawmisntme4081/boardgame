@@ -35,10 +35,18 @@ function validateScenario(scenario: Scenario): void {
 }
 
 export function createGame(
-  scenario: Scenario,
+  catalogScenario: Scenario,
   seed: number,
   { timerMs = null, abilities = [] }: GameOptions = {},
 ): GameState {
+  // Modules may change the altitude track (Altitude 5000 starts one space lower).
+  const scenario: Scenario = {
+    ...catalogScenario,
+    altitudes: modulesOf(catalogScenario).reduce(
+      (track, module) => module.altitudes?.(track) ?? track,
+      catalogScenario.altitudes,
+    ),
+  };
   validateScenario(scenario);
   if (
     new Set(abilities).size !== abilities.length ||

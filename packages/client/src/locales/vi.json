@@ -107,7 +107,8 @@
     "rerollToken": "Đổ lại ({{count}})",
     "winConditions": "Điều kiện thắng",
     "winConditionsIntro": "Hạ cánh ở vòng cuối, sau xúc xắc cuối cùng, khi:",
-    "internTokenHeld": "Thẻ thực tập sinh: {{value}}"
+    "internTokenHeld": "Thẻ thực tập sinh: {{value}}",
+    "diceDone_other": "Bạn đã đặt đủ {{count}} xúc xắc; số còn lại không dùng trong vòng này."
   },
   "cockpit": {
     "axis": "Trục",
@@ -201,6 +202,18 @@
     "ice-brakes": {
       "name": "Phanh băng",
       "rule": "Cặp 2, 3, 4, 5 ở trên và dưới đường phanh, từ trái sang phải, trong cùng một vòng. Phải vượt qua 5 để hạ cánh."
+    },
+    "wind-reversed": {
+      "name": "Gió ngược",
+      "rule": "Mô-đun Gió đặt ngược: máy bay bắt đầu ở phía đối diện của vòng gió, nên mọi tốc độ gió đều đảo chiều (gió ngược)."
+    },
+    "altitude-5000": {
+      "name": "Bắt đầu ở 5.000 ft",
+      "rule": "Ván chơi bắt đầu ở 5.000 ft thay vì 6.000: không có thẻ đổ lại ban đầu và ít hơn một vòng."
+    },
+    "engines-out": {
+      "name": "Động cơ tắt",
+      "rule": "Không có động cơ: mỗi người đổ 4 xúc xắc nhưng chỉ đặt 3, và máy bay lướt thêm một ô ở cuối mỗi vòng. Hạ cánh khi phanh băng đã qua 5 (không xét tốc độ)."
     }
   },
   "abilityText": {
@@ -307,7 +320,8 @@
     "ability-used": "Kỹ năng này đã được dùng.",
     "not-first-player": "Chỉ người đi trước mới dùng được Đoán trước.",
     "first-die-placed": "Đoán trước phải dùng trước xúc xắc đầu tiên của bạn.",
-    "no-partner-dice": "Đồng đội của bạn không còn xúc xắc để đổi."
+    "no-partner-dice": "Đồng đội của bạn không còn xúc xắc để đổi.",
+    "dice-limit": "Bạn đã đặt đủ 3 xúc xắc trong vòng này."
   },
   "endReasons": {
     "spin": "Trục nghiêng quá mức: máy bay rơi vào vòng xoáy.",

@@ -8,8 +8,8 @@ const R = 48;
 /** Space markers as big as the ring allows for its number of spaces (20 today). */
 const SPOT = Math.min(9, (Math.PI * R) / WIND_RING.length - 0.5);
 
+/** `index` places from the top (0), clockwise. */
 const point = (index: number, radius: number) => {
-  // Index 0 (the white centre space) at the top, then clockwise.
   const angle = ((index * 360) / WIND_RING.length - 90) * (Math.PI / 180);
   return { x: C + radius * Math.cos(angle), y: C + radius * Math.sin(angle) };
 };
@@ -32,10 +32,22 @@ function useNeedleAngle(wind: number): number {
   return needle.angle;
 }
 
-/** The Wind Ring: the blue airplane points at the wind speed added to the engines. */
-export function WindRing({ wind, className }: { wind: number; className?: string }) {
+/**
+ * The Wind Ring: the blue airplane points at the wind speed added to the engines. `start`
+ * is the airplane's starting space (white), drawn at the top: 0, or the opposite space when
+ * the module is placed upside down.
+ */
+export function WindRing({
+  wind,
+  start = 0,
+  className,
+}: {
+  wind: number;
+  start?: number;
+  className?: string;
+}) {
   const nose = point(0, R - 16);
-  const angle = useNeedleAngle(wind);
+  const angle = useNeedleAngle(wind - start);
   const speed = windSpeed(wind);
   const { t } = useTranslation();
   return (
@@ -47,7 +59,7 @@ export function WindRing({ wind, className }: { wind: number; className?: string
     >
       <circle cx={C} cy={C} r={R + SPOT + 2} className="fill-muted" />
       {WIND_RING.map((value, i) => {
-        const { x, y } = point(i, R);
+        const { x, y } = point(i - start, R);
         const current = i === wind;
         return (
           <g key={i}>
@@ -57,7 +69,7 @@ export function WindRing({ wind, className }: { wind: number; className?: string
               r={SPOT}
               className={cn(
                 'transition-[fill] duration-500',
-                current ? 'fill-pilot' : i === 0 ? 'fill-card' : 'fill-background',
+                current ? 'fill-pilot' : i === start ? 'fill-card' : 'fill-background',
                 'stroke-border',
               )}
             />

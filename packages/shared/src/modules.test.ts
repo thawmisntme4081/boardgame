@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { KEROSENE_START, REAL_TIME_MS, WIND_RING } from './modules';
+import { KEROSENE_START, REAL_TIME_MS, WIND_REVERSED_START, WIND_RING } from './modules';
 import {
   canPlaceDie,
   checkLanding,
+  checkPlacement,
+  dicePerRound,
+  diceToPlace,
+  placementContext,
   landingConditions,
   expireRoundTimer,
   PLANE_TOKENS,
@@ -247,6 +251,136 @@ describe('wind', () => {
       MANDATORY,
     );
     expect(s.speed).toBe(4 + WIND_RING[3]!);
+  });
+});
+
+describe('wind upside down', () => {
+  const REVERSED = withModules('wind-reversed');
+
+  it('starts the airplane on the opposite side of the ring: every wind speed is reversed', () => {
+    expect(createGame(testScenario(undefined, REVERSED), 1).wind).toBe(WIND_REVERSED_START);
+    // The ring is symmetric: the opposite space holds the negated value.
+    WIND_RING.forEach((value, i) => {
+      expect(WIND_RING[(i + WIND_REVERSED_START) % WIND_RING.length]! + value).toBe(0);
+    });
+  });
+
+  it('turns with the axis like the Wind module, from its reversed start', () => {
+    let s = setupRound({
+      pilot: [4, 1, 3, 3],
+      copilot: [2, 1, 3, 3],
+      scenario: REVERSED,
+      patch: { wind: WIND_REVERSED_START },
+    });
+    s = play(s, [
+      ['pilot', 'p1', 'axisPilot'],
+      ['copilot', 'c1', 'axisCopilot'],
+      ['pilot', 'p2', 'enginePilot'],
+      ['copilot', 'c2', 'engineCopilot'],
+    ]);
+    expect(s.wind).toBe(WIND_REVERSED_START - 2);
+    // Two spaces left of the start: the normal ring's +2 tailwind there is a 2 headwind.
+    expect(WIND_RING[WIND_RING.length - 2]).toBe(2);
+    expect(s.speed).toBe(2 - 2);
+  });
+});
+
+describe('engines out', () => {
+  const OUT = withModules('engines-out');
+  /** Three dice each, no engines: level axis, coffee and radios (nothing to clear). */
+  const GLIDE: Move[] = [
+    ['pilot', 'p1', 'axisPilot'],
+    ['copilot', 'c1', 'axisCopilot'],
+    ['pilot', 'p2', 'concentration1'],
+    ['copilot', 'c2', 'concentration2'],
+    ['pilot', 'p3', 'radioPilot'],
+    ['copilot', 'c3', 'radioCopilot1'],
+  ];
+
+  it('covers the engines: no dice there, and they are not mandatory', () => {
+    const s = setupRound({ ...QUIET_DICE, scenario: OUT });
+    expect(reason(s, 'pilot', intent('p1', 'enginePilot'))).toBe('unknown-slot');
+    const next = play(s, GLIDE);
+    expect(next.phase).toBe('strategy');
+    expect(next.round).toBe(2);
+  });
+
+  it('lets each player place only 3 of their 4 dice; the 4th is lost', () => {
+    const s = play(setupRound({ ...QUIET_DICE, scenario: OUT }), GLIDE.slice(0, 3));
+    const check = checkPlacement(placementContext(s, 'pilot'), intent('p4', 'concentration3'));
+    expect(check).toEqual({ ok: true });
+    const done = play(s, GLIDE.slice(3, 5));
+    expect(checkPlacement(placementContext(done, 'pilot'), intent('p4', 'concentration3'))).toEqual(
+      {
+        ok: false,
+        reason: 'dice-limit',
+      },
+    );
+    expect(dicePerRound(done.scenario)).toBe(3);
+    expect(diceToPlace(done.placed, done.scenario, 'pilot', done.dice.pilot.length)).toBe(0);
+    // The round ends after six dice, with a die left in each hand.
+    expect(play(done, GLIDE.slice(5)).round).toBe(2);
+  });
+
+  it('glides one space at the end of every round', () => {
+    const s = play(setupRound({ ...QUIET_DICE, scenario: OUT }), GLIDE);
+    expect(s.approachIndex).toBe(1);
+    expect(s.speed).toBeNull();
+  });
+
+  it('still collides with planes left on the space, and still checks turns', () => {
+    const planes = play(
+      setupRound({ ...QUIET_DICE, scenario: OUT, approach: [1, 0, 0, 0, 0, 0, 0] }),
+      GLIDE,
+    );
+    expect(planes).toMatchObject({ phase: 'lost', endReason: 'collision' });
+
+    const turn = play(
+      setupRound({
+        ...QUIET_DICE,
+        scenario: { ...OUT, turns: [[1], null, null, null, null, null, null] },
+      }),
+      GLIDE,
+    );
+    expect(turn).toMatchObject({ phase: 'lost', endReason: 'turn' });
+  });
+
+  it('does not glide in the final round, and lands without a speed check', () => {
+    const s = play(
+      setupRound({
+        ...QUIET_DICE,
+        scenario: OUT,
+        patch: {
+          round: 7,
+          approachIndex: 6,
+          gear: [true, true, true],
+          flaps: [true, true, true, true],
+        },
+      }),
+      GLIDE,
+    );
+    expect(s.phase).toBe('won');
+    expect(s.approachIndex).toBe(6);
+    expect(landingConditions({ modules: ['engines-out', 'ice-brakes'] })).toEqual([
+      'landing-traffic',
+      'landing-gear',
+      'landing-flaps',
+      'landing-axis',
+      'landing-ice-brakes',
+    ]);
+  });
+});
+
+describe('start at 5000 ft', () => {
+  it('starts on the 5000 space: one round fewer and no starting reroll token', () => {
+    const base = createGame(testScenario(), 1);
+    const s = createGame(testScenario(undefined, withModules('altitude-5000')), 1);
+    expect(s.scenario.altitudes).toHaveLength(base.scenario.altitudes.length - 1);
+    expect(s.scenario.altitudes[0]!.altitude).toBe(5000);
+    expect(base.rerolls).toBe(1);
+    expect(s.rerolls).toBe(0);
+    // The 5000 space says who plays first.
+    expect(s.currentSeat).toBe(base.scenario.altitudes[1]!.first);
   });
 });
 
