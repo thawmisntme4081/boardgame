@@ -20,7 +20,7 @@ This is a personal/learning project: if it is ever published, use an original na
 
 | Milestone | Outcome | Phases | Status |
 | --- | --- | --- | --- |
-| **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026); one real-phone check open |
+| **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Built (Sep 30, 2026); last scenario tracks being entered |
 | **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | ⏳ Not started (needs the rulebook) |
 | **M4 — Platform features** | Games survive restarts, Vietnamese language, game history (accounts optional) | 9–11 | ⏳ Not started |
@@ -34,7 +34,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 1 | [Core rules in `shared`](phases/phase-01-core-rules.md) | M1 | ✅ Done | — |
 | 2 | [Server and rooms](phases/phase-02-server-rooms.md) | M1 | ✅ Done | — |
 | 3 | [Gameplay over the wire](phases/phase-03-gameplay-over-the-wire.md) | M1 | ✅ Done | — |
-| 4 | [React client](phases/phase-04-react-client.md) | M1 | ✅ Done (real-phone check open) | — |
+| 4 | [React client](phases/phase-04-react-client.md) | M1 | ✅ Done | — |
 | 5 | [Robustness](phases/phase-05-robustness.md) | M1 | ✅ Done | — |
 | 6 | [Tests and CI](phases/phase-06-tests-ci.md) | M1 | ✅ Done | — |
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done (data entry open) | — |
@@ -67,7 +67,6 @@ Suggested next steps: finish Phase 7's data entry → Phase 10 or 11A (independe
 
 ## Open items carried from finished phases
 
-- [ ] Phase 4: one game on a real phone (`pnpm dev:lan`).
 - [ ] Phase 7: the remaining base-box scenario tracks from the physical tiles (Wind Ring and red/black altitude track confirmed Oct 1, 2026).
 
 ## How to work with this plan

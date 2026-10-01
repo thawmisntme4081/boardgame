@@ -62,6 +62,8 @@ export interface RuleModule {
   endOfRound?(state: GameState): EndReason | undefined;
   /** Landing conditions this module adds that failed. */
   landing?(state: GameState): EndReason[];
+  /** Every landing condition this module adds (listed before landing; `landing` checks them). */
+  landingConditions?: readonly Extract<EndReason, `landing-${string}`>[];
   /** Brake marker positions when the module replaces the brakes (landing speed must not exceed). */
   brakeThresholds?: readonly number[];
   /** Real-time: when the round's time runs out, the round ends (instead of the game). */

@@ -46,6 +46,7 @@ export const intern: RuleModule = {
     if (token !== undefined && tokenSlot) resolve(state, seat, tokenSlot, token, 'intern');
     return undefined;
   },
+  landingConditions: ['landing-intern'],
   landing(state) {
     return state.intern && state.intern.length > 0 ? ['landing-intern'] : [];
   },

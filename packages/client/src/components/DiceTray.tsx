@@ -2,6 +2,7 @@ import {
   canSpendReroll,
   canUseAbilityInView,
   coffeeRange,
+  landingConditions,
   nextInternToken,
   otherSeat,
   REAL_TIME_MS,
@@ -59,6 +60,38 @@ function AbilityList({ view }: { view: PlayerView }) {
         </span>
       ))}
     </p>
+  );
+}
+
+/**
+ * From the round before the final one: what a landing needs (tap for the list). The list
+ * comes from the shared rules, so modules add their own conditions.
+ */
+function WinConditions({ view, className }: { view: PlayerView; className?: string }) {
+  const { t } = useTranslation();
+  if (view.round < view.scenario.altitudes.length - 1) return null;
+  return (
+    <Popover>
+      <PopoverTrigger
+        className={cn(
+          'relative self-center font-medium text-foreground underline decoration-dotted underline-offset-2 outline-none after:absolute after:top-1/2 after:left-1/2 after:h-11 after:w-full after:min-w-11 after:-translate-1/2 focus-visible:ring-3 focus-visible:ring-ring/50',
+          className,
+        )}
+      >
+        {t('tray.winConditions')}
+      </PopoverTrigger>
+      <PopoverContent side="top" className="w-64">
+        <PopoverHeader>
+          <PopoverTitle>{t('tray.winConditions')}</PopoverTitle>
+          <PopoverDescription>{t('tray.winConditionsIntro')}</PopoverDescription>
+        </PopoverHeader>
+        <ul className="list-disc space-y-1 pl-5 text-sm">
+          {landingConditions(view.scenario).map((reason) => (
+            <li key={reason}>{t(`win.${reason}`)}</li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -120,7 +153,7 @@ function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence
   const { t } = useTranslation();
   return (
     // Notes on the left, "Roll dice" on the right (one column in the tablet side column).
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-col gap-1">
         <TrafficNews view={view} />
         {view.scenario.modules.includes('real-time') ? (
@@ -135,6 +168,7 @@ function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence
           )
         )}
         <AbilityList view={view} />
+        <WinConditions view={view} className="text-base" />
       </div>
       <ReadyButton
         ready={presence?.[view.seat]?.ready ?? false}
@@ -381,6 +415,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
           </Button>
         )}
         <AbilityList view={view} />
+        <WinConditions view={view} className="text-sm" />
       </div>
     </div>
   );

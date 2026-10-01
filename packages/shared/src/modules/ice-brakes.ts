@@ -20,6 +20,7 @@ export const iceBrakes: RuleModule = {
     if (opposite && state.placed[opposite]) state.brakes++;
     return undefined;
   },
+  landingConditions: ['landing-ice-brakes'],
   landing(state) {
     return state.brakes < ICE_BRAKE_COLUMNS ? ['landing-ice-brakes'] : [];
   },

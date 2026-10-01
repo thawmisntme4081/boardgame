@@ -3,6 +3,7 @@ import { KEROSENE_START, REAL_TIME_MS, WIND_RING } from './modules';
 import {
   canPlaceDie,
   checkLanding,
+  landingConditions,
   expireRoundTimer,
   PLANE_TOKENS,
   placeDie,
@@ -471,5 +472,24 @@ describe('turns (approach track effect)', () => {
     const s = turn([LEFT, ...none], {}, [2, 2]);
     expect(s.phase).toBe('placing');
     expect(s.approachIndex).toBe(0);
+  });
+});
+
+describe('landing conditions', () => {
+  it('list the base five, plus the ones a module adds', () => {
+    const base = [
+      'landing-traffic',
+      'landing-gear',
+      'landing-flaps',
+      'landing-axis',
+      'landing-brakes',
+    ];
+    expect(landingConditions({ modules: [] })).toEqual(base);
+    expect(landingConditions({ modules: ['intern', 'ice-brakes'] })).toEqual([
+      ...base,
+      'landing-intern',
+      'landing-ice-brakes',
+    ]);
+    expect(landingConditions({ modules: ['wind'] })).toEqual(base);
   });
 });

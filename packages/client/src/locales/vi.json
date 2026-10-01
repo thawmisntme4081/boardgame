@@ -104,7 +104,9 @@
     "noDiceLeft": "Hết xúc xắc",
     "cancelIntern": "Hủy thực tập sinh",
     "spendReroll": "Dùng một lượt đổ lại (còn {{count}})",
-    "rerollToken": "Đổ lại ({{count}})"
+    "rerollToken": "Đổ lại ({{count}})",
+    "winConditions": "Điều kiện thắng",
+    "winConditionsIntro": "Hạ cánh ở vòng cuối, sau xúc xắc cuối cùng, khi:"
   },
   "cockpit": {
     "axis": "Trục",
@@ -322,5 +324,14 @@
     "turn": "Máy bay không rẽ đúng hướng trên đường tiếp cận.",
     "landing-intern": "Thực tập sinh chưa được đào tạo xong.",
     "landing-ice-brakes": "Phanh băng chưa được bật hết."
+  },
+  "win": {
+    "landing-traffic": "Không còn máy bay trên đường tiếp cận",
+    "landing-gear": "Đã hạ hết càng đáp",
+    "landing-flaps": "Đã mở hết cánh tà",
+    "landing-axis": "Trục cân bằng",
+    "landing-brakes": "Tốc độ không vượt quá phanh",
+    "landing-intern": "Thực tập sinh đã được đào tạo xong",
+    "landing-ice-brakes": "Đã mở hết phanh băng"
   }
 }

@@ -109,7 +109,9 @@
     "noDiceLeft": "No dice left",
     "cancelIntern": "Cancel the intern",
     "spendReroll": "Spend a reroll token ({{count}} left)",
-    "rerollToken": "Reroll ({{count}})"
+    "rerollToken": "Reroll ({{count}})",
+    "winConditions": "Win conditions",
+    "winConditionsIntro": "Land in the final round, after the last die, with:"
   },
   "cockpit": {
     "axis": "Axis",
@@ -328,5 +330,14 @@
     "turn": "The plane was not turned the right way on the approach.",
     "landing-intern": "The intern was not fully trained.",
     "landing-ice-brakes": "The ice brakes were not fully deployed."
+  },
+  "win": {
+    "landing-traffic": "No planes left on the approach",
+    "landing-gear": "All the landing gear down",
+    "landing-flaps": "All the flaps deployed",
+    "landing-axis": "The axis level",
+    "landing-brakes": "A speed no higher than the brakes",
+    "landing-intern": "The intern fully trained",
+    "landing-ice-brakes": "All the ice brakes deployed"
   }
 }

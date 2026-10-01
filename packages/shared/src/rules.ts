@@ -498,6 +498,20 @@ export function placeDie(state: GameState, seat: Seat, intent: PlaceIntent): Gam
 }
 
 /** Landing conditions that failed; empty means a successful landing. */
+/** Every condition a landing must meet in this scenario, in `checkLanding` order. */
+export type LandingReason = Extract<EndReason, `landing-${string}`>;
+
+export function landingConditions(scenario: Pick<Scenario, 'modules'>): LandingReason[] {
+  return [
+    'landing-traffic',
+    'landing-gear',
+    'landing-flaps',
+    'landing-axis',
+    'landing-brakes',
+    ...modulesOf(scenario).flatMap((module) => module.landingConditions ?? []),
+  ];
+}
+
 export function checkLanding(state: GameState): EndReason[] {
   const failures: EndReason[] = [];
   if (state.approachPlanes.some((n) => n > 0)) failures.push('landing-traffic');

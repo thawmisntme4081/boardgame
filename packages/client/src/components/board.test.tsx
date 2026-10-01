@@ -554,3 +554,28 @@ describe('recent board details', () => {
     expect(container.querySelector('rect.stroke-pilot')).toBeNull();
   });
 });
+
+describe('win conditions', () => {
+  it('appear from the round before the final one, as a popover listing each condition', async () => {
+    const rounds = makeView('pilot').scenario.altitudes.length;
+    const { unmount } = render(
+      <DiceTray view={makeView('pilot', { patch: { round: rounds - 2 } })} presence={presence()} />,
+    );
+    expect(screen.queryByRole('button', { name: 'Win conditions' })).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <DiceTray
+        view={makeView('pilot', {
+          scenario: { modules: ['intern'] },
+          patch: { round: rounds - 1 },
+        })}
+        presence={presence()}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Win conditions' }));
+    expect(await screen.findByText('All the landing gear down')).toBeInTheDocument();
+    expect(screen.getByText('The intern fully trained')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(6);
+  });
+});

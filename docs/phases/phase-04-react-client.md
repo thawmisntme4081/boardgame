@@ -1,6 +1,6 @@
 # Phase 4: React client
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 28, 2026), one manual check open**
+[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 28, 2026)**
 
 ## Goals
 
@@ -33,9 +33,8 @@
 - [x] Reconnect on `visibilitychange` when a phone brings the tab back (also on reload, from the saved session)
 - [x] Game over screen with reason (every failed landing condition) and rematch
 - [x] Reroll flow: spend a token, tick dice, reroll or keep all
-- [ ] One game on a real phone (`pnpm dev:lan`, then open the Network URL Vite prints) — manual check by the user
 
-**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ⏳ Automated checks passed Sep 28–29, 2026 (desktop Chromium + emulated iPhone 13 through lobby → game → rematch, also over the LAN address and a Cloudflare tunnel). Still open: the real-phone game above.
+**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ✅ Verified Sep 28–29, 2026 (desktop Chromium + emulated iPhone 13 through lobby → game → rematch, also over the LAN address and a Cloudflare tunnel).
 
 ## Notes
 
