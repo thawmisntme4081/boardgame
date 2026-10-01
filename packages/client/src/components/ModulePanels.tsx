@@ -53,7 +53,7 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
   );
 }
 
-function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean }) {
+export function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean }) {
   return (
     <Panel
       title={leak ? 'Kerosene leak' : 'Kerosene'}
@@ -111,7 +111,7 @@ function InternArrows() {
   );
 }
 
-function InternPanel({ view }: { view: PlayerView }) {
+export function InternPanel({ view }: { view: PlayerView }) {
   const tokens = view.intern ?? [];
   return (
     <Panel title="Intern" hint="Die ≠ next token · the token goes on any of your spaces">
@@ -191,21 +191,5 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
         ))}
       </div>
     </Panel>
-  );
-}
-
-/** Kerosene and Intern panels for the scenario's modules, below the control panel. */
-export function ModulePanels({ view }: { view: PlayerView }) {
-  const modules = view.scenario.modules;
-  const panels: ReactNode[] = [];
-  if (modules.includes('kerosene') || modules.includes('kerosene-leak')) {
-    panels.push(
-      <KerosenePanel key="kerosene" view={view} leak={modules.includes('kerosene-leak')} />,
-    );
-  }
-  if (modules.includes('intern')) panels.push(<InternPanel key="intern" view={view} />);
-  if (panels.length === 0) return null;
-  return (
-    <div className="mt-3 grid grid-cols-1 gap-3 desktop:grid-cols-3 @xl:grid-cols-2">{panels}</div>
   );
 }

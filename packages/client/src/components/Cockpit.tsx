@@ -1,4 +1,4 @@
-import type { PlayerView, SlotId } from '@sky/shared';
+import type { PlayerView, Seat, SlotId } from '@sky/shared';
 import { ChevronDown, ChevronRight, Coffee } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -7,29 +7,63 @@ import { AeroMarkerIcon } from '@/svgs/AeroMarker';
 import { BrakeMarkerIcon } from '@/svgs/BrakeMarker';
 import { SpeedGauge } from '@/svgs/SpeedGauge';
 import { Switch } from '@/svgs/Switch';
-import { IceBrakesPanel, ModulePanels, WindOnEngines, WindPanel } from './ModulePanels';
+import {
+  IceBrakesPanel,
+  InternPanel,
+  KerosenePanel,
+  WindOnEngines,
+  WindPanel,
+} from './ModulePanels';
 import { DESKTOP_PANEL, Panel, PANEL, PanelHeader } from './Panel';
 import { Slot } from './Slot';
 
-type Section = 'axis' | 'engines' | 'gear' | 'flaps' | 'radio' | 'brakes' | 'concentration';
-
-/** Top to bottom below desktop; radio and brakes share a row when there is room. */
-const ORDER: Section[] = ['axis', 'engines', 'gear', 'flaps', 'radio', 'brakes', 'concentration'];
+type Section =
+  | 'axis'
+  | 'engines'
+  | 'gear'
+  | 'flaps'
+  | 'radio'
+  | 'brakes'
+  | 'concentration'
+  | 'kerosene'
+  | 'intern';
 
 /**
- * Below desktop only (`max-desktop:`, so the desktop grid areas are untouched): two
- * columns, panels full width on phones and two per row once the cockpit is wide. Radio and
- * brakes share a row from 28rem, where three slots and two arrows fit without wrapping.
+ * Top to bottom below desktop, per seat: your own systems first (Wind sits inside the axis
+ * section). Brakes: the pilot's, so near the top for the pilot; for the co-pilot the Ice brakes
+ * (whose bottom row they can fill) come after the flaps, the normal brakes go last.
+ * Desktop ignores this order and places panels by grid area.
  */
-const SPAN: Record<Section, string> = {
-  axis: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
-  engines: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
-  gear: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
-  flaps: 'max-desktop:col-span-2 @xl:max-desktop:col-span-1',
-  radio: 'max-desktop:col-span-2 @md:max-desktop:col-span-1',
-  brakes: 'max-desktop:col-span-2 @md:max-desktop:col-span-1',
-  concentration: 'max-desktop:col-span-2',
-};
+function sectionOrder(seat: Seat, ice: boolean): Section[] {
+  if (seat === 'pilot') {
+    return [
+      'axis',
+      'engines',
+      'gear',
+      'brakes',
+      'kerosene',
+      'intern',
+      'radio',
+      'concentration',
+      'flaps',
+    ];
+  }
+  return [
+    'axis',
+    'engines',
+    'radio',
+    'flaps',
+    ...(ice ? (['brakes'] as const) : []),
+    'kerosene',
+    'intern',
+    'concentration',
+    'gear',
+    ...(ice ? [] : (['brakes'] as const)),
+  ];
+}
+
+/** Below desktop every panel takes the full width, so the per-seat order reads top to bottom. */
+const SPAN = 'max-desktop:col-span-2';
 
 /**
  * Desktop places each panel by name (see `.cockpit-grid`): pilot radio and gear left,
@@ -44,6 +78,9 @@ const AREA: Record<Section, string> = {
   concentration: 'desktop:[grid-area:concentration]',
   gear: 'desktop:[grid-area:gear]',
   flaps: 'desktop:[grid-area:flaps]',
+  // Desktop: one row under the control panel, half each.
+  kerosene: 'desktop:col-span-2',
+  intern: 'desktop:col-span-2',
 };
 
 /** Arrow between ordered spaces: right in a row, down in a desktop column (under the slot). */
@@ -109,13 +146,18 @@ function Slots({
   );
 }
 
-/** Ice brakes are wider than the brakes: radio and brakes then get a row each. */
-const ICE_SPAN = 'max-desktop:col-span-2';
-
 export function Cockpit({ view }: { view: PlayerView }) {
   const ice = view.scenario.modules.includes('ice-brakes');
-  const span = (id: Section) => (ice && (id === 'radio' || id === 'brakes') ? ICE_SPAN : SPAN[id]);
+  const modules = view.scenario.modules;
+  const leak = modules.includes('kerosene-leak');
+  const shown = sectionOrder(view.seat, ice).filter(
+    (id) =>
+      (id !== 'kerosene' || leak || modules.includes('kerosene')) &&
+      (id !== 'intern' || modules.includes('intern')),
+  );
   const sections: Record<Section, ReactNode> = {
+    kerosene: <KerosenePanel view={view} leak={leak} />,
+    intern: <InternPanel view={view} />,
     axis: (
       <div className="flex h-full flex-col gap-3 desktop:flex-row">
         {view.wind !== null && (
@@ -271,13 +313,12 @@ export function Cockpit({ view }: { view: PlayerView }) {
   return (
     <div className="@container">
       <div className="cockpit-grid grid grid-cols-2 gap-3">
-        {ORDER.map((id) => (
-          <div key={id} className={cn(span(id), AREA[id])}>
+        {shown.map((id) => (
+          <div key={id} className={cn(SPAN, AREA[id])}>
             {sections[id]}
           </div>
         ))}
       </div>
-      <ModulePanels view={view} />
     </div>
   );
 }
