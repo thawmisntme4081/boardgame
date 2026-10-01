@@ -1,6 +1,6 @@
 # Sky Team Online
 
-Online 2-player, cooperative web version of the board game Sky Team (pilot + co-pilot land a plane by placing dice silently). Personal/learning project. Full plan: `docs/PLAN.md` — follow its phases in order.
+Online 2-player, cooperative web version of the board game Sky Team (pilot + co-pilot land a plane by placing dice silently). Personal/learning project. Master plan: `docs/PLAN.md` (milestones and the phase table); each phase has its own file in `docs/phases/` (goals, scope, tasks, checklist); technical references are in `docs/reference/`. Follow the suggested order in the master plan.
 
 ## Stack (decided)
 
@@ -35,18 +35,18 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 ## Scope
 
-- v1: base game, one airport, responsive UI, reconnection. Public deploy is the last phase (Phase 10); until then play locally or share a temporary tunnel.
-- Phase 7 (done): the 21 Flight Log scenarios on 11 airports (`scenarios.ts`), modules as `RuleModule` hooks (`packages/shared/src/modules`: Kerosene, Kerosene leak, Intern, Wind, Real-time, Ice brakes), traffic die and turns on the approach track, and the six Special Abilities (`abilities.ts`). The 20 non-YUL approach tracks, `WIND_RING` and `HARD_ALTITUDES` are placeholders until read off the physical tiles; don't present them as official.
-- Phase 8: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios).
-- Phase 9: extras (persistence, accounts). Phase 10: deploy.
+- v1 (milestone M1, phases 0–6): base game, one airport, responsive UI, reconnection. Public deploy is the last phase (Phase 12); until then play locally or share a temporary tunnel.
+- Phase 7 (done): the 21 Flight Log scenarios on 11 airports (`scenarios.ts`), modules as `RuleModule` hooks (`packages/shared/src/modules`: Kerosene, Kerosene leak, Intern, Wind, Real-time, Ice brakes), traffic die and turns on the approach track, and the six Special Abilities (`abilities.ts`). Scenario tracks are entered from the physical tiles in `scenarios.ts` (commented entries are not yet verified); `WIND_RING` (20 spaces) and `HARD_ALTITUDES` (red/black side: reroll only at 6000) are confirmed from the physical pieces; don't present unverified data as official.
+- Phase 8: Turbulence expansion (Turbulence, Low Visibility, Alarms modules, 20 scenarios); needs the rulebook first.
+- Phase 9: persistence (SQLite or Redis). Phase 10: i18n (English + Vietnamese). Phase 11: game history (local first, accounts optional). Phase 12: deploy.
 - Exact rule numbers must be checked against the rulebooks; the numbers in the plan are a starting model. Ask the user when a rule is unclear instead of guessing.
 
 ## Workflow
 
 When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm build` passing):
 
-- Tick that phase's checklist in `docs/PLAN.md`. Leave unfinished items unticked and say why. Add a "✅ Verified <date>" note to its "Done when" line.
-- Update the docs so they match the code: the relevant `docs/PLAN.md` sections (protocol table, game state and rules, assumptions, later phases affected by work pulled forward) and this file (stack, commands, rules) when they changed.
+- Tick that phase's checklist in its `docs/phases/phase-NN-*.md` file. Leave unfinished items unticked and say why. Add a "✅ Verified <date>" note to its "Done when" line, and update the phase's status in the `docs/PLAN.md` table.
+- Update the docs so they match the code: the relevant `docs/reference/` files (protocol, game rules and assumptions, UI, testing, deployment), later phase files affected by work pulled forward, and this file (stack, commands, rules) when they changed.
 
 ## Commands
 
@@ -62,7 +62,7 @@ When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm ty
 
 ## Shortcuts
 
-- **"run tunnel"**: share the current build on a public link (manual steps for the user: `docs/PLAN.md`, "Sharing a local game").
+- **"run tunnel"**: share the current build on a public link (manual steps for the user: `docs/reference/sharing-and-deployment.md`).
   1. Check port 3000 is free; if something is listening there, say what and ask before touching it.
   2. `pnpm build`.
   3. In the background: `NODE_ENV=production TRUST_PROXY=1 PORT=3000 node packages/server/dist/index.js`; wait until `http://localhost:3000/health` answers.
