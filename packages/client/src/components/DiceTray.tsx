@@ -14,6 +14,14 @@ import { ArrowLeftRight, Coffee, FlipVertical2, Minus, Plus, RotateCcw, X } from
 import type { ReactNode } from 'react';
 import { playAbility, ready, reroll, spendReroll } from '@/api';
 import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { formatClock } from '@/lib/clock';
 import { useNow } from '@/lib/useNow';
 import { cn } from '@/lib/utils';
@@ -25,16 +33,26 @@ import { DieFace } from '@/svgs/DieFace';
 const partnerName = (view: PlayerView, presence: Presence | null) =>
   presence?.[otherSeat(view.seat)]?.name ?? seatName[otherSeat(view.seat)];
 
-/** The Special Ability cards in play, with their rules on hover. */
+/** The Special Ability cards in play; tap one for its rule (no hover-only info on phones). */
 function AbilityList({ view }: { view: PlayerView }) {
   if (view.abilities.length === 0) return null;
   return (
     <p className="text-xs text-muted-foreground">
       Abilities:{' '}
       {view.abilities.map((ability, i) => (
-        <span key={ability} title={ABILITY_TEXT[ability].rule}>
+        <span key={ability}>
           {i > 0 && ' · '}
-          <span className="font-medium text-foreground">{ABILITY_TEXT[ability].name}</span>
+          <Popover>
+            <PopoverTrigger className="relative font-medium text-foreground underline decoration-dotted underline-offset-2 outline-none after:absolute after:top-1/2 after:left-1/2 after:h-11 after:w-full after:min-w-11 after:-translate-1/2 focus-visible:ring-3 focus-visible:ring-ring/50">
+              {ABILITY_TEXT[ability].name}
+            </PopoverTrigger>
+            <PopoverContent side="top" className="w-64">
+              <PopoverHeader>
+                <PopoverTitle>{ABILITY_TEXT[ability].name}</PopoverTitle>
+                <PopoverDescription>{ABILITY_TEXT[ability].rule}</PopoverDescription>
+              </PopoverHeader>
+            </PopoverContent>
+          </Popover>
         </span>
       ))}
     </p>

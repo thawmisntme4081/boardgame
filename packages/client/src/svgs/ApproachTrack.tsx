@@ -67,7 +67,7 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
   const fade = (i: number) => cn('transition-opacity duration-500', passed(i) && 'opacity-30');
   const effects = Boolean(scenario.traffic?.some(Boolean) || scenario.turns?.some(Boolean));
   const rowY = 51;
-  const arrowY = effects ? 64 : 52;
+  const height = effects ? 64 : 50;
   const hereTraffic = scenario.traffic?.[here] ?? 0;
   const hereTurn = scenario.turns?.[here];
   const hereText = [
@@ -90,7 +90,7 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
         Approach · {scenario.name}
       </figcaption>
       <svg
-        viewBox={`0 0 ${planes.length * CELL} ${arrowY + 12}`}
+        viewBox={`0 0 ${planes.length * CELL} ${height}`}
         style={{ width: trackWidth(planes.length) }}
         role="img"
         aria-label={`Approach: ${airport - here} spaces to the airport. Planes per space from here: ${planes.slice(here).join(', ')}${hereText ? `. Current space: ${hereText}` : ''}`}
@@ -138,13 +138,10 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
             width={CELL - 4}
             height="46"
             rx="6"
-            strokeWidth="3"
-            className="fill-none stroke-pilot"
-          />
-          {/* A little smaller on phones; anchored at its tip. */}
-          <path
-            d={`M ${CELL / 2} ${arrowY} l -7 10 h 14 z`}
-            className="origin-top scale-75 fill-pilot [transform-box:fill-box] tablet:scale-100"
+            strokeWidth="2"
+            className={
+              view.seat === 'pilot' ? 'fill-none stroke-pilot' : 'fill-none stroke-copilot'
+            }
           />
         </g>
 

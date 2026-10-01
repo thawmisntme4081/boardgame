@@ -169,11 +169,16 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
               <span
                 role="img"
                 aria-label={`Ice brake ${i + 2}: ${view.brakes > i ? 'deployed' : 'not deployed'}`}
-                className={cn(
-                  'h-2 w-10 rounded-full',
-                  view.brakes > i ? 'bg-light-on' : 'bg-muted-foreground/25',
-                )}
-              />,
+                className="h-2 w-10 overflow-hidden rounded-full bg-muted-foreground/25"
+              >
+                {/* The green fills in from the left when the pair is complete. */}
+                <span
+                  className={cn(
+                    'block h-full origin-left rounded-full bg-light-on transition-transform duration-700 ease-out',
+                    view.brakes > i ? 'scale-x-100' : 'scale-x-0',
+                  )}
+                />
+              </span>,
               `m${i}`,
             )}
           </Fragment>

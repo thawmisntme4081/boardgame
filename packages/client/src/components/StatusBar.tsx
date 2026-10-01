@@ -158,7 +158,7 @@ export function StatusBar({
             {/* Dice are rolled: silence until the round ends, as at the table. */}
             {view.phase === 'placing' && (
               <p className="rounded-full bg-danger px-3 py-1 text-sm font-semibold whitespace-nowrap text-white">
-                No talking
+                No talking!!!
               </p>
             )}
             {view.phase === 'placing' && <RoundCountdown />}

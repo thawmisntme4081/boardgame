@@ -392,13 +392,13 @@ describe('StatusBar', () => {
     );
     expect(screen.getByText('Strategy time')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Roll dice|Waiting/ })).not.toBeInTheDocument();
-    expect(screen.queryByText('No talking')).not.toBeInTheDocument();
+    expect(screen.queryByText(/No talking/)).not.toBeInTheDocument();
   });
 
   it('adds a red "No talking" next to the turn while dice are placed', () => {
     render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
     expect(screen.getByText('Your turn')).toBeInTheDocument();
-    expect(screen.getByText('No talking')).toHaveClass('bg-danger');
+    expect(screen.getByText('No talking!!!')).toHaveClass('bg-danger');
   });
 });
 
@@ -474,5 +474,34 @@ describe('cockpit hints and module details', () => {
     rerender(<Cockpit view={makeView('pilot', { scenario, patch: { kerosene: 14 } })} />);
     expect(screen.getByText('−6')).toBeInTheDocument();
     expect(screen.getByRole('meter', { name: 'Kerosene' })).toHaveAttribute('aria-valuenow', '14');
+  });
+});
+
+describe('recent board details', () => {
+  it('explain an ability in a popover when its name is tapped', async () => {
+    render(<DiceTray view={makeView('pilot', { abilities: ['control'] })} presence={presence()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Control' }));
+    expect(await screen.findByText('Two equal Axis dice: gain a coffee.')).toBeInTheDocument();
+  });
+
+  it('fill an ice brake bar only once its pair is complete', () => {
+    render(
+      <Cockpit
+        view={makeView('pilot', { scenario: { modules: ['ice-brakes'] }, patch: { brakes: 1 } })}
+      />,
+    );
+    const fill = (n: number) =>
+      screen.getByRole('img', { name: new RegExp(`^Ice brake ${n}:`) }).firstElementChild;
+    expect(fill(2)).toHaveClass('scale-x-100');
+    expect(fill(3)).toHaveClass('scale-x-0');
+  });
+
+  it('outline your current approach space in your colour, with no marker under it', () => {
+    const { container, rerender } = render(<ApproachTrack view={makeView('pilot')} />);
+    expect(container.querySelector('rect.stroke-pilot')).not.toBeNull();
+    expect(container.querySelector('path.fill-pilot')).toBeNull();
+    rerender(<ApproachTrack view={makeView('copilot')} />);
+    expect(container.querySelector('rect.stroke-copilot')).not.toBeNull();
+    expect(container.querySelector('rect.stroke-pilot')).toBeNull();
   });
 });

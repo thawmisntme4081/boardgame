@@ -366,6 +366,39 @@ The Turbulence expansion ([publisher page](https://www.scorpionmasque.com/en/sky
 - [x] Optional round timer (Sep 29, 2026): lobby switch (off by default), 3 minutes per round from the roll, countdown next to the turn label (red for the last 30 s), time up = game lost; enforced by the server; kept on rematch. Tests: shared rules, server (expiry for both players, late move refused, stopping when the last die is placed, rematch), client (lobby switch, countdown), Playwright (a timed game running out)
 - [x] "Next turn in 5s" pause (Sep 29, 2026): after each round's last die (not at game over), a green countdown sits next to the turn label for 5 s, in every game. Display only (client): players still talk strategy and press "Ready to roll"; the status-bar actions wrap on phones so everything fits
 - [ ] Accounts and game history
+- [ ] Vietnamese language (i18n): English and Vietnamese, switchable in the app; plan below
+
+#### i18n plan (English + Vietnamese)
+
+Only the client shows text, so i18n is a client concern. The server and shared rules keep sending codes (`MoveError`, `EndReason`, `ErrorCode`, ids), never sentences, and that stays the rule.
+
+1. **Library:** `i18next` + `react-i18next` (plurals, interpolation, React hooks; works with Vite and React 19). Plurals matter in English ("1 die" / "3 dice"); Vietnamese has no plural forms, which i18next handles per language.
+2. **Message files:** `packages/client/src/locales/en.json` and `vi.json`, one nested key per text (`statusBar.yourTurn`, `errors.not-your-turn`, `endReasons.spin`, `modules.kerosene.rule`, `abilities.control.rule`, …). Types: generate a `TranslationKey` type from `en.json` (i18next's TypeScript resources typing), so a missing or misspelled key breaks the build.
+3. **Move every string:**
+   - `messages.ts` (errors, end reasons, seat names);
+   - `scenarioText.ts` (module and ability names and rules);
+   - airport names and difficulty names;
+   - all component text (lobby, status bar, dice tray, cockpit hints, dialogs, toasts);
+   - `aria-label`s and `<title>`s in the SVGs.
+   Shared constants like `DIFFICULTY_NAMES` and `AIRPORT_NAMES` stay in `shared` as ids; the client looks up their labels.
+4. **Formatting:** numbers and altitudes with `Intl.NumberFormat(locale)` (e.g. "6.000 ft" in Vietnamese), the countdown clock unchanged (`m:ss`).
+5. **Choosing the language:**
+   - The first visit follows the browser (`navigator.language` starting with `vi` gives Vietnamese, otherwise English).
+   - A language switch (shadcn Select, "English / Tiếng Việt") sits in the lobby and in the status bar menu.
+   - The choice is saved in `localStorage` and sets `<html lang>`.
+   - Each player picks their own language: two players in one game can use different languages.
+6. **Vietnamese text:**
+   - Translate from the English keys, keeping game terms consistent: a short glossary (Pilot = Phi công, Co-pilot = Cơ phó, Axis, Engines, Landing gear, Flaps, Brakes, Radio, Concentration, coffee, reroll, Kerosene, Intern, Wind, Ice brakes, traffic die, …).
+   - The user reviews the glossary and the full `vi.json` before release.
+   - Check the Geist font covers Vietnamese diacritics (it has a `latin-ext` subset), or add a fallback.
+7. **Layout:** Vietnamese strings run longer. Check phone layouts (status bar pills, tray buttons, panel hints) with long strings; truncate or wrap where needed.
+8. **Tests:**
+   - unit tests render key components in both languages;
+   - a test fails if `vi.json` is missing a key that `en.json` has;
+   - a Playwright run of the lobby and one round in Vietnamese on a phone;
+   - existing tests keep using English (the default in tests).
+
+**Done when:** every screen reads fully in Vietnamese (no English left over, `aria-label`s included), switching language updates the app without a reload, the key-parity test passes, and phone layouts still fit.
 
 ### Phase 10: Deploy (last)
 
