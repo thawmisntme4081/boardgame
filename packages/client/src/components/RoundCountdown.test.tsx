@@ -97,17 +97,18 @@ describe('next turn pause', () => {
     expect(useGame.getState().nextTurnAt).toBeNull();
   });
 
-  it('counts down in green next to the turn label, then disappears', () => {
+  it('counts down in green as the only pill, then gives way to the strategy label', () => {
     useGame.setState({ nextTurnAt: T0 + NEXT_TURN_PAUSE_MS });
     render(<StatusBar view={nextRound} presence={presence()} connection="online" />);
     const pause = screen.getByRole('timer', { name: 'Next turn in 5 seconds' });
     expect(pause).toHaveTextContent('Next turn in 5s');
     expect(pause).toHaveClass('bg-light-on');
-    expect(pause.parentElement).toBe(screen.getByText('Strategy: talk it over').parentElement);
+    expect(screen.queryByText('Strategy time')).not.toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(2_100));
     expect(pause).toHaveTextContent('Next turn in 3s');
     act(() => vi.advanceTimersByTime(3_000));
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+    expect(screen.getByText('Strategy time')).toBeInTheDocument();
   });
 });

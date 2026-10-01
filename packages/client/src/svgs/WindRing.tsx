@@ -1,4 +1,5 @@
 import { WIND_RING, windSpeed } from '@sky/shared';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const C = 60;
@@ -12,14 +13,31 @@ const point = (index: number, radius: number) => {
 
 const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
+const STEP = 360 / WIND_RING.length;
+
+/**
+ * The needle's angle, turning the short way round: kept as a running total so going from
+ * the last space to the first (or back) moves one step, not a full turn the other way.
+ */
+function useNeedleAngle(wind: number): number {
+  const [needle, setNeedle] = useState({ wind, angle: wind * STEP });
+  if (wind !== needle.wind) {
+    const n = WIND_RING.length;
+    const steps = ((((wind - needle.wind) % n) + n + n / 2) % n) - n / 2;
+    setNeedle({ wind, angle: needle.angle + steps * STEP });
+  }
+  return needle.angle;
+}
+
 /** The Wind Ring: the blue airplane points at the wind speed added to the engines. */
-export function WindRing({ wind }: { wind: number }) {
-  const nose = point(wind, R - 16);
+export function WindRing({ wind, className }: { wind: number; className?: string }) {
+  const nose = point(0, R - 16);
+  const angle = useNeedleAngle(wind);
   const speed = windSpeed(wind);
   return (
     <svg
       viewBox="0 0 120 120"
-      className="size-28 shrink-0"
+      className={cn('size-28 shrink-0', className)}
       role="img"
       aria-label={`Wind ${signed(speed)} added to the engines`}
     >
@@ -34,6 +52,7 @@ export function WindRing({ wind }: { wind: number }) {
               cy={y}
               r="9"
               className={cn(
+                'transition-[fill] duration-500',
                 current ? 'fill-pilot' : i === 0 ? 'fill-card' : 'fill-background',
                 'stroke-border',
               )}
@@ -43,7 +62,7 @@ export function WindRing({ wind }: { wind: number }) {
               y={y + 3.5}
               textAnchor="middle"
               className={cn(
-                'text-[10px] font-semibold',
+                'text-[10px] font-semibold transition-[fill] duration-500',
                 current ? 'fill-white' : 'fill-foreground',
               )}
             >
@@ -52,6 +71,7 @@ export function WindRing({ wind }: { wind: number }) {
           </g>
         );
       })}
+      {/* Drawn pointing at the centre space, then turned: the turn animates. */}
       <line
         x1={C}
         y1={C}
@@ -59,7 +79,8 @@ export function WindRing({ wind }: { wind: number }) {
         y2={nose.y}
         strokeWidth="5"
         strokeLinecap="round"
-        className="stroke-pilot"
+        style={{ transform: `rotate(${angle}deg)`, transformOrigin: `${C}px ${C}px` }}
+        className="stroke-pilot transition-transform duration-700 ease-in-out"
       />
       <circle cx={C} cy={C} r="6" className="fill-pilot" />
     </svg>

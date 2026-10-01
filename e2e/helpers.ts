@@ -48,14 +48,14 @@ export async function startGame(
   await copilot.getByRole('button', { name: 'Join' }).click();
 
   for (const page of [pilot, copilot]) {
-    await expect(page.getByRole('button', { name: 'Ready to roll' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Roll dice' })).toBeVisible();
   }
   return { pilot, copilot, code };
 }
 
 export async function bothReady({ pilot, copilot }: Players): Promise<void> {
-  await pilot.getByRole('button', { name: 'Ready to roll' }).click();
-  await copilot.getByRole('button', { name: 'Ready to roll' }).click();
+  await pilot.getByRole('button', { name: 'Roll dice' }).click();
+  await copilot.getByRole('button', { name: 'Roll dice' }).click();
   await expect(pilot.getByText(/Your turn|’s turn/).first()).toBeVisible();
 }
 
@@ -92,7 +92,7 @@ export async function playToTheEnd(players: Players): Promise<void> {
   const { pilot, copilot } = players;
   for (let step = 0; step < 200; step++) {
     if (await pilot.getByRole('dialog').isVisible()) break;
-    if (await pilot.getByRole('button', { name: 'Ready to roll' }).isVisible()) {
+    if (await pilot.getByRole('button', { name: 'Roll dice' }).isVisible()) {
       await bothReady(players);
       continue;
     }

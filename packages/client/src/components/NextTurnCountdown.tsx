@@ -3,7 +3,7 @@ import { useGame } from '@/store';
 
 /**
  * A short breather after each round's last die: "Next turn in 5s", in green. Display only;
- * players still talk strategy and press "Ready to roll" as usual. Gone once it reaches 0.
+ * players still talk strategy and press "Roll dice" as usual. Gone once it reaches 0.
  */
 export function NextTurnCountdown() {
   const nextTurnAt = useGame((s) => s.nextTurnAt);

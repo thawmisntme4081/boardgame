@@ -1,5 +1,5 @@
 import { SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Cockpit } from '@/components/Cockpit';
 import { DiceTray } from '@/components/DiceTray';
 import { GameOverDialog } from '@/components/GameOverDialog';
@@ -55,7 +55,22 @@ function useShownView(view: PlayerView): PlayerView {
   return { ...view, placed: view.lastRound.placed, speed: view.lastRound.speed };
 }
 
+/** The status bar's height, so the tablet dice column can stick just below it. */
+function useHeight<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, height] as const;
+}
+
 export default function Game({ view, presence }: { view: PlayerView; presence: Presence | null }) {
+  const [statusRef, statusHeight] = useHeight<HTMLDivElement>();
   const connection = useGame((s) => s.connection);
   const shown = useShownView(view);
   const radioTarget = useRadioTarget(view);
@@ -64,24 +79,28 @@ export default function Game({ view, presence }: { view: PlayerView; presence: P
   return (
     // On desktop the game sits in a centred container over a muted page.
     <div className="bg-muted">
-      <div className="game-grid bg-background desktop:border-x desktop:shadow-sm">
-        <div className="[grid-area:status]">
+      <div
+        className="game-grid bg-background desktop:border-x desktop:shadow-sm"
+        style={{ '--status-h': `${statusHeight}px` } as CSSProperties}
+      >
+        {/* Sticky: the page scrolls under the status bar and above the dice tray. */}
+        <div ref={statusRef} className="sticky top-0 z-20 [grid-area:status]">
           <StatusBar view={view} presence={presence} connection={connection} />
         </div>
 
         {/* Side by side on phones (compact strip) and desktop, stacked on tablets. */}
-        <div className="grid content-start gap-3 border-b bg-background px-4 py-2 [grid-area:tracks] tablet:grid-cols-1 tablet:py-3 desktop:grid-cols-[repeat(2,minmax(0,24rem))] desktop:justify-center desktop:gap-x-10">
+        <div className="grid content-start gap-3 border-b bg-background px-4 py-2 [grid-area:tracks] tablet:grid-cols-1 tablet:py-3 desktop:grid-cols-[repeat(2,minmax(0,30rem))] desktop:justify-center desktop:gap-x-10">
           <AltitudeTrack view={view} />
           <ApproachTrack view={view} radioTarget={radioTarget} />
         </div>
 
-        <main className="min-h-0 overflow-y-auto bg-muted/40 p-3 [grid-area:cockpit]">
+        <main className="bg-muted/40 p-3 [grid-area:cockpit]">
           <Cockpit view={shown} />
         </main>
 
         <section
           aria-label="Your dice"
-          className="border-t bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [grid-area:tray] tablet:border-t-0 tablet:border-l desktop:border-t desktop:border-l-0"
+          className="sticky bottom-0 z-20 border-t bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [grid-area:tray] tablet:top-(--status-h) tablet:bottom-auto tablet:self-start tablet:border-t-0 tablet:border-l desktop:top-auto desktop:bottom-0 desktop:self-auto desktop:border-t desktop:border-l-0"
         >
           <DiceTray view={view} presence={presence} />
         </section>

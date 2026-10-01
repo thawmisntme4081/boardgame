@@ -46,12 +46,15 @@ export function PanelHeader({
   hint,
   side,
   mandatory,
+  badge,
   className,
 }: {
   title: string;
   hint?: ReactNode;
   side?: boolean;
   mandatory?: boolean;
+  /** Shown right after the title, e.g. the marker a system moves. */
+  badge?: ReactNode;
   className?: string;
 }) {
   return (
@@ -65,6 +68,7 @@ export function PanelHeader({
       <h2 className="flex items-center gap-1 text-sm font-semibold">
         {title}
         {mandatory && <MandatoryMark title={title} />}
+        {badge && <span className="text-xs font-normal text-muted-foreground">{badge}</span>}
       </h2>
       {hint && (
         <p className={cn('text-right text-xs text-muted-foreground', side && 'desktop:text-left')}>
@@ -80,6 +84,7 @@ export function Panel({
   hint,
   side,
   mandatory,
+  badge,
   className,
   children,
 }: {
@@ -87,12 +92,13 @@ export function Panel({
   hint?: ReactNode;
   side?: boolean;
   mandatory?: boolean;
+  badge?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <section className={cn(PANEL, className)} aria-label={title}>
-      <PanelHeader title={title} hint={hint} side={side} mandatory={mandatory} />
+      <PanelHeader title={title} hint={hint} side={side} mandatory={mandatory} badge={badge} />
       {children}
     </section>
   );

@@ -98,16 +98,32 @@ describe('DiceTray', () => {
 
   it('says who is placing when it is the partner’s turn', () => {
     render(<DiceTray view={makeView('copilot')} presence={presence()} />);
-    expect(screen.getByText('Ana is placing a die…')).toBeInTheDocument();
-    expect(screen.getByLabelText('Ana has 4 dice left')).toBeInTheDocument();
+    expect(screen.getByText('Ana is placing a die… (4 dice left)')).toBeInTheDocument();
+    render(
+      <DiceTray
+        view={makeView('copilot', {
+          pilot: [3],
+          patch: { rerollPending: { pilot: true, copilot: false } },
+        })}
+        presence={presence()}
+      />,
+    );
+    expect(screen.getByText('Ana is placing a die… (1 die left, rerolling)')).toBeInTheDocument();
   });
 
-  it('explains the strategy phase without its own ready button', () => {
-    render(
-      <DiceTray view={makeView('pilot', { rolled: false })} presence={presence(false, true)} />,
-    );
-    expect(screen.getByText(/Talk strategy now/)).toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  it('has the "Roll dice" button in the strategy phase; it waits for the partner once pressed', async () => {
+    const view = makeView('pilot', { rolled: false });
+    const { rerender } = render(<DiceTray view={view} presence={presence(false, true)} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Roll dice' }));
+    expect(api.ready).toHaveBeenCalled();
+    rerender(<DiceTray view={view} presence={presence(true, false)} />);
+    expect(screen.getByRole('button', { name: 'Waiting for Ben…' })).toBeDisabled();
+  });
+
+  it('disables "Roll dice" during the "Next turn in 5s" pause', () => {
+    useGame.setState({ nextTurnAt: Date.now() + 5_000 });
+    render(<DiceTray view={makeView('pilot', { rolled: false })} presence={presence()} />);
+    expect(screen.getByRole('button', { name: 'Roll dice' })).toBeDisabled();
   });
 
   it('spends a reroll token, then rerolls the ticked dice', async () => {
@@ -216,7 +232,7 @@ describe('module panels', () => {
     expect(within(ice).getByRole('img', { name: 'Ice brake 3: not deployed' })).toBeInTheDocument();
   });
 
-  it('show the wind speed the ring points at', () => {
+  it('show the wind with the axis, and its speed over the engines', () => {
     render(
       <Cockpit view={makeView('pilot', { scenario: { modules: ['wind'] }, patch: { wind: 2 } })} />,
     );
@@ -226,6 +242,16 @@ describe('module panels', () => {
         name: `Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`,
       }),
     ).toBeInTheDocument();
+    const engines = screen.getByRole('region', { name: 'Engines' });
+    expect(
+      within(engines).getByRole('note', {
+        name: `Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`,
+      }),
+    ).toHaveTextContent(`${speed > 0 ? '+' : ''}${speed} wind`);
+    // Wind and Axis share the axis row (no separate module panel at the bottom).
+    expect(screen.getByRole('region', { name: 'Wind' }).parentElement?.parentElement).toBe(
+      screen.getByRole('region', { name: 'Axis' }).parentElement?.parentElement,
+    );
   });
 
   it('train the intern in two taps: the Intern space, then where the token goes', async () => {
@@ -356,37 +382,37 @@ describe('approach effects', () => {
 });
 
 describe('StatusBar', () => {
-  it('puts "Ready to roll" next to the strategy label', async () => {
-    const view = makeView('pilot', { rolled: false });
-    const { rerender } = render(
-      <StatusBar view={view} presence={presence()} connection="online" />,
+  it('says "Strategy time" before the roll, without a roll button of its own', () => {
+    render(
+      <StatusBar
+        view={makeView('pilot', { rolled: false })}
+        presence={presence()}
+        connection="online"
+      />,
     );
-    const label = screen.getByText('Strategy: talk it over');
-    const button = screen.getByRole('button', { name: 'Ready to roll' });
-    expect(label.parentElement).toBe(button.parentElement);
-    await userEvent.click(button);
-    expect(api.ready).toHaveBeenCalled();
-
-    rerender(<StatusBar view={view} presence={presence(true, false)} connection="online" />);
-    expect(screen.getByRole('button', { name: 'Waiting for Ben…' })).toBeDisabled();
+    expect(screen.getByText('Strategy time')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Roll dice|Waiting/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('No talking')).not.toBeInTheDocument();
   });
 
-  it('hides the ready button once dice are rolled', () => {
+  it('adds a red "No talking" next to the turn while dice are placed', () => {
     render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
     expect(screen.getByText('Your turn')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Ready to roll|Waiting/ })).not.toBeInTheDocument();
+    expect(screen.getByText('No talking')).toHaveClass('bg-danger');
   });
 });
 
 describe('Leave game', () => {
   it('asks for confirmation before giving up the seat', async () => {
     render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
-    await userEvent.click(screen.getByRole('button', { name: 'Leave game' }));
+    // One Leave button per layout (phone row, tablet+ row); CSS shows one of them.
+    expect(screen.getAllByRole('button', { name: 'Leave game' })).toHaveLength(2);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Leave game' })[0]!);
     const dialog = screen.getByRole('dialog', { name: 'Leave this game?' });
     await userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
     expect(api.leaveGame).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Leave game' }));
+    await userEvent.click(screen.getAllByRole('button', { name: 'Leave game' })[1]!);
     await userEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Leave game' }),
     );

@@ -69,20 +69,32 @@ function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean }) {
   );
 }
 
-function WindPanel({ view }: { view: PlayerView }) {
-  const speed = windSpeed(view.wind);
+/** Wind: shown with the axis (see Cockpit), since the axis turns the ring. */
+export function WindPanel({ view }: { view: PlayerView }) {
   return (
-    <Panel title="Wind" hint="The axis turns the ring each round">
-      <div className="flex items-center gap-3">
-        <WindRing wind={view.wind ?? 0} />
-        <p className="text-sm">
-          <span className="block text-2xl font-bold tabular-nums">
-            {speed > 0 ? `+${speed}` : speed}
-          </span>
-          added to the engines
-        </p>
+    <Panel title="Wind" hint="Turned by the axis">
+      {/* Desktop: the ring fills the height left in the panel (set by the Axis panel beside it). */}
+      <div className="flex justify-center desktop:relative desktop:min-h-28 desktop:flex-1">
+        <WindRing
+          wind={view.wind ?? 0}
+          className="size-44 desktop:absolute desktop:inset-0 desktop:size-full"
+        />
       </div>
     </Panel>
+  );
+}
+
+/** "+N wind" floating over the speed gauge (absolute, like the turn dots over the axis dial). */
+export function WindOnEngines({ wind }: { wind: number }) {
+  const speed = windSpeed(wind);
+  return (
+    <p
+      role="note"
+      aria-label={`Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`}
+      className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border bg-card px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums shadow-sm"
+    >
+      {speed > 0 ? `+${speed}` : speed} wind
+    </p>
   );
 }
 
@@ -177,7 +189,7 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
   );
 }
 
-/** Kerosene, Wind and Intern panels for the scenario's modules, below the control panel. */
+/** Kerosene and Intern panels for the scenario's modules, below the control panel. */
 export function ModulePanels({ view }: { view: PlayerView }) {
   const modules = view.scenario.modules;
   const panels: ReactNode[] = [];
@@ -186,7 +198,6 @@ export function ModulePanels({ view }: { view: PlayerView }) {
       <KerosenePanel key="kerosene" view={view} leak={modules.includes('kerosene-leak')} />,
     );
   }
-  if (modules.includes('wind')) panels.push(<WindPanel key="wind" view={view} />);
   if (modules.includes('intern')) panels.push(<InternPanel key="intern" view={view} />);
   if (panels.length === 0) return null;
   return (

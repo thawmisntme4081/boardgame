@@ -1,6 +1,6 @@
 import { otherSeat, type PlayerView, type Presence } from '@sky/shared';
 import { LogOut, WifiOff } from 'lucide-react';
-import { leaveGame, ready } from '@/api';
+import { leaveGame } from '@/api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,12 +16,13 @@ import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
 import { NextTurnCountdown } from './NextTurnCountdown';
 import { RoundCountdown } from './RoundCountdown';
-import type { Connection } from '@/store';
+import { useNow } from '@/lib/useNow';
+import { useGame, type Connection } from '@/store';
 
 function turnText(view: PlayerView, partner: string): string {
   switch (view.phase) {
     case 'strategy':
-      return 'Strategy: talk it over';
+      return 'Strategy time';
     case 'placing':
       return view.currentSeat === view.seat ? 'Your turn' : `${partner}’s turn`;
     case 'won':
@@ -31,26 +32,17 @@ function turnText(view: PlayerView, partner: string): string {
   }
 }
 
-/** Ends your strategy discussion; the dice roll once both players are ready. */
-function ReadyButton({ ready: isReady, partnerName }: { ready: boolean; partnerName: string }) {
-  return (
-    <Button
-      className="h-11"
-      variant={isReady ? 'outline' : 'default'}
-      disabled={isReady}
-      onClick={() => void ready()}
-    >
-      {isReady ? `Waiting for ${partnerName}…` : 'Ready to roll'}
-    </Button>
-  );
-}
-
 /** Gives up your seat, after a confirmation; your partner's game restarts. */
 function LeaveButton({ partnerName }: { partnerName: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-11" aria-label="Leave game">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11 hover:bg-danger hover:text-white"
+          aria-label="Leave game"
+        >
           <LogOut />
         </Button>
       </DialogTrigger>
@@ -90,6 +82,10 @@ export function StatusBar({
   const partner = presence?.[partnerSeat];
   const partnerName = partner?.name ?? seatName[partnerSeat];
   const myTurn = view.phase === 'placing' && view.currentSeat === view.seat;
+  // During the green "Next turn in 5s" pause, that countdown is the only pill.
+  const nextTurnAt = useGame((s) => s.nextTurnAt);
+  const now = useNow();
+  const pausing = view.phase === 'strategy' && nextTurnAt !== null && now < nextTurnAt;
 
   return (
     <header className="flex flex-col gap-2 border-b bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2">
@@ -103,52 +99,74 @@ export function StatusBar({
         </p>
       )}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold tabular-nums">
-            Round {view.round}/{view.scenario.altitudes.length} · {view.altitude.toLocaleString()}{' '}
-            ft
-            {view.finalRound && (
-              <span className="ml-2 rounded bg-danger px-1.5 py-0.5 text-xs text-white">Final</span>
-            )}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            You are the{' '}
-            <span className={view.seat === 'pilot' ? 'text-pilot' : 'text-copilot'}>
-              {seatName[view.seat]}
-            </span>
-            {' · '}
-            <span className="inline-flex items-center gap-1">
-              <span
-                className={cn(
-                  'inline-block size-2 rounded-full',
-                  partner?.online ? 'bg-light-on' : 'bg-danger',
-                )}
-                aria-hidden="true"
-              />
-              {partnerName} {partner?.online ? 'online' : 'offline'}
-            </span>
-          </p>
+        <div className="flex min-w-0 items-start gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tabular-nums">
+              Round {view.round}/{view.scenario.altitudes.length} · {view.altitude.toLocaleString()}{' '}
+              ft
+              {view.finalRound && (
+                <span className="ml-2 rounded bg-danger px-1.5 py-0.5 text-xs text-white">
+                  Final
+                </span>
+              )}
+            </p>
+            <p className="flex flex-col text-xs text-muted-foreground tablet:flex-row tablet:gap-1">
+              <span className="truncate">
+                You are the{' '}
+                <span className={view.seat === 'pilot' ? 'text-pilot' : 'text-copilot'}>
+                  {seatName[view.seat]}
+                </span>
+                <span className="hidden tablet:inline"> ·</span>
+              </span>
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <span
+                  className={cn(
+                    'inline-block size-2 rounded-full',
+                    partner?.online ? 'bg-light-on' : 'bg-danger',
+                  )}
+                  aria-hidden="true"
+                />
+                {partnerName} {partner?.online ? 'online' : 'offline'}
+              </span>
+            </p>
+          </div>
         </div>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <p
-            role="status"
-            className={cn(
-              'rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap',
-              myTurn
-                ? view.seat === 'pilot'
-                  ? 'bg-pilot text-white'
-                  : 'bg-copilot text-white'
-                : 'bg-muted',
+        {/*
+          The right box. Phones: Leave on top, the turn label and buttons under it.
+          From tablet up: one row, Leave last.
+        */}
+        <div className="ml-auto flex flex-col items-end tablet:flex-row tablet:items-center md:gap-2">
+          <div className="tablet:hidden">
+            <LeaveButton partnerName={partnerName} />
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {!pausing && (
+              <p
+                role="status"
+                className={cn(
+                  'rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap',
+                  myTurn
+                    ? view.seat === 'pilot'
+                      ? 'bg-pilot text-white'
+                      : 'bg-copilot text-white'
+                    : 'bg-muted',
+                )}
+              >
+                {turnText(view, partnerName)}
+              </p>
             )}
-          >
-            {turnText(view, partnerName)}
-          </p>
-          {view.phase === 'placing' && <RoundCountdown />}
-          {view.phase === 'strategy' && <NextTurnCountdown />}
-          {view.phase === 'strategy' && (
-            <ReadyButton ready={presence?.[view.seat]?.ready ?? false} partnerName={partnerName} />
-          )}
-          <LeaveButton partnerName={partnerName} />
+            {/* Dice are rolled: silence until the round ends, as at the table. */}
+            {view.phase === 'placing' && (
+              <p className="rounded-full bg-danger px-3 py-1 text-sm font-semibold whitespace-nowrap text-white">
+                No talking
+              </p>
+            )}
+            {view.phase === 'placing' && <RoundCountdown />}
+            {view.phase === 'strategy' && <NextTurnCountdown />}
+            <div className="hidden tablet:block">
+              <LeaveButton partnerName={partnerName} />
+            </div>
+          </div>
         </div>
       </div>
     </header>

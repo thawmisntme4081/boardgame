@@ -21,7 +21,7 @@ test.describe('a two-player game', () => {
     for (const page of [players.pilot, players.copilot]) {
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(page.getByText(/Round 1\/7/)).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Ready to roll' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Roll dice' })).toBeVisible();
     }
   });
 
@@ -110,7 +110,7 @@ test.describe('a two-player game', () => {
     await newcomer.getByLabel('Your name').fill('Cat');
     await newcomer.getByRole('button', { name: 'Join' }).click();
     await expect(pilot.getByText(/Cat joined the game/)).toBeVisible();
-    await expect(newcomer.getByRole('button', { name: 'Ready to roll' })).toBeVisible();
+    await expect(newcomer.getByRole('button', { name: 'Roll dice' })).toBeVisible();
   });
 });
 

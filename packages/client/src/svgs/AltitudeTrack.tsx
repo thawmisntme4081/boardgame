@@ -1,5 +1,6 @@
 import type { PlayerView } from '@sky/shared';
 import { PlaneLanding } from 'lucide-react';
+import { trackWidth } from '@/lib/trackRow';
 import { cn } from '@/lib/utils';
 
 /** Each space is a 3:4 card; wide enough for "6000" with a little padding. */
@@ -20,7 +21,7 @@ export function AltitudeTrack({ view }: { view: PlayerView }) {
       </figcaption>
       <svg
         viewBox={`0 0 ${spaces.length * CELL} ${HEIGHT}`}
-        className="w-full"
+        style={{ width: trackWidth(spaces.length) }}
         role="img"
         aria-label={`Altitude ${view.altitude} feet, round ${view.round} of ${spaces.length}`}
       >

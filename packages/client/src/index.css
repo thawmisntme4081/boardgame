@@ -51,17 +51,22 @@ html {
   }
 }
 
-/* Mobile-first game layout; the same components move between grid areas. */
+/*
+ * Mobile-first game layout; the same components move between grid areas. The page scrolls
+ * normally; the status bar and dice tray are sticky (see Game.tsx), so no viewport height is
+ * needed. min-height uses svh (never taller than the visible screen) to keep a short game
+ * filling it.
+ */
 .game-grid {
   display: grid;
-  height: 100dvh;
+  min-height: 100svh;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto 1fr auto;
   grid-template-areas: 'status' 'tracks' 'cockpit' 'tray';
 
   @variant tablet {
     grid-template-columns: minmax(0, 1fr) 20rem;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
     grid-template-areas: 'status status' 'tracks tray' 'cockpit tray';
   }
 
@@ -70,7 +75,7 @@ html {
     max-width: 72rem;
     margin-inline: auto;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto 1fr auto;
     grid-template-areas: 'status' 'tracks' 'cockpit' 'tray';
   }
 }

@@ -7,7 +7,7 @@ import { AeroMarkerIcon } from '@/svgs/AeroMarker';
 import { BrakeMarkerIcon } from '@/svgs/BrakeMarker';
 import { SpeedGauge } from '@/svgs/SpeedGauge';
 import { Switch } from '@/svgs/Switch';
-import { IceBrakesPanel, ModulePanels } from './ModulePanels';
+import { IceBrakesPanel, ModulePanels, WindOnEngines, WindPanel } from './ModulePanels';
 import { DESKTOP_PANEL, Panel, PANEL, PanelHeader } from './Panel';
 import { Slot } from './Slot';
 
@@ -117,17 +117,26 @@ export function Cockpit({ view }: { view: PlayerView }) {
   const span = (id: Section) => (ice && (id === 'radio' || id === 'brakes') ? ICE_SPAN : SPAN[id]);
   const sections: Record<Section, ReactNode> = {
     axis: (
-      <Panel title="Axis" hint="Must be level to land" mandatory>
-        <div className="flex items-center justify-between gap-2">
-          <Slot slot="axisPilot" view={view} />
-          <AxisDial
-            axis={view.axis}
-            // Turns only matter while the track can still advance.
-            turn={view.finalRound ? null : view.scenario.turns?.[view.approachIndex]}
-          />
-          <Slot slot="axisCopilot" view={view} />
+      <div className="flex h-full flex-col gap-3 desktop:flex-row">
+        {view.wind !== null && (
+          <div className="desktop:order-last desktop:w-1/4 desktop:flex-none">
+            <WindPanel view={view} />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <Panel title="Axis" hint="Must be level to land" mandatory>
+            <div className="flex items-center justify-between gap-2">
+              <Slot slot="axisPilot" view={view} />
+              <AxisDial
+                axis={view.axis}
+                // Turns only matter while the track can still advance.
+                turn={view.finalRound ? null : view.scenario.turns?.[view.approachIndex]}
+              />
+              <Slot slot="axisCopilot" view={view} />
+            </div>
+          </Panel>
         </div>
-      </Panel>
+      </div>
     ),
     engines: (
       <Panel
@@ -137,13 +146,14 @@ export function Cockpit({ view }: { view: PlayerView }) {
           view.finalRound
             ? 'Final round: speed must be below the brakes'
             : view.wind !== null
-              ? 'Sum + wind sets how far you fly'
+              ? 'Sum + wind'
               : 'Sum sets how far you fly'
         }
       >
         <div className="flex items-center justify-between gap-2 desktop:flex-1">
           <Slot slot="enginePilot" view={view} />
-          <div className="flex min-w-0 flex-1 justify-center desktop:relative desktop:min-h-24 desktop:self-stretch">
+          <div className="relative flex min-w-0 flex-1 justify-center desktop:min-h-24 desktop:self-stretch">
+            {view.wind !== null && <WindOnEngines wind={view.wind} />}
             <SpeedGauge
               view={view}
               className="desktop:absolute desktop:inset-0 desktop:size-full desktop:max-w-none"
@@ -181,7 +191,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
     gear: (
       <Panel
         title="Landing gear"
-        hint={
+        badge={
           <span className="inline-flex items-center gap-1">
             <AeroMarkerIcon marker="blue" />
             <span className="sr-only">Blue aerodynamics marker</span> +1
@@ -200,7 +210,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
     flaps: (
       <Panel
         title="Flaps"
-        hint={
+        badge={
           <span className="inline-flex items-center gap-1">
             <AeroMarkerIcon marker="orange" />
             <span className="sr-only">Orange aerodynamics marker</span> +1
@@ -222,7 +232,7 @@ export function Cockpit({ view }: { view: PlayerView }) {
     ) : (
       <Panel
         title="Brakes"
-        hint={
+        badge={
           <span className="inline-flex items-center gap-1">
             <BrakeMarkerIcon />
             <span className="sr-only">Brake marker</span> +2

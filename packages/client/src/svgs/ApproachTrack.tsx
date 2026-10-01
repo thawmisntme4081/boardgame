@@ -1,4 +1,5 @@
 import type { PlayerView } from '@sky/shared';
+import { trackWidth } from '@/lib/trackRow';
 import { cn } from '@/lib/utils';
 import { DIFFICULTY_DOT } from '@/scenarioText';
 import { Plane } from './Plane';
@@ -90,7 +91,7 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
       </figcaption>
       <svg
         viewBox={`0 0 ${planes.length * CELL} ${arrowY + 12}`}
-        className="w-full"
+        style={{ width: trackWidth(planes.length) }}
         role="img"
         aria-label={`Approach: ${airport - here} spaces to the airport. Planes per space from here: ${planes.slice(here).join(', ')}${hereText ? `. Current space: ${hereText}` : ''}`}
       >
@@ -140,7 +141,11 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
             strokeWidth="3"
             className="fill-none stroke-pilot"
           />
-          <path d={`M ${CELL / 2} ${arrowY} l -7 10 h 14 z`} className="fill-pilot" />
+          {/* A little smaller on phones; anchored at its tip. */}
+          <path
+            d={`M ${CELL / 2} ${arrowY} l -7 10 h 14 z`}
+            className="origin-top scale-75 fill-pilot [transform-box:fill-box] tablet:scale-100"
+          />
         </g>
 
         {/* Planes the traffic die just added: marked until the dice are rolled. */}
