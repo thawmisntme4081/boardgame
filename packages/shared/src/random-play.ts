@@ -63,7 +63,7 @@ const COUNTERPART: Partial<Record<SlotId, SlotId>> = {
 
 /**
  * The agent sees both hands: after a first axis/engine die, can the other space's owner
- * reply without losing? (Usually the partner; the traffic die can fill either colour.)
+ * reply without losing? (Usually the partner; the traffic die can fill either color.)
  */
 function counterpartCanAnswer(after: GameState, slot: SlotId): boolean {
   const counterpart = COUNTERPART[slot];

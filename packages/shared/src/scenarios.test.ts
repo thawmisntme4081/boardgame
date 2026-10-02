@@ -10,7 +10,7 @@ describe('scenarios', () => {
   it('lists YUL and only well-formed entries (at most 21 Flight Log + 20 Turbulence)', () => {
     expect(SCENARIOS['yul-green']).toBe(YUL);
     expect(SCENARIO_LIST.length).toBeLessThanOrEqual(41);
-    // One scenario per airport and colour, so ids never clash.
+    // One scenario per airport and color, so ids never clash.
     expect(new Set(SCENARIO_LIST.map((s) => s.id)).size).toBe(SCENARIO_LIST.length);
     for (const s of SCENARIO_LIST) {
       expect(AIRPORT_NAMES[s.airport], s.id).toBeDefined();

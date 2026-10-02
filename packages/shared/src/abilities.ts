@@ -1,4 +1,4 @@
-// Special Ability cards. Control, Mastery and Synchronisation trigger by themselves in
+// Special Ability cards. Control, Mastery and Synchronization trigger by themselves in
 // `rules.ts`; the three below are actions a player takes.
 import { rollDie } from './rng';
 import { currentAltitude, isGameOver, otherSeat, RuleError, settleTurn } from './rules';
@@ -22,7 +22,7 @@ export const ABILITY_IDS: readonly AbilityId[] = [
   'anticipation',
   'control',
   'mastery',
-  'synchronisation',
+  'synchronization',
   'working-together',
 ];
 
@@ -30,7 +30,7 @@ export const freshAbilityUse = (): AbilityUse => ({
   adaptation: { pilot: false, copilot: false },
   anticipation: false,
   workingTogether: false,
-  synchronisation: false,
+  synchronization: false,
 });
 
 /** What an ability check reads: built from `GameState` here, or from a `PlayerView` on the client. */

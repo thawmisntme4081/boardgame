@@ -85,7 +85,7 @@ export interface PlacementContext {
   brakes: number;
   scenario: Pick<Scenario, 'modules'>;
   intern: readonly DieValue[] | null;
-  /** Synchronisation's traffic die, which the co-pilot must place before anything else. */
+  /** Synchronization's traffic die, which the co-pilot must place before anything else. */
   bonus: { die: Die } | null;
   /** A Working Together swap waiting for the partner: nobody places until it is done. */
   swap: { seat: Seat } | null;
@@ -106,7 +106,7 @@ export const placementContext = (state: GameState, seat: Seat): PlacementContext
 
 /**
  * Colour, number and order checks for anything going on `slot`: a die, an Intern token or
- * the traffic die (`seat` null: any colour).
+ * the traffic die (`seat` null: any color).
  */
 export function checkSlot(
   ctx: PlacementContext,
@@ -145,7 +145,7 @@ export const diceToPlace = (
   inHand: number,
 ): number => Math.max(0, Math.min(inHand, dicePerRound(scenario) - diesPlayed({ placed }, seat)));
 
-/** Colour, number, order and coffee checks, ignoring phase and turn. */
+/** Color, number, order and coffee checks, ignoring phase and turn. */
 export function checkPlacement(ctx: PlacementContext, intent: PlaceIntent): MoveCheck {
   if (ctx.swap) return fail('swap-pending');
   const { bonus } = ctx;
@@ -164,7 +164,7 @@ export function checkPlacement(ctx: PlacementContext, intent: PlaceIntent): Move
   const def = SLOTS[intent.slot];
   if (!def || !slotActive(ctx.scenario.modules, intent.slot)) return fail('unknown-slot');
   if (ctx.placed[intent.slot]) return fail('slot-taken');
-  // The co-pilot places the traffic die on any colour.
+  // The co-pilot places the traffic die on any color.
   const seat = bonus ? null : ctx.seat;
   if (seat && !def.seats.includes(seat)) return fail('wrong-seat');
   if (bonus && OFF_PANEL.includes(def.group)) return fail('slot-not-allowed');
@@ -460,16 +460,16 @@ const placedIn = (state: GameState, group: SlotGroup): boolean =>
   (Object.keys(state.placed) as SlotId[]).some((slot) => SLOTS[slot].group === group);
 
 /**
- * Synchronisation: once a round has dice on both Landing Gear and Flaps, roll the traffic
+ * Synchronization: once a round has dice on both Landing Gear and Flaps, roll the traffic
  * die; the co-pilot places it right away on any empty space (an extra action this turn).
  * Returns whether the co-pilot now has that die to place.
  */
 function synchronise(state: GameState, after: Seat): boolean {
-  if (!state.abilities.includes('synchronisation') || state.abilityUse.synchronisation) {
+  if (!state.abilities.includes('synchronization') || state.abilityUse.synchronization) {
     return false;
   }
   if (!placedIn(state, 'gear') || !placedIn(state, 'flaps')) return false;
-  state.abilityUse.synchronisation = true;
+  state.abilityUse.synchronization = true;
   const die: Die = { id: `r${state.round}-traffic`, value: rollTrafficDie(state) };
   state.log.push({ type: 'bonus-die', round: state.round, die });
   state.bonus = { die, after };
@@ -591,7 +591,7 @@ function endRound(state: GameState): void {
     ...state.abilityUse,
     anticipation: false,
     workingTogether: false,
-    synchronisation: false,
+    synchronization: false,
   };
   state.phase = 'strategy';
   const altitude = currentAltitude(state);

@@ -9,8 +9,8 @@ The whole game is one serialisable `GameState` object plus pure functions that r
 | File | Contents |
 | --- | --- |
 | `types.ts` | `Seat`, `SlotId`, `Phase` (`strategy` → `placing` → … → `won` / `lost`), `EndReason`, `Scenario`, `PlaceIntent`, `GameEvent`, `GameState` |
-| `slots.ts` | Every slot's seat colours, allowed values and group; module slots (`module`, `coveredBy`); the 4 mandatory slots |
-| `scenarios.ts` | Both altitude track sides and the Flight Log scenarios as data (`SCENARIO_LIST`, `SCENARIOS`); ids are `<airport>-<colour>` |
+| `slots.ts` | Every slot's seat colors, allowed values and group; module slots (`module`, `coveredBy`); the 4 mandatory slots |
+| `scenarios.ts` | Both altitude track sides and the Flight Log scenarios as data (`SCENARIO_LIST`, `SCENARIOS`); ids are `<airport>-<color>` |
 | `state.ts` | `createGame(scenario, seed, { timerMs, abilities })`: runs each module's `setup` and the first traffic roll |
 | `modules/` | One file per Flight Log module, each a `RuleModule` of hooks (see below); `MODULES`, `modulesOf(scenario)` |
 | `abilities.ts` | Special Abilities: `ABILITY_IDS`, `canUseAbility` / `useAbility` (Adaptation, Anticipation, Working Together) |
@@ -43,7 +43,7 @@ The game creator can turn on a timer in the lobby (off by default). From the rol
 
 ## Flight Log scenarios and modules
 
-A `Scenario` has an airport, a colour (`green` Routine, `yellow` Exceptional, `red` Elite, `black` Heroic), its altitude track (green/yellow or red/black side), its approach track (`approach` planes, optional `traffic` icons and `turns`), its `modules` and how many Special Ability cards the players choose. Modules are `RuleModule` objects in `packages/shared/src/modules`; the rules call their hooks at fixed points (`altitudes`, `dicePerRound`, `approachPerRound`, `noSpeed`, `setup`, `checkSlot`, `checkMove`, `place`, `afterAxis`, `speedBonus`, `endOfRound`, `landing`, `brakeThresholds`, `timeUpEndsRound`) and a module only reacts to its own slots. `rules.ts` never tests for a module by name. Module state lives in `GameState` (`kerosene`, `intern`, `wind`) and is public in the view.
+A `Scenario` has an airport, a color (`green` Routine, `yellow` Exceptional, `red` Elite, `black` Heroic), its altitude track (green/yellow or red/black side), its approach track (`approach` planes, optional `traffic` icons and `turns`), its `modules` and how many Special Ability cards the players choose. Modules are `RuleModule` objects in `packages/shared/src/modules`; the rules call their hooks at fixed points (`altitudes`, `dicePerRound`, `approachPerRound`, `noSpeed`, `setup`, `checkSlot`, `checkMove`, `place`, `afterAxis`, `speedBonus`, `endOfRound`, `landing`, `brakeThresholds`, `timeUpEndsRound`) and a module only reacts to its own slots. `rules.ts` never tests for a module by name. Module state lives in `GameState` (`kerosene`, `intern`, `wind`) and is public in the view.
 
 | Module / effect | Rule as implemented |
 | --- | --- |
@@ -59,16 +59,16 @@ A `Scenario` has an airport, a colour (`green` Routine, `yellow` Exceptional, `r
 | Traffic die | At the start of each round (round 1 included), one roll of the traffic die (2, 3, 3, 4, 4, 5) per icon on the current space adds a plane that many spaces ahead, counting the current one (beyond the track: the airport), while the box (12 planes) has any. Radio-cleared planes go back to the box. The round's rolls are kept in `traffic` and shown to both players |
 | Turns | Every space the plane flies out of when the track advances checks the axis against its permitted positions; outside them loses (`turn`). No advance, no check |
 
-**Special Abilities** (the lobby picks as many as the scenario allows): **Control** (two equal Axis dice: +1 coffee) and **Mastery** (two equal Engine dice: +1 reroll token if one of the 3 is still in the box, not on the altitude track or in the supply) trigger by themselves; **Synchronisation** rolls the traffic die once per round when that round has dice on both Landing Gear and Flaps, and the co-pilot must place it at once on any empty Control Panel space, any colour, no coffee (an extra action; the turn then continues as before); **Adaptation** (once per game each, flip one of your dice to its opposite side), **Anticipation** (each round the first player may reroll one die before placing their first) and **Working Together** (once per round: offer a die; the partner must answer with one; the values swap; nobody places meanwhile) are `game:ability` actions.
+**Special Abilities** (the lobby picks as many as the scenario allows): **Control** (two equal Axis dice: +1 coffee) and **Mastery** (two equal Engine dice: +1 reroll token if one of the 3 is still in the box, not on the altitude track or in the supply) trigger by themselves; **Synchronization** rolls the traffic die once per round when that round has dice on both Landing Gear and Flaps, and the co-pilot must place it at once on any empty Control Panel space, any color, no coffee (an extra action; the turn then continues as before); **Adaptation** (once per game each, flip one of your dice to its opposite side), **Anticipation** (each round the first player may reroll one die before placing their first) and **Working Together** (once per round: offer a die; the partner must answer with one; the values swap; nobody places meanwhile) are `game:ability` actions.
 
 ## Data still to verify
 
-Approach tracks are entered from the physical tiles in `scenarios.ts`; scenarios still commented out there are not yet verified (tracked in [Phase 7](../phases/phase-07-base-airports-modules.md)). Confirmed from the physical pieces (Oct 1, 2026): the Wind Ring (`WIND_RING`) and the red/black altitude track (`HARD_ALTITUDES`).
+Approach tracks are entered from the physical tiles in `scenarios.ts` (all 40 scenarios, Oct 2, 2026). Confirmed from the physical pieces (Oct 1, 2026): the Wind Ring (`WIND_RING`) and the red/black altitude track (`HARD_ALTITUDES`).
 
 ## Assumptions to revisit
 
 - Turns check the space the plane flies out of (both spaces when advancing 2), not the one it arrives on.
-- Synchronisation triggers once per round, the traffic die cannot take coffee and cannot go on the Kerosene or Intern boards.
+- Synchronization triggers once per round, the traffic die cannot take coffee and cannot go on the Kerosene or Intern boards.
 - Abilities are chosen by whoever creates the game (or presses "Fly again"); Adaptation may be used at any time while dice are being placed.
 - Radio-cleared planes return to the box, so the traffic die can reuse them.
 - If the seat on turn has no legal placement, the turn passes to the partner; if neither can place, the leftover dice are lost and the round ends (the rulebook does not cover this).

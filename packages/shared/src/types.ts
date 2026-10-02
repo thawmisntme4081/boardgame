@@ -43,7 +43,7 @@ export type SlotId =
   | 'ice5Top'
   | 'ice5Bottom';
 
-/** Scenario colour in the Flight Log: Routine, Exceptional, Elite, Heroic. */
+/** Scenario color in the Flight Log: Routine, Exceptional, Elite, Heroic. */
 export type Difficulty = 'green' | 'yellow' | 'red' | 'black';
 
 export type ModuleId =
@@ -58,7 +58,7 @@ export type ModuleId =
   | 'engines-out';
 
 export type AbilityId =
-  'adaptation' | 'anticipation' | 'control' | 'mastery' | 'synchronisation' | 'working-together';
+  'adaptation' | 'anticipation' | 'control' | 'mastery' | 'synchronization' | 'working-together';
 
 /** `strategy`: talking allowed, dice not rolled yet. `placing`: dice rolled, silence. */
 export type Phase = 'strategy' | 'placing' | 'won' | 'lost';
@@ -85,7 +85,7 @@ export interface PlacedDie {
   dieId: string;
   /** Value after coffee modifiers. */
   value: DieValue;
-  /** Not one of the seat's own dice: an Intern token or the Synchronisation traffic die. */
+  /** Not one of the seat's own dice: an Intern token or the Synchronization traffic die. */
   source?: 'intern' | 'traffic';
 }
 
@@ -149,7 +149,7 @@ export interface AbilityUse {
   adaptation: Record<Seat, boolean>;
   anticipation: boolean;
   workingTogether: boolean;
-  synchronisation: boolean;
+  synchronization: boolean;
 }
 
 export type GameEvent =
@@ -168,7 +168,7 @@ export type GameEvent =
   | { type: 'reroll'; round: number; seat: Seat; dice: Die[] }
   /** Traffic die rolls at the start of a round; planes went to `approachIndex + roll - 1`. */
   | { type: 'traffic'; round: number; rolls: number[] }
-  /** Synchronisation: the traffic die the co-pilot must place. */
+  /** Synchronization: the traffic die the co-pilot must place. */
   | { type: 'bonus-die'; round: number; die: Die }
   /** A die changed by an ability (flipped, rerolled or swapped); `value` is its new value. */
   | {
@@ -228,7 +228,7 @@ export interface GameState {
   planeSupply: number;
   /** The traffic die rolls at the start of this round (empty when the space had no icon). */
   traffic: TrafficRoll[];
-  /** Synchronisation: the traffic die the co-pilot must place now, and whose turn it interrupted. */
+  /** Synchronization: the traffic die the co-pilot must place now, and whose turn it interrupted. */
   bonus: { die: Die; after: Seat } | null;
   /** Working Together: the die a player put on the card, waiting for the partner's die. */
   swap: { seat: Seat; dieId: string; value: DieValue } | null;

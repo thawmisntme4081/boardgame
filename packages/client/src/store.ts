@@ -60,7 +60,7 @@ export const useGame = create<GameStore>()((set) => ({
   setView: (view) =>
     set((s) => {
       const ids = new Set(view.myDice.map((d) => d.id));
-      // Synchronisation: the co-pilot may be holding the traffic die.
+      // Synchronization: the co-pilot may be holding the traffic die.
       if (view.bonus && view.seat === 'copilot') ids.add(view.bonus.die.id);
       const keepSelection = s.selectedDieId !== null && ids.has(s.selectedDieId);
       return {

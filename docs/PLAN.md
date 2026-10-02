@@ -21,7 +21,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | Milestone | Outcome | Phases | Status |
 | --- | --- | --- | --- |
 | **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
-| **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Built (Sep 30, 2026); last scenario tracks being entered |
+| **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Done (Oct 2, 2026) |
 | **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | 🚧 In progress (rulebook studied) |
 | **M4 — Platform features** | Games survive restarts, Vietnamese language, game history (accounts optional) | 9–11 | ⏳ Not started |
 | **M5 — Public launch** | The game on a public URL, monitored | 12 | ⏳ Not started |
@@ -37,7 +37,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 4 | [React client](phases/phase-04-react-client.md) | M1 | ✅ Done | — |
 | 5 | [Robustness](phases/phase-05-robustness.md) | M1 | ✅ Done | — |
 | 6 | [Tests and CI](phases/phase-06-tests-ci.md) | M1 | ✅ Done | — |
-| 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done (data entry open) | — |
+| 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done | — |
 | 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | 🚧 In progress (rulebook studied, questions open) | High |
 | 9 | [Persistence](phases/phase-09-persistence.md) | M4 | ⏳ Not started | Medium-low |
 | 10 | [Internationalisation (EN + VI)](phases/phase-10-i18n.md) | M4 | ✅ Done | Medium |
@@ -63,11 +63,12 @@ flowchart LR
 - **Phase 10** and **Phase 11 stage A** depend on nothing else and can be done any time.
 - **Phase 11 stage B** (accounts) needs persistence and the production domain.
 
-Suggested next steps: finish Phase 7's data entry → Phase 10 or 11A (independent, quick wins) → Phase 8 once the rulebook is in hand → Phase 9 + 12 together → 11B if wanted.
+Suggested next steps: Phase 11A (independent, quick win) → Phase 8 once the rulebook is in hand → Phase 9 + 12 together → 11B if wanted.
 
 ## Open items carried from finished phases
 
-- [ ] Phase 7: the remaining base-box scenario tracks from the physical tiles (Wind Ring and red/black altitude track confirmed Oct 1, 2026).
+None (Phase 7 data entry finished Oct 2, 2026).
+
 
 ## How to work with this plan
 

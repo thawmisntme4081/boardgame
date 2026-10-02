@@ -1,6 +1,6 @@
 # Phase 7: Base game airports and modules
 
-[← Master plan](../PLAN.md) · Milestone M2 · **Status: ✅ Done (Sep 30, 2026), scenario data being entered**
+[← Master plan](../PLAN.md) · Milestone M2 · **Status: ✅ Done (Sep 30, 2026; scenario data completed Oct 2, 2026)**
 
 ## Goals
 
@@ -18,7 +18,7 @@
 1. `RuleModule` hooks in `packages/shared/src/modules` (`setup`, `checkSlot`, `checkMove`, `place`, `afterAxis`, `speedBonus`, `endOfRound`, `landing`, `brakeThresholds`, `timeUpEndsRound`); module slots declare `module` / `coveredBy` in `slots.ts`.
 2. One file per module, each with unit tests; approach effects (traffic die, turns) in `rules.ts`.
 3. Special Abilities: automatic ones in the rules, action ones via `game:ability` (`abilities.ts`).
-4. Scenario data in `scenarios.ts` (ids `<airport>-<colour>`); both altitude track sides.
+4. Scenario data in `scenarios.ts` (ids `<airport>-<color>`); both altitude track sides.
 5. Server: `room:create` and `game:rematch` take `scenario` and `abilities`; Zod validation.
 6. Client: `ScenarioPicker` (lobby + game over), module panels, ice brakes, traffic/turn marks, traffic die in the co-pilot's tray, ability buttons.
 7. Random-play fuzzing on every scenario; a "winnable from a prepared final round" test per scenario.
@@ -26,15 +26,15 @@
 ## Checklist
 
 - [x] Module hook system: each module is a `RuleModule` with its own state and hooks
-- [x] Scenario data structure for all base-box airports and scenarios (colours, modules and ability counts from the Flight Log cards)
+- [x] Scenario data structure for all base-box airports and scenarios (colors, modules and ability counts from the Flight Log cards)
 - [x] Base modules as rule hooks, each with tests: Kerosene, Kerosene leak, Intern, Wind, Real-time, Ice brakes; approach effects Traffic die and Turns; the six Special Abilities
-- [x] Scenario picker in the lobby (grouped by colour, modules explained, ability chips), shown in the waiting room and after a game ("Fly again" may switch scenario)
+- [x] Scenario picker in the lobby (grouped by color, modules explained, ability chips), shown in the waiting room and after a game ("Fly again" may switch scenario)
 - [x] UI for each module on phone and desktop
-- [ ] Enter every base scenario's approach track from the printed tiles. Active today (15): YUL, LHR, HND green; LHR, TGU, GIG, KEF, PRG, ATL yellow; OSL, HND, TGU red; KEF, PBH, HND black. Still commented out: OSL, ATL, PRG green; KUL yellow; PBH, GIG red; KUL black
+- [x] Enter every scenario's approach track from the printed tiles: 40 scenarios on 18 airports, none left commented out (entered by the user, Oct 2, 2026)
 - [x] Read the Wind Ring values off the ring (`WIND_RING`: 20 spaces, +3 at the white centre down to −3 opposite; confirmed Oct 1, 2026)
 - [x] Read the red/black altitude track (`HARD_ALTITUDES`: like the green/yellow side, with a reroll only at 6000; confirmed Oct 1, 2026)
 
-**Done when:** every base scenario plays end to end and random-play fuzzing passes on all of them. ✅ Verified Sep 30, 2026 with placeholder tracks (2,100 fuzzed games, every scenario won from a prepared final round, Playwright Kerosene and Intern games on three devices). Re-verify once the open data items above are entered.
+**Done when:** every base scenario plays end to end and random-play fuzzing passes on all of them. ✅ Verified Sep 30, 2026 with placeholder tracks (2,100 fuzzed games, every scenario won from a prepared final round, Playwright Kerosene and Intern games on three devices). ✅ Re-verified Oct 2, 2026 with the real tracks: 40 scenarios, 4,000 fuzzed games (100 per scenario) with no errors, every scenario won from a prepared final round, 292 unit tests and 32 Playwright tests on three devices.
 
 ## Also delivered (online extras and UX polish, Sep 29 – Oct 1, 2026)
 

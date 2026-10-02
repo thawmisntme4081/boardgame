@@ -43,9 +43,9 @@ describe('mastery', () => {
   });
 });
 
-describe('synchronisation', () => {
+describe('synchronization', () => {
   const synced = () =>
-    play(withAbility('synchronisation'), [
+    play(withAbility('synchronization'), [
       ['pilot', 'p1', 'gear1'],
       ['copilot', 'c1', 'flaps1'],
     ]);
@@ -64,7 +64,7 @@ describe('synchronisation', () => {
     ).toBeNull();
   });
 
-  it('the co-pilot places it on any colour, without coffee, before anything else', () => {
+  it('the co-pilot places it on any color, without coffee, before anything else', () => {
     const s = { ...synced(), coffee: 1 };
     const id = s.bonus!.die.id;
     expect(placeReason(s, 'pilot', intent(id, 'axisPilot'))).toBe('not-your-turn');
@@ -97,7 +97,7 @@ describe('synchronisation', () => {
     const s = play(
       setupRound({
         ...QUIET_DICE,
-        abilities: ['synchronisation'],
+        abilities: ['synchronization'],
         scenario: { modules: ['kerosene'] },
       }),
       [

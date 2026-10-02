@@ -12,7 +12,7 @@ import type {
   SlotId,
 } from '../types';
 
-/** The core colour/number/order check for anything placed on `slot` (`seat` null: any colour). */
+/** The core color/number/order check for anything placed on `slot` (`seat` null: any color). */
 export type SlotCheck = (
   ctx: PlacementContext,
   seat: Seat | null,

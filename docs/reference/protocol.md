@@ -11,7 +11,7 @@ All events are typed once in `packages/shared/src/events.ts` (`ClientToServer`, 
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, partner's game restarts; empty room deleted |
 | Client → Server | `game:ready` | `{}` | ack; rolls dice when both are ready ("Roll dice") |
-| Client → Server | `game:place` | `{ dieId, slot, coffeeDelta, tokenSlot? }` (`tokenSlot`: where an Intern token goes; the Synchronisation traffic die uses its own `dieId`) | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
+| Client → Server | `game:place` | `{ dieId, slot, coffeeDelta, tokenSlot? }` (`tokenSlot`: where an Intern token goes; the Synchronization traffic die uses its own `dieId`) | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
 | Client → Server | `game:ability` | `{ ability: 'adaptation' \| 'anticipation' \| 'working-together', dieId }` | ack; Working Together: the first call offers a die, the partner's call answers |
 | Client → Server | `game:spend-reroll` | `{}` | ack; both players may then reroll once |
 | Client → Server | `game:reroll` | `{ dieIds }` | ack; rerolls your chosen dice (may be none) |
@@ -28,7 +28,7 @@ Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room e
 - Your own unplaced dice: full values.
 - Partner's unplaced dice: a count only (`partnerDiceLeft: 3`).
 - Placed dice, tracks, coffee, altitude, the finished round's board (`lastRound`): public.
-- Module state (kerosene, intern tokens, wind), the traffic die rolls, the Synchronisation traffic die and the die offered for Working Together: public (face up at the table).
+- Module state (kerosene, intern tokens, wind), the traffic die rolls, the Synchronization traffic die and the die offered for Working Together: public (face up at the table).
 - `rngSeed` and the log's future rolls: never sent.
 
 ## Repeated requests

@@ -347,7 +347,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
   const partner = partnerName(view, presence);
   const selected = view.myDice.find((d) => d.id === selectedDieId);
   const canSpend = canSpendReroll(view).ok;
-  // Synchronisation: the co-pilot holds the black traffic die until it is placed.
+  // Synchronization: the co-pilot holds the black traffic die until it is placed.
   const trafficDie = view.seat === 'copilot' ? view.bonus?.die : undefined;
   // Training the intern: the token the die on the Intern space collects, waiting for a space.
   const internToken = internSlot ? nextInternToken(view.intern, view.seat) : undefined;

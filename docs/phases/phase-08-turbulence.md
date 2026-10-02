@@ -23,11 +23,11 @@ Source: [Sky Team: Turbulence rules (EN, 21 Aug 2024)](https://www.scorpionmasqu
 
 - **Altitude 5000:** the game starts with the 5000 space in the Current Altitude space instead of 6000: no starting reroll token and one round fewer.
 - **Total Trust:** if the Total Trust symbol is in the Current Position space at the end of the round, the next round skips the Strategy Discussion: players just roll.
-- **Alarms:** the Alarm board sits next to the Control Panel with the 6 tokens shuffled face down. If an Alarm symbol is in the Current Position space at the beginning of a round, flip any token face up: that Action can no longer be used until the token is removed; "a die placed on a space affected by an Alarm will have no effect". A die of the right colour and number placed on the token removes it, together with the die (that die is out for the round). No tokens left to flip: nothing happens. Active Alarms do not prevent landing. An Alarm on Concentration stops new coffee; coffee already earned can still be used. Tokens (the colour is the *other* seat for a seat's own action):
+- **Alarms:** the Alarm board sits next to the Control Panel with the 6 tokens shuffled face down. If an Alarm symbol is in the Current Position space at the beginning of a round, flip any token face up: that Action can no longer be used until the token is removed; "a die placed on a space affected by an Alarm will have no effect". A die of the right color and number placed on the token removes it, together with the die (that die is out for the round). No tokens left to flip: nothing happens. Active Alarms do not prevent landing. An Alarm on Concentration stops new coffee; coffee already earned can still be used. Tokens (the color is the *other* seat for a seat's own action):
 
   | Token | Blocks | Cleared by |
   | --- | --- | --- |
-  | Concentration | Concentration | 1, either colour |
+  | Concentration | Concentration | 1, either color |
   | Brakes | Brakes | orange 2 |
   | Landing Gear | Landing gear | orange 3 |
   | Flaps | Flaps | blue 4 |

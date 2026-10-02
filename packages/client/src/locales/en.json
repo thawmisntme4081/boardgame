@@ -95,7 +95,7 @@
     "offerSwap": "Offer to swap",
     "swapWaiting": "Working Together: waiting for {{name}} to swap with your {{value}}.",
     "swapOffered": "{{name}} offers a {{value}} to swap: tap one of your dice, then Swap.",
-    "syncPlace": "Synchronisation: place the traffic die on any empty space.",
+    "syncPlace": "Synchronization: place the traffic die on any empty space.",
     "syncPartner": "{{name}} is placing the traffic die…",
     "internToken": "Intern token {{value}}: tap a glowing space for it.",
     "partnerPlacing_one": "{{name}} is placing a die… ({{count}} die left)",
@@ -239,8 +239,8 @@
       "name": "Mastery",
       "rule": "Two equal Engine dice: gain a reroll token, if one is left."
     },
-    "synchronisation": {
-      "name": "Synchronisation",
+    "synchronization": {
+      "name": "Synchronization",
       "rule": "Dice on Landing Gear and Flaps in a round: the co-pilot places the traffic die on any space."
     },
     "working-together": {

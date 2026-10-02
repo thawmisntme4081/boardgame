@@ -38,7 +38,7 @@ const PIPS: Record<DieValue, [number, number][]> = {
 interface DieFaceProps {
   value: DieValue;
   seat: Seat;
-  /** The black traffic die (Synchronisation) or an Intern token, instead of a player's die. */
+  /** The black traffic die (Synchronization) or an Intern token, instead of a player's die. */
   kind?: PlacedDie['source'];
   className?: string;
 }

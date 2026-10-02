@@ -65,7 +65,7 @@ export interface PlayerView {
   planeSupply: number;
   /** The traffic die rolls that started this round (public: rolled in the open). */
   traffic: TrafficRoll[];
-  /** Synchronisation's traffic die (rolled in the open) waiting for the co-pilot. */
+  /** Synchronization's traffic die (rolled in the open) waiting for the co-pilot. */
   bonus: { die: Die } | null;
   /** Working Together: the die on the card is face up, so both players see its value. */
   swap: { seat: Seat; value: DieValue } | null;

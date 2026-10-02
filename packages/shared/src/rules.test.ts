@@ -58,7 +58,7 @@ describe('turn order and placement basics', () => {
     expect(reason(s, 'pilot', intent('p2', 'concentration1'))).toBe('slot-taken');
   });
 
-  it('enforces seat colours', () => {
+  it('enforces seat colors', () => {
     const s = setupRound({ pilot: [1, 2, 3, 4], copilot: [1, 2, 3, 4] });
     expect(reason(s, 'pilot', intent('p1', 'flaps1'))).toBe('wrong-seat');
     expect(reason(s, 'pilot', intent('p1', 'axisCopilot'))).toBe('wrong-seat');

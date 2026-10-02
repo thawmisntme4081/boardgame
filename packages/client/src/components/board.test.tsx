@@ -401,22 +401,22 @@ describe('special abilities in the tray', () => {
     expect(api.playAbility).toHaveBeenCalledWith({ ability: 'working-together', dieId: 'c4' });
   });
 
-  it('hands the co-pilot the traffic die to place (Synchronisation)', async () => {
+  it('hands the co-pilot the traffic die to place (Synchronization)', async () => {
     const bonus = { die: { id: 'r1-traffic', value: 4 as const }, after: 'copilot' as const };
     const patch = { bonus, currentSeat: 'copilot' as const };
     render(
       <DiceTray
-        view={makeView('copilot', { abilities: ['synchronisation'], patch })}
+        view={makeView('copilot', { abilities: ['synchronization'], patch })}
         presence={presence()}
       />,
     );
     expect(
-      screen.getByText('Synchronisation: place the traffic die on any empty space.'),
+      screen.getByText('Synchronization: place the traffic die on any empty space.'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Traffic die: 4' }));
     expect(useGame.getState().selectedDieId).toBe('r1-traffic');
-    render(<Cockpit view={makeView('copilot', { abilities: ['synchronisation'], patch })} />);
-    // Any colour: the pilot's axis too.
+    render(<Cockpit view={makeView('copilot', { abilities: ['synchronization'], patch })} />);
+    // Any color: the pilot's axis too.
     expect(validSlots()).toContain('Axis 1 (pilot)');
   });
 });
@@ -624,7 +624,7 @@ describe('recent board details', () => {
     expect(fill(3)).toHaveClass('scale-x-0');
   });
 
-  it('outline your current approach space in your colour, with no marker under it', () => {
+  it('outline your current approach space in your color, with no marker under it', () => {
     const { container, rerender } = render(<ApproachTrack view={makeView('pilot')} />);
     expect(container.querySelector('rect.stroke-pilot')).not.toBeNull();
     expect(container.querySelector('path.fill-pilot')).toBeNull();

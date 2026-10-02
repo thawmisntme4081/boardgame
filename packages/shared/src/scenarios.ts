@@ -49,7 +49,7 @@ export const AIRPORT_NAMES: Record<string, string> = {
 
 // Axis positions for turns, left to right -2 -1 0 1 2 (negative = toward the pilot, a left turn).
 const BEAR_LEFT = [-2, -1, 0] as const;
-// const FULL_LEFT = [-2] as const;
+const FULL_LEFT = [-2] as const;
 const LEFT = [-2, -1] as const;
 const EASE_LEFT = [-1, 0] as const;
 const STEADY = [-1, 0, 1] as const;
@@ -59,13 +59,12 @@ const RIGHT = [1, 2] as const;
 const BEAR_RIGHT = [0, 1, 2] as const;
 const FULL_RIGHT = [2] as const;
 
-/** The id (`<airport>-<colour>`, e.g. `lhr-yellow`), name and altitude track follow from these. */
+/** The id (`<airport>-<color>`, e.g. `lhr-yellow`), name and altitude track follow from these. */
 type Entry = Omit<Scenario, 'id' | 'name' | 'altitudes'>;
 
 /**
- * The Flight Log scenarios: modules, ability counts and colours from the cards; approach
- * tracks (planes, traffic icons, turns) from the printed tiles. Commented entries hold
- * placeholder tracks until they are read off the real tiles.
+ * The Flight Log scenarios: modules, ability counts and colors from the cards; approach
+ * tracks (planes, traffic icons, turns) from the printed tiles.
  */
 const ENTRIES: Entry[] = [
   // Green: routine landing.
@@ -102,13 +101,14 @@ const ENTRIES: Entry[] = [
     modules: ['wind'],
     abilities: 0,
   },
-  // {
-  //   airport: 'OSL',
-  //   difficulty: 'green',
-  //   approach: [0, 1, 1, 1, 2, 1, 2],
-  //   modules: ['kerosene'],
-  //   abilities: 0,
-  // },
+  {
+    airport: 'OSL',
+    difficulty: 'green',
+    approach: [0, 0, 1, 0, 1, 1, 1, 0],
+    traffic: [2, 0, 0, 1, 0, 0, 0, 0],
+    modules: ['kerosene'],
+    abilities: 0,
+  },
   {
     airport: 'BLQ',
     difficulty: 'green',
@@ -118,21 +118,23 @@ const ENTRIES: Entry[] = [
     modules: ['kerosene-leak'],
     abilities: 0,
   },
-  // {
-  //   airport: 'ATL',
-  //   difficulty: 'green',
-  //   approach: [0, 1, 0, 2, 1, 1, 2],
-  //   traffic: [2, 0, 1, 0, 1, 0, 0],
-  //   modules: ['intern'],
-  //   abilities: 0,
-  // },
-  // {
-  //   airport: 'PRG',
-  //   difficulty: 'green',
-  //   approach: [0, 1, 2, 1, 2, 1, 1, 2],
-  //   modules: ['kerosene'],
-  //   abilities: 2,
-  // },
+  {
+    airport: 'ATL',
+    difficulty: 'green',
+    approach: [0, 0, 0, 0, 1, 2, 1, 2],
+    traffic: [4, 0, 1, 0, 1, 1, 0, 0],
+    modules: ['intern'],
+    abilities: 0,
+  },
+  {
+    airport: 'PRG',
+    difficulty: 'green',
+    approach: [0, 0, 1, 1, 0, 1, 1, 1],
+    traffic: [1, 0, 1, 0, 0, 1, 0, 0],
+    turns: [null, EASE_LEFT, null, RIGHT, null, null, null, null],
+    modules: ['kerosene'],
+    abilities: 2,
+  },
   // Yellow: exceptional conditions.
   {
     airport: 'TER',
@@ -176,13 +178,15 @@ const ENTRIES: Entry[] = [
     modules: ['ice-brakes'],
     abilities: 1,
   },
-  // {
-  //   airport: 'KUL',
-  //   difficulty: 'yellow',
-  //   approach: [0, 1, 1, 1, 2, 1, 2],
-  //   modules: ['ice-brakes'],
-  //   abilities: 1,
-  // },
+  {
+    airport: 'KUL',
+    difficulty: 'yellow',
+    approach: [0, 0, 1, 1, 0, 1, 1, 1],
+    traffic: [2, 0, 0, 1, 0, 0, 0, 0],
+    turns: [null, RIGHT, null, EASE_RIGHT, RIGHT, null, RIGHT, null],
+    modules: ['kerosene'],
+    abilities: 1,
+  },
   {
     airport: 'PRG',
     difficulty: 'yellow',
@@ -236,15 +240,15 @@ const ENTRIES: Entry[] = [
     modules: ['wind-reversed', 'ice-brakes'],
     abilities: 1,
   },
-  // {
-  //   airport: 'PBH',
-  //   difficulty: 'red',
-  //   approach: [0, 1, 1, 1, 1, 2, 1],
-  //   traffic: [1, 0, 0, 0, 0, 0, 0],
-  //   turns: [null, LEFT, [-1, 0], [0, 1], RIGHT, null, null],
-  //   modules: ['kerosene', 'real-time'],
-  //   abilities: 2,
-  // },
+  {
+    airport: 'PBH',
+    difficulty: 'red',
+    approach: [0, 1, 1, 1, 1, 1],
+    traffic: [3, 0, 0, 1, 0, 0],
+    turns: [null, null, LEFT, BEAR_LEFT, RIGHT, null],
+    modules: ['kerosene', 'real-time'],
+    abilities: 2,
+  },
   {
     airport: 'CDG',
     difficulty: 'red',
@@ -254,14 +258,14 @@ const ENTRIES: Entry[] = [
     modules: ['kerosene', 'wind'],
     abilities: 0,
   },
-  // {
-  //   airport: 'GIG',
-  //   difficulty: 'red',
-  //   approach: [0, 1, 1, 2, 1, 1, 2, 1, 1],
-  //   turns: [null, STEADY, STEADY, STEADY, null, null, null, null, null],
-  //   modules: ['wind', 'kerosene-leak'],
-  //   abilities: 2,
-  // },
+  {
+    airport: 'GIG',
+    difficulty: 'red',
+    approach: [0, 1, 2, 2, 1, 1, 2],
+    traffic: [3, 0, 1, 0, 1, 0, 0],
+    modules: ['wind', 'kerosene-leak'],
+    abilities: 2,
+  },
   {
     airport: 'OSL',
     difficulty: 'red',
@@ -279,30 +283,30 @@ const ENTRIES: Entry[] = [
     modules: ['intern'],
     abilities: 1,
   },
-  // {
-  //   airport: 'PRG',
-  //   difficulty: 'red',
-  //   approach: [0, 1, 1, 2, 1, 2],
-  //   turns: [null, null, null, LEFT, LEFT, null],
-  //   modules: ['kerosene', 'wind'],
-  //   abilities: 2,
-  // },
-  // {
-  //   airport: 'YUL',
-  //   difficulty: 'red',
-  //   approach: [0, 1, 1, 2, 1, 2],
-  //   turns: [null, null, null, LEFT, LEFT, null],
-  //   modules: ['kerosene', 'wind'],
-  //   abilities: 2,
-  // },
-  // {
-  //   airport: 'LHR',
-  //   difficulty: 'red',
-  //   approach: [0, 1, 1, 2, 1, 2],
-  //   turns: [null, null, null, LEFT, LEFT, null],
-  //   modules: ['kerosene', 'wind'],
-  //   abilities: 2,
-  // },
+  {
+    airport: 'PRG',
+    difficulty: 'red',
+    approach: [1, 1, 1, 1, 0, 1, 1, 1],
+    traffic: [1, 0, 1, 0, 0, 1, 0, 0],
+    turns: [null, EASE_LEFT, null, RIGHT, null, null, null, null],
+    modules: ['kerosene', 'wind'],
+    abilities: 1,
+  },
+  {
+    airport: 'YUL',
+    difficulty: 'red',
+    approach: [0, 0, 1, 2, 1, 3, 2],
+    modules: ['intern', 'ice-brakes'],
+    abilities: 1,
+  },
+  {
+    airport: 'LHR',
+    difficulty: 'red',
+    approach: [1, 1, 1, 2, 2, 2],
+    traffic: [1, 0, 1, 0, 1, 0],
+    modules: ['altitude-5000'],
+    abilities: 1,
+  },
   {
     airport: 'TGU',
     difficulty: 'red',
@@ -367,15 +371,15 @@ const ENTRIES: Entry[] = [
     modules: ['kerosene', 'ice-brakes'],
     abilities: 1,
   },
-  // {
-  //   airport: 'KUL',
-  //   difficulty: 'black',
-  //   approach: [0, 1, 1, 2, 1, 2, 2],
-  //   traffic: [1, 0, 1, 0, 1, 0, 0],
-  //   turns: [null, STEADY, STEADY, LEVEL, STEADY, STEADY, null],
-  //   modules: ['kerosene', 'real-time'],
-  //   abilities: 2,
-  // },
+  {
+    airport: 'KUL',
+    difficulty: 'black',
+    approach: [0, 0, 1, 0, 1, 1, 1, 1],
+    traffic: [3, 0, 1, 0, 0, 1, 0, 0],
+    turns: [null, EASE_RIGHT, null, FULL_LEFT, EASE_LEFT, EASE_RIGHT, RIGHT, null],
+    modules: ['kerosene', 'real-time'],
+    abilities: 2,
+  },
   {
     airport: 'PBH',
     difficulty: 'black',
@@ -394,15 +398,14 @@ const ENTRIES: Entry[] = [
     modules: ['kerosene-leak', 'real-time'],
     abilities: 1,
   },
-  // {
-  //   airport: 'ATL',
-  //   difficulty: 'black',
-  //   approach: [0, 1, 1, 2, 1, 2, 2],
-  //   traffic: [1, 1, 0, 0, 0, 0, 0],
-  //   turns: [null, LEFT, [-1, 0], [0, 1], RIGHT, STEADY, null],
-  //   modules: ['kerosene', 'real-time'],
-  //   abilities: 2,
-  // },
+  {
+    airport: 'ATL',
+    difficulty: 'black',
+    approach: [0, 0, 0, 0, 1, 2, 1, 2],
+    traffic: [4, 0, 1, 0, 1, 1, 0, 0],
+    modules: ['kerosene'],
+    abilities: 1,
+  },
   {
     airport: 'HND',
     difficulty: 'black',

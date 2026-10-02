@@ -15,7 +15,7 @@ export const abilityText = (id: AbilityId): { name: string; rule: string } => ({
 
 export const difficultyName = (difficulty: Difficulty): string => t(`difficulty.${difficulty}`);
 
-/** The scenario colour dot. */
+/** The scenario color dot. */
 export const DIFFICULTY_DOT: Record<Difficulty, string> = {
   green: 'bg-emerald-500',
   yellow: 'bg-amber-400',

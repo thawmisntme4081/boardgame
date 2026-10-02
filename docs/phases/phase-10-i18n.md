@@ -64,5 +64,5 @@
 | Ice brakes | Phanh băng |
 | Traffic die | Xúc xắc giao thông |
 | Real-time | Thời gian thực |
-| Adaptation, Anticipation, Control, Mastery, Synchronisation, Working Together | Thích ứng, Đoán trước, Kiểm soát, Thành thạo, Đồng bộ, Phối hợp |
+| Adaptation, Anticipation, Control, Mastery, Synchronization, Working Together | Thích ứng, Đoán trước, Kiểm soát, Thành thạo, Đồng bộ, Phối hợp |
 | Routine landing / Special conditions / Elite pilots only / Heroic landing | Hạ cánh thường lệ / Điều kiện đặc biệt / Chỉ dành cho phi công ưu tú / Hạ cánh anh hùng |

@@ -9,7 +9,7 @@
   --breakpoint-tablet: 600px;
   --breakpoint-desktop: 1024px;
 
-  /* Seat colours and cockpit lights, usable as utilities and as SVG fills. */
+  /* Seat colors and cockpit lights, usable as utilities and as SVG fills. */
   --color-pilot: oklch(0.55 0.17 255);
   --color-pilot-soft: oklch(0.93 0.04 255);
   --color-copilot: oklch(0.7 0.17 55);
@@ -25,7 +25,7 @@ html {
 }
 
 /* A space either player can use (concentration): half pilot blue, half co-pilot orange,
-   fill and border. Two background layers, because a border cannot have two colours. */
+   fill and border. Two background layers, because a border cannot have two colors. */
 .slot-shared {
   border-color: transparent;
   background:

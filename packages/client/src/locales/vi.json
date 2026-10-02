@@ -233,7 +233,7 @@
       "name": "Thành thạo",
       "rule": "Hai xúc xắc động cơ bằng nhau: nhận một lượt đổ lại, nếu còn."
     },
-    "synchronisation": {
+    "synchronization": {
       "name": "Đồng bộ",
       "rule": "Trong một vòng có xúc xắc ở cả Càng đáp và Cánh tà: cơ phó đặt xúc xắc giao thông vào bất kỳ ô nào."
     },
