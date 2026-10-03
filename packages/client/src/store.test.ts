@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useGame } from './store';
-import { makeView, resetStore } from './test/fixtures';
+import { makeView, presence, resetStore } from './test/fixtures';
 
 beforeEach(resetStore);
 
@@ -51,5 +51,23 @@ describe('game store', () => {
       selectedDieId: null,
       rerollPick: [],
     });
+  });
+});
+
+describe('presence across a seat change', () => {
+  it('waits for the view of the new seat before showing the new presence', () => {
+    const before = presence();
+    // Ana created the game as the pilot, then took the co-pilot seat.
+    const swapped = { pilot: before.copilot, copilot: before.pilot, you: 'copilot' as const };
+    useGame.getState().setView(makeView('pilot', { rolled: false, patch: { phase: 'setup' } }));
+    useGame.getState().setPresence({ ...before, you: 'pilot' });
+
+    useGame.getState().setPresence(swapped);
+    // Still the pilot's view: the old presence stays, so the partner is still Ben.
+    expect(useGame.getState().presence?.copilot?.name).toBe('Ben');
+
+    useGame.getState().setView(makeView('copilot', { rolled: false, patch: { phase: 'setup' } }));
+    expect(useGame.getState().presence).toBe(swapped);
+    expect(useGame.getState().presence?.pilot?.name).toBe('Ben');
   });
 });

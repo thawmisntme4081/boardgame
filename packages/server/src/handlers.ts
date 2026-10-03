@@ -37,12 +37,14 @@ import {
 export type GameServer = Server<ClientToServer, ServerToClient>;
 type GameSocket = Socket<ClientToServer, ServerToClient>;
 
-/** Sends presence to the room, then each seat its own filtered view. */
+/** Sends each seat its presence (marked with its seat), then its own filtered view. */
 export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): void {
-  io.to(room.code).emit('room:presence', rooms.presence(room));
+  const presence = rooms.presence(room);
   for (const seat of SEATS) {
     const socketId = room.players[seat]?.socketId;
-    if (socketId) io.to(socketId).emit('game:view', viewFor(room.game, seat));
+    if (!socketId) continue;
+    io.to(socketId).emit('room:presence', { ...presence, you: seat });
+    io.to(socketId).emit('game:view', viewFor(room.game, seat));
   }
 }
 

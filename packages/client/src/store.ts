@@ -16,6 +16,8 @@ export interface GameStore {
   session: Session | null;
   view: PlayerView | null;
   presence: Presence | null;
+  /** Presence sent for a seat this client does not show yet: applied with the matching view. */
+  pendingPresence: Presence | null;
   /** Die tapped in the tray, waiting for a slot. */
   selectedDieId: string | null;
   /** Draft coffee modifier for the selected die; sent with the move. */
@@ -48,6 +50,7 @@ export const useGame = create<GameStore>()((set) => ({
   session: loadSession(),
   view: null,
   presence: null,
+  pendingPresence: null,
   selectedDieId: null,
   coffeeDelta: 0,
   internSlot: null,
@@ -63,8 +66,10 @@ export const useGame = create<GameStore>()((set) => ({
       // Synchronization: the co-pilot may be holding the traffic die.
       if (view.bonus && view.seat === 'copilot') ids.add(view.bonus.die.id);
       const keepSelection = s.selectedDieId !== null && ids.has(s.selectedDieId);
+      const pending = s.pendingPresence?.you === view.seat ? s.pendingPresence : null;
       return {
         view,
+        ...(pending && { presence: pending, pendingPresence: null }),
         // A placed or rerolled-away die can't stay selected; coffee may have changed too.
         selectedDieId: keepSelection ? s.selectedDieId : null,
         coffeeDelta: keepSelection && view.coffee >= Math.abs(s.coffeeDelta) ? s.coffeeDelta : 0,
@@ -80,7 +85,14 @@ export const useGame = create<GameStore>()((set) => ({
               : s.nextTurnAt,
       };
     }),
-  setPresence: (presence) => set({ presence }),
+  // Seats can change before round 1: presence for a new seat waits for that seat's view, so
+  // "you" and "your partner" never point at the same player for a moment.
+  setPresence: (presence) =>
+    set((s) =>
+      presence.you && s.view && presence.you !== s.view.seat
+        ? { pendingPresence: presence }
+        : { presence, pendingPresence: null },
+    ),
   selectDie: (dieId) =>
     set((s) => ({
       selectedDieId: s.selectedDieId === dieId ? null : dieId,
@@ -100,6 +112,7 @@ export const useGame = create<GameStore>()((set) => ({
       session: null,
       view: null,
       presence: null,
+      pendingPresence: null,
       selectedDieId: null,
       coffeeDelta: 0,
       internSlot: null,

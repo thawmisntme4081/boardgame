@@ -42,8 +42,12 @@ export interface PlayerInfo {
   confirmed: boolean;
 }
 
-/** Who sits in each seat; `null` while the seat is empty. */
-export type Presence = Record<Seat, PlayerInfo | null>;
+/**
+ * Who sits in each seat; `null` while the seat is empty. `you`: the seat of the player it
+ * was sent to, so a client can apply it together with the view for that seat (seats can
+ * change before round 1).
+ */
+export type Presence = Record<Seat, PlayerInfo | null> & { you?: Seat };
 
 /** Which Flight Log scenario to fly (roles and Special Abilities are chosen in the game). */
 export interface GameSetup {
