@@ -576,6 +576,13 @@ export function placeDie(state: GameState, seat: Seat, intent: PlaceIntent): Gam
   applySlotEffect(s, intent.slot, placed.value, seat, intent.tokenSlot);
   // Turbulence and Bad Visibility follow a player's own die (not the traffic die).
   if (s.phase === 'placing' && placed.source === undefined) weather(s, seat);
+  // Final round: once ending the round now would land the plane, the game ends; dice still in
+  // hand cannot undo a landing (axis and speed are set; gear, flaps and brakes only deploy).
+  if (s.phase === 'placing' && isFinalRound(s)) {
+    const landed = structuredClone(s);
+    endRound(landed);
+    if (landed.phase === 'won') return landed;
+  }
   if (s.phase === 'placing' && !synchronise(s, after)) nextTurn(s, after);
   return s;
 }

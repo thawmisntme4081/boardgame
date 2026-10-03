@@ -15,7 +15,7 @@ import {
   spendReroll,
 } from './rules';
 import { createGame } from './state';
-import { QUIET_DICE, QUIET_ROUND, play, setupRound, testScenario } from './test-utils';
+import { QUIET_DICE, QUIET_ROUND, play, setupRound, testScenario, type Move } from './test-utils';
 import type { GameState, PlaceIntent, Seat, SlotId } from './types';
 
 const intent = (dieId: string, slot: SlotId, coffeeDelta = 0): PlaceIntent => ({
@@ -635,5 +635,58 @@ describe('rerolls', () => {
     s = play(s, QUIET_ROUND);
     expect(s.rerollPending).toEqual({ pilot: false, copilot: false });
     expect(s.rerolls).toBe(1);
+  });
+});
+
+describe('an early landing in the final round', () => {
+  const ready: Partial<GameState> = {
+    round: 7,
+    approachIndex: 6,
+    gear: [true, true, true],
+    flaps: [true, true, true, true],
+    aeroBlue: 7,
+    aeroOrange: 12,
+    brakes: 2,
+  };
+  const axisAndEngines: Move[] = [
+    ['pilot', 'p1', 'axisPilot'],
+    ['copilot', 'c1', 'axisCopilot'],
+    ['pilot', 'p2', 'enginePilot'],
+    ['copilot', 'c2', 'engineCopilot'],
+  ];
+
+  it('ends the game as soon as the landing is certain, with dice still in hand', () => {
+    let s = setupRound({ pilot: [3, 1, 3, 3], copilot: [3, 2, 3, 3], patch: ready });
+    s = play(s, axisAndEngines.slice(0, 3));
+    expect(s.phase).toBe('placing');
+    s = placeDie(s, 'copilot', intent('c2', 'engineCopilot'));
+    expect(s).toMatchObject({ phase: 'won', speed: 3 });
+    expect(s.dice.pilot).toHaveLength(2);
+    expect(s.log.at(-1)).toEqual({ type: 'game-end', round: 7, result: 'won' });
+  });
+
+  it('plays on while a condition is still missing', () => {
+    const s = play(
+      setupRound({
+        pilot: [3, 1, 3, 3],
+        copilot: [3, 2, 3, 3],
+        patch: { ...ready, flaps: [true, true, true, false] },
+      }),
+      axisAndEngines,
+    );
+    expect(s.phase).toBe('placing');
+  });
+
+  it('waits when the end of the round would still lose (Kerosene burning 6 with no die on it)', () => {
+    const s = play(
+      setupRound({
+        pilot: [3, 1, 3, 3],
+        copilot: [3, 2, 3, 3],
+        scenario: { modules: ['kerosene'] },
+        patch: { ...ready, kerosene: 5 },
+      }),
+      axisAndEngines,
+    );
+    expect(s.phase).toBe('placing');
   });
 });

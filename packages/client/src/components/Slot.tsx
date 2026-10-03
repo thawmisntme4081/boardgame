@@ -54,7 +54,7 @@ function CoveredSlot({ slot }: { slot: SlotId }) {
     <span
       role="img"
       aria-label={t('slot.covered', { label: slotLabel(slot) })}
-      className="grid size-12 shrink-0 place-items-center rounded-xl border-2 border-dashed border-muted-foreground/40 bg-muted text-muted-foreground"
+      className="grid size-11 shrink-0 place-items-center rounded-xl border-2 border-dashed border-muted-foreground/40 bg-muted text-muted-foreground desktop:size-12"
     >
       <X aria-hidden="true" className="size-7" strokeWidth={3} />
     </span>
@@ -89,7 +89,7 @@ function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
       disabled={!valid}
       onClick={() => void placeSelected(slot)}
       className={cn(
-        'relative grid size-12 shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold transition',
+        'relative grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold transition desktop:size-12',
         both
           ? 'slot-shared'
           : seat === 'pilot'
@@ -101,7 +101,12 @@ function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
       )}
     >
       {placed ? (
-        <DieFace value={placed.value} seat={placed.seat} kind={placed.source} className="size-10" />
+        <DieFace
+          value={placed.value}
+          seat={placed.seat}
+          kind={placed.source}
+          className="size-9 desktop:size-10"
+        />
       ) : (
         <span>{def.values?.join('·') ?? ''}</span>
       )}

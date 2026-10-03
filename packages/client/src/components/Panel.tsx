@@ -12,10 +12,6 @@ import {
 import { cn } from '@/lib/utils';
 
 export const PANEL = 'flex h-full flex-col gap-2 rounded-2xl border bg-card p-3';
-/** The same panel look, applied only on desktop (the two radio halves). */
-export const DESKTOP_PANEL =
-  'desktop:flex desktop:h-full desktop:flex-col desktop:gap-2 desktop:rounded-2xl desktop:border desktop:bg-card desktop:p-3';
-
 /**
  * The panel's info icon: tap for its hint (no hover-only info). Red on a panel whose two
  * dice must both be placed every round (axis, engines), whose popover also says why; gray

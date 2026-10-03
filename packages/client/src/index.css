@@ -38,25 +38,12 @@ html {
       border-box;
 }
 
-/* Desktop cockpit: landing gear down the left, flaps down the right, the rest in the middle.
-   Smaller screens keep the seat-ordered grid from the Cockpit component. */
+/* Desktop cockpit: the areas and columns depend on the modules in play (`desktopGrid` in
+   Cockpit.tsx). Smaller screens keep the seat-ordered grid from the Cockpit component. */
 .cockpit-grid {
   @variant desktop {
-    /* Equal side columns (radio above gear/flaps); the centre takes the rest. */
-    grid-template-columns: 16% minmax(0, 1fr) minmax(0, 1fr) 16%;
-    grid-template-areas:
-      'radioPilot axis axis radioCopilot'
-      'gear engines engines flaps'
-      'gear brakes concentration flaps';
-  }
-}
-
-/* Engines out (TER): no Engines panel, so brakes and concentration sit beside gear and flaps. */
-.cockpit-grid.no-engines {
-  @variant desktop {
-    grid-template-areas:
-      'radioPilot axis axis radioCopilot'
-      'gear brakes concentration flaps';
+    grid-template-columns: var(--cockpit-columns);
+    grid-template-areas: var(--cockpit-areas);
   }
 }
 
@@ -81,7 +68,7 @@ html {
 
   /* One centred column in a container: tracks above the cockpit, dice tray below. */
   @variant desktop {
-    max-width: 72rem;
+    max-width: min(100%, calc(72rem + var(--module-columns, 0) * 7.75rem));
     margin-inline: auto;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto 1fr auto;

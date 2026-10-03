@@ -1,6 +1,6 @@
 # Phase 8: Turbulence expansion
 
-[← Master plan](../PLAN.md) · Milestone M3 · **Status: 🚧 In progress (rules and UI built Oct 3, 2026; waiting for the 16 scenarios)** · Effort: **high**
+[← Master plan](../PLAN.md) · Milestone M3 · **Status: ✅ Done (Oct 4, 2026)** · Effort: **high**
 
 ## Goals
 
@@ -47,17 +47,17 @@ Source: [Sky Team: Turbulence rules (EN, 21 Aug 2024)](https://www.scorpionmasqu
   - **WAW Warsaw:** 3 face-down Intern tokens on the Landing Gear spaces: no dice there, the blue Aerodynamics marker stays at 5, and the gear is not needed to land. Only the Flaps, Co-Pilot Radio and Concentration Alarm tokens are used.
 - **Scenarios (16 left to build, 8 destinations):** CPT, SYD, PEK, KBP (green/yellow), WAW, SXM, DUS, MAD (yellow/red), SYD, DUS, PEK, WAW (red), MAD, KBP, CPT (black). TER and NZIR (4 scenarios) are already in `scenarios.ts`. Each card lists its modules by icon (Altitude A–D, 5000, Total Trust, Alarms, traffic, Intern, Kerosene leak, Real-time, Ice brakes, Wind, book) and its number of Special Abilities. Track data comes later from the physical tiles.
 
-## Open questions
+## Open questions (all settled Oct 4, 2026)
 
 1. ~~Alarms: can a die go on a blocked Action?~~ Settled with the user (Oct 3, 2026): no. While its Alarm token is face up, no die can be placed on that Action's spaces (only the matching die on the token itself, which clears it).
 2. ~~Alarms: random token, coffee, Turbulence?~~ Settled with the user (Oct 3, 2026): the flipped token is random (the game picks one of the face-down tokens), and coffee may change a die to match a token. A die placed on an Alarm token counts as placing on an Action, so Turbulence rerolls your remaining dice.
 3. ~~Total Trust in the app~~ Settled with the user (Oct 3, 2026): no "Roll dice" step; the next round rolls automatically when the 5 s "Next turn" countdown ends.
 4. ~~Altitude tracks A–D~~ Settled with the user (Oct 2, 2026), rerolls included.
 5. ~~Turbulence + Bad Visibility after the set-aside dice run out~~ Never more than 2 dice in hand; each time you take a set-aside die to replace the one you placed, roll both dice in hand. Once no set-aside dice are left, each placement still rerolls your remaining die (Oct 3, 2026).
-6. **Assumption (to confirm):** Turbulence and Bad Visibility act after a player places one of their own dice, not after the co-pilot places the black traffic die (Synchronization). Training the intern (a die on the Intern space, then its token on the board) counts as one placement.
-7. **Assumption (to confirm):** an Intern token can clear an Alarm, since it is placed like a die of its number (same colour rule: the token is the placing player's colour).
-8. **Assumption (to confirm):** Bad Visibility: if neither die in your hand can be placed, your turn is skipped as usual, and your set-aside dice are lost for the round (they only come in after a placement).
-9. **Assumption (to confirm):** an Alarm symbol flips a token at the start of every round the plane is on that space, the first round included (the rulebook says "at the beginning of a round"; traffic icons work the same way). The entered data supports it: SYD green, SYD red, CPT black and KBP black print Alarm symbols on the starting space, which would only matter in round 1 if the plane never moved.
+6. ~~Turbulence and Bad Visibility after the traffic die and the intern~~ Settled with the user (Oct 4, 2026): Turbulence and Bad Visibility act after a player places one of their own dice, not after the co-pilot places the black traffic die (Synchronization). Training the intern (a die on the Intern space, then its token on the board) counts as one placement.
+7. ~~Intern token on an Alarm~~ Settled with the user (Oct 4, 2026): an Intern token can clear an Alarm, since it is placed like a die of its number (same colour rule: the token is the placing player's colour).
+8. ~~Bad Visibility when no die can be placed~~ Settled with the user (Oct 4, 2026): Bad Visibility: if neither die in your hand can be placed, your turn is skipped as usual, and your set-aside dice are lost for the round (they only come in after a placement).
+9. ~~Alarms on the starting space~~ Settled with the user (Oct 4, 2026): an Alarm symbol flips a token at the start of every round the plane is on that space, the first round included (the rulebook says "at the beginning of a round"; traffic icons work the same way). The entered data supports it: SYD green, SYD red, CPT black and KBP black print Alarm symbols on the starting space, which would only matter in round 1 if the plane never moved.
 10. ~~Total Trust on the starting space in round 1~~ Settled by the data (Oct 3, 2026): no scenario has a Total Trust symbol on its starting space, so it never comes up.
 11. ~~The Brakes alarm and Ice brakes~~ Settled by the data (Oct 3, 2026): no scenario combines Alarms with Ice brakes; the Brakes alarm blocks the three Brakes spaces.
 
@@ -75,7 +75,7 @@ Source: [Sky Team: Turbulence rules (EN, 21 Aug 2024)](https://www.scorpionmasqu
 
 ## Checklist
 
-- [x] Rulebook in hand; every new rule listed as a test case and unclear rules confirmed (assumptions 6–9 still to confirm)
+- [x] Rulebook in hand; every new rule listed as a test case and unclear rules confirmed
 - [x] 16 scenarios entered in `ENTRIES` by the user (Oct 3, 2026); airport names added for CPT, SYD, PEK, KBP, WAW, SXM, MAD
 - [x] New `RuleModule` hook points (only those needed), with tests
 - [x] Altitude tracks A–D: Turbulence, Bad Visibility, both together
@@ -87,6 +87,6 @@ Source: [Sky Team: Turbulence rules (EN, 21 Aug 2024)](https://www.scorpionmasqu
 - [x] Fuzzing (100 games each, 56 scenarios) and a prepared-final-round win on every scenario
 - [x] Docs updated: game rules reference, protocol, UI, `CLAUDE.md`
 
-**Done when:** all 20 expansion scenarios play end to end on phone and desktop with tests green.
+**Done when:** all 20 expansion scenarios play end to end on phone and desktop with tests green. ✅ Verified Oct 4, 2026 (100 fuzzed games and a prepared-final-round win on every scenario, 339 unit tests, 38 Playwright tests on three devices).
 
 Publisher page: <https://www.scorpionmasque.com/en/sky-team-turbulence>

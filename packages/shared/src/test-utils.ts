@@ -52,9 +52,11 @@ export function setupRound({
 
 export type Move = [seat: Seat, dieId: string, slot: SlotId, coffeeDelta?: number];
 
+/** Places the moves in order; stops early if the game ends (a final round can land early). */
 export function play(state: GameState, moves: Move[]): GameState {
   return moves.reduce(
-    (s, [seat, dieId, slot, coffeeDelta = 0]) => placeDie(s, seat, { dieId, slot, coffeeDelta }),
+    (s, [seat, dieId, slot, coffeeDelta = 0]) =>
+      s.phase === 'won' || s.phase === 'lost' ? s : placeDie(s, seat, { dieId, slot, coffeeDelta }),
     state,
   );
 }

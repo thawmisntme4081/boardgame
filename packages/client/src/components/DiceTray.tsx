@@ -168,25 +168,20 @@ function SetAsideDice({ count }: { count: number }) {
 function TrafficNews({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
   if (view.traffic.length === 0) return null;
+  // Only the black dice on screen; where each plane went stays readable for screen readers.
+  const news = view.traffic
+    .map(({ roll, space }) =>
+      space === null
+        ? t('tray.trafficNoPlanes', { roll })
+        : t('tray.trafficRolled', { roll, where: spacesAhead(view, space) }),
+    )
+    .join('; ');
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2" role="status">
-      <span className="flex gap-1">
-        {view.traffic.map(({ roll }, i) => (
-          <DieFace key={i} value={roll} seat="pilot" kind="traffic" className="size-8" />
-        ))}
-      </span>
-      <p className="text-sm">
-        <span className="font-medium">{t('tray.traffic')}</span>{' '}
-        {view.traffic
-          .map(({ roll, space }) =>
-            space === null
-              ? t('tray.trafficNoPlanes', { roll })
-              : t('tray.trafficRolled', { roll, where: spacesAhead(view, space) }),
-          )
-          .join('; ')}
-        .
-      </p>
-    </div>
+    <span role="status" aria-label={`${t('tray.traffic')} ${news}`} className="flex gap-1">
+      {view.traffic.map(({ roll }, i) => (
+        <DieFace key={i} value={roll} seat="pilot" kind="traffic" className="size-8" />
+      ))}
+    </span>
   );
 }
 

@@ -142,7 +142,8 @@
     "mandatory": "Mandatory",
     "isMandatory": "{{title}} is mandatory",
     "about": "About {{title}}",
-    "mandatoryBody": "Place both dice here every round. If a round ends without both axis and both engine dice, the plane goes down."
+    "mandatoryBody": "Place both dice here every round. If a round ends without both axis and both engine dice, the plane goes down.",
+    "axisEngines": "Axis & Engines"
   },
   "slot": {
     "group": {

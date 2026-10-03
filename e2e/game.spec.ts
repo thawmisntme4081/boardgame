@@ -66,11 +66,9 @@ test.describe('a two-player game', () => {
     await place(pilot, 4, 'Axis 1 (pilot)');
     await place(copilot, 4, 'Axis 2 (co-pilot)');
     await place(pilot, 2, 'Engines 1 (pilot)');
-    await place(copilot, 3, 'Engines 2 (co-pilot)'); // speed 5, brakes stop up to 6
-    await place(pilot, 5, 'Concentration 1 (either player)');
-    await place(copilot, 5, 'Concentration 2 (either player)');
-    await place(pilot, 6, 'Concentration 3 (either player)');
-    await place(copilot, 6, 'Radio 2 (co-pilot)');
+    // Speed 5, brakes stop up to 6: every condition is met, so the game ends right away,
+    // with dice still in hand.
+    await place(copilot, 3, 'Engines 2 (co-pilot)');
 
     for (const page of [pilot, copilot]) {
       await expect(page.getByRole('dialog', { name: 'Smooth landing!' })).toBeVisible();

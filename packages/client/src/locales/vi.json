@@ -136,7 +136,8 @@
     "mandatory": "Bắt buộc",
     "isMandatory": "{{title}} là bắt buộc",
     "about": "Về {{title}}",
-    "mandatoryBody": "Mỗi vòng phải đặt đủ hai xúc xắc ở đây. Nếu vòng kết thúc mà thiếu xúc xắc ở trục hoặc động cơ, máy bay sẽ rơi."
+    "mandatoryBody": "Mỗi vòng phải đặt đủ hai xúc xắc ở đây. Nếu vòng kết thúc mà thiếu xúc xắc ở trục hoặc động cơ, máy bay sẽ rơi.",
+    "axisEngines": "Trục & Động cơ"
   },
   "slot": {
     "group": {

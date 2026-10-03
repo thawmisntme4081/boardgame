@@ -174,11 +174,13 @@ describe('a full game over sockets', () => {
     expectOk(await place('pilot', 'r7-p1', 'axisPilot'));
     expectOk(await place('copilot', 'r7-c1', 'axisCopilot'));
     expectOk(await place('pilot', 'r7-p2', 'enginePilot'));
+    // Everything else is already deployed: the landing is certain once the speed is set.
     expectOk(await place('copilot', 'r7-c2', 'engineCopilot'));
-    expectOk(await place('pilot', 'r7-p3', 'concentration1'));
-    expectOk(await place('copilot', 'r7-c3', 'concentration2'));
-    expectOk(await place('pilot', 'r7-p4', 'radioPilot'));
-    expectOk(await place('copilot', 'r7-c4', 'radioCopilot1'));
+    // The game is over: the dice still in hand are not needed.
+    expect(await place('pilot', 'r7-p3', 'concentration1')).toEqual({
+      ok: false,
+      error: 'game-over',
+    });
 
     expect(room().game.phase).toBe('won');
     await waitFor(

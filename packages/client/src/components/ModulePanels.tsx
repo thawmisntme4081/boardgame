@@ -10,7 +10,7 @@ import {
   type SlotId,
 } from '@sky/shared';
 import { BellRing, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { InternBadge } from '@/svgs/InternBadge';
@@ -31,7 +31,7 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
     setSeen({ value: kerosene, drop: seen.value - kerosene, burns: seen.burns + 1 });
   }
   return (
-    <div className="relative flex min-w-0 flex-1 flex-col gap-1">
+    <div className="relative flex min-w-0 flex-1 flex-col gap-1 desktop:items-center">
       {seen.drop > 0 && (
         <span
           key={seen.burns}
@@ -47,14 +47,14 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
         aria-valuemin={0}
         aria-valuemax={KEROSENE_START}
         aria-valuenow={kerosene}
-        className="h-3 overflow-hidden rounded-full bg-muted"
+        className="h-3 overflow-hidden rounded-full bg-muted desktop:flex desktop:h-auto desktop:min-h-24 desktop:w-3 desktop:flex-1 desktop:flex-col desktop:justify-end"
       >
         <div
           className={cn(
-            'h-full rounded-full transition-[width,background-color] duration-700 ease-out',
+            'h-full w-(--fuel) rounded-full transition-[width,height,background-color] duration-700 ease-out desktop:h-(--fuel) desktop:w-full',
             low ? 'bg-danger' : 'bg-light-on',
           )}
-          style={{ width: `${(kerosene / KEROSENE_START) * 100}%` }}
+          style={{ '--fuel': `${(kerosene / KEROSENE_START) * 100}%` } as CSSProperties}
         />
       </div>
       <p className={cn('text-xs tabular-nums', low && 'font-semibold text-danger')}>
@@ -72,7 +72,8 @@ export function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean 
       title={leak ? t('modules.keroseneLeak') : t('modules.kerosene')}
       hint={leak ? t('modules.keroseneLeakHint') : t('modules.keroseneHint')}
     >
-      <div className="flex items-center gap-3">
+      {/* The Kerosene space above the gauge. */}
+      <div className="flex flex-col gap-3 desktop:flex-1 desktop:items-center">
         {!leak && <Slot slot="kerosene" view={view} />}
         <KeroseneGauge kerosene={view.kerosene ?? 0} />
       </div>
@@ -118,7 +119,10 @@ export function WindOnEngines({ wind }: { wind: number }) {
  */
 function InternArrows() {
   return (
-    <li aria-hidden="true" className="flex w-3 flex-col items-center justify-center">
+    <li
+      aria-hidden="true"
+      className="flex w-3 flex-col items-center justify-center desktop:h-3 desktop:w-auto desktop:rotate-90"
+    >
       <ChevronRight strokeWidth={3} className="-my-0.5 size-4 shrink-0 text-pilot" />
       <ChevronLeft strokeWidth={3} className="-my-0.5 size-4 shrink-0 text-copilot" />
     </li>
@@ -130,10 +134,10 @@ export function InternPanel({ view }: { view: PlayerView }) {
   const tokens = view.intern ?? [];
   return (
     <Panel title={t('modules.intern')} hint={t('modules.internHint')}>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 desktop:flex-1 desktop:flex-col">
         <Slot slot="internPilot" view={view} />
         <ol
-          className="flex min-w-0 flex-1 items-center justify-center gap-1"
+          className="flex min-w-0 flex-1 items-center justify-center gap-1 desktop:flex-col"
           aria-label={
             tokens.length > 0
               ? t('modules.internLeft', { tokens: tokens.join(', ') })
@@ -144,7 +148,7 @@ export function InternPanel({ view }: { view: PlayerView }) {
             <Fragment key={value}>
               {i > 0 && <InternArrows />}
               <li className={cn(i > 0 && i < tokens.length - 1 && 'opacity-70')}>
-                <InternBadge value={value} className="h-11" />
+                <InternBadge value={value} className="h-9 desktop:h-10" />
               </li>
             </Fragment>
           ))}
@@ -179,7 +183,7 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
       hint={t('modules.iceBrakesHint')}
       className="justify-between"
     >
-      <div className="grid grid-cols-[repeat(7,auto)] items-center justify-start gap-x-1 gap-y-1">
+      <div className="grid grid-cols-[repeat(7,auto)] items-center justify-start gap-x-1 gap-y-0.5">
         {ICE_COLUMNS.map(([top], i) => (
           <Fragment key={top}>
             {i > 0 && <span aria-hidden="true" />}
@@ -195,16 +199,8 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
                 aria-label={t(view.brakes > i ? 'cockpit.deployed' : 'cockpit.notDeployed', {
                   label: t('modules.iceBrake', { n: i + 2 }),
                 })}
-                className="h-2 w-10 overflow-hidden rounded-full bg-muted-foreground/25"
-              >
-                {/* The green fills in from the left when the pair is complete. */}
-                <span
-                  className={cn(
-                    'block h-full origin-left rounded-full bg-light-on transition-transform duration-700 ease-out',
-                    view.brakes > i ? 'scale-x-100' : 'scale-x-0',
-                  )}
-                />
-              </span>,
+                className="block h-0.5 w-11 rounded-full bg-muted-foreground desktop:w-12"
+              />,
               `m${i}`,
             )}
           </Fragment>
@@ -220,7 +216,7 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
   );
 }
 
-const TOKEN = 'grid size-12 shrink-0 place-items-center rounded-xl border-2';
+const TOKEN = 'grid size-11 shrink-0 place-items-center rounded-xl border-2 desktop:size-12';
 
 /**
  * The Alarm board: sounding tokens (each a space for the die that clears it, named after the
@@ -258,7 +254,7 @@ export function AlarmsPanel({ view }: { view: PlayerView }) {
           </li>
         ))}
         {board.faceDown.map((id, i) => (
-          <li key={`down-${i}`} className="flex w-12 flex-col items-center">
+          <li key={`down-${i}`} className="flex w-11 flex-col items-center desktop:w-12">
             <span
               role="img"
               aria-label={t('alarms.faceDown')}
@@ -269,7 +265,7 @@ export function AlarmsPanel({ view }: { view: PlayerView }) {
           </li>
         ))}
         {cleared.map((id) => (
-          <li key={id} className="flex w-12 flex-col items-center">
+          <li key={id} className="flex w-11 flex-col items-center desktop:w-12">
             <span
               role="img"
               aria-label={t('alarms.cleared', { alarm: t(`alarms.name.${id}`) })}

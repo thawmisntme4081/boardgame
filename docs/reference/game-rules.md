@@ -20,7 +20,7 @@ The whole game is one serialisable `GameState` object plus pure functions that r
 | `events.ts` | Socket.IO protocol types (see [protocol](protocol.md)) |
 | `random-play.ts` | Random agent (`createRandomAgent`, `applyAgentAction`) and `playRandomGame`, imported as `@sky/shared/random-play`; used by fuzzing, the socket full-game test and `pnpm --filter @sky/shared random-play` |
 
-Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { dieId, slot, coffeeDelta })` returns `{ ok: true }` or `{ ok: false, reason }`; `placeDie` throws `RuleError` on an illegal move. Axis and engines resolve **as soon as the second die is placed** (as the rulebook says); `placeDie` ends the round by itself once nobody can place another die. When a round ends, its dice and speed stay in `lastRound` until the next roll.
+Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { dieId, slot, coffeeDelta })` returns `{ ok: true }` or `{ ok: false, reason }`; `placeDie` throws `RuleError` on an illegal move. Axis and engines resolve **as soon as the second die is placed** (as the rulebook says); `placeDie` ends the round by itself once nobody can place another die. When a round ends, its dice and speed stay in `lastRound` until the next roll. In the final round, the game ends as a win as soon as ending the round would land the plane (all landing conditions met and no end-of-round loss, e.g. Kerosene); the dice still in hand are not needed (user rule, Oct 4, 2026).
 
 ## Base-game numbers (checked against the rulebook and the physical board)
 

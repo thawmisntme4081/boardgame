@@ -209,10 +209,13 @@ describe('engines out', () => {
     radioPilot: { seat: 'pilot', dieId: 'x3', value: 3 },
   } as const;
 
-  it('hide the Engines panel and its speed gauge', () => {
+  it('show the Engine spaces covered: no die can go there', () => {
     render(<Cockpit view={makeView('pilot', { scenario: { modules: ['engines-out'] } })} />);
-    expect(screen.queryByRole('region', { name: 'Engines' })).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Axis' })).toBeInTheDocument();
+    const panel = screen.getByRole('region', { name: 'Axis & Engines' });
+    expect(
+      within(panel).getByRole('img', { name: /^Engines 1 .*: stuck, no dice here$/ }),
+    ).toBeInTheDocument();
+    expect(within(panel).queryByRole('button', { name: /^Engines 1/ })).not.toBeInTheDocument();
   });
 
   it('leave the fourth die unused once three are placed', () => {
@@ -389,16 +392,14 @@ describe('module panels', () => {
         name: `Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`,
       }),
     ).toBeInTheDocument();
-    const engines = screen.getByRole('region', { name: 'Engines' });
+    // The wind speed sits on the Axis & Engines instrument; Wind is its own panel.
+    const instrument = screen.getByRole('region', { name: 'Axis & Engines' });
     expect(
-      within(engines).getByRole('note', {
+      within(instrument).getByRole('note', {
         name: `Wind ${speed > 0 ? '+' : ''}${speed} added to the engines`,
       }),
     ).toHaveTextContent(`${speed > 0 ? '+' : ''}${speed} wind`);
-    // Wind and Axis share the axis row (no separate module panel at the bottom).
-    expect(screen.getByRole('region', { name: 'Wind' }).parentElement?.parentElement).toBe(
-      screen.getByRole('region', { name: 'Axis' }).parentElement?.parentElement,
-    );
+    expect(screen.getByRole('region', { name: 'Wind' })).toBeInTheDocument();
   });
 
   it('turn the wind ring upside down: the airplane starts at the top on a headwind', () => {
@@ -528,8 +529,11 @@ describe('traffic die', () => {
       },
     });
     render(<DiceTray view={view} presence={presence()} />);
+    // Only the black dice show; where the planes went is read out, not written.
     expect(
-      screen.getByText(/rolled 4, a plane 3 spaces ahead; rolled 2, no planes left to add/),
+      screen.getByRole('status', {
+        name: /rolled 4, a plane 3 spaces ahead; rolled 2, no planes left to add/,
+      }),
     ).toBeInTheDocument();
     render(<ApproachTrack view={view} />);
     expect(screen.getAllByText('Added by the traffic die')).toHaveLength(1);
@@ -665,10 +669,10 @@ describe('panel hints', () => {
     expect(await screen.findByText('Any die: +1 coffee (max 3)')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
 
-    const axis = screen.getByRole('button', { name: 'Axis is mandatory' });
+    const axis = screen.getByRole('button', { name: 'Axis & Engines is mandatory' });
     expect(axis).toHaveClass('text-danger');
     await userEvent.click(axis);
-    expect(await screen.findByText('Must be level to land')).toBeInTheDocument();
+    expect(await screen.findByText(/^Must be level to land/)).toBeInTheDocument();
     expect(screen.getByText('Mandatory')).toBeInTheDocument();
   });
 
@@ -706,16 +710,14 @@ describe('recent board details', () => {
     expect(await screen.findByText('Two equal Axis dice: gain a coffee.')).toBeInTheDocument();
   });
 
-  it('fill an ice brake bar only once its pair is complete', () => {
+  it('mark an ice brake deployed only once its pair is complete', () => {
     render(
       <Cockpit
         view={makeView('pilot', { scenario: { modules: ['ice-brakes'] }, patch: { brakes: 1 } })}
       />,
     );
-    const fill = (n: number) =>
-      screen.getByRole('img', { name: new RegExp(`^Ice brake ${n}:`) }).firstElementChild;
-    expect(fill(2)).toHaveClass('scale-x-100');
-    expect(fill(3)).toHaveClass('scale-x-0');
+    expect(screen.getByRole('img', { name: 'Ice brake 2: deployed' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Ice brake 3: not deployed' })).toBeInTheDocument();
   });
 
   it('outline your current approach space in your color, with no marker under it', () => {
@@ -750,5 +752,39 @@ describe('win conditions', () => {
     expect(await screen.findByText('All the landing gear down')).toBeInTheDocument();
     expect(screen.getByText('The intern fully trained')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(6);
+  });
+});
+
+describe('Axis & Engines instrument', () => {
+  it('shows the speed on its number, the brakes deployed in red, and describes both', () => {
+    const { container } = render(
+      <Cockpit view={makeView('pilot', { patch: { speed: 7, brakes: 2, axis: -1 } })} />,
+    );
+    const instrument = screen.getByRole('img', { name: /tilted 1 toward the pilot\. Speed 7/ });
+    expect(instrument).toBeInTheDocument();
+    // Brake sections: the first two filled (offset 0), the third empty (offset 1).
+    const fills = [...container.querySelectorAll('path.stroke-danger[stroke-dasharray]')];
+    expect(fills.map((p) => p.getAttribute('stroke-dashoffset'))).toEqual(['0', '0', '1']);
+  });
+
+  it('hides the speed dot until both engine dice are placed', () => {
+    const { container } = render(<Cockpit view={makeView('pilot')} />);
+    expect(container.querySelector('g.opacity-0 circle.fill-foreground')).toBeInTheDocument();
+  });
+});
+
+describe('Radio', () => {
+  const radioSpaces = () =>
+    within(screen.getByRole('region', { name: 'Radio' }))
+      .getAllByRole('button')
+      .map((b) => b.getAttribute('aria-label'))
+      .filter((label) => label?.startsWith('Radio'));
+
+  it('lists your own radio spaces first', () => {
+    const { unmount } = render(<Cockpit view={makeView('pilot')} />);
+    expect(radioSpaces()[0]).toMatch(/^Radio 1 \(pilot/);
+    unmount();
+    render(<Cockpit view={makeView('copilot')} />);
+    expect(radioSpaces()[0]).toMatch(/^Radio 2 \(co-pilot/);
   });
 });

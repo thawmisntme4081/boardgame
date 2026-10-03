@@ -1,12 +1,11 @@
 import type { PlayerView, Seat, SlotId } from '@sky/shared';
 import { ChevronDown, ChevronRight, Coffee } from 'lucide-react';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { AxisDial } from '@/svgs/AxisDial';
 import { AeroMarkerIcon } from '@/svgs/AeroMarker';
 import { BrakeMarkerIcon } from '@/svgs/BrakeMarker';
-import { SpeedGauge } from '@/svgs/SpeedGauge';
+import { FlightInstrument } from '@/svgs/FlightInstrument';
 import { Switch } from '@/svgs/Switch';
 import {
   AlarmsPanel,
@@ -16,12 +15,12 @@ import {
   WindOnEngines,
   WindPanel,
 } from './ModulePanels';
-import { DESKTOP_PANEL, Panel, PANEL, PanelHeader } from './Panel';
+import { Panel } from './Panel';
 import { Slot } from './Slot';
 
 type Section =
-  | 'axis'
-  | 'engines'
+  | 'wind'
+  | 'instrument'
   | 'gear'
   | 'flaps'
   | 'radio'
@@ -32,16 +31,15 @@ type Section =
   | 'alarms';
 
 /**
- * Top to bottom below desktop, per seat: your own systems first (Wind sits inside the axis
- * section). Brakes: the pilot's, so near the top for the pilot; for the co-pilot the Ice brakes
- * (whose bottom row they can fill) come after the flaps, the normal brakes go last.
- * Desktop ignores this order and places panels by grid area.
+ * Top to bottom below desktop, per seat: your own systems first. Brakes: the pilot's, so near
+ * the top for the pilot; for the co-pilot the Ice brakes (whose bottom row they can fill) come
+ * after the flaps, the normal brakes go last. Desktop ignores this order (see `desktopGrid`).
  */
 function sectionOrder(seat: Seat, ice: boolean): Section[] {
   if (seat === 'pilot') {
     return [
-      'axis',
-      'engines',
+      'wind',
+      'instrument',
       'alarms',
       'gear',
       'brakes',
@@ -53,41 +51,103 @@ function sectionOrder(seat: Seat, ice: boolean): Section[] {
     ];
   }
   return [
-    'axis',
-    'engines',
+    'wind',
+    'instrument',
     'alarms',
     'radio',
+    'concentration',
     'flaps',
     ...(ice ? (['brakes'] as const) : []),
     'kerosene',
     'intern',
-    'concentration',
     'gear',
     ...(ice ? [] : (['brakes'] as const)),
   ];
 }
 
+/**
+ * The desktop grid, built from the panels in play. Landing gear left and Flaps right share
+ * the top row, so they always have the same height. Axis & Engines spans the top two rows,
+ * with Wind and Radio stacked beside it (Radio alone when there is no Wind). Brakes and
+ * Concentration split the centre below. Kerosene and Intern each get a full-height column
+ * left of Flaps. Alarms take a row of their own under the centre.
+ */
+function desktopGrid(shown: readonly Section[]): CSSProperties {
+  const has = (s: Section) => shown.includes(s);
+  const mods = [...(has('kerosene') ? ['kerosene'] : []), ...(has('intern') ? ['intern'] : [])];
+  const row = (...cells: string[]) => `'${cells.join(' ')}'`;
+  if (!has('wind')) {
+    // No Wind: Radio is a narrow column (its spaces stacked). The centre is 1fr · R · 1fr · R,
+    // R the Radio width: Axis & Engines spans the first three, Radio the last, and Brakes and
+    // Concentration take 1fr + R each, so they match and fill the width of the two above.
+    const rows = [
+      row('gear', 'instrument', 'instrument', 'instrument', 'radio', ...mods, 'flaps'),
+      row('.', 'instrument', 'instrument', 'instrument', 'radio', ...mods, '.'),
+      row('.', 'brakes', 'brakes', 'concentration', 'concentration', ...mods, '.'),
+      ...(has('alarms')
+        ? [row('.', 'alarms', 'alarms', 'alarms', 'alarms', ...mods.map(() => '.'), '.')]
+        : []),
+    ];
+    const radio = '5.5rem';
+    const columns = [
+      '13%',
+      'minmax(0, 1fr)',
+      radio,
+      'minmax(0, 1fr)',
+      radio,
+      ...mods.map(() => '7rem'),
+      '13%',
+    ];
+    return {
+      '--cockpit-areas': rows.join(' '),
+      '--cockpit-columns': columns.join(' '),
+    } as CSSProperties;
+  }
+  const rows = [
+    row(
+      'gear',
+      'instrument',
+      'instrument',
+      'instrument',
+      has('wind') ? 'wind' : 'radio',
+      ...mods,
+      'flaps',
+    ),
+    row('.', 'instrument', 'instrument', 'instrument', 'radio', ...mods, '.'),
+    row('.', 'brakes', 'brakes', 'concentration', 'concentration', ...mods, '.'),
+    ...(has('alarms')
+      ? [row('.', 'alarms', 'alarms', 'alarms', 'alarms', ...mods.map(() => '.'), '.')]
+      : []),
+  ];
+  const columns = ['13%', 'repeat(4, minmax(0, 1fr))', ...mods.map(() => '7rem'), '13%'];
+  return {
+    '--cockpit-areas': rows.join(' '),
+    '--cockpit-columns': columns.join(' '),
+  } as CSSProperties;
+}
+
 /** Below desktop every panel takes the full width, so the per-seat order reads top to bottom. */
 const SPAN = 'max-desktop:col-span-2';
+/** Phones: these two share a row instead of each taking the full width. */
+const HALF: Partial<Record<Section, string>> = {
+  radio: 'max-desktop:col-span-1',
+  concentration: 'max-desktop:col-span-1',
+};
 
-/**
- * Desktop places each panel by name (see `.cockpit-grid`): pilot radio and gear left,
- * co-pilot radio and flaps right. Radio is one panel below desktop; on desktop its wrapper
- * steps aside (`contents`) so its pilot and co-pilot halves take their own areas.
- */
+/** The pilot's radio space and the co-pilot's two. */
+const RADIO_GROUPS: SlotId[][] = [['radioPilot'], ['radioCopilot1', 'radioCopilot2']];
+
 const AREA: Record<Section, string> = {
-  axis: 'desktop:[grid-area:axis]',
-  engines: 'desktop:[grid-area:engines]',
-  radio: 'desktop:contents',
+  wind: 'desktop:[grid-area:wind]',
+  instrument: 'desktop:[grid-area:instrument]',
+  radio: 'desktop:[grid-area:radio]',
   brakes: 'desktop:[grid-area:brakes]',
   concentration: 'desktop:[grid-area:concentration]',
   gear: 'desktop:[grid-area:gear]',
   flaps: 'desktop:[grid-area:flaps]',
-  // Desktop: one row under the control panel, half each.
-  kerosene: 'desktop:col-span-2',
-  intern: 'desktop:col-span-2',
-  // Desktop: its own full row under the control panel.
-  alarms: 'desktop:col-span-4',
+  kerosene: 'desktop:[grid-area:kerosene]',
+  intern: 'desktop:[grid-area:intern]',
+  alarms: 'desktop:[grid-area:alarms]',
 };
 
 /** Arrow between ordered spaces: right in a row, down in a desktop column (under the slot). */
@@ -96,8 +156,8 @@ function OrderArrow({ column }: { column: boolean }) {
     <span
       aria-hidden="true"
       className={cn(
-        'flex h-12 items-center text-muted-foreground',
-        column && 'desktop:h-auto desktop:w-12 desktop:justify-center',
+        'flex h-11 items-center text-muted-foreground desktop:h-12',
+        column && 'desktop:h-4 desktop:w-12 desktop:justify-center',
       )}
     >
       <ChevronRight className={cn('size-4', column && 'desktop:hidden')} />
@@ -112,6 +172,7 @@ function Slots({
   switches,
   column,
   ordered,
+  className,
 }: {
   ids: SlotId[];
   view: PlayerView;
@@ -123,16 +184,20 @@ function Slots({
   column?: 'switch-left' | 'switch-right';
   /** Draw arrows between spaces that must be filled in order. */
   ordered?: boolean;
+  className?: string;
 }) {
   const { t } = useTranslation();
   return (
     <div
       className={cn(
-        'flex flex-wrap items-end gap-2',
+        'flex flex-wrap items-end',
+        // Ordered spaces sit tight around their arrows (brakes, flaps).
+        ordered ? 'gap-0' : 'gap-2',
         column && 'desktop:flex-col',
         column === 'switch-right' && 'desktop:items-start',
         column === 'switch-left' && 'desktop:items-end',
-        column && (ordered ? 'desktop:gap-1' : 'desktop:gap-5'),
+        column && (ordered ? 'desktop:gap-0' : 'desktop:gap-5'),
+        className,
       )}
     >
       {ids.map((id, i) => (
@@ -156,97 +221,109 @@ function Slots({
 
 export function Cockpit({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
-  const ice = view.scenario.modules.includes('ice-brakes');
   const modules = view.scenario.modules;
+  const ice = modules.includes('ice-brakes');
   const leak = modules.includes('kerosene-leak');
-  // Engines out (TER): no Engine spaces, so no Engines panel.
-  const enginesOut = modules.includes('engines-out');
+  // Engines out (TER): the Engine spaces are covered (grey X) and there is no speed.
+  const engines = !modules.includes('engines-out');
   const shown = sectionOrder(view.seat, ice).filter(
     (id) =>
+      (id !== 'wind' || view.wind !== null) &&
       (id !== 'kerosene' || leak || modules.includes('kerosene')) &&
       (id !== 'intern' || modules.includes('intern')) &&
-      (id !== 'engines' || !enginesOut) &&
       (id !== 'alarms' || view.alarms !== null),
   );
+  const slotLabel = (text: string) => (
+    <span className="text-[11px] text-muted-foreground">{text}</span>
+  );
   const sections: Record<Section, ReactNode> = {
+    wind: <WindPanel view={view} />,
     kerosene: <KerosenePanel view={view} leak={leak} />,
     intern: <InternPanel view={view} />,
     alarms: <AlarmsPanel view={view} />,
-    axis: (
-      <div className="flex h-full flex-col gap-3 desktop:flex-row">
-        {view.wind !== null && (
-          <div className="desktop:order-last desktop:w-1/4 desktop:flex-none">
-            <WindPanel view={view} />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <Panel title={t('cockpit.axis')} hint={t('cockpit.axisHint')} mandatory>
-            <div className="flex items-center justify-between gap-2">
-              <Slot slot="axisPilot" view={view} />
-              <AxisDial
-                axis={view.axis}
-                // Turns only matter while the track can still advance.
-                turn={view.finalRound ? null : view.scenario.turns?.[view.approachIndex]}
-              />
-              <Slot slot="axisCopilot" view={view} />
-            </div>
-          </Panel>
-        </div>
-      </div>
-    ),
-    engines: (
+    instrument: (
       <Panel
-        title={t('cockpit.engines')}
+        title={t('cockpit.axisEngines')}
         mandatory
-        hint={
-          view.finalRound
-            ? t('cockpit.enginesFinal')
-            : view.wind !== null
-              ? t('cockpit.enginesWind')
-              : t('cockpit.enginesHint')
-        }
+        hint={[
+          t('cockpit.axisHint'),
+          engines &&
+            (view.finalRound
+              ? t('cockpit.enginesFinal')
+              : view.wind !== null
+                ? t('cockpit.enginesWind')
+                : t('cockpit.enginesHint')),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       >
-        <div className="flex items-center justify-between gap-2 desktop:flex-1">
-          <Slot slot="enginePilot" view={view} />
-          <div className="relative flex min-w-0 flex-1 justify-center desktop:min-h-24 desktop:self-stretch">
-            {view.wind !== null && <WindOnEngines wind={view.wind} />}
-            <SpeedGauge
-              view={view}
-              className="desktop:absolute desktop:inset-0 desktop:size-full desktop:max-w-none"
-            />
+        {/* Axis spaces at the top corners, Engine spaces at the bottom ones. */}
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-2">
+          <div className="flex flex-col items-center justify-between">
+            <div className="flex flex-col items-center gap-1">
+              <Slot slot="axisPilot" view={view} />
+              {slotLabel(t('cockpit.axis'))}
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Slot slot="enginePilot" view={view} />
+              {slotLabel(t('cockpit.engines'))}
+            </div>
           </div>
-          <Slot slot="engineCopilot" view={view} />
+          <div className="relative flex items-center justify-center">
+            <FlightInstrument
+              view={view}
+              // Turns only matter while the track can still advance.
+              turn={view.finalRound ? null : view.scenario.turns?.[view.approachIndex]}
+            />
+            {engines && view.wind !== null && (
+              <div className="absolute inset-x-0 top-[68%]">
+                <WindOnEngines wind={view.wind} />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-center justify-between">
+            <div className="flex flex-col items-center gap-1">
+              <Slot slot="axisCopilot" view={view} />
+              {slotLabel(t('cockpit.axis'))}
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Slot slot="engineCopilot" view={view} />
+              {slotLabel(t('cockpit.engines'))}
+            </div>
+          </div>
         </div>
       </Panel>
     ),
+    // One Radio panel: the co-pilot's two spaces above the pilot's (on desktop without Wind,
+    // all three in one column).
     radio: (
-      <section aria-label={t('cockpit.radio')} className={cn(PANEL, 'desktop:contents')}>
-        <PanelHeader
-          title={t('cockpit.radio')}
-          hint={t('cockpit.radioHint')}
-          className="desktop:hidden"
-        />
-        <div className="flex flex-wrap items-end gap-2 desktop:contents">
-          <div className={cn('desktop:[grid-area:radioPilot]', DESKTOP_PANEL)}>
-            <PanelHeader
-              title={t('cockpit.radio')}
-              hint={t('cockpit.radioHint')}
-              side
-              className="hidden desktop:flex"
-            />
-            <Slots ids={['radioPilot']} view={view} />
-          </div>
-          <div className={cn('desktop:[grid-area:radioCopilot]', DESKTOP_PANEL)}>
-            <PanelHeader
-              title={t('cockpit.radio')}
-              hint={t('cockpit.radioHint')}
-              side
-              className="hidden desktop:flex"
-            />
-            <Slots ids={['radioCopilot1', 'radioCopilot2']} view={view} />
-          </div>
+      <Panel title={t('cockpit.radio')} hint={t('cockpit.radioHint')}>
+        {/*
+          Your own radio spaces first, then a separator, then your partner's. Phones: one row.
+          Desktop: stacked; without Wind, one column (each group too) with the separator.
+        */}
+        <div
+          className={cn(
+            'flex items-center gap-1.5 desktop:flex-col desktop:items-start desktop:gap-2',
+            view.wind === null && 'desktop:flex-1 desktop:items-center desktop:[&>div]:flex-col',
+          )}
+        >
+          {(view.seat === 'pilot' ? RADIO_GROUPS : [...RADIO_GROUPS].reverse()).map((ids, i) => (
+            <Fragment key={ids[0]}>
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'h-11 w-px shrink-0 bg-border desktop:h-12',
+                    view.wind === null ? 'desktop:h-px desktop:w-12' : 'desktop:hidden',
+                  )}
+                />
+              )}
+              <Slots ids={ids} view={view} />
+            </Fragment>
+          ))}
         </div>
-      </section>
+      </Panel>
     ),
     gear: (
       <Panel
@@ -314,8 +391,12 @@ export function Cockpit({ view }: { view: PlayerView }) {
         hint={t('cockpit.concentrationHint')}
         className="justify-between"
       >
-        <div className="flex items-center justify-between gap-2">
-          <Slots ids={['concentration1', 'concentration2', 'concentration3']} view={view} />
+        <div className="flex items-center justify-between gap-2 max-desktop:flex-col max-desktop:items-start">
+          <Slots
+            ids={['concentration1', 'concentration2', 'concentration3']}
+            view={view}
+            className="max-desktop:gap-1.5"
+          />
           <p
             className="flex items-center gap-1"
             aria-label={t('cockpit.coffeeCount', { count: view.coffee })}
@@ -337,9 +418,12 @@ export function Cockpit({ view }: { view: PlayerView }) {
 
   return (
     <div className="@container">
-      <div className={cn('cockpit-grid grid grid-cols-2 gap-3', enginesOut && 'no-engines')}>
+      <div
+        className="cockpit-grid grid grid-cols-[auto_minmax(0,1fr)] gap-2 desktop:gap-3"
+        style={desktopGrid(shown)}
+      >
         {shown.map((id) => (
-          <div key={id} className={cn(SPAN, AREA[id])}>
+          <div key={id} className={cn(HALF[id] ?? SPAN, AREA[id])}>
             {sections[id]}
           </div>
         ))}

@@ -84,7 +84,15 @@ export default function Game({ view, presence }: { view: PlayerView; presence: P
     <div className="bg-muted">
       <div
         className="game-grid bg-background desktop:border-x desktop:shadow-sm"
-        style={{ '--status-h': `${statusHeight}px` } as CSSProperties}
+        style={
+          {
+            '--status-h': `${statusHeight}px`,
+            // Desktop: the container widens for the Kerosene and Intern columns.
+            '--module-columns': ['kerosene', 'kerosene-leak', 'intern'].filter((m) =>
+              view.scenario.modules.includes(m as never),
+            ).length,
+          } as CSSProperties
+        }
       >
         {/* Sticky: the page scrolls under the status bar and above the dice tray. */}
         <div ref={statusRef} className="sticky top-0 z-20 [grid-area:status]">

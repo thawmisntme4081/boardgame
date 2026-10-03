@@ -36,6 +36,8 @@ test('the creator chooses the seats before round 1; the traffic die waits for bo
   await pilot.goto('/');
   await pilot.getByLabel('Your name').fill('Ana');
   await pilot.getByRole('button', { name: 'Create a game' }).click();
+  // Wait for the waiting room: the lobby's own "Game code" field would match too.
+  await expect(pilot.getByText('Waiting for your co-pilot')).toBeVisible();
   const code = (await pilot.getByLabel(/^Game code/).textContent())!.trim();
   await copilot.goto(`/r/${code}`);
   await expect(copilot.getByLabel('Game code')).toHaveValue(code);
