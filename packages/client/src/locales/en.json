@@ -57,7 +57,8 @@
     "noTalking": "No talking!!!",
     "timeLeft": "Time left this round: {{time}}",
     "nextTurn": "Next turn in {{seconds}}s",
-    "nextTurnLabel": "Next turn in {{seconds}} seconds"
+    "nextTurnLabel": "Next turn in {{seconds}} seconds",
+    "totalTrust": "Total Trust"
   },
   "leave": {
     "button": "Leave game",
@@ -114,7 +115,8 @@
     "winConditionsIntro": "Land in the final round, after the last die, with:",
     "internTokenHeld": "Intern token: {{value}}",
     "diceDone_one": "You have placed your {{count}} die; the rest are not used this round.",
-    "diceDone_other": "You have placed your {{count}} dice; the rest are not used this round."
+    "diceDone_other": "You have placed your {{count}} dice; the rest are not used this round.",
+    "totalTrust": "Total Trust: no strategy talk this round. The dice roll by themselves."
   },
   "cockpit": {
     "axis": "Axis",
@@ -153,7 +155,8 @@
       "concentration": "Concentration",
       "kerosene": "Kerosene",
       "intern": "Intern",
-      "iceBrakes": "Ice brakes"
+      "iceBrakes": "Ice brakes",
+      "alarm": "Alarm"
     },
     "above": " above",
     "below": " below",
@@ -162,7 +165,11 @@
     "label": "{{group}} {{n}}{{row}} ({{who}}{{needs}})",
     "placed": "{{label}}: {{value}}",
     "internToken": " (intern token)",
-    "trafficDie": " (traffic die)"
+    "trafficDie": " (traffic die)",
+    "covered": "{{label}}: stuck, no dice here",
+    "blockedBy": ", blocked by the {{alarm}}",
+    "and": " and ",
+    "alarmLabel": "{{alarm}} ({{who}}{{needs}})"
   },
   "modules": {
     "kerosene": "Kerosene",
@@ -220,6 +227,18 @@
     "engines-out": {
       "name": "Engines out",
       "rule": "No engines: each player rolls 4 dice but places only 3, and the plane glides one space at the end of every round. Land with the ice brakes past 5 (no speed check)."
+    },
+    "alarms": {
+      "name": "Alarms",
+      "rule": "An Alarm symbol on your approach space flips a random token at the start of a round: its Action takes no dice until the die shown on the token (colour and number, coffee allowed) is placed on it. Alarms never stop a landing."
+    },
+    "total-trust": {
+      "name": "Total Trust",
+      "rule": "A round ending on a Total Trust space skips the next strategy talk: the dice roll by themselves."
+    },
+    "belly-landing": {
+      "name": "Belly landing",
+      "rule": "The landing gear is stuck: no dice on it, and you land without it. Only the Flaps, Co-pilot radio and Concentration alarms are used."
     }
   },
   "abilityText": {
@@ -270,7 +289,13 @@
     "axisTurn": "Turn: to advance, the axis must be at {{positions}}",
     "speedLabel": "Speed {{speed}}. Below {{blue}}: stay; up to {{orange}}: 1 space; above: 2 spaces. Brakes stop speeds up to {{brake}}.",
     "speedNotSet": "not set",
-    "speedTitle": "Speed {{speed}}"
+    "speedTitle": "Speed {{speed}}",
+    "alarmTitle_one": "Alarm: a token flips at the start of each round here",
+    "alarmTitle_other": "Alarm: {{count}} tokens flip at the start of each round here",
+    "trustTitle": "Total Trust: a round ending here skips the next strategy talk",
+    "hereAlarm_one": "an alarm flips at the start of each round here",
+    "hereAlarm_other": "{{count}} alarms flip at the start of each round here",
+    "hereTrust": "Total Trust after a round ending here"
   },
   "gameOver": {
     "landed": "Smooth landing!",
@@ -328,7 +353,17 @@
     "not-first-player": "Only the first player can use Anticipation.",
     "first-die-placed": "Anticipation comes before your first die.",
     "no-partner-dice": "Your partner has no dice left to swap.",
-    "dice-limit": "You have already placed your 3 dice this round."
+    "dice-limit": "You have already placed your 3 dice this round.",
+    "alarm-blocked": "An alarm blocks this Action. Clear it on the Alarm board first.",
+    "alarm-not-active": "This alarm is not sounding.",
+    "setup-closed": "The game has started: seats and abilities are set.",
+    "not-your-pick": "Your partner picks this card.",
+    "ability-taken": "Your partner already picked this card.",
+    "abilities-missing": "Choose the Special Abilities first.",
+    "no-partner": "Wait for your partner to join.",
+    "not-creator": "Only the game’s creator chooses the seats.",
+    "roles-missing": "Choose the seats first.",
+    "not-setup": "The game has already started."
   },
   "endReasons": {
     "spin": "The axis tipped too far: the plane went into a spin.",
@@ -355,5 +390,48 @@
     "landing-brakes": "A speed no higher than the brakes",
     "landing-intern": "The intern fully trained",
     "landing-ice-brakes": "All the ice brakes deployed"
+  },
+  "alarms": {
+    "title": "Alarms",
+    "hint": "An Alarm symbol on your space flips a random token at the start of a round. Its Action is blocked until you place the die shown on it.",
+    "faceDown": "Face-down alarm",
+    "cleared": "{{alarm}}: cleared",
+    "name": {
+      "concentration": "Concentration alarm",
+      "brakes": "Brakes alarm",
+      "gear": "Landing gear alarm",
+      "flaps": "Flaps alarm",
+      "radioPilot": "Pilot radio alarm",
+      "radioCopilot": "Co-pilot radio alarm"
+    },
+    "board": "Alarm board: {{active}} sounding, {{faceDown}} face down"
+  },
+  "weather": {
+    "turbulence": "Turbulence",
+    "badVisibility": "Bad visibility",
+    "turbulenceRule": "Turbulence: each die you place rerolls your other dice.",
+    "badVisibilityRule": "Bad visibility: you hold 2 dice; each of your next placements brings in a set-aside die.",
+    "stormRule": "Storm: you hold 2 dice; each placement brings in a set-aside die and rerolls your hand.",
+    "setAside_one": "{{count}} die set aside",
+    "setAside_other": "{{count}} dice set aside",
+    "altitudeWeather": "{{altitude}} ft: {{weather}}"
+  },
+  "preflight": {
+    "title": "Before take-off",
+    "abilitiesEach": "Special Abilities: each of you picks one card.",
+    "abilitiesYou": "Special Ability: you pick the card.",
+    "abilitiesPartner": "Special Ability: {{name}} picks the card.",
+    "yourPick": "Your pick",
+    "partnersPick": "{{name}}’s pick",
+    "roles": "Roles",
+    "rolesYou": "Choose your seat:",
+    "rolesPartner": "{{name}} chooses the seats.",
+    "confirm": "Confirm",
+    "waitingPartner": "Waiting for your partner to join.",
+    "chooseRoles": "The seats are not chosen yet.",
+    "chooseAbilities": "Choose the Special Abilities.",
+    "waitingConfirm": "Waiting for {{name}} to confirm.",
+    "partnerConfirmed": "{{name}} has confirmed.",
+    "trayNote": "Choose the seats and Special Abilities above, then confirm."
   }
 }

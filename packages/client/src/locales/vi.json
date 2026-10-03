@@ -55,7 +55,8 @@
     "noTalking": "Không trao đổi!!!",
     "timeLeft": "Thời gian còn lại của vòng: {{time}}",
     "nextTurn": "Vòng sau sau {{seconds}} giây",
-    "nextTurnLabel": "Vòng sau bắt đầu sau {{seconds}} giây"
+    "nextTurnLabel": "Vòng sau bắt đầu sau {{seconds}} giây",
+    "totalTrust": "Tin tưởng tuyệt đối"
   },
   "leave": {
     "button": "Rời ván",
@@ -108,7 +109,8 @@
     "winConditions": "Điều kiện thắng",
     "winConditionsIntro": "Hạ cánh ở vòng cuối, sau xúc xắc cuối cùng, khi:",
     "internTokenHeld": "Thẻ thực tập sinh: {{value}}",
-    "diceDone_other": "Bạn đã đặt đủ {{count}} xúc xắc; số còn lại không dùng trong vòng này."
+    "diceDone_other": "Bạn đã đặt đủ {{count}} xúc xắc; số còn lại không dùng trong vòng này.",
+    "totalTrust": "Tin tưởng tuyệt đối: vòng này không bàn chiến thuật. Xúc xắc tự đổ."
   },
   "cockpit": {
     "axis": "Trục",
@@ -147,7 +149,8 @@
       "concentration": "Tập trung",
       "kerosene": "Nhiên liệu",
       "intern": "Thực tập sinh",
-      "iceBrakes": "Phanh băng"
+      "iceBrakes": "Phanh băng",
+      "alarm": "Báo động"
     },
     "above": " phía trên",
     "below": " phía dưới",
@@ -156,7 +159,11 @@
     "label": "{{group}} {{n}}{{row}} ({{who}}{{needs}})",
     "placed": "{{label}}: {{value}}",
     "internToken": " (thẻ thực tập sinh)",
-    "trafficDie": " (xúc xắc giao thông)"
+    "trafficDie": " (xúc xắc giao thông)",
+    "covered": "{{label}}: bị kẹt, không đặt xúc xắc",
+    "blockedBy": ", bị khóa bởi {{alarm}}",
+    "and": " và ",
+    "alarmLabel": "{{alarm}} ({{who}}{{needs}})"
   },
   "modules": {
     "kerosene": "Nhiên liệu",
@@ -214,6 +221,18 @@
     "engines-out": {
       "name": "Động cơ tắt",
       "rule": "Không có động cơ: mỗi người đổ 4 xúc xắc nhưng chỉ đặt 3, và máy bay lướt thêm một ô ở cuối mỗi vòng. Hạ cánh khi phanh băng đã qua 5 (không xét tốc độ)."
+    },
+    "alarms": {
+      "name": "Báo động",
+      "rule": "Biểu tượng Báo động ở ô tiếp cận của bạn lật ngẫu nhiên một thẻ khi bắt đầu vòng: Hành động đó không nhận xúc xắc cho đến khi đặt đúng xúc xắc in trên thẻ (đúng màu và số, được dùng cà phê). Báo động không ngăn hạ cánh."
+    },
+    "total-trust": {
+      "name": "Tin tưởng tuyệt đối",
+      "rule": "Vòng kết thúc ở ô Tin tưởng tuyệt đối thì bỏ bàn chiến thuật ở vòng sau: xúc xắc tự đổ."
+    },
+    "belly-landing": {
+      "name": "Hạ cánh bằng bụng",
+      "rule": "Càng đáp bị kẹt: không đặt xúc xắc vào đó và hạ cánh không cần càng đáp. Chỉ dùng báo động Cánh tà, Radio cơ phó và Tập trung."
     }
   },
   "abilityText": {
@@ -263,7 +282,11 @@
     "axisTurn": "Rẽ: để tiến lên, trục phải ở {{positions}}",
     "speedLabel": "Tốc độ {{speed}}. Từ {{blue}} trở xuống: đứng yên; đến {{orange}}: 1 ô; cao hơn: 2 ô. Phanh dừng được tốc độ đến {{brake}}.",
     "speedNotSet": "chưa có",
-    "speedTitle": "Tốc độ {{speed}}"
+    "speedTitle": "Tốc độ {{speed}}",
+    "alarmTitle_other": "Báo động: {{count}} thẻ lật khi bắt đầu mỗi vòng ở đây",
+    "trustTitle": "Tin tưởng tuyệt đối: vòng kết thúc ở đây sẽ bỏ bàn chiến thuật vòng sau",
+    "hereAlarm_other": "{{count}} báo động lật khi bắt đầu mỗi vòng ở đây",
+    "hereTrust": "Tin tưởng tuyệt đối sau vòng kết thúc ở đây"
   },
   "gameOver": {
     "landed": "Hạ cánh êm!",
@@ -321,7 +344,17 @@
     "not-first-player": "Chỉ người đi trước mới dùng được Đoán trước.",
     "first-die-placed": "Đoán trước phải dùng trước xúc xắc đầu tiên của bạn.",
     "no-partner-dice": "Đồng đội của bạn không còn xúc xắc để đổi.",
-    "dice-limit": "Bạn đã đặt đủ 3 xúc xắc trong vòng này."
+    "dice-limit": "Bạn đã đặt đủ 3 xúc xắc trong vòng này.",
+    "alarm-blocked": "Báo động đang khóa Hành động này. Hãy tắt nó trên bảng Báo động trước.",
+    "alarm-not-active": "Báo động này đang không kêu.",
+    "setup-closed": "Ván chơi đã bắt đầu: chỗ ngồi và kỹ năng đã cố định.",
+    "not-your-pick": "Đồng đội của bạn chọn thẻ này.",
+    "ability-taken": "Đồng đội của bạn đã chọn thẻ này.",
+    "abilities-missing": "Hãy chọn Kỹ năng đặc biệt trước.",
+    "no-partner": "Hãy chờ đồng đội vào phòng.",
+    "not-creator": "Chỉ người tạo ván mới được chọn chỗ ngồi.",
+    "roles-missing": "Hãy chọn chỗ ngồi trước.",
+    "not-setup": "Ván chơi đã bắt đầu."
   },
   "endReasons": {
     "spin": "Trục nghiêng quá mức: máy bay rơi vào vòng xoáy.",
@@ -348,5 +381,47 @@
     "landing-brakes": "Tốc độ không vượt quá phanh",
     "landing-intern": "Thực tập sinh đã được đào tạo xong",
     "landing-ice-brakes": "Đã mở hết phanh băng"
+  },
+  "alarms": {
+    "title": "Báo động",
+    "hint": "Biểu tượng Báo động ở ô của bạn lật ngẫu nhiên một thẻ khi bắt đầu vòng. Hành động của thẻ bị khóa cho đến khi bạn đặt xúc xắc in trên thẻ.",
+    "faceDown": "Thẻ báo động úp",
+    "cleared": "{{alarm}}: đã tắt",
+    "name": {
+      "concentration": "báo động Tập trung",
+      "brakes": "báo động Phanh",
+      "gear": "báo động Càng đáp",
+      "flaps": "báo động Cánh tà",
+      "radioPilot": "báo động Radio phi công",
+      "radioCopilot": "báo động Radio cơ phó"
+    },
+    "board": "Bảng báo động: {{active}} đang kêu, {{faceDown}} thẻ úp"
+  },
+  "weather": {
+    "turbulence": "Nhiễu động",
+    "badVisibility": "Tầm nhìn kém",
+    "turbulenceRule": "Nhiễu động: mỗi xúc xắc bạn đặt sẽ đổ lại các xúc xắc còn lại của bạn.",
+    "badVisibilityRule": "Tầm nhìn kém: bạn cầm 2 xúc xắc; mỗi lần đặt tiếp theo sẽ lấy thêm một xúc xắc để riêng.",
+    "stormRule": "Bão: bạn cầm 2 xúc xắc; mỗi lần đặt lấy thêm một xúc xắc để riêng và đổ lại cả tay.",
+    "setAside_other": "{{count}} xúc xắc để riêng",
+    "altitudeWeather": "{{altitude}} ft: {{weather}}"
+  },
+  "preflight": {
+    "title": "Trước khi cất cánh",
+    "abilitiesEach": "Kỹ năng đặc biệt: mỗi người chọn một thẻ.",
+    "abilitiesYou": "Kỹ năng đặc biệt: bạn chọn thẻ.",
+    "abilitiesPartner": "Kỹ năng đặc biệt: {{name}} chọn thẻ.",
+    "yourPick": "Bạn chọn",
+    "partnersPick": "{{name}} chọn",
+    "roles": "Vai trò",
+    "rolesYou": "Chọn chỗ ngồi của bạn:",
+    "rolesPartner": "{{name}} chọn chỗ ngồi.",
+    "confirm": "Xác nhận",
+    "waitingPartner": "Đang chờ đồng đội vào phòng.",
+    "chooseRoles": "Chưa chọn chỗ ngồi.",
+    "chooseAbilities": "Hãy chọn Kỹ năng đặc biệt.",
+    "waitingConfirm": "Đang chờ {{name}} xác nhận.",
+    "partnerConfirmed": "{{name}} đã xác nhận.",
+    "trayNote": "Chọn chỗ ngồi và Kỹ năng đặc biệt ở trên, rồi xác nhận."
   }
 }

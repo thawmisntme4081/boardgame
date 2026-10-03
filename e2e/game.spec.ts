@@ -1,7 +1,15 @@
 import { devices, expect, test } from '@playwright/test';
 import { DIFFICULTY_NAMES, SCENARIO_LIST } from '../packages/shared/src/scenarios';
 import type { Scenario } from '../packages/shared/src/types';
-import { bothReady, deviceOptions, playOneDie, playToTheEnd, setGame, startGame } from './helpers';
+import {
+  bothReady,
+  deviceOptions,
+  playOneDie,
+  playToTheEnd,
+  setGame,
+  startGame,
+  takeOff,
+} from './helpers';
 
 test.describe('a two-player game', () => {
   test('plays the base scenario to a crash, then flies again', async ({ browser }, testInfo) => {
@@ -21,7 +29,8 @@ test.describe('a two-player game', () => {
     for (const page of [players.pilot, players.copilot]) {
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(page.getByText(/Round 1\/7/)).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Roll dice' })).toBeVisible();
+      // A new game starts with the crew choosing seats and abilities again.
+      await expect(page.getByRole('region', { name: 'Before take-off' })).toBeVisible();
     }
   });
 
@@ -110,7 +119,7 @@ test.describe('a two-player game', () => {
     await newcomer.getByLabel('Your name').fill('Cat');
     await newcomer.getByRole('button', { name: 'Join' }).click();
     await expect(pilot.getByText(/Cat joined the game/)).toBeVisible();
-    await expect(newcomer.getByRole('button', { name: 'Roll dice' })).toBeVisible();
+    await expect(newcomer.getByRole('region', { name: 'Before take-off' })).toBeVisible();
   });
 });
 
@@ -155,6 +164,7 @@ test.describe('round timer', () => {
     await copilot.goto(`/r/${code}`);
     await copilot.getByLabel('Your name').fill('Ben');
     await copilot.getByRole('button', { name: 'Join' }).click();
+    await takeOff({ pilot, copilot });
     await expect(copilot.getByText(/Timed game: 0:05 to place all the dice/)).toBeVisible();
     await expect(copilot.getByRole('timer')).toHaveCount(0); // not before the roll
 

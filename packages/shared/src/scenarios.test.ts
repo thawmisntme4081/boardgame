@@ -7,9 +7,8 @@ import { slotActive } from './slots';
 import { play, type Move } from './test-utils';
 
 describe('scenarios', () => {
-  it('lists YUL and only well-formed entries (at most 21 Flight Log + 20 Turbulence)', () => {
+  it('lists YUL and only well-formed entries', () => {
     expect(SCENARIOS['yul-green']).toBe(YUL);
-    expect(SCENARIO_LIST.length).toBeLessThanOrEqual(41);
     // One scenario per airport and color, so ids never clash.
     expect(new Set(SCENARIO_LIST.map((s) => s.id)).size).toBe(SCENARIO_LIST.length);
     for (const s of SCENARIO_LIST) {
@@ -68,8 +67,12 @@ describe('scenarios', () => {
         aeroOrange: 12,
         brakes: scenario.modules.includes('ice-brakes') ? 4 : 3,
         intern: game.intern && [],
+        // No alarm sounding: a token flipped at the start would block Concentration.
+        alarms: game.alarms && { active: [], faceDown: [] },
         wind: game.wind === null ? null : calmest,
       });
+      // Bad Visibility in the final round (track D): play the four prepared dice instead.
+      s.setAside = { pilot: 0, copilot: 0 };
       s.dice = {
         pilot: [1, 2, 3, 4].map((n) => ({ id: `p${n}`, value: 1 })),
         copilot: [1, 2, 3, 4].map((n) => ({ id: `c${n}`, value: 1 })),
@@ -94,6 +97,22 @@ describe('scenarios', () => {
         phase: 'won',
         failures: undefined,
       });
+    }
+  });
+});
+
+describe('alarms and total trust data', () => {
+  it('turn their module on exactly when a scenario has symbols, and the symbols are not all 0', () => {
+    for (const s of SCENARIO_LIST) {
+      expect(s.modules.includes('alarms'), s.id).toBe(s.alarms !== undefined);
+      expect(s.modules.includes('total-trust'), s.id).toBe(s.totalTrust !== undefined);
+      for (const symbols of [s.alarms, s.totalTrust]) {
+        if (symbols)
+          expect(
+            symbols.some((n) => n > 0),
+            s.id,
+          ).toBe(true);
+      }
     }
   });
 });

@@ -9,6 +9,7 @@ import { BrakeMarkerIcon } from '@/svgs/BrakeMarker';
 import { SpeedGauge } from '@/svgs/SpeedGauge';
 import { Switch } from '@/svgs/Switch';
 import {
+  AlarmsPanel,
   IceBrakesPanel,
   InternPanel,
   KerosenePanel,
@@ -27,7 +28,8 @@ type Section =
   | 'brakes'
   | 'concentration'
   | 'kerosene'
-  | 'intern';
+  | 'intern'
+  | 'alarms';
 
 /**
  * Top to bottom below desktop, per seat: your own systems first (Wind sits inside the axis
@@ -40,6 +42,7 @@ function sectionOrder(seat: Seat, ice: boolean): Section[] {
     return [
       'axis',
       'engines',
+      'alarms',
       'gear',
       'brakes',
       'kerosene',
@@ -52,6 +55,7 @@ function sectionOrder(seat: Seat, ice: boolean): Section[] {
   return [
     'axis',
     'engines',
+    'alarms',
     'radio',
     'flaps',
     ...(ice ? (['brakes'] as const) : []),
@@ -82,6 +86,8 @@ const AREA: Record<Section, string> = {
   // Desktop: one row under the control panel, half each.
   kerosene: 'desktop:col-span-2',
   intern: 'desktop:col-span-2',
+  // Desktop: its own full row under the control panel.
+  alarms: 'desktop:col-span-4',
 };
 
 /** Arrow between ordered spaces: right in a row, down in a desktop column (under the slot). */
@@ -159,11 +165,13 @@ export function Cockpit({ view }: { view: PlayerView }) {
     (id) =>
       (id !== 'kerosene' || leak || modules.includes('kerosene')) &&
       (id !== 'intern' || modules.includes('intern')) &&
-      (id !== 'engines' || !enginesOut),
+      (id !== 'engines' || !enginesOut) &&
+      (id !== 'alarms' || view.alarms !== null),
   );
   const sections: Record<Section, ReactNode> = {
     kerosene: <KerosenePanel view={view} leak={leak} />,
     intern: <InternPanel view={view} />,
+    alarms: <AlarmsPanel view={view} />,
     axis: (
       <div className="flex h-full flex-col gap-3 desktop:flex-row">
         {view.wind !== null && (

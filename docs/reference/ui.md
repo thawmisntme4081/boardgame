@@ -35,6 +35,18 @@ Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 - Gauges, dice and tracks are SVG with a `viewBox`; slots are real buttons so they stay accessible and easy to tap.
 - The page scrolls; the status bar and dice tray are `position: sticky` (no `100dvh`), and `env(safe-area-inset-*)` keeps the tray clear of the iPhone home bar.
 
+## Before take-off
+
+- The lobby picks the scenario and the timer only. In the game's `setup` phase a "Before take-off" panel sits above the tracks (`Preflight`): Pilot and Co-pilot buttons (outline in the seat colour; the creator clicks one, the partner sees them disabled; each player's own seat turns solid once chosen), the six Special Ability cards with their rules when the scenario has any (one each with two cards, the creator's with one), and a Confirm button at the bottom for both. Round 1 (and its traffic die) starts once both have confirmed; until then the dice tray only points to the panel. "Fly again" keeps the scenario picker and returns to the panel, with the last seats and picks kept.
+
+## Turbulence
+
+- Alarms: an Alarm board panel (after Engines in both seats' phone order; its own full row under the control panel on desktop) shows sounding tokens as spaces for the clearing die, named after their Action, then face-down tokens (anonymous), then cleared ones (green check). A blocked space shows a red bell and is never lit.
+- Weather: Turbulence (waves) and Bad Visibility (crossed eye) icons on the altitude cards; the dice tray says what this round's weather does and shows Bad Visibility's set-aside dice face down.
+- Approach track: a red bell (Alarm) at a card's top left, a muted speaker (Total Trust) at its top right.
+- Total Trust: no "Roll dice" button; the tray explains, the status bar says "Total Trust" with a red "No talking" pill once the pause is over.
+- Covered spaces (Belly landing's stuck gear) show a grey X.
+
 ## Languages
 
 - English and Vietnamese (`i18next` + `react-i18next`). English is the default whatever the browser language. `LanguageSwitch` (lobby card and status bar) changes the language without a reload, saves it in `localStorage` (`sky-team-language`) and sets `<html lang>`. Each player picks their own language.

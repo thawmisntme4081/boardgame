@@ -1,7 +1,7 @@
 import type { PlayerView } from '@sky/shared';
-import { PlaneLanding } from 'lucide-react';
+import { EyeOff, PlaneLanding, Waves } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatNumber } from '@/i18n';
+import { formatNumber, t as translate } from '@/i18n';
 import { trackWidth } from '@/lib/trackRow';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,17 @@ const GAP = 4;
 const CELL = CARD_W + GAP;
 const HEIGHT = CARD_H + GAP;
 const LANDING_ICON = 18;
+const WEATHER_ICON = 11;
+
+/** "Turbulence and Bad visibility", or '' for a calm altitude. */
+function weatherText(space: { turbulence?: boolean; badVisibility?: boolean }): string {
+  return [
+    space.turbulence && translate('weather.turbulence'),
+    space.badVisibility && translate('weather.badVisibility'),
+  ]
+    .filter(Boolean)
+    .join(translate('slot.and'));
+}
 
 export function AltitudeTrack({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
@@ -26,11 +37,24 @@ export function AltitudeTrack({ view }: { view: PlayerView }) {
         viewBox={`0 0 ${spaces.length * CELL} ${HEIGHT}`}
         style={{ width: trackWidth(spaces.length) }}
         role="img"
-        aria-label={t('tracks.altitudeLabel', {
-          altitude: formatNumber(view.altitude),
-          round: view.round,
-          rounds: spaces.length,
-        })}
+        aria-label={
+          t('tracks.altitudeLabel', {
+            altitude: formatNumber(view.altitude),
+            round: view.round,
+            rounds: spaces.length,
+          }) +
+          spaces
+            .filter((space) => weatherText(space))
+            .map(
+              (space) =>
+                '. ' +
+                t('weather.altitudeWeather', {
+                  altitude: formatNumber(space.altitude),
+                  weather: weatherText(space),
+                }),
+            )
+            .join('')
+        }
       >
         {spaces.map((space, i) => {
           const x = i * CELL;
@@ -64,6 +88,28 @@ export function AltitudeTrack({ view }: { view: PlayerView }) {
                 >
                   ↻
                 </text>
+              )}
+              {/* Weather on this altitude (Turbulence tracks A–D). */}
+              {(space.turbulence || space.badVisibility) && (
+                <g className="text-danger">
+                  <title>{weatherText(space)}</title>
+                  {[space.turbulence && Waves, space.badVisibility && EyeOff]
+                    .filter((Icon) => Icon !== false && Icon !== undefined)
+                    .map((Icon, k, all) => {
+                      const Shape = Icon as typeof Waves;
+                      const start = x + CELL / 2 - (all.length * (WEATHER_ICON + 2)) / 2 + 1;
+                      return (
+                        <Shape
+                          key={k}
+                          aria-hidden="true"
+                          x={start + k * (WEATHER_ICON + 2)}
+                          y={GAP / 2 + CARD_H - WEATHER_ICON - 5}
+                          size={WEATHER_ICON}
+                          strokeWidth={2.5}
+                        />
+                      );
+                    })}
+                </g>
               )}
               {space.altitude === 0 ? (
                 <PlaneLanding

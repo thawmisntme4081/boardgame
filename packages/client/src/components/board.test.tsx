@@ -1,4 +1,10 @@
-import { canPlaceInView, SLOT_IDS, WIND_REVERSED_START, WIND_RING } from '@sky/shared';
+import {
+  ALTITUDE_TRACKS,
+  canPlaceInView,
+  SLOT_IDS,
+  WIND_REVERSED_START,
+  WIND_RING,
+} from '@sky/shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,6 +14,7 @@ import { Cockpit } from './Cockpit';
 import { DiceTray } from './DiceTray';
 import { GameOverDialog } from './GameOverDialog';
 import { StatusBar } from './StatusBar';
+import { AltitudeTrack } from '@/svgs/AltitudeTrack';
 import { ApproachTrack } from '@/svgs/ApproachTrack';
 
 vi.mock('@/api', () => ({
@@ -159,10 +166,10 @@ describe('GameOverDialog', () => {
     expect(within(dialog).getByText('Not all the landing gear was down.')).toBeInTheDocument();
     expect(within(dialog).getByText('Your speed was too high for the brakes.')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Fly again' }));
-    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'yul-green', abilities: [] });
+    expect(api.rematch).toHaveBeenCalledWith({ scenario: 'yul-green' });
   });
 
-  it('flies again on the same scenario and abilities by default', async () => {
+  it('flies again on the same scenario by default', async () => {
     const ice = catalogScenario((s) => s.modules.includes('ice-brakes') && s.abilities === 1);
     const view = makeView('pilot', {
       scenario: ice.id,
@@ -173,7 +180,7 @@ describe('GameOverDialog', () => {
     expect(screen.getByText('The ice brakes were not fully deployed.')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent(ice.name);
     await userEvent.click(screen.getByRole('button', { name: 'Fly again' }));
-    expect(api.rematch).toHaveBeenCalledWith({ scenario: ice.id, abilities: ['mastery'] });
+    expect(api.rematch).toHaveBeenCalledWith({ scenario: ice.id });
   });
 
   it('celebrates a landing and stays closed during play', () => {
@@ -240,6 +247,93 @@ describe('engines out', () => {
     );
     // Four dice in hand, but only two more of the pilot's three may be placed.
     expect(screen.getByRole('status')).toHaveTextContent('Ana is placing a die… (2 dice left)');
+  });
+});
+
+describe('turbulence', () => {
+  it('show sounding alarms as spaces for the clearing die, and block their Action', () => {
+    const view = makeView('pilot', {
+      scenario: { modules: ['alarms'] },
+      pilot: [4, 2, 3, 3],
+      patch: {
+        alarms: { active: ['flaps'], faceDown: ['brakes', 'gear', 'radioPilot', 'radioCopilot'] },
+      },
+    });
+    useGame.setState({ selectedDieId: 'p1' });
+    render(<Cockpit view={view} />);
+    const board = screen.getByRole('list', { name: 'Alarm board: 1 sounding, 4 face down' });
+    expect(within(board).getAllByRole('img', { name: 'Face-down alarm' })).toHaveLength(4);
+    expect(
+      within(board).getByRole('img', { name: 'Concentration alarm: cleared' }),
+    ).toBeInTheDocument();
+    // The pilot's 4 lights up the Flaps alarm space; the co-pilot's flaps are blocked.
+    expect(validSlots()).toContain('Flaps alarm (pilot, needs 4)');
+    expect(
+      screen.getByRole('button', {
+        name: /^Flaps 1 \(co-pilot, needs 1 or 2\), blocked by the Flaps alarm$/,
+      }),
+    ).toBeDisabled();
+  });
+
+  it('show stuck landing gear for a belly landing', () => {
+    render(<Cockpit view={makeView('pilot', { scenario: { modules: ['belly-landing'] } })} />);
+    expect(
+      screen.getByRole('img', {
+        name: 'Landing gear 1 (pilot, needs 1 or 2): stuck, no dice here',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('explain the weather in the tray and show the set-aside dice', () => {
+    render(
+      <DiceTray
+        view={makeView('pilot', {
+          scenario: { altitudes: ALTITUDE_TRACKS.D },
+          pilot: [3, 5],
+          patch: { round: 4, currentSeat: 'pilot', setAside: { pilot: 2, copilot: 2 } },
+        })}
+        presence={presence()}
+      />,
+    );
+    expect(screen.getByText(/^Storm: you hold 2 dice/)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '2 dice set aside' })).toBeInTheDocument();
+  });
+
+  it('mark the weather on the altitude track', () => {
+    render(
+      <AltitudeTrack view={makeView('pilot', { scenario: { altitudes: ALTITUDE_TRACKS.D } })} />,
+    );
+    expect(
+      screen.getByRole('img', { name: /3,000 ft: Turbulence and Bad visibility/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('roll by themselves under Total Trust: no "Roll dice" button, and no talking', () => {
+    const view = makeView('pilot', { rolled: false, patch: { round: 2, autoRoll: true } });
+    render(<DiceTray view={view} presence={presence()} />);
+    expect(screen.queryByRole('button', { name: 'Roll dice' })).not.toBeInTheDocument();
+    expect(screen.getByText(/^Total Trust: no strategy talk this round/)).toBeInTheDocument();
+    render(<StatusBar view={view} presence={presence()} connection="online" />);
+    expect(screen.getByText('No talking!!!')).toBeInTheDocument();
+  });
+
+  it('mark Alarm and Total Trust symbols on the approach track', () => {
+    render(
+      <ApproachTrack
+        view={makeView('pilot', {
+          scenario: {
+            modules: ['alarms', 'total-trust'],
+            alarms: [1, 0, 0, 0, 0, 0, 0],
+            totalTrust: [1, 0, 0, 0, 0, 0, 0],
+          },
+        })}
+      />,
+    );
+    expect(
+      screen.getByRole('img', {
+        name: /Current space: an alarm flips at the start of each round here; Total Trust after a round ending here/,
+      }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -598,7 +692,7 @@ describe('approach markers', () => {
       />,
     );
     const die = container.querySelector('rect.fill-neutral-900')!;
-    const dot = container.querySelector('circle.fill-green-600')!;
+    const dot = container.querySelector('circle.fill-amber-400')!;
     expect(Number(dot.getAttribute('cy'))).toBeGreaterThan(
       Number(die.getAttribute('y')) + Number(die.getAttribute('height')),
     );

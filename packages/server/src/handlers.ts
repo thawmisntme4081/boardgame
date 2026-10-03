@@ -26,10 +26,12 @@ import {
   createRoomSchema,
   emptySchema,
   joinRoomSchema,
+  pickAbilitySchema,
   placeSchema,
   rejoinRoomSchema,
   rematchSchema,
   rerollSchema,
+  chooseSeatSchema,
 } from './schemas';
 
 export type GameServer = Server<ClientToServer, ServerToClient>;
@@ -45,13 +47,16 @@ export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): v
 }
 
 /**
- * Keeps one timeout per room in step with its round deadline: when a timed round runs out,
- * the players lose and everyone gets fresh views. Call after anything that changes the game.
+ * Keeps one timeout per room in step with the game: when a timed round runs out, the players
+ * lose; with Total Trust, the next round's dice roll by themselves once the "Next turn" pause
+ * is over. Either way everyone gets fresh views. Call after anything that changes the game.
  */
 export function syncRoundTimer(io: GameServer, rooms: RoomManager, room: Room): void {
   clearTimeout(room.roundTimer);
   room.roundTimer = undefined;
-  const { phase, deadline } = room.game;
+  const { phase, deadline, autoRoll } = room.game;
+  if (phase === 'strategy' && autoRoll) return scheduleAutoRoll(io, rooms, room);
+  room.autoRollAt = undefined;
   if (phase !== 'placing' || deadline === null) return;
   room.roundTimer = setTimeout(
     () => {
@@ -60,6 +65,7 @@ export function syncRoundTimer(io: GameServer, rooms: RoomManager, room: Room): 
       const next = expireRoundTimer(room.game, Date.now());
       if (next !== room.game) {
         room.game = next;
+        syncRoundTimer(io, rooms, room); // Real-time: the next round may roll by itself
         broadcastRoom(io, rooms, room);
       } else {
         syncRoundTimer(io, rooms, room); // woke a moment early: wait again
@@ -71,6 +77,28 @@ export function syncRoundTimer(io: GameServer, rooms: RoomManager, room: Room): 
 }
 
 /** Clients may omit the ack or send junk; never let that throw. */
+/** Total Trust: no strategy discussion, so the server rolls once the pause is over. */
+function scheduleAutoRoll(io: GameServer, rooms: RoomManager, room: Room): void {
+  room.autoRollAt ??= Date.now() + rooms.nextTurnMs;
+  room.roundTimer = setTimeout(
+    () => {
+      room.roundTimer = undefined;
+      if (rooms.get(room.code) !== room) return; // the room was closed meanwhile
+      if (room.game.phase !== 'strategy' || !room.game.autoRoll) return;
+      room.autoRollAt = undefined;
+      room.game = startRoundTimer(rollDice(room.game), Date.now());
+      for (const seat of SEATS) {
+        const player = room.players[seat];
+        if (player) player.ready = false;
+      }
+      syncRoundTimer(io, rooms, room);
+      broadcastRoom(io, rooms, room);
+    },
+    Math.max(0, room.autoRollAt - Date.now()),
+  );
+  room.roundTimer.unref?.();
+}
+
 function replier<R>(ack: unknown): (result: R) => void {
   return typeof ack === 'function' ? (ack as (result: R) => void) : () => {};
 }
@@ -101,16 +129,10 @@ export function clientIp(socket: GameSocket, trustProxy = false): string {
   return (trustProxy && first) || socket.handshake.address || 'unknown';
 }
 
-const sameSetup = (room: Room, setup: Setup) =>
-  room.game.scenario.id === setup.scenario.id &&
-  room.game.abilities.join() === setup.abilities.join();
+const sameSetup = (room: Room, setup: Setup) => room.game.scenario.id === setup.scenario.id;
 
 /** A game that has not started: the rematch someone else already asked for. */
-const isFresh = (room: Room) =>
-  room.game.phase === 'strategy' &&
-  room.game.round === 1 &&
-  // The traffic die may already have rolled when the game was created; nothing else has.
-  room.game.log.every((event) => event.type === 'traffic');
+const isFresh = (room: Room) => room.game.phase === 'setup';
 
 export function registerHandlers(
   io: GameServer,
@@ -229,6 +251,21 @@ export function registerHandlers(
       return OK;
     });
 
+    onSeated('game:pick-ability', pickAbilitySchema, ({ ability }, { room, player }) => {
+      const result = rooms.pickAbility(room, player, ability);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
+
+    onSeated('room:choose-seat', chooseSeatSchema, ({ seat }, { room, player }) => {
+      const result = rooms.chooseSeat(room, player, seat);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
+
+    onSeated('game:confirm', emptySchema, (_data, { room, player }) => {
+      const result = rooms.confirm(room, player);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
+
     onSeated('game:place', placeSchema, (intent, { room, player }) => {
       // A double tap sends the same move twice; the repeat is accepted and changes nothing.
       const repeat = room.game.log.some(
@@ -268,7 +305,7 @@ export function registerHandlers(
     });
 
     onSeated('game:rematch', rematchSchema, (data = {}, { room }) => {
-      const asked = data.scenario !== undefined || data.abilities !== undefined;
+      const asked = data.scenario !== undefined;
       const setup = asked ? resolveSetup(data) : undefined;
       if (asked && !setup) return { ok: false, error: 'bad-request' };
       if (isFresh(room)) {

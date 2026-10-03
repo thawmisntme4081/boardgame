@@ -27,7 +27,6 @@ describe('Lobby', () => {
     await userEvent.click(create);
     expect(api.createRoom).toHaveBeenCalledWith('Ana', false, {
       scenario: 'yul-green',
-      abilities: [],
     });
   });
 
@@ -42,11 +41,10 @@ describe('Lobby', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
     expect(api.createRoom).toHaveBeenCalledWith('Ana', true, {
       scenario: 'yul-green',
-      abilities: [],
     });
   });
 
-  it('picks a scenario, then exactly as many special abilities as it allows', async () => {
+  it('picks a scenario; its special abilities are chosen later, in the game', async () => {
     const two = catalogScenario((s) => s.abilities === 2);
     render(<Lobby />);
     expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent('YUL');
@@ -57,20 +55,11 @@ describe('Lobby', () => {
       screen.getByRole('option', { name: `${two.name}, ${DIFFICULTY_NAMES[two.difficulty]}` }),
     );
     expect(screen.getByText(scenarioSummary(two))).toBeInTheDocument();
-    expect(screen.getByText('Choose 2 special abilities')).toBeInTheDocument();
-    const pressed = () =>
-      screen.getAllByRole('button', { pressed: true }).map((b) => b.textContent);
-    expect(pressed()).toEqual(['Adaptation', 'Anticipation']);
-    // A third choice drops the oldest.
-    await userEvent.click(screen.getByRole('button', { name: 'Control' }));
-    expect(pressed()).toEqual(['Anticipation', 'Control']);
+    expect(screen.queryByRole('button', { name: 'Control' })).not.toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Your name'), 'Ana');
     await userEvent.click(screen.getByRole('button', { name: 'Create a game' }));
-    expect(api.createRoom).toHaveBeenCalledWith('Ana', false, {
-      scenario: two.id,
-      abilities: ['anticipation', 'control'],
-    });
+    expect(api.createRoom).toHaveBeenCalledWith('Ana', false, { scenario: two.id });
   });
 
   it('joins by code, uppercasing and dropping anything but letters', async () => {

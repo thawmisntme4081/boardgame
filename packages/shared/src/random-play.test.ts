@@ -4,8 +4,9 @@ import { ABILITY_IDS } from './abilities';
 import { INTERN_TOKENS, WIND_RING } from './modules';
 import { playRandomGame } from './random-play';
 import { AXIS_LIMIT, MAX_COFFEE, PLANE_TOKENS } from './rules';
-import { SCENARIO_LIST } from './scenarios';
-import type { GameState } from './types';
+import { ALTITUDE_TRACKS, SCENARIO_LIST } from './scenarios';
+import { testScenario } from './test-utils';
+import type { GameState, Scenario } from './types';
 
 /** Plain checks (not `expect`) so they stay cheap across thousands of steps. */
 function checkInvariants(s: GameState): void {
@@ -36,6 +37,14 @@ function checkInvariants(s: GameState): void {
   );
   check(s.round >= 1 && s.round <= s.scenario.altitudes.length, `round ${s.round}`);
   check(s.dice.pilot.length <= 4 && s.dice.copilot.length <= 4, 'too many dice');
+  check(
+    s.dice.pilot.length + s.setAside.pilot <= 4 && s.dice.copilot.length + s.setAside.copilot <= 4,
+    'too many dice with the set-aside ones',
+  );
+  check(
+    !s.alarms || s.alarms.active.every((id) => !s.alarms!.faceDown.includes(id)),
+    'an alarm both face up and face down',
+  );
   check(s.rerolls >= 0, `rerolls ${s.rerolls}`);
   check(
     Object.values(s.placed).every((p) => p.value >= 1 && p.value <= 6),
@@ -75,6 +84,43 @@ describe('random play', () => {
           },
         ),
         { numRuns: 100 },
+      );
+    }
+  }, 120_000);
+
+  it('random games with every Turbulence feature finish and keep invariants', () => {
+    const everywhere = [1, 1, 1, 1, 1, 1, 1];
+    const turbulence: Scenario[] = [
+      testScenario([0, 1, 1, 1, 1, 1, 1], {
+        altitudes: ALTITUDE_TRACKS.D,
+        modules: ['alarms', 'total-trust'],
+        alarms: everywhere,
+        totalTrust: [0, 1, 0, 1, 0, 1, 0],
+        traffic: [1, 0, 1, 0, 1, 0, 0],
+      }),
+      testScenario([0, 1, 0, 1, 1, 0, 1], {
+        altitudes: ALTITUDE_TRACKS.A,
+        modules: ['belly-landing', 'alarms', 'intern'],
+        alarms: everywhere,
+      }),
+      testScenario([0, 1, 1, 0, 1, 1, 0], {
+        altitudes: ALTITUDE_TRACKS.C,
+        modules: ['altitude-5000', 'wind-reversed', 'kerosene'],
+      }),
+      testScenario([0, 0, 1, 1, 1, 0, 1], {
+        altitudes: ALTITUDE_TRACKS.B,
+        modules: ['alarms', 'total-trust'],
+        alarms: [2, 0, 1, 0, 1, 0, 0],
+        totalTrust: everywhere,
+      }),
+    ];
+    for (const scenario of turbulence) {
+      fc.assert(
+        fc.property(fc.integer(), fc.boolean(), (seed, careful) => {
+          const end = playRandomGame(seed, scenario, checkInvariants, careful, ['synchronization']);
+          expect(['won', 'lost']).toContain(end.phase);
+        }),
+        { numRuns: 200 },
       );
     }
   }, 120_000);

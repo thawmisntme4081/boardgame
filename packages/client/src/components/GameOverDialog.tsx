@@ -21,10 +21,7 @@ import { difficultyName } from '@/scenarioText';
 /** "Fly again" on the same scenario, or pick the next one. */
 function RematchForm({ view, won }: { view: PlayerView; won: boolean }) {
   const { t } = useTranslation();
-  const [setup, setSetup] = useState({
-    scenario: view.scenario.id,
-    abilities: view.abilities,
-  });
+  const [setup, setSetup] = useState({ scenario: view.scenario.id });
   return (
     <>
       <ScenarioPicker id="rematch" value={setup} onChange={setSetup} />

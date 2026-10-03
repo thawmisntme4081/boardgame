@@ -10,7 +10,8 @@ export type SlotGroup =
   | 'concentration'
   | 'kerosene'
   | 'intern'
-  | 'iceBrakes';
+  | 'iceBrakes'
+  | 'alarm';
 
 export interface SlotDef {
   group: SlotGroup;
@@ -38,6 +39,15 @@ const ice = (index: number, value: DieValue, row: 'top' | 'bottom'): SlotDef => 
   module: 'ice-brakes',
 });
 
+/** An Alarm token's space: the die of the colour and number printed on it clears the alarm. */
+const alarm = (index: number, seats: readonly Seat[], value: DieValue): SlotDef => ({
+  group: 'alarm',
+  index,
+  seats,
+  values: [value],
+  module: 'alarms',
+});
+
 export const SLOTS: Record<SlotId, SlotDef> = {
   axisPilot: { group: 'axis', index: 0, seats: PILOT },
   axisCopilot: { group: 'axis', index: 1, seats: COPILOT },
@@ -46,9 +56,9 @@ export const SLOTS: Record<SlotId, SlotDef> = {
   radioPilot: { group: 'radio', index: 0, seats: PILOT },
   radioCopilot1: { group: 'radio', index: 1, seats: COPILOT },
   radioCopilot2: { group: 'radio', index: 2, seats: COPILOT },
-  gear1: { group: 'gear', index: 0, seats: PILOT, values: [1, 2] },
-  gear2: { group: 'gear', index: 1, seats: PILOT, values: [3, 4] },
-  gear3: { group: 'gear', index: 2, seats: PILOT, values: [5, 6] },
+  gear1: { group: 'gear', index: 0, seats: PILOT, values: [1, 2], coveredBy: 'belly-landing' },
+  gear2: { group: 'gear', index: 1, seats: PILOT, values: [3, 4], coveredBy: 'belly-landing' },
+  gear3: { group: 'gear', index: 2, seats: PILOT, values: [5, 6], coveredBy: 'belly-landing' },
   brakes1: { group: 'brakes', index: 0, seats: PILOT, values: [2], coveredBy: 'ice-brakes' },
   brakes2: { group: 'brakes', index: 1, seats: PILOT, values: [4], coveredBy: 'ice-brakes' },
   brakes3: { group: 'brakes', index: 2, seats: PILOT, values: [6], coveredBy: 'ice-brakes' },
@@ -70,6 +80,13 @@ export const SLOTS: Record<SlotId, SlotDef> = {
   ice4Bottom: ice(2, 4, 'bottom'),
   ice5Top: ice(3, 5, 'top'),
   ice5Bottom: ice(3, 5, 'bottom'),
+  // The token colour is the partner's: an orange die clears a pilot Action's alarm.
+  alarmConcentration: alarm(0, BOTH, 1),
+  alarmBrakes: alarm(1, COPILOT, 2),
+  alarmGear: alarm(2, COPILOT, 3),
+  alarmFlaps: alarm(3, PILOT, 4),
+  alarmRadioPilot: alarm(4, COPILOT, 5),
+  alarmRadioCopilot: alarm(5, PILOT, 6),
 };
 
 export const SLOT_IDS = Object.keys(SLOTS) as SlotId[];

@@ -1,9 +1,9 @@
-import type { PlayerView, Presence, SlotId } from '@sky/shared';
+import { NEXT_TURN_MS, type PlayerView, type Presence, type SlotId } from '@sky/shared';
 import { create } from 'zustand';
 import { loadSession, type Session } from './session';
 
-/** The green pause shown after each round (display only). */
-export const NEXT_TURN_PAUSE_MS = 5_000;
+/** The green pause shown after each round (display only; Total Trust rolls when it ends). */
+export const NEXT_TURN_PAUSE_MS = NEXT_TURN_MS;
 
 export type Connection = 'connecting' | 'online' | 'offline';
 

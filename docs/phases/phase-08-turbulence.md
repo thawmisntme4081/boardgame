@@ -1,6 +1,6 @@
 # Phase 8: Turbulence expansion
 
-[← Master plan](../PLAN.md) · Milestone M3 · **Status: 🚧 In progress (rulebook studied, questions open)** · Effort: **high**
+[← Master plan](../PLAN.md) · Milestone M3 · **Status: 🚧 In progress (rules and UI built Oct 3, 2026; waiting for the 16 scenarios)** · Effort: **high**
 
 ## Goals
 
@@ -10,7 +10,7 @@
 
 ## Feature scope
 
-- **In:** Altitude 5000, Total Trust, Alarms and Altitudes A–D (Turbulence and Bad Visibility events) modules; scenario-specific rules (TER engines out, WAW belly landing, NZIR reversed wind and penguin tokens); new tracks and scenarios; picker filter; UI for each module.
+- **In:** Altitude 5000, Total Trust, Alarms and Altitudes A–D (Turbulence and Bad Visibility events) modules; scenario-specific rules (WAW belly landing); new tracks and scenarios; UI for each module (no picker filter). Already built before this phase, so out of scope here: TER (`engines-out`) and NZIR (`wind-reversed`).
 - **Out:** mixing expansion modules into base scenarios unless the rulebook allows it.
 
 **Prerequisite:** the Turbulence rulebook (PDF or photos) and the printed tracks. Rules are not guessed: unclear rules are asked, not assumed.
@@ -38,50 +38,54 @@ Source: [Sky Team: Turbulence rules (EN, 21 Aug 2024)](https://www.scorpionmasqu
   - **Turbulence:** every time you place a die on an Action, reroll all your remaining dice.
   - **Bad Visibility:** both players roll only 2 dice and set 2 aside; the next two times you place a die on an Action, roll one set-aside die and add it (the die you kept is not rerolled). Never more than 2 dice to choose from.
   - **Turbulence + Bad Visibility:** as Bad Visibility, but when you take the new die, roll both of your available dice.
-  - Track A, as drawn in the contents picture (to confirm on the tile): 6000 reroll, 5000 none, 4000 Bad Visibility, 3000 Bad Visibility, 2000 Bad Visibility + reroll, 1000 Bad Visibility. B, C, D are not readable in the rulebook.
+  - Track A (confirmed by the user Oct 2, 2026): 6000 reroll, 5000 none, 4000 Bad Visibility, 3000 Bad Visibility, 2000 Bad Visibility + reroll, 1000 Bad Visibility.
+  - Track B (confirmed by the user Oct 2, 2026): the same as `BASE_ALTITUDES` (first player alternating, rerolls at 6000 and 2000), with Turbulence at 5000, 4000, 3000 and 2000.
+  - Track C (confirmed by the user Oct 2, 2026): Turbulence at 5000 and 4000; Bad Visibility at 3000, 2000 and 1000.
+  - Track D (confirmed by the user Oct 2, 2026): Turbulence at 5000 and 4000; Turbulence and Bad Visibility together at 3000 and 2000; Bad Visibility at 0 (the final round).
+  - Rerolls and first players (confirmed by the user Oct 2, 2026): tracks A and B follow `BASE_ALTITUDES` (rerolls at 6000 and 2000); tracks C and D follow `HARD_ALTITUDES` (reroll only at 6000).
 - **Scenario-specific (book icon):**
-  - **TER Lajes:** two face-down Intern tokens on each Engine space: no dice there, and Engines are no longer mandatory. Both players roll 4 dice but use only 3. At the end of every round, the Approach and Altitude tracks each advance one space. (Its scenarios also use Ice brakes: a stronger braking system.)
   - **WAW Warsaw:** 3 face-down Intern tokens on the Landing Gear spaces: no dice there, the blue Aerodynamics marker stays at 5, and the gear is not needed to land. Only the Flaps, Co-Pilot Radio and Concentration Alarm tokens are used.
-  - **NZIR Ice Runway:** the Wind module is placed the other way round (arrows pointing down: headwinds), and Penguin tokens replace the Airplane tokens on the Approach track.
-- **Scenarios (20, 10 destinations):** CPT, SYD, PEK, KBP (green/yellow), TER, WAW, SXM, DUS, MAD (yellow/red), SYD, DUS, NZIR, PEK, WAW (red), MAD, TER, KBP, CPT, NZIR (black). Each card lists its modules by icon (Altitude A–D, 5000, Total Trust, Alarms, traffic, Intern, Kerosene leak, Real-time, Ice brakes, Wind, book) and its number of Special Abilities. Track data comes later from the physical tiles.
+- **Scenarios (16 left to build, 8 destinations):** CPT, SYD, PEK, KBP (green/yellow), WAW, SXM, DUS, MAD (yellow/red), SYD, DUS, PEK, WAW (red), MAD, KBP, CPT (black). TER and NZIR (4 scenarios) are already in `scenarios.ts`. Each card lists its modules by icon (Altitude A–D, 5000, Total Trust, Alarms, traffic, Intern, Kerosene leak, Real-time, Ice brakes, Wind, book) and its number of Special Abilities. Track data comes later from the physical tiles.
 
-## Open questions (to confirm with the user)
+## Open questions
 
-1. Alarms: on a blocked Action, can a die still be placed (with no effect), or can no die go there at all?
-2. Alarms: is the flipped token random (they are shuffled face down)? May coffee change a die to match a token? Does a die placed on an Alarm token count as "placing on an Action" for Turbulence?
-3. Total Trust in the app (no in-app talking): skip the "Roll dice" step and roll automatically when the next round starts (after the 5 s countdown)?
-4. Altitude tracks: confirm A and give B, C, D (event and reroll icon per altitude) from the tiles.
-5. Turbulence + Bad Visibility: once the set-aside dice are used up, does each placement still reroll your last remaining die?
-6. ~~TER: speed at landing, collisions, the fourth die?~~ Settled with the user (Oct 1, 2026): no speed check (Ice brakes past 5 is enough); planes left on the space still collide; the fourth die is unused. Built as the `engines-out` module.
-7. ~~NZIR: what does the reversed Wind module change?~~ Settled: the airplane starts on the opposite ring space, and the ring is symmetric, so every speed is negated. Built as the `wind-reversed` module (Oct 1, 2026), with `altitude-5000`.
-8. NZIR: do Penguins follow every Airplane rule (radio clears them, collision when advancing)?
+1. ~~Alarms: can a die go on a blocked Action?~~ Settled with the user (Oct 3, 2026): no. While its Alarm token is face up, no die can be placed on that Action's spaces (only the matching die on the token itself, which clears it).
+2. ~~Alarms: random token, coffee, Turbulence?~~ Settled with the user (Oct 3, 2026): the flipped token is random (the game picks one of the face-down tokens), and coffee may change a die to match a token. A die placed on an Alarm token counts as placing on an Action, so Turbulence rerolls your remaining dice.
+3. ~~Total Trust in the app~~ Settled with the user (Oct 3, 2026): no "Roll dice" step; the next round rolls automatically when the 5 s "Next turn" countdown ends.
+4. ~~Altitude tracks A–D~~ Settled with the user (Oct 2, 2026), rerolls included.
+5. ~~Turbulence + Bad Visibility after the set-aside dice run out~~ Never more than 2 dice in hand; each time you take a set-aside die to replace the one you placed, roll both dice in hand. Once no set-aside dice are left, each placement still rerolls your remaining die (Oct 3, 2026).
+6. **Assumption (to confirm):** Turbulence and Bad Visibility act after a player places one of their own dice, not after the co-pilot places the black traffic die (Synchronization). Training the intern (a die on the Intern space, then its token on the board) counts as one placement.
+7. **Assumption (to confirm):** an Intern token can clear an Alarm, since it is placed like a die of its number (same colour rule: the token is the placing player's colour).
+8. **Assumption (to confirm):** Bad Visibility: if neither die in your hand can be placed, your turn is skipped as usual, and your set-aside dice are lost for the round (they only come in after a placement).
+9. **Assumption (to confirm):** an Alarm symbol flips a token at the start of every round the plane is on that space, the first round included (the rulebook says "at the beginning of a round"; traffic icons work the same way). The entered data supports it: SYD green, SYD red, CPT black and KBP black print Alarm symbols on the starting space, which would only matter in round 1 if the plane never moved.
+10. ~~Total Trust on the starting space in round 1~~ Settled by the data (Oct 3, 2026): no scenario has a Total Trust symbol on its starting space, so it never comes up.
+11. ~~The Brakes alarm and Ice brakes~~ Settled by the data (Oct 3, 2026): no scenario combines Alarms with Ice brakes; the Brakes alarm blocks the three Brakes spaces.
 
 ## Technical tasks
 
-1. Read the rulebook; write every new rule as a test case first and confirm unclear ones with the user.
-2. Enter the 20 scenarios in `scenarios.ts`, tagged `expansion: 'turbulence'` (drafts for BUD, BLQ, TER, CDG, DUS, LGA and NZIR are already commented out there); add airport names.
-3. Add hook points to `RuleModule` only where a module needs one (e.g. "before rolling", "is this slot blocked now?").
-4. Turbulence module.
-5. Low Visibility module: if it hides information, extend `viewFor` so hidden values never leave the server, with leak tests.
-6. Alarms module: alarm board state, alarm tokens, blocked actions checked in `canPlaceDie` (and so highlighted correctly by `canPlaceInView`).
-7. Scenario-specific extras as their own small modules.
-8. UI: alarm board panel and new track art, fitting the per-seat phone order and the desktop grid.
-9. Lobby: "Turbulence" filter in the scenario picker.
-10. Tests: unit tests per module, fuzzing across all 41 scenarios, one Playwright game per new module.
+1. ✅ Read the rulebook; write every new rule as a test case first and confirm unclear ones with the user.
+2. Enter the 16 remaining scenarios in `ENTRIES` (`scenarios.ts`), with the `Entry` fields `altitudeTrack` ('A'–'D'), `alarms` and `totalTrust` (symbols per approach space, like `traffic`) (these two switch on the Alarms and Total Trust modules by themselves: never list them in `modules`) and the modules `'belly-landing'`, `'altitude-5000'`; add airport names. When an airport and colour appear more than once, ids are numbered automatically: `dus-red1`, `dus-red2` (in `ENTRIES` order). **The user enters these.**
+3. ✅ Hooks added to `RuleModule`: `startOfRound` (Alarms, Total Trust), `checkAnySlot` (an Alarm blocks core spaces), `waivedLanding` (replaces `noSpeed`; Engines out, Belly landing), `alarmTokens` (Belly landing keeps 3 tokens); `setup` now gets every module in play.
+4. ✅ Altitude tracks A–D (`ALTITUDE_TRACKS`), with `turbulence` / `badVisibility` on `AltitudeSpace`; Turbulence and Bad Visibility in the core rules (`rollDice`, then `weather` after each of a player's own dice); `setAside` counts in the state and view. Nothing new is hidden: set-aside dice are rolled only when they come in.
+5. ✅ Alarms module: face-up and face-down tokens in `GameState.alarms` (public: the flip is random when it happens), six alarm token slots, blocked Actions refused in `checkPlacement` (so `canPlaceInView` lights spaces correctly).
+6. ✅ Total Trust module (`autoRoll`) and the server's automatic roll after the pause (`syncRoundTimer` → `scheduleAutoRoll`, `NEXT_TURN_MS`).
+7. ✅ Belly landing module (WAW): Landing gear covered, landing without gear, 3 alarm tokens.
+8. ✅ UI: Alarm board panel, red bell on blocked spaces, stuck gear, weather icons on the altitude track, Alarm and Total Trust symbols on the approach track, weather notes and set-aside dice in the tray, no "Roll dice" under Total Trust.
+9. Tests: unit tests per module ✅, fuzzing on test scenarios with every feature ✅, one Playwright game (Alarms) ✅; fuzzing on the 16 real scenarios once they are entered.
 
 ## Checklist
 
-- [ ] Rulebook in hand; every new rule listed as a test case and unclear rules confirmed
-- [ ] 20 scenarios entered as data, tagged `expansion: 'turbulence'`, airport names added
-- [ ] New `RuleModule` hook points (only those needed), with tests
-- [ ] Turbulence module
-- [ ] Low Visibility module, with `viewFor` leak tests if it hides information
-- [ ] Alarms module: board state, tokens, blocked actions in `canPlaceDie`
-- [ ] Scenario-specific extras (e.g. penguin tokens)
-- [ ] UI panels for each new module, phone (per-seat order) and desktop
-- [ ] "Turbulence" filter in the scenario picker
-- [ ] Unit tests per module, fuzzing on all 41 scenarios, one Playwright game per new module
-- [ ] Docs updated: game rules reference, protocol (if changed), `CLAUDE.md`
+- [x] Rulebook in hand; every new rule listed as a test case and unclear rules confirmed (assumptions 6–9 still to confirm)
+- [x] 16 scenarios entered in `ENTRIES` by the user (Oct 3, 2026); airport names added for CPT, SYD, PEK, KBP, WAW, SXM, MAD
+- [x] New `RuleModule` hook points (only those needed), with tests
+- [x] Altitude tracks A–D: Turbulence, Bad Visibility, both together
+- [x] Alarms module: board state, tokens, blocked actions in `canPlaceDie`
+- [x] Total Trust module, with the server's automatic roll
+- [x] Scenario-specific: WAW belly landing (TER and NZIR were built earlier)
+- [x] UI for each new module, phone (per-seat order) and desktop
+- [x] Unit tests per module, fuzzing with every feature, one Playwright game (Alarms)
+- [x] Fuzzing (100 games each, 56 scenarios) and a prepared-final-round win on every scenario
+- [x] Docs updated: game rules reference, protocol, UI, `CLAUDE.md`
 
 **Done when:** all 20 expansion scenarios play end to end on phone and desktop with tests green.
 

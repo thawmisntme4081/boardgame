@@ -41,7 +41,19 @@ export type SlotId =
   | 'ice4Top'
   | 'ice4Bottom'
   | 'ice5Top'
-  | 'ice5Bottom';
+  | 'ice5Bottom'
+  | 'alarmConcentration'
+  | 'alarmBrakes'
+  | 'alarmGear'
+  | 'alarmFlaps'
+  | 'alarmRadioPilot'
+  | 'alarmRadioCopilot';
+
+/** Turbulence Alarm tokens, named after the Action each one blocks while face up. */
+export type AlarmId = 'concentration' | 'brakes' | 'gear' | 'flaps' | 'radioPilot' | 'radioCopilot';
+
+/** Turbulence replacement altitude tracks (A, B on the green/yellow side, C, D on red/black). */
+export type AltitudeTrackId = 'A' | 'B' | 'C' | 'D';
 
 /** Scenario color in the Flight Log: Routine, Exceptional, Elite, Heroic. */
 export type Difficulty = 'green' | 'yellow' | 'red' | 'black';
@@ -55,13 +67,19 @@ export type ModuleId =
   | 'real-time'
   | 'ice-brakes'
   | 'altitude-5000'
-  | 'engines-out';
+  | 'engines-out'
+  | 'alarms'
+  | 'total-trust'
+  | 'belly-landing';
 
 export type AbilityId =
   'adaptation' | 'anticipation' | 'control' | 'mastery' | 'synchronization' | 'working-together';
 
-/** `strategy`: talking allowed, dice not rolled yet. `placing`: dice rolled, silence. */
-export type Phase = 'strategy' | 'placing' | 'won' | 'lost';
+/**
+ * `setup`: before round 1, the crew chooses roles and Special Abilities (online play).
+ * `strategy`: talking allowed, dice not rolled yet. `placing`: dice rolled, silence.
+ */
+export type Phase = 'setup' | 'strategy' | 'placing' | 'won' | 'lost';
 
 export type EndReason =
   | 'spin' // axis reached an X
@@ -80,6 +98,14 @@ export type EndReason =
   | 'landing-intern' // intern tokens left on the board
   | 'landing-ice-brakes'; // ice brakes not deployed past the 5
 
+/** Weather on an altitude space (Turbulence tracks A–D), applied to the round played there. */
+export interface AltitudeEvents {
+  /** Every die you place on an Action rerolls your remaining dice. */
+  turbulence?: boolean;
+  /** Each player holds only 2 dice; the next two placements each bring in a set-aside die. */
+  badVisibility?: boolean;
+}
+
 export interface PlacedDie {
   seat: Seat;
   dieId: string;
@@ -89,7 +115,7 @@ export interface PlacedDie {
   source?: 'intern' | 'traffic';
 }
 
-export interface AltitudeSpace {
+export interface AltitudeSpace extends AltitudeEvents {
   altitude: number;
   /** Seat shown by the arrow: who places the first die this round. */
   first: Seat;
@@ -114,6 +140,12 @@ export interface Scenario {
    * (`null` or absent: any position).
    */
   turns?: (readonly number[] | null)[];
+  /** Alarms: Alarm symbols per approach space (absent: none); needs the `alarms` module. */
+  alarms?: number[];
+  /** Total Trust: symbols per approach space (absent: none); needs the `total-trust` module. */
+  totalTrust?: number[];
+  /** Turbulence: the replacement altitude track (absent: the colour's standard track). */
+  altitudeTrack?: AltitudeTrackId;
   modules: ModuleId[];
   /** How many Special Ability cards the players choose (0, 1 or 2). */
   abilities: number;
@@ -179,6 +211,10 @@ export type GameEvent =
       dieId: string;
       value: DieValue;
     }
+  /** Turbulence or Bad Visibility changed a player's hand after a placement: the new hand. */
+  | { type: 'weather'; round: number; seat: Seat; dice: Die[] }
+  /** Alarms: a token flipped face up at the start of a round. */
+  | { type: 'alarm'; round: number; alarm: AlarmId }
   | { type: 'round-end'; round: number }
   | { type: 'game-end'; round: number; result: 'won' | 'lost'; reason?: EndReason };
 
@@ -224,6 +260,12 @@ export interface GameState {
   intern: DieValue[] | null;
   /** Wind: the Wind Ring space the blue airplane points at (0 is the white centre); `null` without the module. */
   wind: number | null;
+  /** Alarms: tokens face up (blocking their Action) and still face down; `null` without the module. */
+  alarms: { active: AlarmId[]; faceDown: AlarmId[] } | null;
+  /** Total Trust: this round has no strategy discussion; the dice roll by themselves. */
+  autoRoll: boolean;
+  /** Bad Visibility: dice each player has set aside, brought in one per placement. */
+  setAside: Record<Seat, number>;
   /** Airplane tokens left in the box, for the traffic die. */
   planeSupply: number;
   /** The traffic die rolls at the start of this round (empty when the space had no icon). */
@@ -271,6 +313,9 @@ export type MoveError =
   | 'not-first-player'
   | 'first-die-placed'
   | 'no-partner-dice'
-  | 'dice-limit';
+  | 'dice-limit'
+  | 'not-setup'
+  | 'alarm-blocked'
+  | 'alarm-not-active';
 
 export type MoveCheck = { ok: true } | { ok: false; reason: MoveError };

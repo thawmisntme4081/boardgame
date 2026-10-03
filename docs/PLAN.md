@@ -22,7 +22,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | --- | --- | --- | --- |
 | **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Done (Oct 2, 2026) |
-| **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | 🚧 In progress (rulebook studied) |
+| **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | 🚧 In progress (rules and UI built; scenario data open) |
 | **M4 — Platform features** | Games survive restarts, Vietnamese language, game history (accounts optional) | 9–11 | ⏳ Not started |
 | **M5 — Public launch** | The game on a public URL, monitored | 12 | ⏳ Not started |
 
@@ -38,7 +38,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 5 | [Robustness](phases/phase-05-robustness.md) | M1 | ✅ Done | — |
 | 6 | [Tests and CI](phases/phase-06-tests-ci.md) | M1 | ✅ Done | — |
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done | — |
-| 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | 🚧 In progress (rulebook studied, questions open) | High |
+| 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | 🚧 In progress (rules and UI built; scenario data open) | High |
 | 9 | [Persistence](phases/phase-09-persistence.md) | M4 | ⏳ Not started | Medium-low |
 | 10 | [Internationalisation (EN + VI)](phases/phase-10-i18n.md) | M4 | ✅ Done | Medium |
 | 11 | [Game history and accounts](phases/phase-11-history-accounts.md) | M4 | ⏳ Not started | Low (local) / High (accounts) |
@@ -50,24 +50,24 @@ Status legend: ✅ done · 🚧 in progress · ⏳ not started.
 
 ```mermaid
 flowchart LR
-  P7[7 Base box] --> P8[8 Turbulence]
+  P7[7 Base box ✅] --> P8[8 Turbulence 🚧]
   P9[9 Persistence] --> P11B[11 Accounts - stage B]
   P9 --> P12[12 Deploy]
   P12 --> P11B
-  P10[10 i18n]
-  P11A[11 Local history - stage A]
+  P10[10 i18n ✅]
+  P8 --> P11A[11 Local history - stage A]
 ```
 
-- **Phase 8** needs the Turbulence rulebook and tracks before any code.
+- **Phase 8** (in progress): rules and UI built; the user enters the 16 remaining Turbulence scenarios and airports.
 - **Phase 9** and **Phase 12** share one decision: the host decides whether SQLite (needs a persistent disk) or Redis is used.
-- **Phase 10** and **Phase 11 stage A** depend on nothing else and can be done any time.
+- **Phase 10** is done. **Phase 11 stage A** depends on nothing else; its Flight Log labels Turbulence scenarios, so it follows Phase 8.
 - **Phase 11 stage B** (accounts) needs persistence and the production domain.
 
-Suggested next steps: Phase 11A (independent, quick win) → Phase 8 once the rulebook is in hand → Phase 9 + 12 together → 11B if wanted.
+Suggested next steps: Phase 8 (rulebook in hand; the user enters the Turbulence scenarios and airports) → Phase 11A (its Flight Log labels Turbulence scenarios) → Phase 9 + 12 together → 11B if wanted.
 
 ## Open items carried from finished phases
 
-None (Phase 7 data entry finished Oct 2, 2026).
+None
 
 
 ## How to work with this plan

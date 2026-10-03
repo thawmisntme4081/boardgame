@@ -1,6 +1,6 @@
 import { ABILITY_IDS, freshAbilityUse } from './abilities';
 import { modulesOf } from './modules';
-import { PLANE_TOKENS, rollTraffic } from './rules';
+import { PLANE_TOKENS, startRound } from './rules';
 import type { AbilityId, GameState, Scenario } from './types';
 
 /** Blue Aerodynamics marker starts between 4 and 5. */
@@ -12,6 +12,8 @@ export const AERO_ORANGE_START = 8;
 export const ROUND_TIMER_MS = 3 * 60_000;
 
 export interface GameOptions {
+  /** Wait in the `setup` phase until `beginGame` (roles and abilities chosen in the game). */
+  setup?: boolean;
   /** Round timer in ms, or `null` (the default) for an untimed game. */
   timerMs?: number | null;
   /** Special Ability cards the players chose (the scenario says how many). */
@@ -29,6 +31,11 @@ function validateScenario(scenario: Scenario): void {
   if (scenario.turns && scenario.turns.length !== length) {
     throw new Error(`scenario ${scenario.id} turns do not match the approach`);
   }
+  for (const field of ['alarms', 'totalTrust'] as const) {
+    if (scenario[field] && scenario[field].length !== length) {
+      throw new Error(`scenario ${scenario.id} ${field} do not match the approach`);
+    }
+  }
   if (scenario.approach.reduce((a, b) => a + b, 0) > PLANE_TOKENS) {
     throw new Error(`scenario ${scenario.id} needs more than ${PLANE_TOKENS} planes`);
   }
@@ -37,7 +44,7 @@ function validateScenario(scenario: Scenario): void {
 export function createGame(
   catalogScenario: Scenario,
   seed: number,
-  { timerMs = null, abilities = [] }: GameOptions = {},
+  { timerMs = null, abilities = [], setup = false }: GameOptions = {},
 ): GameState {
   // Modules may change the altitude track (Altitude 5000 starts one space lower).
   const scenario: Scenario = {
@@ -84,6 +91,9 @@ export function createGame(
     kerosene: null,
     intern: null,
     wind: null,
+    alarms: null,
+    autoRoll: false,
+    setAside: { pilot: 0, copilot: 0 },
     planeSupply: PLANE_TOKENS - scenario.approach.reduce((a, b) => a + b, 0),
     traffic: [],
     bonus: null,
@@ -92,7 +102,10 @@ export function createGame(
     timerMs,
     deadline: null,
   };
-  for (const module of modulesOf(scenario)) module.setup?.(state);
-  rollTraffic(state);
+  const modules = modulesOf(scenario);
+  for (const module of modules) module.setup?.(state, modules);
+  // Online games wait for the crew; round 1 (traffic die included) starts in `beginGame`.
+  if (setup) state.phase = 'setup';
+  else startRound(state);
   return state;
 }

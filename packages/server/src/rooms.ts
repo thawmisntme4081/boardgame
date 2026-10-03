@@ -1,9 +1,11 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import {
-  ABILITY_IDS,
+  beginGame,
   createGame,
+  NEXT_TURN_MS,
   ROUND_TIMER_MS,
   SCENARIOS,
+  otherSeat,
   SEATS,
   YUL,
   type AbilityId,
@@ -25,6 +27,12 @@ export interface Player {
   token: string;
   socketId: string | null;
   ready: boolean;
+  /** Created the game (or stayed when the creator left): picks a single Special Ability. */
+  creator: boolean;
+  /** Before round 1: the Special Ability card this player picked. */
+  pick: AbilityId | null;
+  /** Before round 1: happy with the roles and abilities. */
+  confirmed: boolean;
 }
 
 export interface Room {
@@ -37,8 +45,12 @@ export interface Room {
   lastActivity: number;
   /** The creator turned the round timer on in the lobby. */
   timed: boolean;
-  /** The pending "time ran out" check of a timed round (see `syncRoundTimer`). */
+  /** Before round 1: the creator has chosen who flies which seat. */
+  rolesChosen: boolean;
+  /** The pending "time ran out" check of a timed round, or Total Trust's roll (see `syncRoundTimer`). */
   roundTimer?: ReturnType<typeof setTimeout>;
+  /** Total Trust: when the server rolls the next round's dice (ms since epoch). */
+  autoRollAt?: number;
 }
 
 export interface RoomOptions {
@@ -50,32 +62,41 @@ export interface RoomOptions {
   maxRoomsPerIp?: number;
   /** Length of a timed round (tests and dev shorten it). */
   roundTimerMs?: number;
+  /** Total Trust: the pause before the server rolls (tests shorten it). */
+  nextTurnMs?: number;
 }
 
-/** A scenario and its abilities, checked: `resolveSetup` turns a request into one. */
+/** A checked scenario: `resolveSetup` turns a request into one. */
 export interface Setup {
   scenario: Scenario;
-  abilities: AbilityId[];
 }
+
+/** Checks a requested scenario: a known one, YUL by default. */
+export function resolveSetup({ scenario: id }: GameSetup): Setup | undefined {
+  const scenario = id === undefined ? YUL : SCENARIOS[id];
+  return scenario ? { scenario } : undefined;
+}
+
+/** The scenario as the catalog lists it (a game's copy may have been changed by its modules). */
+const setupOf = (game: GameState): Setup => ({
+  scenario: SCENARIOS[game.scenario.id] ?? game.scenario,
+});
+
+/** Before round 1: the crew is choosing roles and abilities. */
+export const isSetupOpen = (game: GameState): boolean => game.phase === 'setup';
 
 /**
- * Checks a requested scenario and Special Abilities: a known scenario (YUL by default) and
- * exactly as many distinct abilities as it allows (the first ones by default).
+ * The Special Abilities the picks make: with two cards, each player's own; with one, the
+ * creator's. Fewer than the scenario allows until everyone has picked.
  */
-export function resolveSetup({ scenario: id, abilities }: GameSetup): Setup | undefined {
-  const scenario = id === undefined ? YUL : SCENARIOS[id];
-  if (!scenario) return undefined;
-  const chosen = abilities ?? ABILITY_IDS.slice(0, scenario.abilities);
-  if (chosen.length !== scenario.abilities || new Set(chosen).size !== chosen.length) {
-    return undefined;
-  }
-  return { scenario, abilities: [...chosen] };
+export function pickedAbilities(room: Room): AbilityId[] {
+  const count = room.game.scenario.abilities;
+  const players = SEATS.map((seat) => room.players[seat]).filter((p) => p !== undefined);
+  const picks = (count === 1 ? players.filter((p) => p.creator) : players)
+    .map((p) => p.pick)
+    .filter((pick) => pick !== null);
+  return [...new Set(picks)].slice(0, count);
 }
-
-const setupOf = (game: GameState): Setup => ({
-  scenario: game.scenario,
-  abilities: game.abilities,
-});
 
 export const DEFAULT_IDLE_TTL_MS = 30 * 60_000;
 export const DEFAULT_MAX_ROOMS_PER_IP = 5;
@@ -100,6 +121,8 @@ export class RoomManager {
   private readonly idleTtlMs: number;
   private readonly maxRoomsPerIp: number;
   private readonly roundTimerMs: number;
+  /** Total Trust: how long after the round ends the server rolls the dice. */
+  readonly nextTurnMs: number;
 
   constructor(options: RoomOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -107,6 +130,7 @@ export class RoomManager {
     this.idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_TTL_MS;
     this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
     this.roundTimerMs = options.roundTimerMs ?? ROUND_TIMER_MS;
+    this.nextTurnMs = options.nextTurnMs ?? NEXT_TURN_MS;
   }
 
   get size(): number {
@@ -129,10 +153,7 @@ export class RoomManager {
     name: string,
     socketId: string,
     ip = 'unknown',
-    {
-      timer = false,
-      setup = { scenario: YUL, abilities: [] },
-    }: { timer?: boolean; setup?: Setup } = {},
+    { timer = false, setup = { scenario: YUL } }: { timer?: boolean; setup?: Setup } = {},
   ): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const fromIp = [...this.rooms.values()].filter((r) => r.creatorIp === ip).length;
@@ -143,15 +164,18 @@ export class RoomManager {
       players: {},
       game: createGame(setup.scenario, this.newSeed(), {
         timerMs: timer ? this.roundTimerMs : null,
-        abilities: setup.abilities,
+        setup: true,
       }),
       timed: timer,
+      rolesChosen: false,
       creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
     };
     this.rooms.set(code, room);
-    return ok({ room, player: this.seat(room, 'pilot', name, socketId) });
+    const player = this.seat(room, 'pilot', name, socketId);
+    player.creator = true;
+    return ok({ room, player });
   }
 
   join(code: string, name: string, socketId: string): Result<Seated> {
@@ -202,6 +226,10 @@ export class RoomManager {
       this.rooms.delete(room.code);
       return { room, player, closed: true };
     }
+    // The one who stays now runs the setup, and roles are chosen again with the newcomer.
+    const stayed = room.players[otherSeat(player.seat)];
+    if (stayed) stayed.creator = true;
+    room.rolesChosen = false;
     this.rematch(room);
     return { room, player, closed: false };
   }
@@ -223,7 +251,17 @@ export class RoomManager {
   presence(room: Room): Presence {
     const info = (seat: Seat) => {
       const p = room.players[seat];
-      return p ? { name: p.name, online: p.socketId !== null, ready: p.ready } : null;
+      return p
+        ? {
+            name: p.name,
+            online: p.socketId !== null,
+            ready: p.ready,
+            creator: p.creator,
+            pick: p.pick,
+            rolesChosen: room.rolesChosen,
+            confirmed: p.confirmed,
+          }
+        : null;
     };
     return { pilot: info('pilot'), copilot: info('copilot') };
   }
@@ -238,13 +276,82 @@ export class RoomManager {
     // Real-time scenario sets its own timer, so the room remembers the lobby choice.
     room.game = createGame(setup.scenario, this.newSeed(), {
       timerMs: room.timed ? this.roundTimerMs : null,
-      abilities: setup.abilities,
+      setup: true,
     });
+    // The last picks are the starting point for the new game's choice.
+    this.syncAbilities(room);
+    this.touch(room);
+  }
+
+  /** Copies the picks into the game, and cancels any confirm given for the old choice. */
+  private syncAbilities(room: Room): void {
+    room.game = { ...room.game, abilities: pickedAbilities(room) };
     for (const seat of SEATS) {
       const player = room.players[seat];
-      if (player) player.ready = false;
+      if (player) {
+        player.ready = false;
+        player.confirmed = false;
+      }
+    }
+  }
+
+  /** Before round 1: pick (or, with `null`, take back) your Special Ability card. */
+  pickAbility(room: Room, player: Player, ability: AbilityId | null): Result<void> {
+    if (!isSetupOpen(room.game)) return err('setup-closed');
+    const count = room.game.scenario.abilities;
+    if (count === 0 || (count === 1 && !player.creator)) return err('not-your-pick');
+    const partner = room.players[otherSeat(player.seat)];
+    if (ability !== null && count === 2 && partner?.pick === ability) return err('ability-taken');
+    player.pick = ability;
+    this.syncAbilities(room);
+    this.touch(room);
+    return ok(undefined);
+  }
+
+  /** Before round 1, rolling needs every Special Ability card chosen. */
+  abilitiesChosen(room: Room): boolean {
+    return room.game.abilities.length === room.game.scenario.abilities;
+  }
+
+  /** Before round 1: the creator takes `seat`; the partner (now or later) gets the other one. */
+  chooseSeat(room: Room, player: Player, seat: Seat): Result<void> {
+    if (!isSetupOpen(room.game)) return err('setup-closed');
+    if (!player.creator) return err('not-creator');
+    if (seat !== player.seat) {
+      const partner = room.players[seat];
+      delete room.players[player.seat];
+      if (partner) {
+        partner.seat = player.seat;
+        room.players[partner.seat] = partner;
+        if (partner.socketId)
+          this.sockets.set(partner.socketId, { code: room.code, seat: partner.seat });
+      }
+      player.seat = seat;
+      room.players[seat] = player;
+      if (player.socketId) this.sockets.set(player.socketId, { code: room.code, seat });
+    }
+    room.rolesChosen = true;
+    this.syncAbilities(room);
+    this.touch(room);
+    return ok(undefined);
+  }
+
+  /**
+   * Before round 1: this player is happy with the roles and abilities. Once both have
+   * confirmed, round 1 starts: the traffic die rolls and the strategy discussion begins.
+   */
+  confirm(room: Room, player: Player): Result<void> {
+    if (!isSetupOpen(room.game)) return err('setup-closed');
+    if (!this.bothSeated(room)) return err('no-partner');
+    if (!room.rolesChosen) return err('roles-missing');
+    if (!this.abilitiesChosen(room)) return err('abilities-missing');
+    player.confirmed = true;
+    if (SEATS.every((seat) => room.players[seat]?.confirmed)) {
+      room.game = beginGame(room.game);
+      for (const seat of SEATS) room.players[seat]!.confirmed = false;
     }
     this.touch(room);
+    return ok(undefined);
   }
 
   touch(room: Room): void {
@@ -252,7 +359,16 @@ export class RoomManager {
   }
 
   private seat(room: Room, seat: Seat, name: string, socketId: string): Player {
-    const player: Player = { seat, name, token: randomUUID(), socketId, ready: false };
+    const player: Player = {
+      seat,
+      name,
+      token: randomUUID(),
+      socketId,
+      ready: false,
+      creator: false,
+      pick: null,
+      confirmed: false,
+    };
     room.players[seat] = player;
     this.sockets.set(socketId, { code: room.code, seat });
     this.touch(room);

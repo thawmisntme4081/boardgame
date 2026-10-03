@@ -3,8 +3,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPartnerNotifier, partnerChange } from './partner';
 
 const both = (copilotOnline = true): Presence => ({
-  pilot: { name: 'Ana', online: true, ready: false },
-  copilot: { name: 'Ben', online: copilotOnline, ready: false },
+  pilot: {
+    name: 'Ana',
+    online: true,
+    ready: false,
+    creator: false,
+    pick: null,
+    rolesChosen: true,
+    confirmed: false,
+  },
+  copilot: {
+    name: 'Ben',
+    online: copilotOnline,
+    ready: false,
+    creator: false,
+    pick: null,
+    rolesChosen: true,
+    confirmed: false,
+  },
 });
 const pilotOnly: Presence = { pilot: both().pilot, copilot: null };
 

@@ -1,4 +1,13 @@
-import { SLOTS, type PlayerView, type SlotId } from '@sky/shared';
+import {
+  ALARM_IDS,
+  ALARMS,
+  alarmBlocking,
+  SLOTS,
+  slotActive,
+  type PlayerView,
+  type SlotId,
+} from '@sky/shared';
+import { BellRing, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { placeSelected } from '@/api';
 import { t } from '@/i18n';
@@ -19,6 +28,8 @@ function slotLabel(slot: SlotId): string {
   const needs = def.values ? t('slot.needs', { values: def.values.join(t('slot.or')) }) : '';
   const row =
     def.group === 'iceBrakes' ? (slot.endsWith('Top') ? t('slot.above') : t('slot.below')) : '';
+  const alarm = ALARM_IDS.find((id) => ALARMS[id].slot === slot);
+  if (alarm) return t('slot.alarmLabel', { alarm: t(`alarms.name.${alarm}`), who, needs });
   return t('slot.label', {
     group: t(`slot.group.${def.group}`),
     n: def.index + 1,
@@ -33,6 +44,24 @@ const SOURCE_KEY = { intern: 'slot.internToken', traffic: 'slot.trafficDie' } as
 /** A space on the control panel: shows its die, or lights up when the selected die fits. */
 export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
   useTranslation(); // re-render when the language changes
+  if (!slotActive(view.scenario.modules, slot)) return <CoveredSlot slot={slot} />;
+  return <OpenSlot slot={slot} view={view} />;
+}
+
+/** A space the scenario covers with a token (Belly landing's stuck gear): no die goes here. */
+function CoveredSlot({ slot }: { slot: SlotId }) {
+  return (
+    <span
+      role="img"
+      aria-label={t('slot.covered', { label: slotLabel(slot) })}
+      className="grid size-12 shrink-0 place-items-center rounded-xl border-2 border-dashed border-muted-foreground/40 bg-muted text-muted-foreground"
+    >
+      <X aria-hidden="true" className="size-7" strokeWidth={3} />
+    </span>
+  );
+}
+
+function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
   const selectedDieId = useGame((s) => s.selectedDieId);
   const coffeeDelta = useGame((s) => s.coffeeDelta);
   const internSlot = useGame((s) => s.internSlot);
@@ -42,6 +71,9 @@ export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
   const chosen = internSlot === slot;
   const both = def.seats.length === 2;
   const seat = def.seats[0]!;
+  // Alarms: a face-up token blocks this space until it is cleared.
+  const blockedBy = placed ? undefined : alarmBlocking(view.alarms, slot);
+  const blocked = blockedBy ? t('slot.blockedBy', { alarm: t(`alarms.name.${blockedBy}`) }) : '';
 
   return (
     <button
@@ -50,7 +82,7 @@ export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
         placed
           ? t('slot.placed', { label: slotLabel(slot), value: placed.value }) +
             (placed.source ? t(SOURCE_KEY[placed.source]) : '')
-          : slotLabel(slot)
+          : slotLabel(slot) + blocked
       }
       aria-pressed={chosen || undefined}
       data-valid={valid || undefined}
@@ -72,6 +104,12 @@ export function Slot({ slot, view }: { slot: SlotId; view: PlayerView }) {
         <DieFace value={placed.value} seat={placed.seat} kind={placed.source} className="size-10" />
       ) : (
         <span>{def.values?.join('·') ?? ''}</span>
+      )}
+      {blockedBy && (
+        <BellRing
+          aria-hidden="true"
+          className="absolute -top-2 -right-2 size-5 rounded-full bg-danger p-0.5 text-white"
+        />
       )}
     </button>
   );

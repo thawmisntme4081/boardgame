@@ -54,8 +54,24 @@ export function catalogScenario(match: (s: Scenario) => boolean): Scenario {
 }
 
 export const presence = (pilotReady = false, copilotReady = false): Presence => ({
-  pilot: { name: 'Ana', online: true, ready: pilotReady },
-  copilot: { name: 'Ben', online: true, ready: copilotReady },
+  pilot: {
+    name: 'Ana',
+    online: true,
+    ready: pilotReady,
+    creator: false,
+    pick: null,
+    rolesChosen: true,
+    confirmed: false,
+  },
+  copilot: {
+    name: 'Ben',
+    online: true,
+    ready: copilotReady,
+    creator: false,
+    pick: null,
+    rolesChosen: true,
+    confirmed: false,
+  },
 });
 
 export function resetStore(): void {

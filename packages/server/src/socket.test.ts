@@ -1,6 +1,8 @@
 import type { JoinResult, PlayerView } from '@sky/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { next, startTestServer, type Client } from './test-server';
+import { next, startTestServer, takeOff, type Client } from './test-server';
+
+const expectOk = (result: unknown) => expect(result).toEqual({ ok: true });
 
 let server: Awaited<ReturnType<typeof startTestServer>>;
 
@@ -25,7 +27,10 @@ async function twoPlayers() {
   const pilotView = next(pilot, 'game:view');
   const copilotView = next(copilot, 'game:view');
   const join = joined(await copilot.emitWithAck('room:join', { code: created.code, name: 'Ben' }));
-  return { pilot, copilot, created, join, views: await Promise.all([pilotView, copilotView]) };
+  const views = await Promise.all([pilotView, copilotView]);
+  // Round 1 starts once the creator has chosen the seats and both have confirmed.
+  await takeOff(pilot, copilot);
+  return { pilot, copilot, created, join, views };
 }
 
 describe('http', () => {
@@ -46,8 +51,8 @@ describe('room:create', () => {
     expect(result.code).toMatch(/^[A-HJ-NP-Z]{4}$/);
     expect(result.seat).toBe('pilot');
     expect(result.token).toMatch(/^[0-9a-f-]{36}$/);
-    expect(await view).toMatchObject({ seat: 'pilot', phase: 'strategy', round: 1 });
-    expect(await presence).toEqual({
+    expect(await view).toMatchObject({ seat: 'pilot', phase: 'setup', round: 1 });
+    expect(await presence).toMatchObject({
       pilot: { name: 'Ana', online: true, ready: false },
       copilot: null,
     });
@@ -80,7 +85,7 @@ describe('room:join', () => {
     const [pilotView, copilotView] = views;
     expect(pilotView.seat).toBe('pilot');
     expect(copilotView.seat).toBe('copilot');
-    expect(copilotView).toMatchObject({ phase: 'strategy', myDice: [], partnerDiceLeft: 0 });
+    expect(copilotView).toMatchObject({ phase: 'setup', myDice: [], partnerDiceLeft: 0 });
   });
 
   it('tells both players who is seated', async () => {
@@ -89,7 +94,7 @@ describe('room:join', () => {
     const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
     const presence = next(pilot, 'room:presence');
     await copilot.emitWithAck('room:join', { code, name: 'Ben' });
-    expect(await presence).toEqual({
+    expect(await presence).toMatchObject({
       pilot: { name: 'Ana', online: true, ready: false },
       copilot: { name: 'Ben', online: true, ready: false },
     });
@@ -162,15 +167,28 @@ describe('game:ready', () => {
     expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: false, error: 'not-strategy' });
   });
 
-  it('waits for the partner to join before rolling', async () => {
+  it('waits for the partner and both confirms before round 1 starts', async () => {
     const pilot = await server.connect();
     const copilot = await server.connect();
     const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
-    await pilot.emitWithAck('game:ready', {});
+    expect(await pilot.emitWithAck('game:confirm', {})).toEqual({ ok: false, error: 'no-partner' });
+    expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: false, error: 'not-strategy' });
     await copilot.emitWithAck('room:join', { code, name: 'Ben' });
-    const view = next(copilot, 'game:view');
-    await copilot.emitWithAck('game:ready', {});
-    expect((await view).phase).toBe('placing');
+    expect(await copilot.emitWithAck('room:choose-seat', { seat: 'pilot' })).toEqual({
+      ok: false,
+      error: 'not-creator',
+    });
+    expect(await pilot.emitWithAck('game:confirm', {})).toEqual({
+      ok: false,
+      error: 'roles-missing',
+    });
+    expectOk(await pilot.emitWithAck('room:choose-seat', { seat: 'pilot' }));
+    expectOk(await pilot.emitWithAck('game:confirm', {}));
+    const started = new Promise<PlayerView>((resolve) =>
+      copilot.on('game:view', (v) => v.phase === 'strategy' && resolve(v)),
+    );
+    expectOk(await copilot.emitWithAck('game:confirm', {}));
+    expect((await started).round).toBe(1);
   });
 
   it('needs a seat', async () => {

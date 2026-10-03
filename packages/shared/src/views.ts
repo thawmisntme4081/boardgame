@@ -36,8 +36,10 @@ export interface PlayerView {
   currentSeat: Seat | null;
   /** Your own unplaced dice, with values. */
   myDice: Die[];
-  /** The partner's unplaced dice: a count only. */
+  /** The partner's unplaced dice (set-aside ones included): a count only. */
   partnerDiceLeft: number;
+  /** Bad Visibility: dice each player still has set aside (public: never rolled yet). */
+  setAside: Record<Seat, number>;
   placed: Partial<Record<SlotId, PlacedDie>>;
   axis: number;
   approachIndex: number;
@@ -62,6 +64,10 @@ export interface PlayerView {
   kerosene: number | null;
   intern: DieValue[] | null;
   wind: number | null;
+  /** Alarms: face-up and face-down tokens (public: the flip is random when it happens). */
+  alarms: GameState['alarms'];
+  /** Total Trust: no strategy discussion this round; the server rolls the dice. */
+  autoRoll: boolean;
   planeSupply: number;
   /** The traffic die rolls that started this round (public: rolled in the open). */
   traffic: TrafficRoll[];
@@ -85,7 +91,8 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     finalRound: isFinalRound(state),
     currentSeat: state.currentSeat,
     myDice: structuredClone(state.dice[seat]),
-    partnerDiceLeft: state.dice[otherSeat(seat)].length,
+    partnerDiceLeft: state.dice[otherSeat(seat)].length + state.setAside[otherSeat(seat)],
+    setAside: { ...state.setAside },
     placed: structuredClone(state.placed),
     axis: state.axis,
     approachIndex: state.approachIndex,
@@ -107,6 +114,8 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     kerosene: state.kerosene,
     intern: state.intern && [...state.intern],
     wind: state.wind,
+    alarms: structuredClone(state.alarms),
+    autoRoll: state.autoRoll,
     planeSupply: state.planeSupply,
     traffic: state.traffic.map((t) => ({ ...t })),
     bonus: state.bonus && { die: { ...state.bonus.die } },

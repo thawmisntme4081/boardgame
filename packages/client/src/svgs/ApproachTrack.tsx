@@ -1,4 +1,5 @@
 import type { PlayerView } from '@sky/shared';
+import { BellRing, VolumeX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { t } from '@/i18n';
 import { trackWidth } from '@/lib/trackRow';
@@ -55,7 +56,12 @@ function Turn({ cx, y, allowed }: { cx: number; y: number; allowed: readonly num
           r="1.6"
           strokeWidth="0.8"
           className={
-            allowed.includes(p) ? 'fill-green-600 stroke-green-600' : 'fill-red-600 stroke-red-600'
+            // Allowed: green when level, yellow when tilted (as on the axis dial); else red.
+            !allowed.includes(p)
+              ? 'fill-red-600 stroke-red-600'
+              : p === 0
+                ? 'fill-green-600 stroke-green-600'
+                : 'fill-amber-400 stroke-amber-400'
           }
         />
       ))}
@@ -84,9 +90,13 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
   const height = effects ? (stacked ? 72 : 64) : 50;
   const hereTraffic = scenario.traffic?.[here] ?? 0;
   const hereTurn = scenario.turns?.[here];
+  const hereAlarms = scenario.alarms?.[here] ?? 0;
+  const hereTrust = (scenario.totalTrust?.[here] ?? 0) > 0;
   const hereText = [
     hereTraffic > 0 && t('tracks.hereTraffic', { count: hereTraffic }),
     hereTurn && t('tracks.hereTurn', { text: turnText(hereTurn) }),
+    hereAlarms > 0 && t('tracks.hereAlarm', { count: hereAlarms }),
+    hereTrust && t('tracks.hereTrust'),
   ]
     .filter(Boolean)
     .join('; ');
@@ -118,6 +128,8 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
           const x = i * CELL;
           const traffic = scenario.traffic?.[i] ?? 0;
           const turn = scenario.turns?.[i];
+          const alarms = scenario.alarms?.[i] ?? 0;
+          const trust = (scenario.totalTrust?.[i] ?? 0) > 0;
           return (
             <g key={i} className={fade(i)}>
               <rect
@@ -138,6 +150,24 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
                   rx="1"
                   className="fill-muted-foreground/40"
                 />
+              )}
+              {/* Alarm (top left) and Total Trust (top right) symbols inside the card. */}
+              {alarms > 0 && (
+                <g className="text-danger">
+                  <title>{t('tracks.alarmTitle', { count: alarms })}</title>
+                  <BellRing aria-hidden="true" x={x + 4} y={4} size={9} strokeWidth={2.5} />
+                  {alarms > 1 && (
+                    <text x={x + 5} y={21} className="fill-danger text-[7px]">
+                      ×{alarms}
+                    </text>
+                  )}
+                </g>
+              )}
+              {trust && (
+                <g className="text-foreground">
+                  <title>{t('tracks.trustTitle')}</title>
+                  <VolumeX aria-hidden="true" x={x + CELL - 13} y={4} size={9} strokeWidth={2.5} />
+                </g>
               )}
               {traffic > 0 && <Traffic x={x + 13} y={rowY} count={traffic} />}
               {turn && (

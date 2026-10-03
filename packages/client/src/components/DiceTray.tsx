@@ -13,7 +13,18 @@ import {
   type PlayerView,
   type Presence,
 } from '@sky/shared';
-import { ArrowLeftRight, Coffee, FlipVertical2, Minus, Plus, RotateCcw, X } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Coffee,
+  EyeOff,
+  FlipVertical2,
+  Minus,
+  Plus,
+  RotateCcw,
+  VolumeX,
+  Waves,
+  X,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { playAbility, ready, reroll, spendReroll } from '@/api';
@@ -104,6 +115,55 @@ const spacesAhead = (view: PlayerView, space: number) => {
   return translate('tray.spacesAhead', { count: ahead });
 };
 
+/** This altitude's weather (Turbulence tracks A–D): what it does to your dice. */
+function WeatherNote({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
+  const space = view.scenario.altitudes[view.round - 1];
+  if (!space?.turbulence && !space?.badVisibility) return null;
+  const Icon = space.turbulence ? Waves : EyeOff;
+  const rule =
+    space.turbulence && space.badVisibility
+      ? t('weather.stormRule')
+      : space.turbulence
+        ? t('weather.turbulenceRule')
+        : t('weather.badVisibilityRule');
+  return (
+    <p className="flex items-start gap-1.5 text-sm font-medium text-danger">
+      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      {rule}
+    </p>
+  );
+}
+
+/** Total Trust: no strategy talk this round; the server rolls when the pause ends. */
+function TotalTrustNote() {
+  const { t } = useTranslation();
+  return (
+    <p className="flex items-start gap-1.5 text-sm font-medium" role="status">
+      <VolumeX aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      {t('tray.totalTrust')}
+    </p>
+  );
+}
+
+/** Bad Visibility: your dice still set aside, face down until they come in. */
+function SetAsideDice({ count }: { count: number }) {
+  const { t } = useTranslation();
+  if (count === 0) return null;
+  return (
+    <span role="img" aria-label={t('weather.setAside', { count })} className="flex gap-2">
+      {Array.from({ length: count }, (_, i) => (
+        <span
+          key={i}
+          className="grid size-12 place-items-center rounded-xl border-2 border-dashed border-muted-foreground/50 bg-muted text-muted-foreground"
+        >
+          <EyeOff aria-hidden="true" className="size-5" />
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /** The traffic die rolled at the start of the round, and where each plane went. */
 function TrafficNews({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
@@ -153,11 +213,14 @@ function ReadyButton({ ready: isReady, partnerName }: { ready: boolean; partnerN
 
 function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const { t } = useTranslation();
+
   return (
     // Notes on the left, "Roll dice" on the right (one column in the tablet side column).
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-col gap-1">
         <TrafficNews view={view} />
+        {view.autoRoll && <TotalTrustNote />}
+        <WeatherNote view={view} />
         {view.scenario.modules.includes('real-time') ? (
           <p className="text-sm font-medium">
             {t('tray.realTime', { time: formatClock(REAL_TIME_MS) })}
@@ -172,10 +235,13 @@ function StrategyTray({ view, presence }: { view: PlayerView; presence: Presence
         <AbilityList view={view} />
         <WinConditions view={view} className="text-base" />
       </div>
-      <ReadyButton
-        ready={presence?.[view.seat]?.ready ?? false}
-        partnerName={partnerName(view, presence)}
-      />
+      {/* Total Trust: no button, the dice roll by themselves. */}
+      {!view.autoRoll && (
+        <ReadyButton
+          ready={presence?.[view.seat]?.ready ?? false}
+          partnerName={partnerName(view, presence)}
+        />
+      )}
     </div>
   );
 }
@@ -368,6 +434,7 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
         >
           {placingText(view, partner, internSlot !== null)}
         </p>
+        <WeatherNote view={view} />
         <div className="flex flex-wrap items-center gap-2">
           {internToken !== undefined && (
             <span
@@ -415,7 +482,8 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
               </button>
             );
           })}
-          {view.myDice.length === 0 && !trafficDie && (
+          <SetAsideDice count={view.setAside[view.seat]} />
+          {view.myDice.length === 0 && !trafficDie && view.setAside[view.seat] === 0 && (
             <span className="text-sm text-muted-foreground">{t('tray.noDiceLeft')}</span>
           )}
         </div>
@@ -447,7 +515,13 @@ function PlacingTray({ view, presence }: { view: PlayerView; presence: Presence 
   );
 }
 
+function SetupNote() {
+  const { t } = useTranslation();
+  return <p className="text-sm text-muted-foreground">{t('preflight.trayNote')}</p>;
+}
+
 export function DiceTray({ view, presence }: { view: PlayerView; presence: Presence | null }) {
+  if (view.phase === 'setup') return <SetupNote />;
   if (view.phase === 'strategy') return <StrategyTray view={view} presence={presence} />;
   if (view.phase !== 'placing') return null;
   if (view.rerollPending[view.seat]) return <RerollTray view={view} />;

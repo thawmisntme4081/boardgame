@@ -1,14 +1,6 @@
-import {
-  ABILITY_IDS,
-  DIFFICULTIES,
-  SCENARIO_LIST,
-  SCENARIOS,
-  type AbilityId,
-  type Scenario,
-} from '@sky/shared';
-import { fitAbilities, scenarioSummary, type SetupChoice } from '@/lib/setup';
+import { DIFFICULTIES, SCENARIO_LIST, SCENARIOS, type Scenario } from '@sky/shared';
+import { scenarioSummary, type SetupChoice } from '@/lib/setup';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -20,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { abilityText, DIFFICULTY_DOT, difficultyName, moduleText } from '@/scenarioText';
+import { DIFFICULTY_DOT, difficultyName, moduleText } from '@/scenarioText';
 
 export function DifficultyDot({ scenario }: { scenario: Scenario }) {
   return (
@@ -34,7 +26,7 @@ export function DifficultyDot({ scenario }: { scenario: Scenario }) {
   );
 }
 
-/** Choose one of the 21 Flight Log scenarios and, when it allows, its Special Abilities. */
+/** Choose a Flight Log scenario (its Special Abilities are picked in the game, before round 1). */
 export function ScenarioPicker({
   id,
   value,
@@ -47,16 +39,9 @@ export function ScenarioPicker({
 }) {
   const { t } = useTranslation();
   const scenario = SCENARIOS[value.scenario] ?? SCENARIO_LIST[0]!;
-  const count = scenario.abilities;
 
   const pickScenario = (next: string) => {
-    const chosen = SCENARIOS[next];
-    if (chosen) onChange({ scenario: next, abilities: fitAbilities(chosen, value.abilities) });
-  };
-  // Always exactly `count` chosen: picking a new one drops the oldest.
-  const toggleAbility = (ability: AbilityId) => {
-    if (value.abilities.includes(ability)) return;
-    onChange({ ...value, abilities: [...value.abilities, ability].slice(-count) });
+    if (SCENARIOS[next]) onChange({ scenario: next });
   };
 
   return (
@@ -91,40 +76,6 @@ export function ScenarioPicker({
             </li>
           ))}
         </ul>
-      )}
-      {count > 0 && (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-sm font-medium">
-            {t('scenario.chooseAbilities', { count })}
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
-            {ABILITY_IDS.map((ability) => {
-              const on = value.abilities.includes(ability);
-              return (
-                <Button
-                  key={ability}
-                  type="button"
-                  size="sm"
-                  variant={on ? 'default' : 'outline'}
-                  aria-pressed={on}
-                  title={abilityText(ability).rule}
-                  className="h-9"
-                  onClick={() => toggleAbility(ability)}
-                >
-                  {abilityText(ability).name}
-                </Button>
-              );
-            })}
-          </div>
-          <ul className="space-y-0.5 text-xs text-muted-foreground">
-            {value.abilities.map((ability) => (
-              <li key={ability}>
-                <span className="font-medium text-foreground">{abilityText(ability).name}:</span>{' '}
-                {abilityText(ability).rule}
-              </li>
-            ))}
-          </ul>
-        </fieldset>
       )}
     </div>
   );

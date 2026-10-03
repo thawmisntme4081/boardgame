@@ -24,8 +24,10 @@ import { useGame, type Connection } from '@/store';
 
 function turnText(view: PlayerView, partner: string): string {
   switch (view.phase) {
+    case 'setup':
+      return t('preflight.title');
     case 'strategy':
-      return t('status.strategy');
+      return view.autoRoll ? t('status.totalTrust') : t('status.strategy');
     case 'placing':
       return view.currentSeat === view.seat
         ? t('status.yourTurn')
@@ -170,8 +172,9 @@ export function StatusBar({
                 {turnText(view, partnerName)}
               </p>
             )}
-            {/* Dice are rolled: silence until the round ends, as at the table. */}
-            {view.phase === 'placing' && (
+            {/* Dice are rolled (or Total Trust): silence until the round ends, as at the table. */}
+            {(view.phase === 'placing' ||
+              (view.autoRoll && view.phase === 'strategy' && !pausing)) && (
               <p className="rounded-full bg-danger px-3 py-1 text-sm font-semibold whitespace-nowrap text-white">
                 {t('status.noTalking')}
               </p>

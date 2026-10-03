@@ -47,10 +47,44 @@ export async function startGame(
   await copilot.getByLabel('Your name').fill('Ben');
   await copilot.getByRole('button', { name: 'Join' }).click();
 
+  await takeOff({ pilot, copilot });
+  return { pilot, copilot, code };
+}
+
+/**
+ * Before round 1: the creator (Ana) keeps the pilot seat, the Special Ability cards are
+ * picked, and both confirm; round 1 starts and "Roll dice" appears.
+ */
+export async function takeOff({ pilot, copilot }: Pick<Players, 'pilot' | 'copilot'>) {
+  const panel = (page: Page) => page.getByRole('region', { name: 'Before take-off' });
+  await panel(pilot).getByRole('button', { name: 'Pilot', exact: true }).click();
+  await expect(
+    panel(copilot).getByRole('button', { name: 'Co-pilot', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await chooseAbilities({ pilot, copilot });
+  for (const page of [pilot, copilot]) {
+    await panel(page).getByRole('button', { name: 'Confirm' }).click();
+  }
   for (const page of [pilot, copilot]) {
     await expect(page.getByRole('button', { name: 'Roll dice' })).toBeVisible();
   }
-  return { pilot, copilot, code };
+}
+
+/**
+ * Before round 1: each player who may pick a Special Ability card takes one (the pilot the
+ * first free card, the co-pilot the last, so they never clash).
+ */
+export async function chooseAbilities({ pilot, copilot }: Pick<Players, 'pilot' | 'copilot'>) {
+  for (const [page, end] of [
+    [pilot, 'first'],
+    [copilot, 'last'],
+  ] as const) {
+    const cards = page.getByRole('region', { name: 'Before take-off' }).locator('fieldset button');
+    const free = cards.and(page.locator(':not([disabled])'));
+    if ((await free.count()) === 0) continue;
+    await free[end]().click();
+    await expect(cards.and(page.locator('[aria-pressed="true"]'))).toHaveCount(1);
+  }
 }
 
 export async function bothReady({ pilot, copilot }: Players): Promise<void> {

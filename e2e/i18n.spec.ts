@@ -27,6 +27,10 @@ test('each player picks a language: a Vietnamese pilot and an English co-pilot p
   await copilot.getByLabel('Your name').fill('Ben');
   await copilot.getByRole('button', { name: 'Join' }).click();
 
+  // Before take-off, in each player's language.
+  await pilot.getByRole('button', { name: 'Phi công', exact: true }).click();
+  await pilot.getByRole('button', { name: 'Xác nhận' }).click();
+  await copilot.getByRole('button', { name: 'Confirm' }).click();
   await pilot.getByRole('button', { name: 'Đổ xúc xắc' }).click();
   await copilot.getByRole('button', { name: 'Roll dice' }).click();
   await expect(pilot.getByText('Lượt của bạn').first()).toBeVisible();

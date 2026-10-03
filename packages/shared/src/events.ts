@@ -11,7 +11,15 @@ export type ErrorCode =
   | 'already-in-room'
   | 'not-strategy'
   | 'game-not-over'
-  | 'too-many-rooms';
+  | 'too-many-rooms'
+  // Before round 1: roles and Special Abilities.
+  | 'setup-closed'
+  | 'not-your-pick'
+  | 'ability-taken'
+  | 'abilities-missing'
+  | 'no-partner'
+  | 'not-creator'
+  | 'roles-missing';
 
 export type JoinResult =
   { ok: true; code: string; seat: Seat; token: string } | { ok: false; error: ErrorCode };
@@ -24,17 +32,33 @@ export interface PlayerInfo {
   online: boolean;
   /** Ready to roll: the strategy discussion is over for this player. */
   ready: boolean;
+  /** Created the game: picks the card when the scenario allows only one Special Ability. */
+  creator: boolean;
+  /** Before round 1: the Special Ability card this player picked. */
+  pick: AbilityId | null;
+  /** Before round 1: the creator has chosen who flies which seat. */
+  rolesChosen: boolean;
+  /** Before round 1: this player confirmed the roles and abilities. */
+  confirmed: boolean;
 }
 
 /** Who sits in each seat; `null` while the seat is empty. */
 export type Presence = Record<Seat, PlayerInfo | null>;
 
-/** Which Flight Log scenario to fly, and the Special Ability cards the players chose. */
+/** Which Flight Log scenario to fly (roles and Special Abilities are chosen in the game). */
 export interface GameSetup {
   /** Scenario id (`SCENARIOS`); YUL when absent. */
   scenario?: string;
-  /** Exactly as many as the scenario allows; the first ones of `ABILITY_IDS` when absent. */
-  abilities?: AbilityId[];
+}
+
+/** Before round 1: pick a Special Ability card (`null` takes yours back). */
+export interface PickAbilityPayload {
+  ability: AbilityId | null;
+}
+
+/** Before round 1: the seat the creator takes (the partner gets the other one). */
+export interface ChooseSeatPayload {
+  seat: Seat;
 }
 
 export interface CreateRoomPayload extends GameSetup {
@@ -62,6 +86,12 @@ export interface ClientToServer {
   /** Give up your seat for good (closing the tab only marks you offline). */
   'room:leave': (payload: Empty, ack: (result: AckResult) => void) => void;
   'game:ready': (payload: Empty, ack: (result: AckResult) => void) => void;
+  /** Before round 1: pick your Special Ability card. */
+  'game:pick-ability': (payload: PickAbilityPayload, ack: (result: AckResult) => void) => void;
+  /** Before round 1: the creator chooses their seat. */
+  'room:choose-seat': (payload: ChooseSeatPayload, ack: (result: AckResult) => void) => void;
+  /** Before round 1: roles and abilities are fine; round 1 starts once both confirm. */
+  'game:confirm': (payload: Empty, ack: (result: AckResult) => void) => void;
   'game:place': (payload: PlaceIntent, ack: (result: AckResult) => void) => void;
   /** Spend a reroll token: both players may then reroll once. */
   'game:spend-reroll': (payload: Empty, ack: (result: AckResult) => void) => void;

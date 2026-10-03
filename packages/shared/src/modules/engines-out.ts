@@ -10,5 +10,5 @@ export const enginesOut: RuleModule = {
   id: 'engines-out',
   dicePerRound: 3,
   approachPerRound: 1,
-  noSpeed: true,
+  waivedLanding: ['landing-brakes'],
 };

@@ -28,6 +28,8 @@ export const BRAKE_THRESHOLDS: readonly number[] = [1, 2, 4, 6];
 export const TRAFFIC_DIE: readonly DieValue[] = [2, 3, 3, 4, 4, 5];
 /** Airplane tokens in the box: the traffic die adds planes only while some are left. */
 export const PLANE_TOKENS = 12;
+/** The pause after a round's last die before the next round (the "Next turn in 5s" countdown). */
+export const NEXT_TURN_MS = 5_000;
 /** Reroll tokens in the box (2 in the base game, 1 with the modules). */
 export const REROLL_TOKENS = 3;
 
@@ -89,6 +91,8 @@ export interface PlacementContext {
   bonus: { die: Die } | null;
   /** A Working Together swap waiting for the partner: nobody places until it is done. */
   swap: { seat: Seat } | null;
+  /** Alarms: face-up tokens block their Action. */
+  alarms: GameState['alarms'];
 }
 
 export const placementContext = (state: GameState, seat: Seat): PlacementContext => ({
@@ -102,6 +106,7 @@ export const placementContext = (state: GameState, seat: Seat): PlacementContext
   intern: state.intern,
   bonus: state.bonus,
   swap: state.swap,
+  alarms: state.alarms,
 });
 
 /**
@@ -123,11 +128,17 @@ export function checkSlot(
     return 'out-of-order';
   }
   if (def.group === 'brakes' && ctx.brakes < def.index) return 'out-of-order';
-  return (def.module && MODULES[def.module].checkSlot?.(ctx, slot, value)) || null;
+  const own = def.module && MODULES[def.module].checkSlot?.(ctx, slot, value);
+  if (own) return own;
+  for (const module of modulesOf(ctx.scenario)) {
+    const error = module.checkAnySlot?.(ctx, slot);
+    if (error) return error;
+  }
+  return null;
 }
 
 /** The traffic die goes on any empty Control Panel space, not the side boards. */
-const OFF_PANEL: readonly SlotGroup[] = ['kerosene', 'intern'];
+const OFF_PANEL: readonly SlotGroup[] = ['kerosene', 'intern', 'alarm'];
 
 /** How many of their own dice each player may place per round (4, or less with a module). */
 export const dicePerRound = (scenario: Pick<Scenario, 'modules'>): number =>
@@ -310,22 +321,71 @@ export function expireRoundTimer(state: GameState, now: number): GameState {
   return s;
 }
 
+/** Bad Visibility: how many dice each player holds at a time. */
+export const BAD_VISIBILITY_HAND = 2;
+
+/** `r3-p2`: the pilot's second die of round 3 (set-aside dice keep their number). */
+const dieId = (round: number, seat: Seat, n: number) =>
+  `r${round}-${seat === 'pilot' ? 'p' : 'c'}${n}`;
+
+/**
+ * After a player places one of their own dice: Bad Visibility brings in a set-aside die,
+ * freshly rolled; Turbulence rerolls every die left in their hand (the new one included).
+ */
+function weather(state: GameState, seat: Seat): void {
+  const { turbulence } = currentAltitude(state);
+  let changed = false;
+  if (state.setAside[seat] > 0) {
+    const n = DICE_PER_SEAT - state.setAside[seat] + 1;
+    state.dice[seat].push(...rollFor(state, [dieId(state.round, seat, n)]));
+    state.setAside[seat]--;
+    changed = true;
+  }
+  if (turbulence && state.dice[seat].length > 0) {
+    state.dice[seat] = rollFor(
+      state,
+      state.dice[seat].map((d) => d.id),
+    );
+    changed = true;
+  }
+  if (changed) {
+    state.log.push({
+      type: 'weather',
+      round: state.round,
+      seat,
+      dice: structuredClone(state.dice[seat]),
+    });
+  }
+}
+
+/**
+ * The start of a round, before the strategy discussion: the traffic die, then each module's
+ * start-of-round step (Alarms flip, Total Trust). Called by `createGame` and between rounds.
+ */
+export function startRound(state: GameState): void {
+  rollTraffic(state);
+  for (const module of modulesOf(state.scenario)) module.startOfRound?.(state);
+}
+
+/** The crew has chosen roles and abilities: round 1 starts (traffic die, alarms, …). */
+export function beginGame(state: GameState): GameState {
+  if (state.phase !== 'setup') throw new RuleError('not-setup');
+  const s = structuredClone(state);
+  s.phase = 'strategy';
+  startRound(s);
+  return s;
+}
+
 /** Strategy phase is over: both players roll 4 dice behind their screens. */
 export function rollDice(state: GameState): GameState {
   if (isGameOver(state)) throw new RuleError('game-over');
   if (state.phase !== 'strategy') throw new RuleError('not-strategy');
   const s = structuredClone(state);
-  const prefix = `r${s.round}`;
-  s.dice = {
-    pilot: rollFor(
-      s,
-      ['p1', 'p2', 'p3', 'p4'].map((d) => `${prefix}-${d}`),
-    ),
-    copilot: rollFor(
-      s,
-      ['c1', 'c2', 'c3', 'c4'].map((d) => `${prefix}-${d}`),
-    ),
-  };
+  // Bad Visibility: each player rolls only 2 dice and sets the other 2 aside.
+  const hand = currentAltitude(s).badVisibility ? BAD_VISIBILITY_HAND : DICE_PER_SEAT;
+  const ids = (seat: Seat) => Array.from({ length: hand }, (_, i) => dieId(s.round, seat, i + 1));
+  s.dice = { pilot: rollFor(s, ids('pilot')), copilot: rollFor(s, ids('copilot')) };
+  s.setAside = { pilot: DICE_PER_SEAT - hand, copilot: DICE_PER_SEAT - hand };
   s.phase = 'placing';
   s.lastRound = null;
   s.currentSeat = currentAltitude(s).first;
@@ -514,6 +574,8 @@ export function placeDie(state: GameState, seat: Seat, intent: PlaceIntent): Gam
   });
 
   applySlotEffect(s, intent.slot, placed.value, seat, intent.tokenSlot);
+  // Turbulence and Bad Visibility follow a player's own die (not the traffic die).
+  if (s.phase === 'placing' && placed.source === undefined) weather(s, seat);
   if (s.phase === 'placing' && !synchronise(s, after)) nextTurn(s, after);
   return s;
 }
@@ -522,32 +584,36 @@ export function placeDie(state: GameState, seat: Seat, intent: PlaceIntent): Gam
 /** Every condition a landing must meet in this scenario, in `checkLanding` order. */
 export type LandingReason = Extract<EndReason, `landing-${string}`>;
 
+/** Base landing conditions the scenario's modules remove (Engines out: speed; Belly landing: gear). */
+const waivedLanding = (scenario: Pick<Scenario, 'modules'>): LandingReason[] =>
+  modulesOf(scenario).flatMap((module) => module.waivedLanding ?? []);
+
 export function landingConditions(scenario: Pick<Scenario, 'modules'>): LandingReason[] {
-  return [
+  const all: LandingReason[] = [
     'landing-traffic',
     'landing-gear',
     'landing-flaps',
     'landing-axis',
-    ...(modulesOf(scenario).some((m) => m.noSpeed) ? [] : (['landing-brakes'] as const)),
+    'landing-brakes',
     ...modulesOf(scenario).flatMap((module) => module.landingConditions ?? []),
   ];
+  return all.filter((reason) => !waivedLanding(scenario).includes(reason));
 }
 
 export function checkLanding(state: GameState): EndReason[] {
-  const failures: EndReason[] = [];
+  const failures: LandingReason[] = [];
   if (state.approachPlanes.some((n) => n > 0)) failures.push('landing-traffic');
   if (!state.gear.every(Boolean)) failures.push('landing-gear');
   if (!state.flaps.every(Boolean)) failures.push('landing-flaps');
   if (state.axis !== 0) failures.push('landing-axis');
-  const noSpeed = modulesOf(state.scenario).some((m) => m.noSpeed);
-  if (
-    !noSpeed &&
-    (state.speed === null || state.speed > brakeThreshold(state.brakes, state.scenario.modules))
-  ) {
+  if (state.speed === null || state.speed > brakeThreshold(state.brakes, state.scenario.modules)) {
     failures.push('landing-brakes');
   }
-  for (const module of modulesOf(state.scenario)) failures.push(...(module.landing?.(state) ?? []));
-  return failures;
+  for (const module of modulesOf(state.scenario)) {
+    failures.push(...((module.landing?.(state) ?? []) as LandingReason[]));
+  }
+  const waived = waivedLanding(state.scenario);
+  return failures.filter((reason) => !waived.includes(reason));
 }
 
 function endRound(state: GameState): void {
@@ -585,6 +651,7 @@ function endRound(state: GameState): void {
   state.round++;
   state.placed = {};
   state.dice = { pilot: [], copilot: [] };
+  state.setAside = { pilot: 0, copilot: 0 };
   state.speed = null;
   state.rerollPending = { pilot: false, copilot: false };
   state.abilityUse = {
@@ -602,7 +669,7 @@ function endRound(state: GameState): void {
   if (isFinalRound(state) && state.approachIndex !== airportIndex(state)) {
     return endGame(state, 'lost', 'missed-airport');
   }
-  rollTraffic(state);
+  startRound(state);
 }
 
 /**

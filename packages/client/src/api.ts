@@ -2,10 +2,12 @@
 import {
   SLOTS,
   type AbilityAction,
+  type AbilityId,
   type AckResult,
   type GameSetup,
   type JoinResult,
   type SlotId,
+  type Seat,
 } from '@sky/shared';
 import { toast } from 'sonner';
 import { t } from './i18n';
@@ -62,7 +64,16 @@ export function startConnection(): void {
   });
   socket.on('disconnect', () => store().setConnection('offline'));
   socket.io.on('reconnect_attempt', () => store().setConnection('connecting'));
-  socket.on('game:view', (view) => store().setView(view));
+  socket.on('game:view', (view) => {
+    // Seats can be swapped before round 1: keep the saved seat in step.
+    const { session } = store();
+    if (session && session.seat !== view.seat) {
+      const moved = { ...session, seat: view.seat };
+      saveSession(moved);
+      store().setSession(moved);
+    }
+    store().setView(view);
+  });
   const onPartner = createPartnerNotifier((text) => toast.message(text));
   socket.on('room:presence', (presence) => {
     const { presence: before, session } = store();
@@ -127,6 +138,17 @@ export async function joinRoom(code: string, name: string): Promise<boolean> {
 }
 
 export const ready = () => run('ready', () => emit().emitWithAck('game:ready', {}));
+
+/** Before round 1: pick your Special Ability card (`null` takes it back). */
+export const pickAbility = (ability: AbilityId | null) =>
+  run('pick-ability', () => emit().emitWithAck('game:pick-ability', { ability }));
+
+/** Before round 1: the creator takes a seat (the partner gets the other). */
+export const chooseSeat = (seat: Seat) =>
+  run('choose-seat', () => emit().emitWithAck('room:choose-seat', { seat }));
+
+/** Before round 1: confirm roles and abilities; round 1 starts once both have. */
+export const confirmSetup = () => run('confirm', () => emit().emitWithAck('game:confirm', {}));
 
 /**
  * Places the selected die, with its draft coffee, on `slot`. An Intern space takes two

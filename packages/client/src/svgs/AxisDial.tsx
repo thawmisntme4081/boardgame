@@ -58,7 +58,8 @@ export function AxisDial({ axis, turn }: { axis: number; turn?: readonly number[
               aria-hidden="true"
               className={cn(
                 'size-3 rounded-full',
-                turn.includes(p) ? 'bg-green-600' : 'bg-red-600',
+                // Allowed: green when level, yellow when tilted (as on the dial); else red.
+                !turn.includes(p) ? 'bg-red-600' : p === 0 ? 'bg-green-600' : 'bg-amber-400',
               )}
             />
           ))}

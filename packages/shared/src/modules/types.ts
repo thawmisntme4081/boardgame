@@ -1,5 +1,6 @@
 import type { PlacementContext } from '../rules';
 import type {
+  AlarmId,
   AltitudeSpace,
   DieValue,
   EndReason,
@@ -38,10 +39,14 @@ export interface RuleModule {
   id: ModuleId;
   /** Changes the scenario's altitude track before the game starts; called by `createGame`. */
   altitudes?(altitudes: AltitudeSpace[]): AltitudeSpace[];
-  /** Sets the module's starting state; called by `createGame`. */
-  setup?(state: GameState): void;
+  /** Sets the module's starting state; called by `createGame` with every module in play. */
+  setup?(state: GameState, modules: readonly RuleModule[]): void;
+  /** At the start of every round (the first included), before the strategy discussion. */
+  startOfRound?(state: GameState): void;
   /** Extra rule for anything placed on one of the module's slots (die, token or bonus die). */
   checkSlot?(ctx: PlacementContext, slot: SlotId, value: DieValue): MoveError | null;
+  /** Extra rule for anything placed on any slot, the core ones included (e.g. an Alarm blocking it). */
+  checkAnySlot?(ctx: PlacementContext, slot: SlotId): MoveError | null;
   /** Extra rule for a player's own die placed on one of the module's slots. */
   checkMove?(
     ctx: PlacementContext,
@@ -73,8 +78,10 @@ export interface RuleModule {
   dicePerRound?: number;
   /** The Approach Track advances this many spaces at the end of every round but the final one. */
   approachPerRound?: number;
-  /** No speed: landing skips the speed-against-brakes check. */
-  noSpeed?: boolean;
+  /** Base landing conditions this module removes (e.g. no speed check without engines). */
+  waivedLanding?: readonly Extract<EndReason, `landing-${string}`>[];
+  /** Alarms: the only tokens in play (absent: all six). */
+  alarmTokens?: readonly AlarmId[];
   /** Real-time: when the round's time runs out, the round ends (instead of the game). */
   timeUpEndsRound?: boolean;
 }

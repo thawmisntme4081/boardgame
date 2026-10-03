@@ -1,10 +1,13 @@
 // The Flight Log's game modules as rule hooks (see `RuleModule`).
 import type { ModuleId, Scenario } from '../types';
+import { alarms } from './alarms';
 import { altitude5000 } from './altitude-5000';
+import { bellyLanding } from './belly-landing';
 import { enginesOut } from './engines-out';
 import { iceBrakes } from './ice-brakes';
 import { intern } from './intern';
 import { kerosene, keroseneLeak } from './kerosene';
+import { totalTrust } from './total-trust';
 import type { RuleModule } from './types';
 import { wind, windReversed } from './wind';
 
@@ -29,6 +32,9 @@ export const MODULES: Record<ModuleId, RuleModule> = {
   'ice-brakes': iceBrakes,
   'altitude-5000': altitude5000,
   'engines-out': enginesOut,
+  alarms,
+  'total-trust': totalTrust,
+  'belly-landing': bellyLanding,
 };
 
 export const MODULE_IDS = Object.keys(MODULES) as ModuleId[];
@@ -38,6 +44,7 @@ export const modulesOf = (scenario: Pick<Scenario, 'modules'>): RuleModule[] =>
   scenario.modules.map((id) => MODULES[id]);
 
 export type { Resolver, RuleModule, SlotCheck } from './types';
+export { ALARM_IDS, ALARMS, alarmBlocking, alarmPool } from './alarms';
 export { ICE_BRAKE_COLUMNS } from './ice-brakes';
 export { INTERN_TOKENS, nextInternToken } from './intern';
 export { burnKerosene, KEROSENE_IDLE_LOSS, KEROSENE_START } from './kerosene';

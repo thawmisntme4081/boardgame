@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Cockpit } from '@/components/Cockpit';
 import { DiceTray } from '@/components/DiceTray';
 import { GameOverDialog } from '@/components/GameOverDialog';
+import { Preflight } from '@/components/Preflight';
 import { StatusBar } from '@/components/StatusBar';
 import { placingValue, slotValid } from '@/lib/moves';
 import { AltitudeTrack } from '@/svgs/AltitudeTrack';
@@ -90,10 +91,14 @@ export default function Game({ view, presence }: { view: PlayerView; presence: P
           <StatusBar view={view} presence={presence} connection={connection} />
         </div>
 
-        {/* Side by side on phones (compact strip) and desktop, stacked on tablets. */}
-        <div className="grid content-start gap-3 border-b bg-background px-4 py-2 [grid-area:tracks] tablet:grid-cols-1 tablet:py-3 desktop:grid-cols-[repeat(2,minmax(0,30rem))] desktop:justify-center desktop:gap-x-10">
-          <AltitudeTrack view={view} />
-          <ApproachTrack view={view} radioTarget={radioTarget} />
+        <div className="[grid-area:tracks]">
+          {/* Before round 1: roles, Special Abilities and both players' confirm. */}
+          <Preflight view={view} presence={presence} />
+          {/* Side by side on phones (compact strip) and desktop, stacked on tablets. */}
+          <div className="grid content-start gap-3 border-b bg-background px-4 py-2 tablet:grid-cols-1 tablet:py-3 desktop:grid-cols-[repeat(2,minmax(0,30rem))] desktop:justify-center desktop:gap-x-10">
+            <AltitudeTrack view={view} />
+            <ApproachTrack view={view} radioTarget={radioTarget} />
+          </div>
         </div>
 
         <main className="bg-muted/40 p-3 [grid-area:cockpit]">

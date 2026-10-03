@@ -42,3 +42,13 @@ export function next<E extends keyof ServerToClient>(
     socket.once(event, ((payload: Parameters<ServerToClient[E]>[0]) => resolve(payload)) as never);
   });
 }
+
+/**
+ * Before round 1: the creator (the pilot here) keeps the pilot seat and both confirm, so
+ * round 1 starts. Harmless once the game has started (the server answers `setup-closed`).
+ */
+export async function takeOff(pilot: Client, copilot: Client): Promise<void> {
+  await pilot.emitWithAck('room:choose-seat', { seat: 'pilot' });
+  await pilot.emitWithAck('game:confirm', {});
+  await copilot.emitWithAck('game:confirm', {});
+}

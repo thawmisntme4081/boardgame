@@ -49,7 +49,7 @@ describe('E2E test routes', () => {
 
     const res = await postGame(url, code, { round: 7, axis: 1 });
     expect(await res.json()).toEqual({ ok: true });
-    expect(rooms.get(code)!.game).toMatchObject({ round: 7, axis: 1, phase: 'strategy' });
+    expect(rooms.get(code)!.game).toMatchObject({ round: 7, axis: 1, phase: 'setup' });
     expect((await postGame(url, 'ZZZZ', {})).status).toBe(404);
   });
 });

@@ -1,12 +1,15 @@
 // Panels for the Flight Log modules; the rules live in @sky/shared.
 import {
+  ALARMS,
+  alarmPool,
   KEROSENE_START,
+  modulesOf,
   WIND_REVERSED_START,
   windSpeed,
   type PlayerView,
   type SlotId,
 } from '@sky/shared';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { BellRing, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -213,6 +216,70 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
           </Fragment>
         ))}
       </div>
+    </Panel>
+  );
+}
+
+const TOKEN = 'grid size-12 shrink-0 place-items-center rounded-xl border-2';
+
+/**
+ * The Alarm board: sounding tokens (each a space for the die that clears it, named after the
+ * Action it blocks), then the face-down ones (which is which stays unknown until they flip),
+ * then the cleared ones.
+ */
+export function AlarmsPanel({ view }: { view: PlayerView }) {
+  const { t } = useTranslation();
+  const board = view.alarms;
+  if (!board) return null;
+  const cleared = alarmPool(modulesOf(view.scenario)).filter(
+    (id) => !board.active.includes(id) && !board.faceDown.includes(id),
+  );
+  return (
+    <Panel title={t('alarms.title')} hint={t('alarms.hint')}>
+      <ul
+        className="flex flex-wrap items-start gap-2"
+        aria-label={t('alarms.board', {
+          active: board.active.length,
+          faceDown: board.faceDown.length,
+        })}
+      >
+        {board.active.map((id) => (
+          <li key={id} className="flex w-14 flex-col items-center gap-1 text-center">
+            <span className="relative">
+              <Slot slot={ALARMS[id].slot} view={view} />
+              <BellRing
+                aria-hidden="true"
+                className="absolute -top-2 -left-2 size-5 animate-pulse rounded-full bg-danger p-0.5 text-white"
+              />
+            </span>
+            <span className="text-[11px] leading-tight font-medium text-danger">
+              {t(`alarms.name.${id}`)}
+            </span>
+          </li>
+        ))}
+        {board.faceDown.map((id, i) => (
+          <li key={`down-${i}`} className="flex w-12 flex-col items-center">
+            <span
+              role="img"
+              aria-label={t('alarms.faceDown')}
+              className={cn(TOKEN, 'border-danger/30 bg-danger/10 text-danger/50')}
+            >
+              <BellRing aria-hidden="true" className="size-5" />
+            </span>
+          </li>
+        ))}
+        {cleared.map((id) => (
+          <li key={id} className="flex w-12 flex-col items-center">
+            <span
+              role="img"
+              aria-label={t('alarms.cleared', { alarm: t(`alarms.name.${id}`) })}
+              className={cn(TOKEN, 'border-light-on/50 bg-light-on/10 text-light-on')}
+            >
+              <Check aria-hidden="true" className="size-5" />
+            </span>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }

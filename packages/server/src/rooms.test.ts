@@ -17,7 +17,8 @@ describe('RoomManager', () => {
     expect([...room.code].every((c) => ROOM_CODE_ALPHABET.includes(c))).toBe(true);
     expect(player).toMatchObject({ seat: 'pilot', name: 'Ana', socketId: 's1', ready: false });
     expect(player.token).toMatch(UUID);
-    expect(room.game.phase).toBe('strategy');
+    // Round 1 waits until the crew has chosen roles and abilities.
+    expect(room.game.phase).toBe('setup');
     expect(rooms.size).toBe(1);
   });
 
@@ -53,7 +54,7 @@ describe('RoomManager', () => {
     rooms.disconnect('s1');
     expect(player.socketId).toBeNull();
     expect(rooms.bySocket('s1')).toBeUndefined();
-    expect(rooms.presence(room).pilot).toEqual({ name: 'Ana', online: false, ready: false });
+    expect(rooms.presence(room).pilot).toMatchObject({ name: 'Ana', online: false, ready: false });
 
     expect(rooms.rejoin(room.code, 'not-the-token', 's9')).toEqual({
       ok: false,
@@ -76,7 +77,7 @@ describe('RoomManager', () => {
   it('reports presence for both seats', () => {
     const rooms = new RoomManager();
     const { room } = unwrap(rooms.create('Ana', 's1'));
-    expect(rooms.presence(room)).toEqual({
+    expect(rooms.presence(room)).toMatchObject({
       pilot: { name: 'Ana', online: true, ready: false },
       copilot: null,
     });
@@ -120,7 +121,7 @@ describe('RoomManager', () => {
     expect(left).toMatchObject({ closed: false, player: { name: 'Ana', seat: 'pilot' } });
     expect(room.players.pilot).toBeUndefined();
     expect(rooms.bySocket('s1')).toBeUndefined();
-    expect(room.game).toMatchObject({ round: 1, phase: 'strategy', log: [], rngSeed: 101 });
+    expect(room.game).toMatchObject({ round: 1, phase: 'setup', log: [], rngSeed: 101 });
     expect(room.players.copilot!.ready).toBe(false);
     expect(rooms.rejoin(room.code, pilotToken, 's9')).toEqual({ ok: false, error: 'bad-token' });
 
@@ -172,21 +173,94 @@ describe('resolveSetup', () => {
   const one = () => pick((s) => s.abilities === 1);
   const realTime = () => pick((s) => s.modules.includes('real-time'));
 
-  it('defaults to YUL, and to the first abilities the scenario allows', () => {
-    expect(resolveSetup({})).toMatchObject({ scenario: { id: 'yul-green' }, abilities: [] });
-    expect(resolveSetup({ scenario: two().id })).toMatchObject({
-      abilities: ['adaptation', 'anticipation'],
+  it('defaults to YUL and needs a known scenario', () => {
+    expect(resolveSetup({})).toMatchObject({ scenario: { id: 'yul-green' } });
+    expect(resolveSetup({ scenario: two().id })).toMatchObject({ scenario: { id: two().id } });
+    expect(resolveSetup({ scenario: 'mars' })).toBeUndefined();
+  });
+
+  /** A room on `scenario` with Ana (creator, pilot) and Ben (co-pilot) seated. */
+  const seated = (scenario: Scenario) => {
+    const rooms = new RoomManager();
+    const { room, player: ana } = unwrap(
+      rooms.create('Ana', 's1', 'ip', { setup: resolveSetup({ scenario: scenario.id })! }),
+    );
+    const { player: ben } = unwrap(rooms.join(room.code, 'Ben', 's2'));
+    return { rooms, room, ana, ben };
+  };
+
+  it('lets each player pick their own card when the scenario has two, never the same one', () => {
+    const { rooms, room, ana, ben } = seated(two());
+    expect(rooms.abilitiesChosen(room)).toBe(false);
+    unwrap(rooms.pickAbility(room, ana, 'control'));
+    expect(rooms.pickAbility(room, ben, 'control')).toEqual({ ok: false, error: 'ability-taken' });
+    unwrap(rooms.pickAbility(room, ben, 'mastery'));
+    expect(room.game.abilities).toEqual(['control', 'mastery']);
+    expect(rooms.abilitiesChosen(room)).toBe(true);
+    expect(rooms.presence(room).copilot).toMatchObject({ pick: 'mastery', creator: false });
+  });
+
+  it('lets only the creator pick when the scenario has one card', () => {
+    const { rooms, room, ana, ben } = seated(one());
+    expect(rooms.pickAbility(room, ben, 'control')).toEqual({ ok: false, error: 'not-your-pick' });
+    unwrap(rooms.pickAbility(room, ana, 'control'));
+    expect(room.game.abilities).toEqual(['control']);
+  });
+
+  it('cancels a confirm when a pick changes, and closes picking once round 1 starts', () => {
+    const { rooms, room, ana, ben } = seated(two());
+    unwrap(rooms.chooseSeat(room, ana, 'pilot'));
+    unwrap(rooms.pickAbility(room, ana, 'control'));
+    unwrap(rooms.pickAbility(room, ben, 'mastery'));
+    unwrap(rooms.confirm(room, ben));
+    unwrap(rooms.pickAbility(room, ana, 'adaptation'));
+    expect(ben.confirmed).toBe(false);
+    unwrap(rooms.confirm(room, ana));
+    unwrap(rooms.confirm(room, ben));
+    expect(room.game.phase).toBe('strategy');
+    expect(rooms.pickAbility(room, ana, 'mastery')).toEqual({ ok: false, error: 'setup-closed' });
+  });
+
+  it('starts round 1, traffic die included, only once both have confirmed', () => {
+    const traffic = pick((s) => (s.traffic?.[0] ?? 0) > 0 && s.abilities === 0);
+    const { rooms, room, ana, ben } = seated(traffic);
+    expect(room.game.log).toEqual([]);
+    expect(rooms.confirm(room, ana)).toEqual({ ok: false, error: 'roles-missing' });
+    unwrap(rooms.chooseSeat(room, ana, 'pilot'));
+    unwrap(rooms.confirm(room, ana));
+    expect(room.game.phase).toBe('setup');
+    unwrap(rooms.confirm(room, ben));
+    expect(room.game.phase).toBe('strategy');
+    expect(room.game.log.map((e) => e.type)).toEqual(['traffic']);
+  });
+
+  it('lets only the creator choose the seats; the partner gets the other, picks going along', () => {
+    const { rooms, room, ana, ben } = seated(two());
+    unwrap(rooms.pickAbility(room, ana, 'control'));
+    expect(rooms.chooseSeat(room, ben, 'pilot')).toEqual({ ok: false, error: 'not-creator' });
+    expect(rooms.presence(room).pilot).toMatchObject({ rolesChosen: false });
+    unwrap(rooms.chooseSeat(room, ana, 'copilot'));
+    expect(room.players.pilot).toBe(ben);
+    expect(room.players.copilot).toBe(ana);
+    expect(ana.seat).toBe('copilot');
+    expect(rooms.bySocket('s1')?.player).toBe(ana);
+    expect(rooms.presence(room).copilot).toMatchObject({
+      name: 'Ana',
+      creator: true,
+      pick: 'control',
+      rolesChosen: true,
     });
   });
 
-  it('needs a known scenario and exactly its number of distinct abilities', () => {
-    expect(resolveSetup({ scenario: 'mars' })).toBeUndefined();
-    expect(resolveSetup({ scenario: one().id, abilities: [] })).toBeUndefined();
-    expect(resolveSetup({ scenario: one().id, abilities: ['control'] })).toMatchObject({
-      scenario: { id: one().id },
-      abilities: ['control'],
-    });
-    expect(resolveSetup({ scenario: two().id, abilities: ['control', 'control'] })).toBeUndefined();
+  it('keeps the picks for the next game, and makes the one who stays the creator', () => {
+    const { rooms, room, ana, ben } = seated(two());
+    unwrap(rooms.pickAbility(room, ana, 'control'));
+    unwrap(rooms.pickAbility(room, ben, 'mastery'));
+    rooms.rematch(room);
+    expect(room.game.abilities).toEqual(['control', 'mastery']);
+    rooms.leave('s1');
+    expect(ben.creator).toBe(true);
+    expect(room.game.abilities).toEqual(['mastery']);
   });
 
   it('keeps the lobby timer choice across rematches, even after a Real-time scenario', () => {
