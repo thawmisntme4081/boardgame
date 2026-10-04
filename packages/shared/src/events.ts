@@ -102,6 +102,8 @@ export interface ClientToServer {
   'game:reroll': (payload: RerollPayload, ack: (result: AckResult) => void) => void;
   /** Use Adaptation, Anticipation or Working Together (offer a die, or answer an offer). */
   'game:ability': (payload: AbilityAction, ack: (result: AckResult) => void) => void;
+  /** Working Together: take back your own offer before your partner answers. */
+  'game:cancel-swap': (payload: Empty, ack: (result: AckResult) => void) => void;
   /**
    * New game in the same room once this one is over; may switch scenario. Before the first
    * roll it just switches the scenario (a repeat of the current setup is accepted, no change).

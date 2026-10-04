@@ -1,4 +1,5 @@
 import {
+  canCancelSwapInView,
   canSpendReroll,
   diceToPlace,
   nextInternToken,
@@ -8,7 +9,7 @@ import {
 } from '@sky/shared';
 import { RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { spendReroll } from '@/api';
+import { cancelSwap, spendReroll } from '@/api';
 import { Button } from '@/components/ui/button';
 import { SEAT_STYLE } from '@/lib/seatStyle';
 import { cn } from '@/lib/utils';
@@ -98,6 +99,11 @@ function PlacingActions({ view }: { view: PlayerView }) {
     <div className="flex min-w-0 flex-col items-end gap-2 tablet:items-start desktop:items-end">
       {selected && <CoffeeControl view={view} value={selected.value} />}
       {selected && <AbilityActions view={view} dieId={selected.id} value={selected.value} />}
+      {canCancelSwapInView(view).ok && (
+        <Button variant="outline" className="h-11" onClick={() => void cancelSwap()}>
+          <X /> {t('tray.cancelSwap')}
+        </Button>
+      )}
       {internSlot && (
         <Button variant="outline" className="h-11" onClick={() => setInternSlot(null)}>
           <X /> {t('tray.cancelIntern')}

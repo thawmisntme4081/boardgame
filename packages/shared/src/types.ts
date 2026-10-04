@@ -211,6 +211,8 @@ export type GameEvent =
       dieId: string;
       value: DieValue;
     }
+  /** Working Together: the offering player took their offer back. */
+  | { type: 'swap-cancelled'; round: number; seat: Seat }
   /** Turbulence or Bad Visibility changed a player's hand after a placement: the new hand. */
   | { type: 'weather'; round: number; seat: Seat; dice: Die[] }
   /** Alarms: a token flipped face up at the start of a round. */
@@ -316,6 +318,7 @@ export type MoveError =
   | 'dice-limit'
   | 'not-setup'
   | 'alarm-blocked'
-  | 'alarm-not-active';
+  | 'alarm-not-active'
+  | 'no-swap';
 
 export type MoveCheck = { ok: true } | { ok: false; reason: MoveError };

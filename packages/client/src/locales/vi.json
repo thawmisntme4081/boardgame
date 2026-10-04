@@ -104,6 +104,7 @@
     "yourDie": "Xúc xắc của bạn: {{value}}",
     "noDiceLeft": "Hết xúc xắc",
     "cancelIntern": "Hủy thực tập sinh",
+    "cancelSwap": "Huỷ đổi",
     "spendReroll": "Dùng một lượt đổ lại (còn {{count}})",
     "rerollToken": "Đổ lại ({{count}})",
     "winConditions": "Điều kiện thắng",
@@ -375,7 +376,8 @@
     "no-partner": "Hãy chờ đồng đội vào phòng.",
     "not-creator": "Chỉ người tạo ván mới được chọn chỗ ngồi.",
     "roles-missing": "Hãy chọn chỗ ngồi trước.",
-    "not-setup": "Ván chơi đã bắt đầu."
+    "not-setup": "Ván chơi đã bắt đầu.",
+    "no-swap": "Bạn không có lời mời đổi nào để huỷ."
   },
   "endReasons": {
     "spin": "Trục nghiêng quá mức: máy bay rơi vào vòng xoáy.",

@@ -176,6 +176,10 @@ export async function placeSelected(slot: SlotId): Promise<boolean> {
 export const playAbility = (action: AbilityAction) =>
   run('ability', () => emit().emitWithAck('game:ability', action));
 
+/** Working Together: take back your offer before your partner answers. */
+export const cancelSwap = () =>
+  run('cancel-swap', () => emit().emitWithAck('game:cancel-swap', {}));
+
 export const spendReroll = () =>
   run('spend-reroll', () => emit().emitWithAck('game:spend-reroll', {}));
 

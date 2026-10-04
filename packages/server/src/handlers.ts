@@ -1,4 +1,6 @@
 import {
+  cancelSwap,
+  canCancelSwap,
   canPlaceDie,
   canUseAbility,
   useAbility,
@@ -303,6 +305,13 @@ export function registerHandlers(
       const check = canUseAbility(room.game, player.seat, action);
       if (!check.ok) return { ok: false, error: check.reason };
       room.game = useAbility(room.game, player.seat, action);
+      return OK;
+    });
+
+    onSeated('game:cancel-swap', emptySchema, (_data, { room, player }) => {
+      const check = canCancelSwap(room.game, player.seat);
+      if (!check.ok) return { ok: false, error: check.reason };
+      room.game = cancelSwap(room.game, player.seat);
       return OK;
     });
 

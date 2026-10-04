@@ -41,6 +41,8 @@ export interface AbilityContext {
   abilityUse: AbilityUse;
   bonus: object | null;
   swap: { seat: Seat } | null;
+  /** A reroll token was spent and someone is still choosing dice: no ability until it is done. */
+  rerollPending: Record<Seat, boolean>;
   placed: Partial<Record<SlotId, PlacedDie>>;
   myDice: readonly Die[];
   partnerDiceLeft: number;
@@ -55,6 +57,7 @@ export const abilityContext = (state: GameState, seat: Seat): AbilityContext => 
   abilityUse: state.abilityUse,
   bonus: state.bonus,
   swap: state.swap,
+  rerollPending: state.rerollPending,
   placed: state.placed,
   myDice: state.dice[seat],
   partnerDiceLeft: state.dice[otherSeat(seat)].length,
@@ -69,6 +72,9 @@ export function checkAbility(ctx: AbilityContext, action: AbilityAction): MoveCh
   if (ctx.phase !== 'placing') return fail('not-placing');
   if (!ctx.abilities.includes(action.ability)) return fail('ability-unavailable');
   if (ctx.bonus) return fail('bonus-pending');
+  // One special action at a time: a reroll in progress blocks abilities (and a pending swap
+  // blocks rerolls, see `canSpendReroll`), so the two can never tangle.
+  if (ctx.rerollPending.pilot || ctx.rerollPending.copilot) return fail('reroll-pending');
   if (!ctx.myDice.some((d) => d.id === action.dieId)) return fail('unknown-die');
   switch (action.ability) {
     case 'adaptation':
@@ -90,6 +96,28 @@ export function checkAbility(ctx: AbilityContext, action: AbilityAction): MoveCh
     default:
       return fail('ability-unavailable');
   }
+}
+
+/**
+ * Working Together: the player who offered a die may take the offer back before the partner
+ * answers (a house rule asked for by the user, Oct 5, 2026). The card is not used up.
+ */
+export function checkCancelSwap(ctx: Pick<AbilityContext, 'seat' | 'phase' | 'swap'>): MoveCheck {
+  if (isGameOver(ctx)) return fail('game-over');
+  if (ctx.phase !== 'placing') return fail('not-placing');
+  return ctx.swap?.seat === ctx.seat ? OK : fail('no-swap');
+}
+
+export const canCancelSwap = (state: GameState, seat: Seat): MoveCheck =>
+  checkCancelSwap({ seat, phase: state.phase, swap: state.swap });
+
+export function cancelSwap(state: GameState, seat: Seat): GameState {
+  const check = canCancelSwap(state, seat);
+  if (!check.ok) throw new RuleError(check.reason);
+  const s = structuredClone(state);
+  s.swap = null;
+  s.log.push({ type: 'swap-cancelled', round: s.round, seat });
+  return s;
 }
 
 export const canUseAbility = (state: GameState, seat: Seat, action: AbilityAction): MoveCheck =>

@@ -109,6 +109,7 @@
     "yourDie": "Your die: {{value}}",
     "noDiceLeft": "No dice left",
     "cancelIntern": "Cancel the intern",
+    "cancelSwap": "Cancel swap",
     "spendReroll": "Spend a reroll token ({{count}} left)",
     "rerollToken": "Reroll ({{count}})",
     "winConditions": "Win conditions",
@@ -384,7 +385,8 @@
     "no-partner": "Wait for your partner to join.",
     "not-creator": "Only the game’s creator chooses the seats.",
     "roles-missing": "Choose the seats first.",
-    "not-setup": "The game has already started."
+    "not-setup": "The game has already started.",
+    "no-swap": "There is no swap offer of yours to cancel."
   },
   "endReasons": {
     "spin": "The axis tipped too far: the plane went into a spin.",

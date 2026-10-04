@@ -15,7 +15,8 @@ All events are typed once in `packages/shared/src/events.ts` (`ClientToServer`, 
 | Client → Server | `room:choose-seat` | `{ seat }` | ack; setup phase only, creator only (`not-creator`): the creator takes that seat, the partner the other; picks move with the players |
 | Client → Server | `game:confirm` | `{}` | ack; setup phase only. Needs a partner (`no-partner`), seats chosen (`roles-missing`) and the cards chosen (`abilities-missing`). When both have confirmed, round 1 starts (`beginGame`: traffic die, alarms, then the strategy phase). Changing seats or cards cancels both confirms |
 | Client → Server | `game:place` | `{ dieId, slot, coffeeDelta, tokenSlot? }` (`tokenSlot`: where an Intern token goes; the Synchronization traffic die uses its own `dieId`) | ack `{ ok }` or `{ ok:false, error }` (rule reason, e.g. `not-your-turn`) |
-| Client → Server | `game:ability` | `{ ability: 'adaptation' \| 'anticipation' \| 'working-together', dieId }` | ack; Working Together: the first call offers a die, the partner's call answers |
+| Client → Server | `game:ability` | `{ ability: 'adaptation' \| 'anticipation' \| 'working-together', dieId }` | ack; Working Together: the first call offers a die, the partner's call answers. Refused (`reroll-pending`) while either player still has a reroll to use |
+| Client → Server | `game:cancel-swap` | `{}` | ack; Working Together: the player who offered takes the offer back before the partner answers (`no-swap` otherwise) |
 | Client → Server | `game:spend-reroll` | `{}` | ack; both players may then reroll once |
 | Client → Server | `game:reroll` | `{ dieIds }` | ack; rerolls your chosen dice (may be none) |
 | Client → Server | `game:rematch` | `{ scenario? }` | ack; new game, same room and seats (same scenario unless given); before the first roll it only switches the scenario; `game-not-over` otherwise |

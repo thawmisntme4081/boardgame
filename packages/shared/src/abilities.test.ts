@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { canUseAbility, useAbility } from './abilities';
-import { canPlaceDie, placeDie, rollDice, TRAFFIC_DIE } from './rules';
+import { cancelSwap, canCancelSwap, canUseAbility, useAbility } from './abilities';
+import {
+  canPlaceDie,
+  canSpendReroll,
+  placeDie,
+  rerollDice,
+  rollDice,
+  spendReroll,
+  TRAFFIC_DIE,
+} from './rules';
 import { createGame } from './state';
 import { QUIET_DICE, QUIET_ROUND, play, setupRound, testScenario } from './test-utils';
 import type { AbilityAction, AbilityId, GameState, PlaceIntent, Seat, SlotId } from './types';
-import { canUseAbilityInView, viewFor } from './views';
+import { canCancelSwapInView, canUseAbilityInView, viewFor } from './views';
 
 const intent = (dieId: string, slot: SlotId, coffeeDelta = 0): PlaceIntent => ({
   dieId,
@@ -182,11 +190,61 @@ describe('working together', () => {
     );
   });
 
+  it('lets the offering player take the offer back; the card is not used up', () => {
+    let s = withAbility('working-together', { pilot: [2, 2, 3, 3], copilot: [5, 2, 3, 3] });
+    expect(canCancelSwap(s, 'pilot')).toEqual({ ok: false, reason: 'no-swap' });
+    s = useAbility(s, 'pilot', { ability: 'working-together', dieId: 'p1' });
+    // Only the player who offered can take it back; the partner still has to answer.
+    expect(canCancelSwap(s, 'copilot')).toEqual({ ok: false, reason: 'no-swap' });
+    expect(canCancelSwapInView(viewFor(s, 'pilot')).ok).toBe(true);
+    expect(canCancelSwapInView(viewFor(s, 'copilot')).ok).toBe(false);
+    s = cancelSwap(s, 'pilot');
+    expect(s.swap).toBeNull();
+    expect(s.log.at(-1)).toEqual({ type: 'swap-cancelled', round: s.round, seat: 'pilot' });
+    expect(s.dice.pilot[0]).toEqual({ id: 'p1', value: 2 });
+    expect(placeReason(s, 'pilot', intent('p2', 'axisPilot'))).toBe('ok');
+    expect(abilityReason(s, 'pilot', { ability: 'working-together', dieId: 'p2' })).toBe('ok');
+    expect(() => cancelSwap(s, 'pilot')).toThrow('no-swap');
+  });
+
   it('needs the partner to have a die', () => {
     const s = withAbility('working-together', { pilot: [2, 2], copilot: [] });
     expect(abilityReason(s, 'pilot', { ability: 'working-together', dieId: 'p1' })).toBe(
       'no-partner-dice',
     );
+  });
+});
+
+describe('one special action at a time', () => {
+  const actions: AbilityAction[] = [
+    { ability: 'working-together', dieId: 'p1' },
+    { ability: 'adaptation', dieId: 'p1' },
+    { ability: 'anticipation', dieId: 'p1' },
+  ];
+
+  it('blocks every ability while a reroll is under way, for both players', () => {
+    let s = setupRound({
+      ...QUIET_DICE,
+      abilities: ['working-together', 'adaptation', 'anticipation'],
+      patch: { rerolls: 1 },
+    });
+    s = spendReroll(s, 'copilot');
+    // The pilot keeps all their dice; the co-pilot is still choosing.
+    s = rerollDice(s, 'pilot', []);
+    for (const action of actions) {
+      expect(abilityReason(s, 'pilot', action), action.ability).toBe('reroll-pending');
+      expect(canUseAbilityInView(viewFor(s, 'pilot'), action).ok).toBe(false);
+    }
+    // Once the co-pilot has rerolled, abilities are back.
+    s = rerollDice(s, 'copilot', []);
+    expect(abilityReason(s, 'pilot', actions[0]!)).toBe('ok');
+  });
+
+  it('blocks spending a reroll token while a swap is offered', () => {
+    let s = withAbility('working-together', QUIET_DICE, { rerolls: 1 });
+    s = useAbility(s, 'pilot', { ability: 'working-together', dieId: 'p1' });
+    expect(canSpendReroll(s)).toEqual({ ok: false, reason: 'swap-pending' });
+    expect(canSpendReroll(viewFor(s, 'copilot'))).toEqual({ ok: false, reason: 'swap-pending' });
   });
 });
 

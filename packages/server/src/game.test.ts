@@ -695,6 +695,21 @@ describe('scenarios and special abilities', () => {
       await clients.pilot.emitWithAck('game:ability', { ability: 'control', dieId: 'x' } as never),
     ).toEqual({ ok: false, error: 'bad-request' });
 
+    // Only the player who offered can take the offer back.
+    expect(await clients.copilot.emitWithAck('game:cancel-swap', {})).toEqual({
+      ok: false,
+      error: 'no-swap',
+    });
+    const withdrawn = next(clients.copilot, 'game:view');
+    expectOk(await clients.pilot.emitWithAck('game:cancel-swap', {}));
+    expect((await withdrawn).swap).toBeNull();
+    expectOk(
+      await clients.pilot.emitWithAck('game:ability', {
+        ability: 'working-together',
+        dieId: pilotDie!.id,
+      }),
+    );
+
     expectOk(
       await clients.copilot.emitWithAck('game:ability', {
         ability: 'working-together',

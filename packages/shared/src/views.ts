@@ -1,4 +1,4 @@
-import { checkAbility, type AbilityContext } from './abilities';
+import { checkAbility, checkCancelSwap, type AbilityContext } from './abilities';
 import {
   checkPlacement,
   checkTurn,
@@ -140,3 +140,6 @@ const abilityContextOfView = (view: PlayerView): AbilityContext => ({
 /** The client's copy of `canUseAbility`, read from the player's own view. */
 export const canUseAbilityInView = (view: PlayerView, action: AbilityAction): MoveCheck =>
   checkAbility(abilityContextOfView(view), action);
+
+/** Whether this player can take back their Working Together offer. */
+export const canCancelSwapInView = (view: PlayerView): MoveCheck => checkCancelSwap(view);

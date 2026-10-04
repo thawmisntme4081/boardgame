@@ -24,6 +24,7 @@ vi.mock('@/api', () => ({
   spendReroll: vi.fn(async () => true),
   rematch: vi.fn(async () => true),
   playAbility: vi.fn(async () => true),
+  cancelSwap: vi.fn(async () => true),
   leaveGame: vi.fn(),
 }));
 const api = await import('@/api');
@@ -494,6 +495,38 @@ describe('special abilities in the tray', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Your die: 5' }));
     await userEvent.click(screen.getByRole('button', { name: /Swap for the 2/ }));
     expect(api.playAbility).toHaveBeenCalledWith({ ability: 'working-together', dieId: 'c4' });
+  });
+
+  it('lets the offering player cancel the swap; the partner has no cancel', async () => {
+    const patch = { swap: { seat: 'pilot' as const, dieId: 'p1', value: 2 as const } };
+    const { unmount } = render(
+      <DiceTray
+        view={makeView('pilot', { abilities: ['working-together'], patch })}
+        presence={presence()}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel swap' }));
+    expect(api.cancelSwap).toHaveBeenCalledTimes(1);
+    unmount();
+
+    render(
+      <DiceTray
+        view={makeView('copilot', { abilities: ['working-together'], patch })}
+        presence={presence()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Cancel swap' })).toBeNull();
+  });
+
+  it('hides ability buttons while a reroll is under way', async () => {
+    const view = makeView('pilot', {
+      abilities: ['adaptation', 'working-together'],
+      patch: { rerollPending: { pilot: false, copilot: true } },
+    });
+    render(<DiceTray view={view} presence={presence()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Your die: 3' }));
+    expect(screen.queryByRole('button', { name: /Flip to 4/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Offer to swap/ })).toBeNull();
   });
 
   it('hands the co-pilot the traffic die to place (Synchronization)', async () => {
