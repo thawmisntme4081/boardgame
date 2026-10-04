@@ -12,11 +12,15 @@ import {
 import { BellRing, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SLOT_SIZE } from '@/lib/classes';
 import { cn } from '@/lib/utils';
 import { InternBadge } from '@/svgs/InternBadge';
 import { WindRing } from '@/svgs/WindRing';
-import { Panel } from './Panel';
-import { Slot } from './Slot';
+import { Panel } from '../Panel';
+import { Slot } from '../Slot';
+
+/** At or under this much fuel, the gauge turns red. */
+const KEROSENE_LOW = 6;
 
 /**
  * The kerosene track. When fuel burns, the bar slides down and a red "−N" floats up and fades
@@ -24,7 +28,7 @@ import { Slot } from './Slot';
  */
 function KeroseneGauge({ kerosene }: { kerosene: number }) {
   const { t } = useTranslation();
-  const low = kerosene <= 6;
+  const low = kerosene <= KEROSENE_LOW;
   // The last value seen and how much the latest burn took (state from the previous render).
   const [seen, setSeen] = useState({ value: kerosene, drop: 0, burns: 0 });
   if (kerosene !== seen.value) {
@@ -65,13 +69,13 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
   );
 }
 
-export function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean }) {
+/** Kerosene, or the Kerosene leak (no space: the fuel only burns). */
+export function KerosenePanel({ view }: { view: PlayerView }) {
+  const leak = view.scenario.modules.includes('kerosene-leak');
   const { t } = useTranslation();
+  const key = leak ? 'keroseneLeak' : 'kerosene';
   return (
-    <Panel
-      title={leak ? t('modules.keroseneLeak') : t('modules.kerosene')}
-      hint={leak ? t('modules.keroseneLeakHint') : t('modules.keroseneHint')}
-    >
+    <Panel title={t(`modules.${key}`)} hint={t(`modules.${key}Hint`)}>
       {/* The Kerosene space above the gauge. */}
       <div className="flex flex-col gap-3 desktop:flex-1 desktop:items-center">
         {!leak && <Slot slot="kerosene" view={view} />}
@@ -81,7 +85,7 @@ export function KerosenePanel({ view, leak }: { view: PlayerView; leak: boolean 
   );
 }
 
-/** Wind: shown with the axis (see Cockpit), since the axis turns the ring. */
+/** Wind: its own panel (first on phones, beside Axis & Engines on desktop); the axis turns the ring. */
 export function WindPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
   return (
@@ -101,14 +105,15 @@ export function WindPanel({ view }: { view: PlayerView }) {
 /** "+N wind" floating over the speed gauge (absolute, like the turn dots over the axis dial). */
 export function WindOnEngines({ wind }: { wind: number }) {
   const { t } = useTranslation();
-  const speed = windSpeed(wind);
+  const raw = windSpeed(wind);
+  const speed = raw > 0 ? `+${raw}` : raw;
   return (
     <p
       role="note"
-      aria-label={t('modules.windLabel', { speed: speed > 0 ? `+${speed}` : speed })}
+      aria-label={t('modules.windLabel', { speed })}
       className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border bg-card px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums shadow-sm"
     >
-      {t('modules.windOnEngines', { speed: speed > 0 ? `+${speed}` : speed })}
+      {t('modules.windOnEngines', { speed })}
     </p>
   );
 }
@@ -172,11 +177,18 @@ const ICE_COLUMNS: [SlotId, SlotId][] = [
 /** Ice brakes: a column of two dice per value, left to right; the marker must pass the 5. */
 export function IceBrakesPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
-  const cell = (node: ReactNode, key: string) => (
-    <div key={key} className="flex justify-center">
-      {node}
-    </div>
-  );
+  // One grid row (the grid has 7 columns): a cell per value, `between` in the gaps.
+  const row = (
+    name: string,
+    cell: (column: [SlotId, SlotId], i: number) => ReactNode,
+    between: ReactNode = <span aria-hidden="true" />,
+  ) =>
+    ICE_COLUMNS.map((column, i) => (
+      <Fragment key={`${name}${i}`}>
+        {i > 0 && between}
+        <div className="flex justify-center">{cell(column, i)}</div>
+      </Fragment>
+    ));
   return (
     <Panel
       title={t('modules.iceBrakes')}
@@ -184,39 +196,31 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
       className="justify-between"
     >
       <div className="grid grid-cols-[repeat(7,auto)] items-center justify-start gap-x-1 gap-y-0.5">
-        {ICE_COLUMNS.map(([top], i) => (
-          <Fragment key={top}>
-            {i > 0 && <span aria-hidden="true" />}
-            {cell(<Slot slot={top} view={view} />, top)}
-          </Fragment>
+        {row('top', ([top]) => (
+          <Slot slot={top} view={view} />
         ))}
-        {ICE_COLUMNS.map(([top], i) => (
-          <Fragment key={`${top}-marker`}>
-            {i > 0 && <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />}
-            {cell(
-              <span
-                role="img"
-                aria-label={t(view.brakes > i ? 'cockpit.deployed' : 'cockpit.notDeployed', {
-                  label: t('modules.iceBrake', { n: i + 2 }),
-                })}
-                className="block h-0.5 w-11 rounded-full bg-muted-foreground desktop:w-12"
-              />,
-              `m${i}`,
-            )}
-          </Fragment>
-        ))}
-        {ICE_COLUMNS.map(([top, bottom], i) => (
-          <Fragment key={bottom}>
-            {i > 0 && <span aria-hidden="true" />}
-            {cell(<Slot slot={bottom} view={view} />, `${top}-b`)}
-          </Fragment>
+        {row(
+          'marker',
+          (_, i) => (
+            <span
+              role="img"
+              aria-label={t(view.brakes > i ? 'cockpit.deployed' : 'cockpit.notDeployed', {
+                label: t('modules.iceBrake', { n: i + 2 }),
+              })}
+              className="block h-0.5 w-11 rounded-full bg-muted-foreground desktop:w-12"
+            />
+          ),
+          <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />,
+        )}
+        {row('bottom', ([, bottom]) => (
+          <Slot slot={bottom} view={view} />
         ))}
       </div>
     </Panel>
   );
 }
 
-const TOKEN = 'grid size-11 shrink-0 place-items-center rounded-xl border-2 desktop:size-12';
+const TOKEN = cn(SLOT_SIZE, 'grid shrink-0 place-items-center rounded-xl border-2');
 
 /**
  * The Alarm board: sounding tokens (each a space for the die that clears it, named after the

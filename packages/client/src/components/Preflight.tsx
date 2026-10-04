@@ -1,31 +1,20 @@
 // Before round 1: who flies which seat, the Special Ability cards, and both players' confirm.
-import { ABILITY_IDS, otherSeat, SEATS, type PlayerView, type Presence } from '@sky/shared';
+import { ABILITY_IDS, SEATS, type PlayerView, type Presence } from '@sky/shared';
 import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { chooseSeat, confirmSetup, pickAbility } from '@/api';
 import { Button } from '@/components/ui/button';
+import { SEAT_STYLE } from '@/lib/seatStyle';
 import { abilitiesChosen, isBeforeTakeoff } from '@/lib/setup';
 import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
+import { partnerOf } from '@/partner';
 import { abilityText } from '@/scenarioText';
-
-/** Outline in the seat's colour; solid once it is this player's chosen seat. */
-const SEAT_STYLE = {
-  pilot: {
-    outline: 'border-pilot text-pilot hover:bg-pilot-soft',
-    solid: 'border-pilot bg-pilot text-white',
-  },
-  copilot: {
-    outline: 'border-copilot text-copilot hover:bg-copilot-soft',
-    solid: 'border-copilot bg-copilot text-white',
-  },
-} as const;
 
 /** The creator picks a seat; the partner sees the choice (their own seat turns solid). */
 function RoleChoice({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const { t } = useTranslation();
   const me = presence?.[view.seat];
-  const partner = presence?.[otherSeat(view.seat)];
   const chosen = me?.rolesChosen === true;
   const creator = me?.creator === true;
   return (
@@ -33,7 +22,7 @@ function RoleChoice({ view, presence }: { view: PlayerView; presence: Presence |
       <p className="text-sm font-medium">
         {creator
           ? t('preflight.rolesYou')
-          : t('preflight.rolesPartner', { name: partner?.name ?? seatName(otherSeat(view.seat)) })}
+          : t('preflight.rolesPartner', { name: partnerOf(view, presence).name })}
       </p>
       <div className="flex gap-2" role="group" aria-label={t('preflight.roles')}>
         {SEATS.map((seat) => {
@@ -47,7 +36,7 @@ function RoleChoice({ view, presence }: { view: PlayerView; presence: Presence |
               onClick={() => void chooseSeat(seat)}
               className={cn(
                 'h-11 flex-1 rounded-lg border-2 px-4 text-sm font-semibold transition disabled:cursor-default tablet:flex-none',
-                mine ? SEAT_STYLE[seat].solid : SEAT_STYLE[seat].outline,
+                mine ? SEAT_STYLE[seat].seatButtonOn : SEAT_STYLE[seat].seatButton,
                 !creator && !mine && 'hover:bg-transparent',
               )}
             >
@@ -64,8 +53,7 @@ function AbilityChoice({ view, presence }: { view: PlayerView; presence: Presenc
   const { t } = useTranslation();
   const count = view.scenario.abilities;
   const me = presence?.[view.seat];
-  const partnerSeat = otherSeat(view.seat);
-  const partner = presence?.[partnerSeat];
+  const { seat: partnerSeat, info: partner, name: partnerName } = partnerOf(view, presence);
   // Two cards: one each. One card: the creator's.
   const canPick = count === 2 || me?.creator === true;
   const intro =
@@ -73,7 +61,7 @@ function AbilityChoice({ view, presence }: { view: PlayerView; presence: Presenc
       ? t('preflight.abilitiesEach')
       : canPick
         ? t('preflight.abilitiesYou')
-        : t('preflight.abilitiesPartner', { name: partner?.name ?? seatName(partnerSeat) });
+        : t('preflight.abilitiesPartner', { name: partnerName });
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-2 text-sm font-medium">{intro}</legend>
@@ -92,13 +80,9 @@ function AbilityChoice({ view, presence }: { view: PlayerView; presence: Presenc
               className={cn(
                 'flex min-h-11 flex-col items-start gap-0.5 rounded-xl border-2 px-3 py-2 text-left transition disabled:cursor-default',
                 mine
-                  ? view.seat === 'pilot'
-                    ? 'border-pilot bg-pilot-soft'
-                    : 'border-copilot bg-copilot-soft'
+                  ? SEAT_STYLE[view.seat].pick
                   : theirs
-                    ? partnerSeat === 'pilot'
-                      ? 'border-pilot/60 bg-pilot-soft/60'
-                      : 'border-copilot/60 bg-copilot-soft/60'
+                    ? SEAT_STYLE[partnerSeat].partnerPick
                     : 'border-border bg-background hover:bg-muted',
                 !canPick && !mine && !theirs && 'opacity-60',
               )}
@@ -127,7 +111,7 @@ function AbilityChoice({ view, presence }: { view: PlayerView; presence: Presenc
 function ConfirmRow({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const { t } = useTranslation();
   const me = presence?.[view.seat];
-  const partner = presence?.[otherSeat(view.seat)];
+  const partner = partnerOf(view, presence).info;
   const ready = Boolean(partner) && me?.rolesChosen === true && abilitiesChosen(view);
   const missing = !partner
     ? t('preflight.waitingPartner')

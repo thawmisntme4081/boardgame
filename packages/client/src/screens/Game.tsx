@@ -1,11 +1,12 @@
 import { SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/shared';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Cockpit } from '@/components/Cockpit';
-import { DiceTray } from '@/components/DiceTray';
+import { Cockpit } from '@/components/cockpit/Cockpit';
+import { moduleColumnCount } from '@/components/cockpit/layout';
 import { GameOverDialog } from '@/components/GameOverDialog';
 import { Preflight } from '@/components/Preflight';
 import { StatusBar } from '@/components/StatusBar';
+import { DiceTray } from '@/components/tray/DiceTray';
 import { placingValue, slotValid } from '@/lib/moves';
 import { AltitudeTrack } from '@/svgs/AltitudeTrack';
 import { ApproachTrack } from '@/svgs/ApproachTrack';
@@ -88,9 +89,7 @@ export default function Game({ view, presence }: { view: PlayerView; presence: P
           {
             '--status-h': `${statusHeight}px`,
             // Desktop: the container widens for the Kerosene and Intern columns.
-            '--module-columns': ['kerosene', 'kerosene-leak', 'intern'].filter((m) =>
-              view.scenario.modules.includes(m as never),
-            ).length,
+            '--module-columns': moduleColumnCount(view),
           } as CSSProperties
         }
       >

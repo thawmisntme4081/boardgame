@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { catalogScenario, makeView, presence, resetStore } from '@/test/fixtures';
-import { DiceTray } from './DiceTray';
+import { DiceTray } from './tray/DiceTray';
 import { Preflight } from './Preflight';
 
 vi.mock('@/api', () => ({

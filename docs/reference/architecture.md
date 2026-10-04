@@ -74,10 +74,16 @@ boardgame/
 │           ├── api.ts          # socket events → store; actions (create, join, place, …)
 │           ├── session.ts      # saved seat token, invite links
 │           ├── screens/        # Lobby (+ waiting room), Game
-│           ├── components/     # Cockpit, Panel, ModulePanels, Slot, DiceTray, StatusBar,
-│           │                   # GameOverDialog, ScenarioPicker (+ components/ui from shadcn)
-│           └── svgs/           # one SVG drawing per file: DieFace, AxisDial, SpeedGauge,
-│                               # AltitudeTrack, ApproachTrack, WindRing, markers, Plane, Switch
+│           ├── lib/            # moves, setup, seat styles, shared classes, small hooks
+│           ├── components/     # Panel, Slot, StatusBar, Preflight, GameOverDialog,
+│           │   │               # ScenarioPicker (+ components/ui from shadcn)
+│           │   ├── cockpit/    # Cockpit (dispatcher), layout (order + desktop grid),
+│           │   │               # panels (base game), ModulePanels, Slots
+│           │   └── tray/       # DiceTray (by phase): Strategy/Reroll/PlacingTray, DieButton,
+│           │                   # notes, popovers, CoffeeControl, AbilityActions, text
+│           └── svgs/           # one SVG drawing per file: DieFace, FlightInstrument,
+│                               # AltitudeTrack, ApproachTrack, WindRing, markers, Plane,
+│                               # InternBadge, Switch (+ geometry helpers)
 ├── e2e/                        # Playwright tests
 └── .github/workflows/ci.yml
 ```

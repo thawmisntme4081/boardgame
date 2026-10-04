@@ -1,7 +1,8 @@
+import { NEXT_TURN_MS } from '@sky/shared';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatClock } from '@/lib/clock';
-import { NEXT_TURN_PAUSE_MS, useGame } from '@/store';
+import { useGame } from '@/store';
 import { makeView, presence, resetStore } from '@/test/fixtures';
 import { RoundCountdown } from './RoundCountdown';
 import { StatusBar } from './StatusBar';
@@ -82,7 +83,7 @@ describe('next turn pause', () => {
   it('starts a 5 s pause when a round ends and the game goes on', () => {
     useGame.getState().setView(placing);
     useGame.getState().setView(nextRound);
-    expect(useGame.getState().nextTurnAt).toBe(T0 + NEXT_TURN_PAUSE_MS);
+    expect(useGame.getState().nextTurnAt).toBe(T0 + NEXT_TURN_MS);
   });
 
   it('never pauses on the first view, at game over, or once dice are rolled', () => {
@@ -98,7 +99,7 @@ describe('next turn pause', () => {
   });
 
   it('counts down in green as the only pill, then gives way to the strategy label', () => {
-    useGame.setState({ nextTurnAt: T0 + NEXT_TURN_PAUSE_MS });
+    useGame.setState({ nextTurnAt: T0 + NEXT_TURN_MS });
     render(<StatusBar view={nextRound} presence={presence()} connection="online" />);
     const pause = screen.getByRole('timer', { name: 'Next turn in 5 seconds' });
     expect(pause).toHaveTextContent('Next turn in 5s');

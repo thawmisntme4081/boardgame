@@ -1,4 +1,4 @@
-import { otherSeat, type PlayerView, type Presence } from '@sky/shared';
+import type { PlayerView, Presence } from '@sky/shared';
 import { LogOut, WifiOff } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { leaveGame } from '@/api';
@@ -13,30 +13,40 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { formatNumber, t } from '@/i18n';
+import { formatNumber } from '@/i18n';
+import { SEAT_STYLE } from '@/lib/seatStyle';
+import { useNextTurnLeft } from '@/lib/useNextTurn';
 import { cn } from '@/lib/utils';
 import { seatName } from '@/messages';
+import { partnerOf } from '@/partner';
+import type { Connection } from '@/store';
 import { LanguageSwitch } from './LanguageSwitch';
 import { NextTurnCountdown } from './NextTurnCountdown';
 import { RoundCountdown } from './RoundCountdown';
-import { useNow } from '@/lib/useNow';
-import { useGame, type Connection } from '@/store';
 
-function turnText(view: PlayerView, partner: string): string {
-  switch (view.phase) {
-    case 'setup':
-      return t('preflight.title');
-    case 'strategy':
-      return view.autoRoll ? t('status.totalTrust') : t('status.strategy');
-    case 'placing':
-      return view.currentSeat === view.seat
-        ? t('status.yourTurn')
-        : t('status.partnersTurn', { name: partner });
-    case 'won':
-      return t('status.landed');
-    case 'lost':
-      return t('status.crashed');
-  }
+/** Whose turn it is (or the game's phase); in your seat's colour while you place. */
+function TurnPill({ view, partnerName }: { view: PlayerView; partnerName: string }) {
+  const { t } = useTranslation();
+  const myTurn = view.phase === 'placing' && view.currentSeat === view.seat;
+  const text = {
+    setup: () => t('preflight.title'),
+    strategy: () => (view.autoRoll ? t('status.totalTrust') : t('status.strategy')),
+    placing: () =>
+      myTurn ? t('status.yourTurn') : t('status.partnersTurn', { name: partnerName }),
+    won: () => t('status.landed'),
+    lost: () => t('status.crashed'),
+  }[view.phase]();
+  return (
+    <p
+      role="status"
+      className={cn(
+        'rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap',
+        myTurn ? SEAT_STYLE[view.seat].pill : 'bg-muted',
+      )}
+    >
+      {text}
+    </p>
+  );
 }
 
 /** Gives up your seat, after a confirmation; your partner's game restarts. */
@@ -84,14 +94,10 @@ export function StatusBar({
   connection: Connection;
 }) {
   const { t } = useTranslation();
-  const partnerSeat = otherSeat(view.seat);
-  const partner = presence?.[partnerSeat];
-  const partnerName = partner?.name ?? seatName(partnerSeat);
-  const myTurn = view.phase === 'placing' && view.currentSeat === view.seat;
+  const { info: partner, name: partnerName } = partnerOf(view, presence);
   // During the green "Next turn in 5s" pause, that countdown is the only pill.
-  const nextTurnAt = useGame((s) => s.nextTurnAt);
-  const now = useNow();
-  const pausing = view.phase === 'strategy' && nextTurnAt !== null && now < nextTurnAt;
+  const pauseLeft = useNextTurnLeft();
+  const pausing = view.phase === 'strategy' && pauseLeft !== null;
 
   return (
     <header className="flex flex-col gap-2 border-b bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2">
@@ -124,11 +130,7 @@ export function StatusBar({
                 <Trans
                   i18nKey="status.youAre"
                   values={{ seat: seatName(view.seat) }}
-                  components={{
-                    seat: (
-                      <span className={view.seat === 'pilot' ? 'text-pilot' : 'text-copilot'} />
-                    ),
-                  }}
+                  components={{ seat: <span className={SEAT_STYLE[view.seat].text} /> }}
                 />
                 <span className="hidden tablet:inline"> ·</span>
               </span>
@@ -157,21 +159,7 @@ export function StatusBar({
             <LeaveButton partnerName={partnerName} />
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {!pausing && (
-              <p
-                role="status"
-                className={cn(
-                  'rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap',
-                  myTurn
-                    ? view.seat === 'pilot'
-                      ? 'bg-pilot text-white'
-                      : 'bg-copilot text-white'
-                    : 'bg-muted',
-                )}
-              >
-                {turnText(view, partnerName)}
-              </p>
-            )}
+            {!pausing && <TurnPill view={view} partnerName={partnerName} />}
             {/* Dice are rolled (or Total Trust): silence until the round ends, as at the table. */}
             {(view.phase === 'placing' ||
               (view.autoRoll && view.phase === 'strategy' && !pausing)) && (

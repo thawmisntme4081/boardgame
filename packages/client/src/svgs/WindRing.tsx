@@ -2,6 +2,7 @@ import { WIND_RING, windSpeed } from '@sky/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { polar } from './geometry';
 
 const C = 60;
 const R = 48;
@@ -10,8 +11,8 @@ const SPOT = Math.min(9, (Math.PI * R) / WIND_RING.length - 0.5);
 
 /** `index` places from the top (0), clockwise. */
 const point = (index: number, radius: number) => {
-  const angle = ((index * 360) / WIND_RING.length - 90) * (Math.PI / 180);
-  return { x: C + radius * Math.cos(angle), y: C + radius * Math.sin(angle) };
+  const [x, y] = polar(C, (index * 360) / WIND_RING.length - 90, radius);
+  return { x, y };
 };
 
 const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);

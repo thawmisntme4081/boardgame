@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-export const PANEL = 'flex h-full flex-col gap-2 rounded-2xl border bg-card p-3';
+const PANEL = 'flex h-full flex-col gap-2 rounded-2xl border bg-card p-3';
 /**
  * The panel's info icon: tap for its hint (no hover-only info). Red on a panel whose two
  * dice must both be placed every round (axis, engines), whose popover also says why; gray
@@ -54,28 +54,24 @@ function PanelInfo({
   );
 }
 
-export function PanelHeader({
-  title,
-  hint,
-  side,
-  mandatory,
-  badge,
-  className,
-}: {
+interface PanelProps {
   title: string;
+  /** Opens from the info icon next to the title. */
   hint?: ReactNode;
-  side?: boolean;
+  /** Desktop: the badge goes under the title (narrow side panels: Landing gear, Flaps). */
+  stackHeaderOnDesktop?: boolean;
+  /** A red info icon: both dice must go here every round (Axis, Engines). */
   mandatory?: boolean;
   /** Shown right after the title, e.g. the marker a system moves. */
   badge?: ReactNode;
-  className?: string;
-}) {
+}
+
+function PanelHeader({ title, hint, stackHeaderOnDesktop, mandatory, badge }: PanelProps) {
   return (
     <header
       className={cn(
         'flex items-baseline justify-between gap-2',
-        side && 'desktop:flex-col desktop:items-start desktop:gap-0',
-        className,
+        stackHeaderOnDesktop && 'desktop:flex-col desktop:items-start desktop:gap-0',
       )}
     >
       <h2 className="flex items-center gap-1 text-sm font-semibold">
@@ -87,26 +83,15 @@ export function PanelHeader({
   );
 }
 
+/** A cockpit panel: a card with its title (and info icon, badge) above the content. */
 export function Panel({
-  title,
-  hint,
-  side,
-  mandatory,
-  badge,
   className,
   children,
-}: {
-  title: string;
-  hint?: ReactNode;
-  side?: boolean;
-  mandatory?: boolean;
-  badge?: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) {
+  ...header
+}: PanelProps & { className?: string; children: ReactNode }) {
   return (
-    <section className={cn(PANEL, className)} aria-label={title}>
-      <PanelHeader title={title} hint={hint} side={side} mandatory={mandatory} badge={badge} />
+    <section className={cn(PANEL, className)} aria-label={header.title}>
+      <PanelHeader {...header} />
       {children}
     </section>
   );

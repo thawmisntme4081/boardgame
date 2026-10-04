@@ -64,10 +64,14 @@ export function approachSteps(speed: number, aeroBlue: number, aeroOrange: numbe
   return 2;
 }
 
+/** The brake marker's steps for these modules: the base track, or a module's own (Ice brakes). */
+export function brakeThresholds(modules: readonly ModuleId[] = []): readonly number[] {
+  return modules.map((id) => MODULES[id].brakeThresholds).find(Boolean) ?? BRAKE_THRESHOLDS;
+}
+
 /** Where the brake marker sits (landing speed must not exceed it); Ice brakes have their own track. */
 export function brakeThreshold(brakes: number, modules: readonly ModuleId[] = []): number {
-  const thresholds =
-    modules.map((id) => MODULES[id].brakeThresholds).find(Boolean) ?? BRAKE_THRESHOLDS;
+  const thresholds = brakeThresholds(modules);
   return thresholds[Math.min(brakes, thresholds.length - 1)]!;
 }
 

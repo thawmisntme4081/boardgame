@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNow } from '@/lib/useNow';
-import { useGame } from '@/store';
+import { useNextTurnLeft } from '@/lib/useNextTurn';
 
 /**
  * A short breather after each round's last die: "Next turn in 5s", in green. Display only;
@@ -8,10 +7,9 @@ import { useGame } from '@/store';
  */
 export function NextTurnCountdown() {
   const { t } = useTranslation();
-  const nextTurnAt = useGame((s) => s.nextTurnAt);
-  const now = useNow();
-  if (nextTurnAt === null || now >= nextTurnAt) return null;
-  const seconds = Math.ceil((nextTurnAt - now) / 1000);
+  const left = useNextTurnLeft();
+  if (left === null) return null;
+  const seconds = Math.ceil(left / 1000);
   return (
     <p
       role="timer"

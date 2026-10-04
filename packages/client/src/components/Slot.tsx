@@ -11,7 +11,9 @@ import { BellRing, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { placeSelected } from '@/api';
 import { t } from '@/i18n';
+import { SLOT_SIZE } from '@/lib/classes';
 import { slotValid } from '@/lib/moves';
+import { SEAT_STYLE } from '@/lib/seatStyle';
 import { cn } from '@/lib/utils';
 import { useGame } from '@/store';
 import { DieFace } from '@/svgs/DieFace';
@@ -54,7 +56,10 @@ function CoveredSlot({ slot }: { slot: SlotId }) {
     <span
       role="img"
       aria-label={t('slot.covered', { label: slotLabel(slot) })}
-      className="grid size-11 shrink-0 place-items-center rounded-xl border-2 border-dashed border-muted-foreground/40 bg-muted text-muted-foreground desktop:size-12"
+      className={cn(
+        SLOT_SIZE,
+        'grid shrink-0 place-items-center rounded-xl border-2 border-dashed border-muted-foreground/40 bg-muted text-muted-foreground',
+      )}
     >
       <X aria-hidden="true" className="size-7" strokeWidth={3} />
     </span>
@@ -89,12 +94,9 @@ function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
       disabled={!valid}
       onClick={() => void placeSelected(slot)}
       className={cn(
-        'relative grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold transition desktop:size-12',
-        both
-          ? 'slot-shared'
-          : seat === 'pilot'
-            ? 'border-pilot/60 bg-pilot-soft text-pilot'
-            : 'border-copilot/70 bg-copilot-soft text-copilot',
+        SLOT_SIZE,
+        'relative grid shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold transition',
+        both ? 'slot-shared' : SEAT_STYLE[seat].slot,
         selectedDieId && !valid && !placed && !chosen && 'opacity-40',
         valid && 'animate-pulse ring-4 ring-light-on ring-offset-1',
         chosen && 'ring-4 ring-foreground ring-offset-1',

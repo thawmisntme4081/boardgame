@@ -2,9 +2,6 @@ import { NEXT_TURN_MS, type PlayerView, type Presence, type SlotId } from '@sky/
 import { create } from 'zustand';
 import { loadSession, type Session } from './session';
 
-/** The green pause shown after each round (display only; Total Trust rolls when it ends). */
-export const NEXT_TURN_PAUSE_MS = NEXT_TURN_MS;
-
 export type Connection = 'connecting' | 'online' | 'offline';
 
 /**
@@ -81,7 +78,7 @@ export const useGame = create<GameStore>()((set) => ({
           view.phase !== 'strategy'
             ? null
             : s.view && view.round > s.view.round
-              ? Date.now() + NEXT_TURN_PAUSE_MS
+              ? Date.now() + NEXT_TURN_MS
               : s.nextTurnAt,
       };
     }),
