@@ -1,5 +1,5 @@
 import { DIFFICULTIES, SCENARIO_LIST, SCENARIOS, type Scenario } from '@sky/shared';
-import { scenarioSummary, type SetupChoice } from '@/lib/setup';
+import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,8 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { landedScenarios } from '@/lib/history';
+import { scenarioSummary, type SetupChoice } from '@/lib/setup';
 import { cn } from '@/lib/utils';
-import { DIFFICULTY_DOT, difficultyName, moduleText } from '@/scenarioText';
+import { DIFFICULTY_DOT, difficultyName, moduleText, weatherText } from '@/scenarioText';
+import { useGame } from '@/store';
 
 export function DifficultyDot({ scenario }: { scenario: Scenario }) {
   return (
@@ -39,6 +42,14 @@ export function ScenarioPicker({
 }) {
   const { t } = useTranslation();
   const scenario = SCENARIOS[value.scenario] ?? SCENARIO_LIST[0]!;
+  // Modules, then the altitude track's weather, each with its rule.
+  const rules = [
+    ...scenario.modules.map((m) => ({ id: m as string, ...moduleText(m) })),
+    ...weatherText(scenario),
+  ];
+  // Scenarios landed on this device get a ✓ (the Flight Log's victory boxes).
+  const history = useGame((s) => s.history);
+  const landed = landedScenarios(history);
 
   const pickScenario = (next: string) => {
     if (SCENARIOS[next]) onChange({ scenario: next });
@@ -60,6 +71,13 @@ export function ScenarioPicker({
                   <DifficultyDot scenario={s} />
                   {s.name}
                   <span className="sr-only">, {difficultyName(s.difficulty)}</span>
+                  {landed.has(s.id) && (
+                    <Check
+                      role="img"
+                      aria-label={t('flightLog.landed')}
+                      className="size-4 text-emerald-600"
+                    />
+                  )}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -67,12 +85,11 @@ export function ScenarioPicker({
         </SelectContent>
       </Select>
       <p className="text-xs text-muted-foreground">{scenarioSummary(scenario)}</p>
-      {scenario.modules.length > 0 && (
+      {rules.length > 0 && (
         <ul className="list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
-          {scenario.modules.map((m) => (
-            <li key={m}>
-              <span className="font-medium text-foreground">{moduleText(m).name}:</span>{' '}
-              {moduleText(m).rule}
+          {rules.map(({ id, name, rule }) => (
+            <li key={id}>
+              <span className="font-medium text-foreground">{name}:</span> {rule}
             </li>
           ))}
         </ul>

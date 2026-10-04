@@ -1,6 +1,6 @@
 # Phase 10: Game history (local)
 
-[← Master plan](../PLAN.md) · Milestone M4 · **Status: ⏳ Not started** · Effort: **low**
+[← Master plan](../PLAN.md) · Milestone M4 · **Status: ✅ Done (Oct 4, 2026)** · Effort: **low**
 
 ## Goals
 
@@ -35,10 +35,21 @@ A W/L cell is green when it has at least one win, orange when it only has losses
 
 ## Checklist
 
-- [ ] History saved on game over (local)
-- [ ] ✓ on landed scenarios in the picker
-- [ ] Flight Log dialog (colour badge, split-flap code, name, pilot and co-pilot W/L, green/orange cells)
-- [ ] History list in the lobby
-- [ ] Tests (component + one Playwright game ending in a recorded result)
+- [x] History saved on game over (local)
+- [x] ✓ on landed scenarios in the picker
+- [x] Flight Log dialog (colour badge, split-flap code, name, pilot and co-pilot W/L, green/orange cells)
+- [x] History list in the lobby (a tab of the Flight Log dialog, also opened from the game-over dialog)
+- [x] Tests (component + one Playwright game ending in a recorded result)
 
-**Done when:** a finished game appears in the history list and the scenario shows ✓ after a reload.
+**Done when:** a finished game appears in the history list and the scenario shows ✓ after a reload. ✅ Verified Oct 4, 2026 (`e2e/history.spec.ts` on three devices: recorded once, kept after a reload, ✓ in the picker; 351 unit tests, 41 Playwright tests).
+
+## How it works
+
+- `lib/history.ts`: `GameRecord` (format `v: 1`), `loadHistory` / `saveRecord` (`localStorage` key `sky-team:history`, newest first, at most 500 games, storage errors ignored), `recordFor` (a record only when a view changes from playing to over, so repeated views, reconnects and reloads on the result screen never count twice), `scenarioStats`, `landedScenarios`.
+- `api.ts` records on `game:view`; the store keeps `history` so the picker and the dialog update at once.
+- `components/FlightLog.tsx`: the dialog (shadcn Tabs: Flight Log table, History list), opened from the lobby and the game-over dialog.
+
+## Open questions (all settled Oct 4, 2026)
+
+1. ~~Vietnamese terms~~ Settled with the user (Oct 4, 2026): Vietnamese "Flight Log" = "Nhật ký bay", History = "Lịch sử", W/L = "T/B" (thắng/bại). New terms for the glossary in [Phase 9](phase-09-i18n.md).
+2. ~~Which device records a game~~ Settled with the user (Oct 4, 2026): a game counts only for the device that saw it end; a game whose end arrived while the page was closed or reloading is not recorded.

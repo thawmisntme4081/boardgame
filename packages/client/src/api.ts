@@ -11,6 +11,7 @@ import {
 } from '@sky/shared';
 import { toast } from 'sonner';
 import { t } from './i18n';
+import { recordFor } from './lib/history';
 import { errorText } from './messages';
 import { createPartnerNotifier } from './partner';
 import { inviteUrl, saveSession } from './session';
@@ -72,6 +73,10 @@ export function startConnection(): void {
       saveSession(moved);
       store().setSession(moved);
     }
+    // A game that just ended goes into this device's history (once).
+    const { view: before, presence } = store();
+    const record = recordFor(before, view, presence, Date.now());
+    if (record) store().addRecord(record);
     store().setView(view);
   });
   const onPartner = createPartnerNotifier((text) => toast.message(text));

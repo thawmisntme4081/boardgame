@@ -3,6 +3,7 @@ import { CircleCheck, CircleX, OctagonAlert, PlaneLanding } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { leaveGame, rematch } from '@/api';
+import { FlightLog } from '@/components/FlightLog';
 import { DifficultyDot, ScenarioPicker } from '@/components/ScenarioPicker';
 import { Button } from '@/components/ui/button';
 import {
@@ -104,6 +105,7 @@ export function GameOverDialog({ view }: { view: PlayerView }) {
             </ul>
           )}
           <RematchForm view={view} won={won} />
+          <FlightLog className="self-center" />
         </div>
       </DialogContent>
     </Dialog>

@@ -1,5 +1,6 @@
 import { NEXT_TURN_MS, type PlayerView, type Presence, type SlotId } from '@sky/shared';
 import { create } from 'zustand';
+import { loadHistory, saveRecord, type GameRecord } from './lib/history';
 import { loadSession, type Session } from './session';
 
 export type Connection = 'connecting' | 'online' | 'offline';
@@ -30,6 +31,8 @@ export interface GameStore {
   roundDeadline: number | null;
   /** When the green "Next turn in 5s" after a round's last die ends (this device's clock). */
   nextTurnAt: number | null;
+  /** Finished games saved on this device, newest first. */
+  history: GameRecord[];
 
   setConnection: (connection: Connection) => void;
   setSession: (session: Session | null) => void;
@@ -39,6 +42,7 @@ export interface GameStore {
   setCoffeeDelta: (delta: number) => void;
   setInternSlot: (slot: SlotId | null) => void;
   toggleRerollPick: (dieId: string) => void;
+  addRecord: (record: GameRecord) => void;
   leave: () => void;
 }
 
@@ -54,6 +58,7 @@ export const useGame = create<GameStore>()((set) => ({
   rerollPick: [],
   roundDeadline: null,
   nextTurnAt: null,
+  history: loadHistory(),
 
   setConnection: (connection) => set({ connection }),
   setSession: (session) => set({ session }),
@@ -104,6 +109,7 @@ export const useGame = create<GameStore>()((set) => ({
         ? s.rerollPick.filter((id) => id !== dieId)
         : [...s.rerollPick, dieId],
     })),
+  addRecord: (record) => set({ history: saveRecord(record) }),
   leave: () =>
     set({
       session: null,

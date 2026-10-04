@@ -307,6 +307,26 @@
     "leave": "Leave",
     "flyAgain": "Fly again"
   },
+  "flightLog": {
+    "open": "Flight Log",
+    "title": "Flight Log",
+    "intro": "Your games on this device.",
+    "tabLog": "Flight Log",
+    "tabHistory": "History",
+    "color": "Color",
+    "code": "Code",
+    "scenario": "Scenario",
+    "pilot": "Pilot (W/L)",
+    "copilot": "Co-pilot (W/L)",
+    "cell": "{{seat}}: {{won}} won, {{lost}} lost",
+    "notPlayed": "{{seat}}: not played",
+    "landed": "landed",
+    "empty": "No games yet. Finished games appear here.",
+    "won": "Landed",
+    "lost": "Crashed",
+    "entry": "as {{seat}} with {{partner}} · round {{rounds}}",
+    "entryAlone": "as {{seat}} · round {{rounds}}"
+  },
   "toast": {
     "noAnswer": "The server did not answer. Check your connection.",
     "inviteCopied": "Invite link copied",
@@ -415,7 +435,9 @@
     "stormRule": "Storm: you hold 2 dice; each placement brings in a set-aside die and rerolls your hand.",
     "setAside_one": "{{count}} die set aside",
     "setAside_other": "{{count}} dice set aside",
-    "altitudeWeather": "{{altitude}} ft: {{weather}}"
+    "altitudeWeather": "{{altitude}} ft: {{weather}}",
+    "turbulenceLobby": "each die you place rerolls your other dice (at {{altitudes}} ft).",
+    "badVisibilityLobby": "you hold 2 dice; each placement brings in a set-aside die (at {{altitudes}} ft)."
   },
   "preflight": {
     "title": "Before take-off",

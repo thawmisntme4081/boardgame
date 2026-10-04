@@ -1,7 +1,7 @@
 // Names and one-line rules for the Flight Log modules and Special Ability cards (texts in
 // locales/*.json).
-import type { AbilityId, Difficulty, ModuleId } from '@sky/shared';
-import { t } from '@/i18n';
+import type { AbilityId, Difficulty, ModuleId, Scenario } from '@sky/shared';
+import { formatNumber, t } from '@/i18n';
 
 export const moduleText = (id: ModuleId): { name: string; rule: string } => ({
   name: t(`moduleText.${id}.name`),
@@ -12,6 +12,25 @@ export const abilityText = (id: AbilityId): { name: string; rule: string } => ({
   name: t(`abilityText.${id}.name`),
   rule: t(`abilityText.${id}.rule`),
 });
+
+/** The airport code, numbered when the airport has two scenarios of a colour: `DUS1`, `DUS2`. */
+export const scenarioCode = (scenario: Scenario): string =>
+  scenario.airport + (/\d+$/.exec(scenario.id)?.[0] ?? '');
+
+/** Turbulence and Bad Visibility on the altitude track, like a module: name, rule, altitudes. */
+export function weatherText(scenario: Scenario): { id: string; name: string; rule: string }[] {
+  return (['turbulence', 'badVisibility'] as const).flatMap((id) => {
+    const at = scenario.altitudes.filter((a) => a[id]).map((a) => formatNumber(a.altitude));
+    if (at.length === 0) return [];
+    return [
+      {
+        id,
+        name: t(`weather.${id}`),
+        rule: t(`weather.${id}Lobby`, { altitudes: at.join(' · ') }),
+      },
+    ];
+  });
+}
 
 export const difficultyName = (difficulty: Difficulty): string => t(`difficulty.${difficulty}`);
 

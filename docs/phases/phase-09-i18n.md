@@ -61,6 +61,9 @@
 | Kerosene / Kerosene leak | Nhiên liệu / Rò rỉ nhiên liệu |
 | Intern | Thực tập sinh |
 | Wind | Gió |
+| Flight Log | Nhật ký bay |
+| History | Lịch sử |
+| W/L (wins/losses) | T/B (thắng/bại) |
 | Ice brakes | Phanh băng |
 | Traffic die | Xúc xắc giao thông |
 | Real-time | Thời gian thực |

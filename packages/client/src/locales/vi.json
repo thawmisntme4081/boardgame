@@ -298,6 +298,26 @@
     "leave": "Rời đi",
     "flyAgain": "Bay lại"
   },
+  "flightLog": {
+    "open": "Nhật ký bay",
+    "title": "Nhật ký bay",
+    "intro": "Các ván của bạn trên thiết bị này.",
+    "tabLog": "Nhật ký bay",
+    "tabHistory": "Lịch sử",
+    "color": "Màu",
+    "code": "Mã",
+    "scenario": "Kịch bản",
+    "pilot": "Phi công (T/B)",
+    "copilot": "Cơ phó (T/B)",
+    "cell": "{{seat}}: thắng {{won}}, thua {{lost}}",
+    "notPlayed": "{{seat}}: chưa chơi",
+    "landed": "đã hạ cánh",
+    "empty": "Chưa có ván nào. Các ván đã xong sẽ hiện ở đây.",
+    "won": "Hạ cánh",
+    "lost": "Rơi máy bay",
+    "entry": "là {{seat}} cùng {{partner}} · vòng {{rounds}}",
+    "entryAlone": "là {{seat}} · vòng {{rounds}}"
+  },
   "toast": {
     "noAnswer": "Máy chủ không phản hồi. Hãy kiểm tra kết nối.",
     "inviteCopied": "Đã sao chép đường dẫn mời",
@@ -405,7 +425,9 @@
     "badVisibilityRule": "Tầm nhìn kém: bạn cầm 2 xúc xắc; mỗi lần đặt tiếp theo sẽ lấy thêm một xúc xắc để riêng.",
     "stormRule": "Bão: bạn cầm 2 xúc xắc; mỗi lần đặt lấy thêm một xúc xắc để riêng và đổ lại cả tay.",
     "setAside_other": "{{count}} xúc xắc để riêng",
-    "altitudeWeather": "{{altitude}} ft: {{weather}}"
+    "altitudeWeather": "{{altitude}} ft: {{weather}}",
+    "turbulenceLobby": "mỗi xúc xắc bạn đặt sẽ đổ lại các xúc xắc còn lại của bạn (ở {{altitudes}} ft).",
+    "badVisibilityLobby": "bạn cầm 2 xúc xắc; mỗi lần đặt lấy thêm một xúc xắc để riêng (ở {{altitudes}} ft)."
   },
   "preflight": {
     "title": "Trước khi cất cánh",

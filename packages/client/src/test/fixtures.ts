@@ -86,5 +86,6 @@ export function resetStore(): void {
     rerollPick: [],
     roundDeadline: null,
     nextTurnAt: null,
+    history: [],
   });
 }

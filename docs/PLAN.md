@@ -25,7 +25,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Done (Oct 2, 2026) |
 | **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | ✅ Done (Oct 4, 2026) |
-| **M4 — Sky Team complete** | Vietnamese language, local game history (Flight Log), games survive restarts | 9–11 | 🚧 In progress (9 done) |
+| **M4 — Sky Team complete** | Vietnamese language, local game history (Flight Log), games survive restarts | 9–11 | 🚧 In progress (9, 10 done) |
 | **M5 — Launch** | The game on a URL friends can open (public or private), monitored | 12 | ⏳ Not started |
 | **M6 — Multi-game platform** | Sky Team runs on a game-agnostic engine, protocol, match log and client shell; accounts; a second game proves it | 13–19 | ⏳ Not started |
 | **M7 — Scale and large games** | Several server instances when needed; large games one by one | 20–21+ | ⏳ Not started |
@@ -44,7 +44,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done | — |
 | 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | ✅ Done | High |
 | 9 | [Internationalisation (EN + VI)](phases/phase-09-i18n.md) | M4 | ✅ Done | Medium |
-| 10 | [Game history (local)](phases/phase-10-history.md) | M4 | ⏳ Not started | Low |
+| 10 | [Game history (local)](phases/phase-10-history.md) | M4 | ✅ Done | Low |
 | 11 | [Persistence](phases/phase-11-persistence.md) | M4 | ⏳ Not started | Medium-low |
 | 12 | [Deploy](phases/phase-12-deploy.md) | M5 | ⏳ Not started | Medium |
 | 13 | [Engine contract](phases/phase-13-engine-contract.md) | M6 | ⏳ Not started | Low-medium |
@@ -63,7 +63,7 @@ Status legend: ✅ done · 🚧 in progress · ⏳ not started.
 
 ```mermaid
 flowchart LR
-  P8[8 Turbulence ✅] --> P10[10 Local history]
+  P8[8 Turbulence ✅] --> P10[10 Local history ✅]
   P9[9 i18n ✅]
   P10 --> P11[11 Persistence] --> P12[12 Deploy]
   P12 --> P13[13 Engine contract] --> P14[14 Everything is a move] --> P15[15 Generic protocol]
@@ -81,7 +81,7 @@ flowchart LR
 - **Phase 18** (accounts) needs the match store (16), the router pages (17) and the production domain (12).
 - **Phase 20** starts only when metrics show one server is not enough.
 
-Suggested next steps: Phase 10 (local history and the Flight Log) → Phase 11 + 12 together → Phases 13–19 in order.
+Suggested next steps: Phase 11 + 12 together → Phases 13–19 in order.
 
 ## Open items carried from finished phases
 

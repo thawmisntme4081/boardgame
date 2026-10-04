@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { createRoom, joinRoom, leaveGame, shareInvite } from '@/api';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { FlightLog } from '@/components/FlightLog';
 import { DifficultyDot, ScenarioPicker } from '@/components/ScenarioPicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -117,6 +118,7 @@ export function Lobby() {
               >
                 {t('lobby.create')}
               </Button>
+              <FlightLog />
             </>
           )}
         </CardContent>
