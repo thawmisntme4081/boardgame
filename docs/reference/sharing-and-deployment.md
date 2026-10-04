@@ -74,6 +74,25 @@ CMD ["node", "packages/server/dist/index.js"]
 
 Check each host's current pricing and sleep rules before choosing; a sleeping or restarting free instance drops live games.
 
+## Chosen hosting: private site on Fly.io
+
+Decided Oct 4, 2026 (built in [Phase 12](../phases/phase-12-deploy.md), storage in [Phase 11](../phases/phase-11-persistence.md)):
+
+| Piece | Choice |
+| --- | --- |
+| App | One Fly.io machine (512 MB–1 GB, shared CPU) in the region nearest the players (`sin`), **at most one machine** |
+| Auto stop/start | `auto_stop_machines = "suspend"` (or `"stop"`), `auto_start_machines = true`, `min_machines_running = 0`: the machine runs only while someone is connected; the first visit after idle waits a moment while it wakes |
+| Database | SQLite in a file on a 1 GB Fly volume (`DATA_DIR=/data`), through Drizzle |
+| Backups | Litestream replicating to object storage (Cloudflare R2 free tier, or Fly Tigris) |
+| Access | Domain on Cloudflare, proxied to Fly; Cloudflare Access (email allowlist, one-time PIN); `noindex` + `robots.txt` |
+| Errors | Sentry free plan |
+
+**Cost:** Fly bills CPU and memory per second while the machine runs, and storage always. At 2–4 hours of play a day: about $0.50–1.50 for the machine, about $0.15 for the volume, $0 for R2, Cloudflare Access and Sentry within their free tiers, plus the domain (about $1/month): **about $1.50–2.50/month**. Always on would be about $3.50–4. Check Fly's current prices before deploying.
+
+**While the machine is stopped nothing runs:** deadlines are stored and checked when a room or match is next loaded; idle rooms are swept on startup; notifications (if ever added) need an outside cron that wakes the app. A deploy restarts the one machine for a few seconds (players reconnect; nothing is lost).
+
+**Move to Postgres** (and several machines) only if the site goes public or one machine is not enough: [Phase 20](../phases/phase-20-scale-out.md).
+
 **Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `ROUND_TIMER_SECONDS` (dev/tests only: shortens timed rounds; ignored in production), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
 
 **CI/CD with GitHub Actions**

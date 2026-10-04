@@ -18,7 +18,7 @@ One Node process serves the built React app and runs Socket.IO; both sides impor
 | Client state | Zustand | Holds the latest server view plus UI-only state |
 | Validation | Zod | Checks every incoming socket payload |
 | Tests | Vitest (+ fast-check), React Testing Library, Playwright | Same runner for shared, server and client; real browsers for E2E |
-| Hosting | Render, Railway or Fly.io | Long-running Node process with WebSockets |
+| Hosting | Fly.io, one machine with auto stop/start; SQLite on a volume + Litestream (decided Oct 4, 2026) | Long-running Node process with WebSockets; pay only while players are connected |
 
 This is a personal/learning project: if it is ever published, use an original name and artwork rather than the publisher's.
 

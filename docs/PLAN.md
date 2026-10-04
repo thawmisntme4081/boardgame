@@ -26,7 +26,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Done (Oct 2, 2026) |
 | **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | ✅ Done (Oct 4, 2026) |
 | **M4 — Sky Team complete** | Vietnamese language, local game history (Flight Log), games survive restarts | 9–11 | 🚧 In progress (9, 10 done) |
-| **M5 — Launch** | The game on a URL friends can open (public or private), monitored | 12 | ⏳ Not started |
+| **M5 — Launch** | The game on a private URL friends can open (Fly.io + SQLite, Cloudflare Access), monitored | 12 | ⏳ Not started |
 | **M6 — Multi-game platform** | Sky Team runs on a game-agnostic engine, protocol, match log and client shell; accounts; a second game proves it | 13–19 | ⏳ Not started |
 | **M7 — Scale and large games** | Several server instances when needed; large games one by one | 20–21+ | ⏳ Not started |
 
@@ -76,7 +76,7 @@ flowchart LR
 ```
 
 - **Sky Team first** (decided Oct 4, 2026): Phases 10–12 finish and ship Sky Team before the platform work starts.
-- **Phase 11** and **Phase 12** share one decision: the host decides the storage. Keep Phase 11's store behind an interface, since **Phase 16** turns it into the platform's move log.
+- **Hosting and storage decided (Oct 4, 2026):** a private site on one Fly.io machine with auto stop/start, SQLite on a Fly volume (Drizzle, Litestream backups), Cloudflare Access in front; about $1.50–2.50/month plus the domain. This holds for the multi-game platform too; Postgres only if Phase 20 happens. Keep Phase 11's store behind an interface, since **Phase 16** turns it into the platform's move log.
 - **Phases 13–15** are a refactor: Sky Team must play exactly as before at the end of each.
 - **Phase 18** (accounts) needs the match store (16), the router pages (17) and the production domain (12).
 - **Phase 20** starts only when metrics show one server is not enough.

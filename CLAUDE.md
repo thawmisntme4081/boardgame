@@ -9,7 +9,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - Client: React + Vite, Tailwind CSS v4 (`@tailwindcss/vite`), Zustand for the latest server view
 - shadcn/ui ONLY for lobby, dialogs, toasts, tooltip/popover, select/tabs. Add components one at a time with `pnpm dlx shadcn@latest add <name>` in `packages/client`. The cockpit board, dice, tracks and alarm board are custom components (Tailwind + SVG).
 - Tests: Vitest (+ fast-check fuzzing), socket.io-client integration tests, React Testing Library, Playwright E2E incl. iPhone/Pixel device profiles
-- Deploy: one Docker image, one Node process serving the built client + Socket.IO on the same port. Render free tier for testing; Railway Hobby or small Fly.io machine later.
+- Deploy (decided Oct 4, 2026): a private site on one Fly.io machine with auto stop/start (at most one machine), SQLite on a Fly volume via Drizzle with Litestream backups, Cloudflare Access in front. One Docker image, one Node process serving the built client + Socket.IO on the same port. The machine stops when nobody is connected: never rely on a timer firing while players are away (store deadlines, check them on load). Postgres and several machines only if Phase 20 happens.
 
 ## Architecture rules (do not break)
 

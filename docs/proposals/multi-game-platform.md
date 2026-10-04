@@ -187,7 +187,9 @@ match_snapshots(match_id, n, state jsonb)             -- every ~50 moves and at 
 - **Debugging**: a bug report is a match id; replay it locally with the exact seed.
 - **Rules upgrades**: a match records `rules_version`; `migrate` upgrades old snapshots, or old matches finish on the old version.
 
-**Storage recommendation:** with several games, accounts and history coming, prefer **PostgreSQL** over the SQLite-or-Redis choice in Phase 11. JSONB fits states and moves, Railway and Fly offer managed Postgres, and it supports several app instances later. SQLite stays a fine choice if the platform remains a single instance; the `MatchStore` interface keeps that choice reversible.
+**Storage (decided Oct 4, 2026): SQLite** on a Fly.io volume, through Drizzle, backed up with Litestream. The site stays private (friends only), so one machine with auto stop/start is enough even with four games, accounts and history; SQLite has no extra service, no second cold start and no free-tier quota. **Postgres** becomes the choice only if the site goes public or needs several instances (Phase 20); `MatchStore` and Drizzle keep that move to a data copy plus a driver switch.
+
+**Auto stop/start:** the machine stops when nobody is connected, so no timer runs while everyone is away. Scheduled moves are stored with their due time and applied when the match is next loaded or touched; notifications for long games (if added) come from an outside cron (e.g. a Cloudflare Worker) that wakes the app.
 
 ### 4.5 Client architecture
 
@@ -253,7 +255,7 @@ Scale in stages, each triggered by a measurement rather than a guess.
 
 | Stage | Trigger | Shape |
 | --- | --- | --- |
-| **1. Modular monolith** (target of this refactor) | now | one Node process, all games in-process, Postgres (or SQLite) store; matches survive restarts |
+| **1. Modular monolith** (target of this refactor) | now | one Fly.io machine with auto stop/start, all games in-process, SQLite on a volume (Litestream backups); matches survive restarts |
 | **2. Several instances** | one process can't hold the load, or zero-downtime deploys are wanted | N identical instances behind a load balancer; **each match owned by one instance** (lease in Redis, or routing by match id); Socket.IO Redis adapter for room fan-out; an instance dying → another loads the match from the store |
 | **3. Split heavy work** | bots or AI analysis eat CPU | bot players as separate workers that connect as clients; stateless services (accounts, history API) separate from the realtime tier |
 
@@ -307,10 +309,10 @@ Steps A–E are a refactor of the existing app. Steps F–G add product. Account
 
 ## 11. Open questions
 
-1. **Public or private?** A public site with published games needs licences; a private, invite-only site changes priorities (accounts, moderation, scale).
+1. ~~**Public or private?**~~ Settled Oct 4, 2026: private (Cloudflare Access). A public site with published games needs licenses; a private, invite-only site changes priorities (accounts, moderation, scale).
 2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favours the event log and adds notifications.
 3. **Accounts:** required for every player, or guests plus optional accounts (as planned in Phase 18)?
 4. **Bots:** will any game need computer players (solo Pandemic, practice Twilight Struggle)? That decides whether stage 3 matters.
-5. **Storage:** Postgres (recommended for several games and history) or SQLite on one instance?
+5. ~~**Storage:**~~ Settled Oct 4, 2026: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Phase 20 happens.
 6. **Second game:** which small game should prove the engine before the big ones?
 7. ~~**Order:**~~ Settled Oct 4, 2026: finish Sky Team first (Phases 10–12), then the platform phases 13–21, numbered in execution order.

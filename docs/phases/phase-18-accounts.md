@@ -16,7 +16,7 @@ Was stage B of the old game-history phase (now [Phase 10](phase-10-history.md) c
 
 ## Technical tasks
 
-1. Sign-in via an auth library storing users in the platform database (e.g. Better Auth): Google or GitHub, or email one-time codes if an email service is added. No passwords stored.
+1. Sign-in via an auth library storing users in the platform's SQLite database (e.g. Better Auth): Google or GitHub, or email one-time codes if an email service is added. No passwords stored.
 2. Sessions in an httpOnly cookie, read by Express and the Socket.IO handshake; seats linked to accounts; guests unaffected.
 3. History from `matches` + `outcome` (written once per match by the match runner); per-game summary cards from each game's `Summary` component.
 4. Profile (display name); import of the local history from Phase 10 on first sign-in.
