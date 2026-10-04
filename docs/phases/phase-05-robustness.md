@@ -10,7 +10,7 @@
 ## Feature scope
 
 - **In:** reconnect tokens, presence, idempotent requests, idle room sweep, per-IP room limit, leaving mid-game.
-- **Out:** surviving a server restart (Phase 9).
+- **Out:** surviving a server restart (Phase 11).
 
 ## Technical tasks
 

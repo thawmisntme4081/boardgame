@@ -1,4 +1,4 @@
-# Phase 9: Persistence
+# Phase 11: Persistence
 
 [← Master plan](../PLAN.md) · Milestone M4 · **Status: ⏳ Not started** · Effort: **medium-low** (1–2 sessions)
 
@@ -6,6 +6,8 @@
 
 - Games survive a server restart or redeploy: players reload and land back in their seats.
 - A storage layer that later phases (history, accounts) can build on.
+
+**Looking ahead:** [Phase 16](phase-16-match-log.md) turns this store into the platform's move log + snapshots. Keep storage behind the `RoomStore` interface, and keep the room's game state and its accepted-move log (`GameState.log`) in separate fields, so that rework stays small. If the multi-game platform is certain, prefer the storage it will use (Postgres or SQLite, see the [proposal](../proposals/multi-game-platform.md#44-persistence-event-sourcing-with-snapshots)) over Redis.
 
 ## Feature scope
 

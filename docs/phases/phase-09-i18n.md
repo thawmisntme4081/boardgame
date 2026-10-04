@@ -1,4 +1,4 @@
-# Phase 10: Internationalisation (English + Vietnamese)
+# Phase 9: Internationalisation (English + Vietnamese)
 
 [← Master plan](../PLAN.md) · Milestone M4 · **Status: ✅ Done** · Effort: **medium** (mostly volume)
 

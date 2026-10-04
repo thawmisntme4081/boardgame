@@ -1,6 +1,6 @@
 # Sky Team Online — Master Plan
 
-Last restructured Oct 1, 2026. This file is the big picture only; each phase has its own file in [`phases/`](phases/) with goals, scope, tasks and a checklist, and the long-lived technical references live in [`reference/`](reference/).
+Last restructured Oct 4, 2026: phases renumbered in execution order (old 10 i18n → 9, old 11 stage A history → 10, old 9 persistence → 11, old 11 stage B accounts → 18) and the multi-game platform added as phases 13–21 ([proposal](proposals/multi-game-platform.md)). This file is the big picture only; each phase has its own file in [`phases/`](phases/) with goals, scope, tasks and a checklist, and the long-lived technical references live in [`reference/`](reference/).
 
 ## Vision
 
@@ -16,6 +16,8 @@ An online, cooperative, 2-player version of the board game Sky Team: a pilot and
 
 This is a personal/learning project: if it is ever published, use an original name and artwork rather than the publisher's.
 
+**Later: a multi-game platform.** Once Sky Team is complete and deployed (M4–M5), the app grows into a platform where players pick a game (Pandemic, Isle of Skye, Twilight Struggle…) in the lobby. The design is in the [multi-game proposal](proposals/multi-game-platform.md): a game-agnostic engine contract, everything as moves, one protocol, a move log for persistence, and a client shell that lazy-loads each game's UI.
+
 ## Milestones
 
 | Milestone | Outcome | Phases | Status |
@@ -23,8 +25,10 @@ This is a personal/learning project: if it is ever published, use an original na
 | **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Done (Oct 2, 2026) |
 | **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | ✅ Done (Oct 4, 2026) |
-| **M4 — Platform features** | Games survive restarts, Vietnamese language, game history (accounts optional) | 9–11 | ⏳ Not started |
-| **M5 — Public launch** | The game on a public URL, monitored | 12 | ⏳ Not started |
+| **M4 — Sky Team complete** | Vietnamese language, local game history (Flight Log), games survive restarts | 9–11 | 🚧 In progress (9 done) |
+| **M5 — Launch** | The game on a URL friends can open (public or private), monitored | 12 | ⏳ Not started |
+| **M6 — Multi-game platform** | Sky Team runs on a game-agnostic engine, protocol, match log and client shell; accounts; a second game proves it | 13–19 | ⏳ Not started |
+| **M7 — Scale and large games** | Several server instances when needed; large games one by one | 20–21+ | ⏳ Not started |
 
 ## Phases
 
@@ -39,10 +43,19 @@ This is a personal/learning project: if it is ever published, use an original na
 | 6 | [Tests and CI](phases/phase-06-tests-ci.md) | M1 | ✅ Done | — |
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done | — |
 | 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | ✅ Done | High |
-| 9 | [Persistence](phases/phase-09-persistence.md) | M4 | ⏳ Not started | Medium-low |
-| 10 | [Internationalisation (EN + VI)](phases/phase-10-i18n.md) | M4 | ✅ Done | Medium |
-| 11 | [Game history and accounts](phases/phase-11-history-accounts.md) | M4 | ⏳ Not started | Low (local) / High (accounts) |
+| 9 | [Internationalisation (EN + VI)](phases/phase-09-i18n.md) | M4 | ✅ Done | Medium |
+| 10 | [Game history (local)](phases/phase-10-history.md) | M4 | ⏳ Not started | Low |
+| 11 | [Persistence](phases/phase-11-persistence.md) | M4 | ⏳ Not started | Medium-low |
 | 12 | [Deploy](phases/phase-12-deploy.md) | M5 | ⏳ Not started | Medium |
+| 13 | [Engine contract](phases/phase-13-engine-contract.md) | M6 | ⏳ Not started | Low-medium |
+| 14 | [Everything is a move](phases/phase-14-everything-is-a-move.md) | M6 | ⏳ Not started | Medium |
+| 15 | [Generic protocol](phases/phase-15-generic-protocol.md) | M6 | ⏳ Not started | Medium |
+| 16 | [Match log (persistence for every game)](phases/phase-16-match-log.md) | M6 | ⏳ Not started | Medium |
+| 17 | [Client shell and router](phases/phase-17-client-shell.md) | M6 | ⏳ Not started | Medium-high |
+| 18 | [Accounts and match history](phases/phase-18-accounts.md) | M6 | ⏳ Not started | High |
+| 19 | [A second, small game](phases/phase-19-second-game.md) | M6 | ⏳ Not started | Medium |
+| 20 | [Scale-out](phases/phase-20-scale-out.md) | M7 | ⏳ Only when metrics ask | Medium |
+| 21+ | [Large games](phases/phase-21-big-games.md) | M7 | ⏳ Not started | High per game |
 
 Status legend: ✅ done · 🚧 in progress · ⏳ not started.
 
@@ -50,20 +63,25 @@ Status legend: ✅ done · 🚧 in progress · ⏳ not started.
 
 ```mermaid
 flowchart LR
-  P7[7 Base box ✅] --> P8[8 Turbulence ✅]
-  P9[9 Persistence] --> P11B[11 Accounts - stage B]
-  P9 --> P12[12 Deploy]
-  P12 --> P11B
-  P10[10 i18n ✅]
-  P11A[11 Local history - stage A]
+  P8[8 Turbulence ✅] --> P10[10 Local history]
+  P9[9 i18n ✅]
+  P10 --> P11[11 Persistence] --> P12[12 Deploy]
+  P12 --> P13[13 Engine contract] --> P14[14 Everything is a move] --> P15[15 Generic protocol]
+  P15 --> P16[16 Match log] --> P17[17 Client shell + router]
+  P16 --> P18[18 Accounts]
+  P17 --> P18
+  P17 --> P19[19 Second game]
+  P19 --> P21[21+ Large games]
+  P16 --> P20[20 Scale-out]
 ```
 
-- **Phase 8** is done (Oct 4, 2026).
-- **Phase 9** and **Phase 12** share one decision: the host decides whether SQLite (needs a persistent disk) or Redis is used.
-- **Phase 10** is done. **Phase 11 stage A** depends on nothing else and can start now.
-- **Phase 11 stage B** (accounts) needs persistence and the production domain.
+- **Sky Team first** (decided Oct 4, 2026): Phases 10–12 finish and ship Sky Team before the platform work starts.
+- **Phase 11** and **Phase 12** share one decision: the host decides the storage. Keep Phase 11's store behind an interface, since **Phase 16** turns it into the platform's move log.
+- **Phases 13–15** are a refactor: Sky Team must play exactly as before at the end of each.
+- **Phase 18** (accounts) needs the match store (16), the router pages (17) and the production domain (12).
+- **Phase 20** starts only when metrics show one server is not enough.
 
-Suggested next steps: Phase 11A (local history and the Flight Log) → Phase 9 + 12 together → 11B if wanted.
+Suggested next steps: Phase 10 (local history and the Flight Log) → Phase 11 + 12 together → Phases 13–19 in order.
 
 ## Open items carried from finished phases
 
@@ -86,6 +104,7 @@ None
 - [Responsive UI](reference/ui.md): layouts per screen size, touch and mobile behaviour.
 - [Testing strategy](reference/testing.md): test layers, rules for tests, device checks.
 - [Sharing and deployment](reference/sharing-and-deployment.md): Cloudflare tunnel, Docker, hosts, environment variables.
+- [Multi-game platform proposal](proposals/multi-game-platform.md): target architecture for Phases 13–21.
 
 ## Risks
 
@@ -95,7 +114,7 @@ None
 | Board data not in any booklet | Mark placeholders; read values off the physical tiles; tests independent of the data |
 | Partner's dice leak to the client | `viewFor` is the only exit; leak checks on every view in integration tests |
 | Player refreshes or loses connection | Reconnect tokens + full view on rejoin |
-| Server restart ends live games | Phase 9 persistence |
+| Server restart ends live games | Phase 11 persistence |
 | Free host sleeps or restarts mid-game | Pick a host that stays awake (Phase 12) |
 | Scope creep as the project grows | One file per phase, explicit "In/Out" scope, milestones |
 | Publishing someone else's IP | Original name and art if it goes public |

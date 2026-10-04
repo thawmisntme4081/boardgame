@@ -35,7 +35,7 @@ Good to know:
 
 - `pnpm build` is only needed again after the code changes.
 - The `$env:` lines last for that terminal window only. `NODE_ENV=production` keeps the test-only settings (`GAME_SEED`, `E2E_HOOKS`) off; `TRUST_PROXY=1` makes the 5-rooms-per-address limit count each player's real address instead of everyone arriving through the tunnel as one.
-- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress (they are kept in memory until [Phase 9](../phases/phase-09-persistence.md)).
+- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress (they are kept in memory until [Phase 11](../phases/phase-11-persistence.md)).
 - When Claude Code runs the tunnel, its background jobs have a time limit; for long sessions run the two terminals yourself.
 - Quick tunnels are free, need no account and have no uptime guarantee: fine for an evening of games, not a permanent address.
 

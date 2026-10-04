@@ -1,4 +1,4 @@
-# Phase 12: Deploy (last)
+# Phase 12: Deploy
 
 [← Master plan](../PLAN.md) · Milestone M5 · **Status: ⏳ Not started (server already serves the built client)** · Effort: **medium**
 
@@ -12,17 +12,18 @@
 - **In:** Docker image, hosting, CI deploy, health checks, logs, error tracking, custom domain + HTTPS.
 - **Out:** several instances (only needed with Redis + sticky sessions).
 
-Moved to the end on Sep 29, 2026: until then, games are played locally or over a temporary Cloudflare tunnel (see [sharing and deployment](../reference/sharing-and-deployment.md)).
+Moved after the Sky Team phases on Sep 29, 2026 (the multi-game platform phases 13+ come after it): until then, games are played locally or over a temporary Cloudflare tunnel (see [sharing and deployment](../reference/sharing-and-deployment.md)).
 
 ## Technical tasks
 
-1. Choose the host with [Phase 9](phase-09-persistence.md)'s storage in mind (Render free has no persistent disk; Railway/Fly.io volumes do).
+1. Choose the host with [Phase 11](phase-11-persistence.md)'s storage in mind (Render free has no persistent disk; Railway/Fly.io volumes do).
 2. Dockerfile (multi-stage build; one Node process serves `client/dist` and Socket.IO).
 3. Environment: `NODE_ENV=production`, `TRUST_PROXY=1`, `ROOM_TTL_MINUTES`, `ROOMS_PER_IP`, `LOG_LEVEL`, optional `SENTRY_DSN`; never `GAME_SEED` or `E2E_HOOKS`.
 4. CI/CD: on push to `main`, build + Playwright, then the host's deploy hook; block on any failure.
 5. Observability: structured logs (pino) for room created/joined/ended and rejected moves; Sentry on client and server.
 6. Custom domain + HTTPS.
 7. Before publishing beyond friends: an original name and artwork instead of the publisher's.
+8. Decide public or private. Private (friends only): a named Cloudflare tunnel or the host behind Cloudflare, with Cloudflare Access (email allowlist, one-time PIN), plus `noindex` and a `robots.txt` that disallows everything.
 
 ## Checklist
 
@@ -37,5 +38,6 @@ Moved to the end on Sep 29, 2026: until then, games are played locally or over a
 - [ ] Error tracking (Sentry) on client and server
 - [ ] Custom domain + HTTPS
 - [ ] Original name and artwork if published publicly
+- [ ] Public or private decided; if private, Cloudflare Access allowlist and `noindex` in place
 
 **Done when:** a friend in another city plays a full game on the public URL.
