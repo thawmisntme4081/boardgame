@@ -1,6 +1,6 @@
 # Sky Team 12: Persistence
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium-low** (1–2 sessions)
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 5, 2026)** · Effort: **medium-low** (1–2 sessions)
 
 ## Goals
 
@@ -32,14 +32,13 @@
 ## Checklist
 
 - [x] Storage choice made together with the host (SQLite on a Fly volume, Oct 4, 2026)
-- [ ] `RoomStore` interface + in-memory implementation
-- [ ] SQLite implementation (Drizzle, WAL)
-- [ ] Write-through after every accepted change
-- [ ] Load on startup; timers re-armed; per-IP counts rebuilt; idle rooms swept
-- [ ] Sweep deletes stored rooms
-- [ ] Litestream backup and a tested restore
-- [ ] Format version check; incompatible rooms dropped
-- [ ] Tests: store unit tests; restart integration test (play, restart on the same store, rejoin, identical view); timer across a restart
-- [ ] Docs and `CLAUDE.md` updated (the "game state is in memory" rule)
+- [x] `RoomStore` interface + in-memory implementation (`MemoryRoomStore`, same JSON round trip as on disk)
+- [x] SQLite implementation (Drizzle on `better-sqlite3`, WAL; its prebuilt binaries need no build step)
+- [x] Write-through after every accepted change (queued in `broadcastRoom`, written on the next tick after the reply; several changes saved once; flushed on SIGINT/SIGTERM)
+- [x] Load on startup; timers re-armed; per-IP counts rebuilt (counted from the loaded rooms); idle rooms swept
+- [x] Sweep deletes stored rooms (and closing a room)
+- [x] Format version check; incompatible rooms dropped (`ROOM_FORMAT`)
+- [x] Tests (`persistence.test.ts`): both stores; saved format; loading, sweeping and saving in the room manager; a restart on the same SQLite file mid-round with identical views after rejoining and play going on; a timed round whose deadline passed while the server was down ends at once
+- [x] Docs and `CLAUDE.md` updated (the "game state is in memory" rule, `DATA_DIR`, architecture, testing)
 
-**Done when:** a game in progress continues with the same view after the server process is restarted, in an automated test and by hand.
+**Done when:** a game in progress continues with the same view after the server process is restarted, in an automated test and by hand. ✅ Verified Oct 5, 2026 (automated: `persistence.test.ts`; by hand: a browser game on the built server with `DATA_DIR`, the server hard-killed mid-round and restarted, both pages reloaded to the same dice, placed die and turn; 372 unit tests, 41 Playwright tests).

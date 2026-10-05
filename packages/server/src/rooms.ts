@@ -17,6 +17,7 @@ import {
   type Seat,
 } from '@sky/shared';
 import { ROOM_CODE_LENGTH } from './schemas';
+import { fromStored, toStored, type RoomStore } from './store';
 
 /** No I or O, so codes can't be misread as 1 or 0. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -64,6 +65,11 @@ export interface RoomOptions {
   roundTimerMs?: number;
   /** Total Trust: the pause before the server rolls (tests shorten it). */
   nextTurnMs?: number;
+  /**
+   * Where rooms are kept between restarts (SQLite in production). Without one, rooms live
+   * in memory only and a restart ends every game.
+   */
+  store?: RoomStore;
 }
 
 /** A checked scenario: `resolveSetup` turns a request into one. */
@@ -123,6 +129,11 @@ export class RoomManager {
   private readonly roundTimerMs: number;
   /** Total Trust: how long after the round ends the server rolls the dice. */
   readonly nextTurnMs: number;
+  private readonly store: RoomStore | undefined;
+  /** Rooms changed since the last write; saved together on the next tick. */
+  private readonly dirty = new Set<string>();
+  private flushQueued = false;
+  private closed = false;
 
   constructor(options: RoomOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -131,6 +142,60 @@ export class RoomManager {
     this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
     this.roundTimerMs = options.roundTimerMs ?? ROUND_TIMER_MS;
     this.nextTurnMs = options.nextTurnMs ?? NEXT_TURN_MS;
+    this.store = options.store;
+    // Saved rooms come back with every player offline (they rejoin with their token). The
+    // server may have been stopped for days, so idle rooms are swept straight away.
+    for (const stored of this.store?.loadAll() ?? []) {
+      this.rooms.set(stored.code, fromStored(stored));
+    }
+    this.sweep();
+  }
+
+  /** Every room, e.g. to re-arm their timers after a restart. */
+  all(): Room[] {
+    return [...this.rooms.values()];
+  }
+
+  /**
+   * Saves the room after it changed. The write happens on the next tick, after the reply
+   * and the broadcast, and several changes in a row are saved once.
+   */
+  save(room: Room): void {
+    if (!this.store || this.closed) return;
+    this.dirty.add(room.code);
+    if (this.flushQueued) return;
+    this.flushQueued = true;
+    setImmediate(() => this.flush());
+  }
+
+  /** Writes every pending change now (also on shutdown). */
+  flush(): void {
+    this.flushQueued = false;
+    if (!this.store || this.closed) return;
+    for (const code of this.dirty) {
+      const room = this.rooms.get(code);
+      if (room) this.store.save(toStored(room));
+    }
+    this.dirty.clear();
+  }
+
+  /**
+   * Shutdown: writes what is pending, stops the rooms' timers (their deadlines are saved
+   * and re-armed by the next start) and closes the store. Safe to call twice.
+   */
+  close(): void {
+    if (this.closed) return;
+    this.flush();
+    this.closed = true;
+    for (const room of this.rooms.values()) clearTimeout(room.roundTimer);
+    this.store?.close();
+  }
+
+  /** A room is gone for good: remove it from the store too. */
+  private forget(code: string): void {
+    this.rooms.delete(code);
+    this.dirty.delete(code);
+    this.store?.delete(code);
   }
 
   get size(): number {
@@ -223,7 +288,7 @@ export class RoomManager {
     this.sockets.delete(socketId);
     delete room.players[player.seat];
     if (SEATS.every((seat) => !room.players[seat])) {
-      this.rooms.delete(room.code);
+      this.forget(room.code);
       return { room, player, closed: true };
     }
     // The one who stays now runs the setup, and roles are chosen again with the newcomer.
@@ -241,7 +306,7 @@ export class RoomManager {
     for (const room of this.rooms.values()) {
       const anyoneOnline = SEATS.some((seat) => room.players[seat]?.socketId);
       if (!anyoneOnline && room.lastActivity <= cutoff) {
-        this.rooms.delete(room.code);
+        this.forget(room.code);
         removed.push(room.code);
       }
     }

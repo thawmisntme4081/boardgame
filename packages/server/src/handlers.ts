@@ -39,8 +39,12 @@ import {
 export type GameServer = Server<ClientToServer, ServerToClient>;
 type GameSocket = Socket<ClientToServer, ServerToClient>;
 
-/** Sends each seat its presence (marked with its seat), then its own filtered view. */
+/**
+ * Sends each seat its presence (marked with its seat), then its own filtered view. Every
+ * accepted change ends here, so this is also where the room is saved (off the reply path).
+ */
 export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): void {
+  rooms.save(room);
   const presence = rooms.presence(room);
   for (const seat of SEATS) {
     const socketId = room.players[seat]?.socketId;

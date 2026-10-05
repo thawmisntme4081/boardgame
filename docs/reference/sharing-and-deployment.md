@@ -35,13 +35,13 @@ Good to know:
 
 - `pnpm build` is only needed again after the code changes.
 - The `$env:` lines last for that terminal window only. `NODE_ENV=production` keeps the test-only settings (`GAME_SEED`, `E2E_HOOKS`) off; `TRUST_PROXY=1` makes the 5-rooms-per-address limit count each player's real address instead of everyone arriving through the tunnel as one.
-- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress (they are kept in memory until [Sky Team 12](../epics/sky-team/phase-12-persistence.md)).
+- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress unless `DATA_DIR` is set (then they are saved in `DATA_DIR/sky-team.sqlite` and continue after a restart: [Sky Team 12](../epics/sky-team/phase-12-persistence.md)).
 - When Claude Code runs the tunnel, its background jobs have a time limit; for long sessions run the two terminals yourself.
 - Quick tunnels are free, need no account and have no uptime guarantee: fine for an evening of games, not a permanent address.
 
 ## Deployment
 
-Ship one Docker image running one Node process that serves the built React files and Socket.IO on the same port; run a single instance while game state lives in memory.
+Ship one Docker image running one Node process that serves the built React files and Socket.IO on the same port; run a single instance (one SQLite file on one volume).
 
 **Build**
 
@@ -93,7 +93,7 @@ Decided Oct 4, 2026 (built in [Sky Team 13](../epics/sky-team/phase-13-deploy.md
 
 **Move to Postgres** (and several machines) only if the site goes public or one machine is not enough: [Platform 07](../epics/platform/phase-07-scale-out.md).
 
-**Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `ROUND_TIMER_SECONDS` (dev/tests only: shortens timed rounds; ignored in production), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
+**Environment variables:** `PORT` (from host), `NODE_ENV=production`, `DATA_DIR=/data` (where games are saved; without it they live in memory and a restart ends them), `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `ROUND_TIMER_SECONDS` (dev/tests only: shortens timed rounds; ignored in production), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
 
 **CI/CD with GitHub Actions**
 

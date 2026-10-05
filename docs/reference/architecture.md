@@ -42,6 +42,8 @@ flowchart LR
 
 Each move flows through the server, then each player receives their own filtered view.
 
+**Saving rooms (Sky Team 12):** every accepted change ends in `broadcastRoom`, which also queues `rooms.save(room)`. On the next tick the room manager writes the changed rooms through its `RoomStore` (`store.ts`): `SqliteRoomStore` (Drizzle on `better-sqlite3`, WAL mode, one table `rooms(code, json, version, updated_at)`) when `DATA_DIR` is set, nothing otherwise; `MemoryRoomStore` in tests. A saved room holds the players (with rejoin tokens), the `GameState` and the room's own flags; socket ids and timers are never saved. On start the rooms load with every player offline, idle ones are swept, and their timers are re-armed. Rows saved in another `ROOM_FORMAT` are dropped. Shutdown (SIGINT/SIGTERM, as Fly sends when it stops the machine) flushes pending saves.
+
 ## Repository layout
 
 ```

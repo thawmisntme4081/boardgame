@@ -36,6 +36,9 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   const httpServer = createServer(app);
   const io: GameServer = new Server(httpServer);
   registerHandlers(io, rooms, options);
+  // Rooms loaded from the store: re-arm their round timers and Total Trust rolls. A deadline
+  // that passed while the server was down expires at once.
+  for (const room of rooms.all()) syncRoundTimer(io, rooms, room);
 
   if (options.e2eHooks) {
     // Merges a partial game state into a room, then sends everyone fresh views.

@@ -34,6 +34,7 @@ Moved to the end of the Sky Team epic on Sep 29, 2026 (the Platform epic comes a
 - [x] Host chosen: Fly.io, one machine, auto stop/start, SQLite volume (Oct 4, 2026)
 - [ ] Fly app, volume and `fly.toml` (auto stop/start, at most one machine)
 - [ ] Dockerfile and production build (with Litestream)
+- [ ] Litestream backup to object storage and a tested restore (moved here from Sky Team 12: Litestream runs in the Linux image and has no Windows build)
 - [ ] Production environment variables set; test-only settings absent
 - [ ] CI deploy step after green checks
 - [ ] `/health` returns 200 and the host's health check uses it

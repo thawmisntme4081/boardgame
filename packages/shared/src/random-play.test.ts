@@ -86,7 +86,7 @@ describe('random play', () => {
         { numRuns: 100 },
       );
     }
-  }, 120_000);
+  }, 300_000); // about 75 s alone; slower when the other test files share the CPU
 
   it('random games with every Turbulence feature finish and keep invariants', () => {
     const everywhere = [1, 1, 1, 1, 1, 1, 1];
@@ -123,7 +123,7 @@ describe('random play', () => {
         { numRuns: 200 },
       );
     }
-  }, 120_000);
+  }, 300_000);
 
   it('replays exactly from the same seed', () => {
     expect(playRandomGame(2024)).toEqual(playRandomGame(2024));
