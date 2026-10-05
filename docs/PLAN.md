@@ -25,7 +25,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | **M1 — Playable online base game** | Two people finish the YUL scenario online, on phone and desktop, with reconnection and CI | 0–6 | ✅ Done (Sep 29, 2026) |
 | **M2 — Complete base box** | All Flight Log scenarios, modules and Special Abilities | 7 | ✅ Done (Oct 2, 2026) |
 | **M3 — Turbulence expansion** | The 20 expansion scenarios and their modules | 8 | ✅ Done (Oct 4, 2026) |
-| **M4 — Sky Team complete** | Vietnamese language, local game history (Flight Log), games survive restarts | 9–11 | 🚧 In progress (9, 10 done) |
+| **M4 — Sky Team complete** | Vietnamese and French languages, local game history (Flight Log), games survive restarts | 9–11 | 🚧 In progress (9, 10 done) |
 | **M5 — Launch** | The game on a private URL friends can open (Fly.io + SQLite, Cloudflare Access), monitored | 12 | ⏳ Not started |
 | **M6 — Multi-game platform** | Sky Team runs on a game-agnostic engine, protocol, match log and client shell; accounts; a second game proves it | 13–19 | ⏳ Not started |
 | **M7 — Scale and large games** | Several server instances when needed; large games one by one | 20–21+ | ⏳ Not started |
@@ -43,7 +43,7 @@ This is a personal/learning project: if it is ever published, use an original na
 | 6 | [Tests and CI](phases/phase-06-tests-ci.md) | M1 | ✅ Done | — |
 | 7 | [Base game airports and modules](phases/phase-07-base-airports-modules.md) | M2 | ✅ Done | — |
 | 8 | [Turbulence expansion](phases/phase-08-turbulence.md) | M3 | ✅ Done | High |
-| 9 | [Internationalisation (EN + VI)](phases/phase-09-i18n.md) | M4 | ✅ Done | Medium |
+| 9 | [I18n (EN + VI + FR)](phases/phase-09-i18n.md) | M4 | ✅ Done (French Oct 5, 2026) | Medium (FR: low-medium) |
 | 10 | [Game history (local)](phases/phase-10-history.md) | M4 | ✅ Done | Low |
 | 11 | [Persistence](phases/phase-11-persistence.md) | M4 | ⏳ Not started | Medium-low |
 | 12 | [Deploy](phases/phase-12-deploy.md) | M5 | ⏳ Not started | Medium |

@@ -740,7 +740,11 @@ describe('recent board details', () => {
   it('explain an ability in a popover when its name is tapped', async () => {
     render(<DiceTray view={makeView('pilot', { abilities: ['control'] })} presence={presence()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Control' }));
-    expect(await screen.findByText('Two equal Axis dice: gain a coffee.')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'If you play 2 dice of the same value on the AXIS, immediately gain a Coffee token.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('mark an ice brake deployed only once its pair is complete', () => {

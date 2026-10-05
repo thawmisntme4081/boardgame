@@ -1,6 +1,6 @@
-# Phase 9: Internationalisation (English + Vietnamese)
+# Phase 9: I18n (English + Vietnamese + French)
 
-[← Master plan](../PLAN.md) · Milestone M4 · **Status: ✅ Done** · Effort: **medium** (mostly volume)
+[← Master plan](../PLAN.md) · Milestone M4 · **Status: ✅ Done (stage 1 English + Vietnamese; stage 2 French, Oct 5, 2026)** · Effort: stage 1 **medium** (mostly volume); stage 2 **low-medium** (see below)
 
 ## Goals
 
@@ -39,7 +39,7 @@
 - [x] Phone layouts checked in Vietnamese (the dice tray keeps four dice on one row; long ability buttons wrap)
 - [x] Tests: key-parity test (`i18n.test.tsx`); components rendered in Vietnamese; Playwright `e2e/i18n.spec.ts` (Vietnamese pilot, English co-pilot, one die placed) on all three devices; existing tests stay in English
 
-**Done when:** every screen reads fully in Vietnamese (no English left over, `aria-label`s included), switching language updates the app without a reload, the key-parity test passes, and phone layouts still fit. ✅ Verified 2026-10-01
+**Stage 1 done when:** every screen reads fully in Vietnamese (no English left over, `aria-label`s included), switching language updates the app without a reload, the key-parity test passes, and phone layouts still fit. ✅ Verified 2026-10-01
 
 ## Glossary
 
@@ -69,3 +69,73 @@
 | Real-time | Thời gian thực |
 | Adaptation, Anticipation, Control, Mastery, Synchronization, Working Together | Thích ứng, Đoán trước, Kiểm soát, Thành thạo, Đồng bộ, Phối hợp |
 | Routine landing / Special conditions / Elite pilots only / Heroic landing | Hạ cánh thường lệ / Điều kiện đặc biệt / Chỉ dành cho phi công ưu tú / Hạ cánh anh hùng |
+
+## Stage 2: French (added Oct 5, 2026)
+
+A third language, French, on the same setup: no new library, no new architecture. Sky Team was first published in French (Le Scorpion Masqué), so the French rulebook's own terms exist and are the reference for the glossary.
+
+### Effort: low-medium (about 1–2 sessions plus the review)
+
+| Part | Size | Notes |
+| --- | --- | --- |
+| Code | Small (about an hour) | `LANGUAGES` gets `fr: 'Français'`; `savedLanguage()` accepts any listed code instead of only `'vi'`; `fr.json` added to the i18next resources; the switch lists three languages. The Geist font already covers French accents. |
+| Translation | Medium (volume) | 374 strings, about 2,100 English words: module and ability rules, cockpit labels, `aria-label`s, errors, end reasons, toasts, Flight Log. |
+| Review | The real bottleneck | A French reader checks the glossary first, then `fr.json` in the app (as the user did for Vietnamese). |
+| Layout | Small | French runs about 15–25% longer than English: re-check the phone dice tray, ability buttons, status pills and the Flight Log table. |
+| Tests | Small | The key-parity test covers every language in `LANGUAGES` (not only `vi`); one component test rendered in French; the switch test lists three languages. No new Playwright test needed. |
+
+### Technical tasks
+
+1. **Glossary first:** French terms for the game words (Pilot, Co-pilot, Axis, Engines, Landing gear, Flaps, Brakes, Concentration, Reroll, Approach, Altitude, the modules, the six Special Abilities, the four difficulty names, Flight Log…), taken from the French edition's rulebook where it has them; reviewed before the full translation.
+2. **Code:** `fr` in `LANGUAGES`; `savedLanguage()` generalized; `fr.json` in the resources; `<html lang="fr">`.
+3. **`fr.json`:** the full translation, same keys as `en.json`; plurals as `_one` / `_other` (in French, 0 takes the singular, which i18next handles).
+4. **French typography:** a narrow no-break space before `: ; ! ?` and inside « » quotes (France style; see open questions); numbers from `Intl.NumberFormat('fr')` ("6 000 ft"); dates from `Intl.DateTimeFormat('fr')` in the History list.
+5. **Layout pass** on phone, tablet and desktop in French.
+6. **Tests** as in the table above.
+
+### Checklist
+
+- [x] Glossary drafted from the French rulebook terms (French glossary below)
+- [x] Glossary reviewed (by Claude, as agreed)
+- [x] `fr` added to `LANGUAGES`; saved choice and `<html lang>` work for three languages (`isLanguage` in `i18n.ts`)
+- [x] `fr.json` drafted (374 strings, same keys and placeholders as `en.json`)
+- [x] `fr.json` reviewed in the app (by Claude: lobby, before take-off, placing tray, cockpit, game over)
+- [x] French typography: narrow no-break space before `; ! ?`, no-break space before `:` and between a number and `ft` / `s`; numbers and dates from `Intl`
+- [x] Phone and desktop layouts checked in French (long ability buttons wrap on phones; the desktop tray keeps one row)
+- [x] Tests: key parity for Vietnamese and French; placeholder and tag parity for French; the status bar, errors and end reasons in French; the switch offers and remembers Français
+
+**Stage 2 done when:** every screen reads fully in French (no English left over, `aria-label`s included), the switch offers English / Tiếng Việt / Français without a reload, the key-parity test passes for all three files, and phone layouts still fit. ✅ Verified Oct 5, 2026 (363 unit tests; typecheck, lint, format and build green).
+
+### French glossary
+
+✔ = the term appears in the French publisher's own material (Le Scorpion Masqué); the others are our translation, in the same plain style, to swap for the rulebook's word if it differs.
+
+| English | Français |
+| --- | --- |
+| Pilot / Co-pilot | Pilote / Copilote ✔ |
+| Axis | Axe ✔ |
+| Engines | Moteurs |
+| Radio | Radio ✔ |
+| Landing gear | Train d'atterrissage ✔ |
+| Flaps | Volets ✔ |
+| Brakes | Freins ✔ |
+| Concentration / coffee | Concentration / café ✔ |
+| Reroll (token) | Relance (jeton Relance) |
+| Round | Manche |
+| Approach / Altitude | Approche / Altitude |
+| Scenario | Scénario |
+| Kerosene / Kerosene leak | Kérosène / Fuite de kérosène |
+| Intern | Stagiaire |
+| Wind | Vent |
+| Ice brakes | Freins sur glace |
+| Traffic die | Dé Trafic |
+| Real-time | Temps réel |
+| Turbulence / Bad visibility / Alarms | Turbulences ✔ / Manque de visibilité ✔ / Alarmes ✔ |
+| Total Trust | Confiance totale |
+| Belly landing / Engines out / Wind upside down | Atterrissage sur le ventre / Moteurs en panne / Vent inversé |
+| Adaptation, Anticipation, Control, Mastery, Synchronization, Working Together | Adaptation, Anticipation, Contrôle, Maîtrise, Synchronisation, Travail d'équipe |
+| Routine landing / Exceptional conditions / Elite pilots only / Heroic landing | Atterrissage de routine / Conditions exceptionnelles / Réservé aux pilotes d'élite / Atterrissage héroïque |
+| Flight Log / History / W/L | Carnet de vol / Historique / V/D |
+| No talking!!! | Silence !!! |
+
+### Open questions

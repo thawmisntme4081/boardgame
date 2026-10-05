@@ -5,6 +5,7 @@ import { GameOverDialog } from '@/components/GameOverDialog';
 import { StatusBar } from '@/components/StatusBar';
 import i18n, { setLanguage } from '@/i18n';
 import en from '@/locales/en.json';
+import fr from '@/locales/fr.json';
 import vi from '@/locales/vi.json';
 import { endReasonText, errorText } from '@/messages';
 import { Lobby } from '@/screens/Lobby';
@@ -36,11 +37,28 @@ beforeEach(resetStore);
 afterEach(() => setLanguage('en'));
 
 describe('translations', () => {
-  it('has a Vietnamese text for every English key, and nothing extra', () => {
+  it.each([
+    ['Vietnamese', vi],
+    ['French', fr],
+  ])('has a %s text for every English key, and nothing extra', (_name, other) => {
     const english = keys(en);
-    const vietnamese = keys(vi);
-    expect([...english].filter((k) => !vietnamese.has(k))).toEqual([]);
-    expect([...vietnamese].filter((k) => !english.has(k))).toEqual([]);
+    const translated = keys(other);
+    expect([...english].filter((k) => !translated.has(k))).toEqual([]);
+    expect([...translated].filter((k) => !english.has(k))).toEqual([]);
+  });
+
+  it('keeps every placeholder and tag of the English text', () => {
+    const flat = (tree: object, prefix = ''): [string, string][] =>
+      Object.entries(tree).flatMap(([key, value]) =>
+        value && typeof value === 'object'
+          ? flat(value as object, prefix + key + '.')
+          : [[prefix + key, String(value)] as [string, string]],
+      );
+    const marks = (s: string) => (s.match(/\{\{\w+\}\}|<\/?\w+>/g) ?? []).sort().join(' ');
+    const english = new Map(flat(en));
+    for (const [key, text] of flat(fr)) {
+      expect(marks(text), key).toBe(marks(english.get(key) ?? ''));
+    }
   });
 
   it('starts in English whatever the browser language', () => {
@@ -53,6 +71,28 @@ describe('translations', () => {
     expect(errorText('not-your-turn')).toBe('Hãy chờ đồng đội đặt xúc xắc.');
     expect(errorText('made-up-code')).toBe('Đã có lỗi xảy ra.');
     expect(endReasonText('spin')).toBe('Trục nghiêng quá mức: máy bay rơi vào vòng xoáy.');
+  });
+});
+
+describe('French', () => {
+  it('shows the game in French, with French spacing and numbers', () => {
+    setLanguage('fr');
+    render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
+    expect(screen.getByText('À vous')).toBeInTheDocument();
+    expect(screen.getByText(/^Silence\s!!!$/)).toBeInTheDocument();
+    // Intl groups thousands with a narrow no-break space in French.
+    expect(screen.getByText(/^Manche 1\/7 · 6\s000\sft$/)).toBeInTheDocument();
+    expect(errorText('not-your-turn')).toBe('Attendez que votre partenaire pose un dé.');
+    expect(endReasonText('spin')).toBe('L’axe a trop penché\u00A0: l’avion est parti en vrille.');
+  });
+
+  it('is offered in the switch and remembered', async () => {
+    render(<Lobby />);
+    await userEvent.click(screen.getByRole('combobox', { name: 'Language' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Français' }));
+    expect(screen.getByRole('button', { name: 'Créer une partie' })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('fr');
+    expect(localStorage.getItem('sky-team-language')).toBe('fr');
   });
 });
 

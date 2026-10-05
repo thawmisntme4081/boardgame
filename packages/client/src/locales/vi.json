@@ -240,27 +240,27 @@
   "abilityText": {
     "adaptation": {
       "name": "Thích ứng",
-      "rule": "Mỗi người một lần mỗi ván: lật một xúc xắc của mình sang mặt đối diện."
+      "rule": "Mỗi người chơi được dùng một lần duy nhất trong ván: lật một viên xúc xắc chưa đặt của mình sang mặt đối diện."
     },
     "anticipation": {
-      "name": "Đoán trước",
-      "rule": "Mỗi vòng, người đi trước được đổ lại một xúc xắc trước khi đặt viên đầu tiên."
+      "name": "Đón đầu",
+      "rule": "Mỗi vòng, trước khi đặt viên xúc xắc đầu tiên, Người chơi đi trước có thể đổ lại một viên xúc xắc của mình."
     },
     "control": {
       "name": "Kiểm soát",
-      "rule": "Hai xúc xắc trục bằng nhau: nhận một cà phê."
+      "rule": "Nếu bạn đặt 2 viên xúc xắc cùng giá trị vào TRỤC, nhận ngay một token Cà phê."
     },
     "mastery": {
       "name": "Thành thạo",
-      "rule": "Hai xúc xắc động cơ bằng nhau: nhận một lượt đổ lại, nếu còn."
+      "rule": "Nếu bạn đặt 2 viên xúc xắc cùng giá trị vào ĐỘNG CƠ, nhận ngay một token Đổ lại (nếu vẫn còn token)."
     },
     "synchronization": {
       "name": "Đồng bộ",
-      "rule": "Trong một vòng có xúc xắc ở cả Càng đáp và Cánh tà: cơ phó đặt xúc xắc giao thông vào bất kỳ ô nào."
+      "rule": "Nếu bạn đã đặt ít nhất một viên xúc xắc vào Càng đáp và một viên vào Cánh tà, hãy đổ ngay xúc xắc Traffic. Đặt nó vào bất kỳ ô trống nào trên Bảng điều khiển, không cần đúng màu, và áp dụng hiệu ứng như một viên xúc xắc bình thường. Đây được tính là một hành động thêm trong lượt này."
     },
     "working-together": {
-      "name": "Phối hợp",
-      "rule": "Mỗi vòng một lần: mỗi người đặt một xúc xắc lên thẻ và hai viên đổi giá trị cho nhau."
+      "name": "Đồng lòng",
+      "rule": "Mỗi vòng một lần, vào bất kỳ lúc nào, một người chơi có thể đặt một viên xúc xắc của mình lên Kỹ năng này. Người còn lại BẮT BUỘC cũng phải đặt một viên của mình lên đây (nếu còn). Hai người hoán đổi giá trị của 2 viên rồi lấy lại."
     }
   },
   "tracks": {

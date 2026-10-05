@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/u
 import { currentLanguage, LANGUAGES, setLanguage, type Language } from '@/i18n';
 import { cn } from '@/lib/utils';
 
-/** English / Tiếng Việt. Each player picks their own; the choice stays on this device. */
+/** English / Tiếng Việt / Français. Each player picks their own; the choice stays on this device. */
 export function LanguageSwitch({ className }: { className?: string }) {
   const { t } = useTranslation();
   const language = currentLanguage();
