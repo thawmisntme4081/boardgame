@@ -1,6 +1,6 @@
-# Phase 1: Core rules in `shared`
+# Sky Team 02: Core rules in `shared`
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
 
 ## Goals
 
@@ -36,4 +36,4 @@
 
 **Done when:** unit tests cover every rule and the random-play script never throws. ✅ Verified Sep 28, 2026: 69 tests pass, including 1,000 fuzzed games.
 
-See [game rules reference](../reference/game-rules.md) for the numbers as implemented.
+See [game rules reference](../../reference/game-rules.md) for the numbers as implemented.

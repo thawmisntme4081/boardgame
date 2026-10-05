@@ -1,6 +1,6 @@
-# Phase 8: Turbulence expansion
+# Sky Team 09: Turbulence expansion
 
-[← Master plan](../PLAN.md) · Milestone M3 · **Status: ✅ Done (Oct 4, 2026)** · Effort: **high**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 4, 2026)** · Effort: **high**
 
 ## Goals
 

@@ -1,8 +1,8 @@
-# Phase 14: Everything is a move
+# Platform 02: Everything is a move
 
-[← Master plan](../PLAN.md) · Milestone M6 · **Status: ⏳ Not started** · Effort: **medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium**
 
-Design reference: [multi-game proposal](../proposals/multi-game-platform.md), sections 3 and 4.3 (step B).
+Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 3 and 4.3 (step B).
 
 ## Goals
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 ## Feature scope
 
 - **In:** "ready", ability picks and confirm as game moves stored in the game state; the round timer and Total Trust's auto-roll as `schedule` entries sent as `'system'` moves; a generic scheduler in the server.
-- **Out:** the wire protocol (Phase 15); persistence of the schedule (Phase 16 reloads it from state).
+- **Out:** the wire protocol (Platform 03); persistence of the schedule (Platform 04 reloads it from state).
 
 ## Technical tasks
 

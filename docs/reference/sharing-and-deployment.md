@@ -4,7 +4,7 @@
 
 ## Sharing a local game (Cloudflare tunnel)
 
-Until the game is deployed ([Phase 12](../phases/phase-12-deploy.md)), you can play with a friend anywhere by running the production build on your computer and opening a temporary public link to it. In Claude Code, just say **"run tunnel"** (and **"stop sharing"** when done).
+Until the game is deployed ([Sky Team 13](../epics/sky-team/phase-13-deploy.md)), you can play with a friend anywhere by running the production build on your computer and opening a temporary public link to it. In Claude Code, just say **"run tunnel"** (and **"stop sharing"** when done).
 
 **Run it yourself** (two PowerShell terminals in the project folder):
 
@@ -35,7 +35,7 @@ Good to know:
 
 - `pnpm build` is only needed again after the code changes.
 - The `$env:` lines last for that terminal window only. `NODE_ENV=production` keeps the test-only settings (`GAME_SEED`, `E2E_HOOKS`) off; `TRUST_PROXY=1` makes the 5-rooms-per-address limit count each player's real address instead of everyone arriving through the tunnel as one.
-- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress (they are kept in memory until [Phase 11](../phases/phase-11-persistence.md)).
+- The link works only while both terminals run and the computer is awake; each new tunnel gets a new address. Restarting the server ends games in progress (they are kept in memory until [Sky Team 12](../epics/sky-team/phase-12-persistence.md)).
 - When Claude Code runs the tunnel, its background jobs have a time limit; for long sessions run the two terminals yourself.
 - Quick tunnels are free, need no account and have no uptime guarantee: fine for an evening of games, not a permanent address.
 
@@ -76,7 +76,7 @@ Check each host's current pricing and sleep rules before choosing; a sleeping or
 
 ## Chosen hosting: private site on Fly.io
 
-Decided Oct 4, 2026 (built in [Phase 12](../phases/phase-12-deploy.md), storage in [Phase 11](../phases/phase-11-persistence.md)):
+Decided Oct 4, 2026 (built in [Sky Team 13](../epics/sky-team/phase-13-deploy.md), storage in [Sky Team 12](../epics/sky-team/phase-12-persistence.md)):
 
 | Piece | Choice |
 | --- | --- |
@@ -91,7 +91,7 @@ Decided Oct 4, 2026 (built in [Phase 12](../phases/phase-12-deploy.md), storage 
 
 **While the machine is stopped nothing runs:** deadlines are stored and checked when a room or match is next loaded; idle rooms are swept on startup; notifications (if ever added) need an outside cron that wakes the app. A deploy restarts the one machine for a few seconds (players reconnect; nothing is lost).
 
-**Move to Postgres** (and several machines) only if the site goes public or one machine is not enough: [Phase 20](../phases/phase-20-scale-out.md).
+**Move to Postgres** (and several machines) only if the site goes public or one machine is not enough: [Platform 07](../epics/platform/phase-07-scale-out.md).
 
 **Environment variables:** `PORT` (from host), `NODE_ENV=production`, `ROOM_TTL_MINUTES=30` (idle time before an empty room is removed), `ROOMS_PER_IP=5`, `TRUST_PROXY=1` behind the host's proxy (reads the client IP from `X-Forwarded-For`), `ROUND_TIMER_SECONDS` (dev/tests only: shortens timed rounds; ignored in production), `LOG_LEVEL=info`, optional `SENTRY_DSN`.
 

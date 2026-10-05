@@ -1,6 +1,6 @@
-# Phase 3: Gameplay over the wire
+# Sky Team 04: Gameplay over the wire
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
 
 ## Goals
 
@@ -10,7 +10,7 @@
 ## Feature scope
 
 - **In:** `game:place`, per-seat views after every change, round resolution and game-over broadcast, rerolls, rematch.
-- **Out:** UI (Phase 4). In-game chat was built, then removed at the user's request.
+- **Out:** UI (Sky Team 05). In-game chat was built, then removed at the user's request.
 
 ## Technical tasks
 

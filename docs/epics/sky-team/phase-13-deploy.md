@@ -1,6 +1,6 @@
-# Phase 12: Deploy
+# Sky Team 13: Deploy
 
-[← Master plan](../PLAN.md) · Milestone M5 · **Status: ⏳ Not started (server already serves the built client)** · Effort: **medium**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started (server already serves the built client)** · Effort: **medium**
 
 ## Goals
 
@@ -10,11 +10,11 @@
 ## Feature scope
 
 - **In:** Docker image, hosting, CI deploy, health checks, logs, error tracking, custom domain + HTTPS.
-- **Out:** several instances ([Phase 20](phase-20-scale-out.md)).
+- **Out:** several instances ([Platform 07](../platform/phase-07-scale-out.md)).
 
-Hosting decision (Oct 4, 2026): a private site on **one Fly.io machine with auto stop/start** and **SQLite on a Fly volume**, backed up with Litestream, behind Cloudflare Access (about $1.50–2.50/month plus the domain). See [sharing and deployment](../reference/sharing-and-deployment.md#chosen-hosting-private-site-on-flyio).
+Hosting decision (Oct 4, 2026): a private site on **one Fly.io machine with auto stop/start** and **SQLite on a Fly volume**, backed up with Litestream, behind Cloudflare Access (about $1.50–2.50/month plus the domain). See [sharing and deployment](../../reference/sharing-and-deployment.md#chosen-hosting-private-site-on-flyio).
 
-Moved after the Sky Team phases on Sep 29, 2026 (the multi-game platform phases 13+ come after it): until then, games are played locally or over a temporary Cloudflare tunnel (see [sharing and deployment](../reference/sharing-and-deployment.md)).
+Moved to the end of the Sky Team epic on Sep 29, 2026 (the Platform epic comes after it): until then, games are played locally or over a temporary Cloudflare tunnel (see [sharing and deployment](../../reference/sharing-and-deployment.md)).
 
 ## Technical tasks
 
@@ -30,7 +30,7 @@ Moved after the Sky Team phases on Sep 29, 2026 (the multi-game platform phases 
 
 ## Checklist
 
-- [x] The server serves the built client (`client/dist`) with an `index.html` fallback for `/r/:code` links (done in Phase 6)
+- [x] The server serves the built client (`client/dist`) with an `index.html` fallback for `/r/:code` links (done in Sky Team 07)
 - [x] Host chosen: Fly.io, one machine, auto stop/start, SQLite volume (Oct 4, 2026)
 - [ ] Fly app, volume and `fly.toml` (auto stop/start, at most one machine)
 - [ ] Dockerfile and production build (with Litestream)

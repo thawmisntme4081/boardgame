@@ -94,4 +94,4 @@ boardgame/
 
 ## Scaling later
 
-More than one server instance needs a shared store (Redis) for game state, the Socket.IO Redis adapter and sticky sessions. Not needed while one instance serves everyone (see [Phase 11](../phases/phase-11-persistence.md) and, for several instances, [Phase 20](../phases/phase-20-scale-out.md)).
+More than one server instance needs a shared store (Redis) for game state, the Socket.IO Redis adapter and sticky sessions. Not needed while one instance serves everyone (see [Sky Team 12](../epics/sky-team/phase-12-persistence.md) and, for several instances, [Platform 07](../epics/platform/phase-07-scale-out.md)).

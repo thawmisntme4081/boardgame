@@ -1,6 +1,6 @@
-# Phase 9: I18n (English + Vietnamese + French)
+# Sky Team 10: I18n (English + Vietnamese + French)
 
-[← Master plan](../PLAN.md) · Milestone M4 · **Status: ✅ Done (stage 1 English + Vietnamese; stage 2 French, Oct 5, 2026)** · Effort: stage 1 **medium** (mostly volume); stage 2 **low-medium** (see below)
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (stage 1 English + Vietnamese; stage 2 French, Oct 5, 2026)** · Effort: stage 1 **medium** (mostly volume); stage 2 **low-medium** (see below)
 
 ## Goals
 

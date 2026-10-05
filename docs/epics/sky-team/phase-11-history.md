@@ -1,11 +1,11 @@
-# Phase 10: Game history (local)
+# Sky Team 11: Game history (local)
 
-[← Master plan](../PLAN.md) · Milestone M4 · **Status: ✅ Done (Oct 4, 2026)** · Effort: **low**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 4, 2026)** · Effort: **low**
 
 ## Goals
 
 - Players see their past games and which scenarios they have landed (the Flight Log "victory" checkboxes), on their own device, with no accounts.
-- Accounts and cross-device history come later, on the multi-game platform: [Phase 18](phase-18-accounts.md).
+- Accounts and cross-device history come later, on the multi-game platform: [Platform 06](../platform/phase-06-accounts.md).
 
 ## Flight Log screen (target design)
 
@@ -24,11 +24,11 @@ A W/L cell is green when it has at least one win, orange when it only has losses
 ## Feature scope
 
 - **In:** finished games and scenario victories saved in the browser; a ✓ on landed scenarios in the picker; the Flight Log dialog; a small history list. No server changes.
-- **Out:** accounts and server-side history ([Phase 18](phase-18-accounts.md)); public leaderboards; replays.
+- **Out:** accounts and server-side history ([Platform 06](../platform/phase-06-accounts.md)); public leaderboards; replays.
 
 ## Technical tasks
 
-1. On game over, the client saves `{ scenario, abilities, partner name, result, end reason, rounds, date }` in `localStorage` (wrapped in try/catch; works without it). Keep the record format simple and versioned: Phase 18 imports it into an account.
+1. On game over, the client saves `{ scenario, abilities, partner name, result, end reason, rounds, date }` in `localStorage` (wrapped in try/catch; works without it). Keep the record format simple and versioned: Platform 06 imports it into an account.
 2. Scenario picker shows ✓ on scenarios won on this device.
 3. Flight Log dialog (design above), computed from the saved games: your W/L per scenario, split by seat (pilot, co-pilot). No team column.
 4. "History" list of past games (a tab in the same dialog).
@@ -51,5 +51,5 @@ A W/L cell is green when it has at least one win, orange when it only has losses
 
 ## Open questions (all settled Oct 4, 2026)
 
-1. ~~Vietnamese terms~~ Settled with the user (Oct 4, 2026): Vietnamese "Flight Log" = "Nhật ký bay", History = "Lịch sử", W/L = "T/B" (thắng/bại). New terms for the glossary in [Phase 9](phase-09-i18n.md).
+1. ~~Vietnamese terms~~ Settled with the user (Oct 4, 2026): Vietnamese "Flight Log" = "Nhật ký bay", History = "Lịch sử", W/L = "T/B" (thắng/bại). New terms for the glossary in [Sky Team 10](phase-10-i18n.md).
 2. ~~Which device records a game~~ Settled with the user (Oct 4, 2026): a game counts only for the device that saw it end; a game whose end arrived while the page was closed or reloading is not recorded.

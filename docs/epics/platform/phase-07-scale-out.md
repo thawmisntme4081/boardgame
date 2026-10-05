@@ -1,8 +1,8 @@
-# Phase 20: Scale-out
+# Platform 07: Scale-out
 
-[← Master plan](../PLAN.md) · Milestone M7 · **Status: ⏳ Not started (only when metrics ask for it)** · Effort: **medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started (only when metrics ask for it)** · Effort: **medium**
 
-Design reference: [multi-game proposal](../proposals/multi-game-platform.md), section 5 (step H).
+Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), section 5 (step H).
 
 ## Goals
 
@@ -14,7 +14,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 - **In:** Redis (or Valkey); the Socket.IO Redis adapter; a match-ownership lease (or routing by match id); durable timers (pg-boss or BullMQ); OpenTelemetry metrics; rolling deploys.
 - **Out:** microservices; Kubernetes; bots (separate workers, if ever wanted).
 
-**Trigger:** start only when metrics show one process is not enough, zero-downtime deploys are wanted, or the site goes public. Until then, Phase 12's single Fly machine with SQLite is the setup.
+**Trigger:** start only when metrics show one process is not enough, zero-downtime deploys are wanted, or the site goes public. Until then, Sky Team 13's single Fly machine with SQLite is the setup.
 
 **First step if triggered:** move from SQLite to Postgres (several machines cannot share one SQLite volume): copy the data, switch the Drizzle driver behind `MatchStore`.
 

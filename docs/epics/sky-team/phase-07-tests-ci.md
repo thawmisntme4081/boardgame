@@ -1,6 +1,6 @@
-# Phase 6: Tests and CI
+# Sky Team 07: Tests and CI
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 29, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 29, 2026)**
 
 ## Goals
 
@@ -30,4 +30,4 @@
 
 **Done when:** unit, integration and Playwright suites are green in GitHub Actions. ✅ Verified Sep 29, 2026.
 
-See [testing strategy](../reference/testing.md).
+See [testing strategy](../../reference/testing.md).

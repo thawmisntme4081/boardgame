@@ -1,6 +1,6 @@
-# Phase 2: Server and rooms
+# Sky Team 03: Server and rooms
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
 
 ## Goals
 
@@ -10,7 +10,7 @@
 ## Feature scope
 
 - **In:** Express `/health`, Socket.IO, room codes and seats, reconnect tokens, `room:create/join/rejoin`, `game:ready`, Zod schemas, `viewFor`, typed protocol.
-- **Out:** placing dice over the wire (Phase 3), UI.
+- **Out:** placing dice over the wire (Sky Team 04), UI.
 
 ## Technical tasks
 
@@ -30,4 +30,4 @@
 
 **Done when:** two socket clients in an integration test can join the same room and both receive a `game:view`. ✅ Verified Sep 28, 2026: 99 tests pass (30 new: rooms, schemas, `viewFor`, and Socket.IO integration tests against a real server).
 
-See [protocol reference](../reference/protocol.md).
+See [protocol reference](../../reference/protocol.md).

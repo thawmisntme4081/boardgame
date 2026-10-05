@@ -1,17 +1,17 @@
-# Phase 7: Base game airports and modules
+# Sky Team 08: Base game airports and modules
 
-[← Master plan](../PLAN.md) · Milestone M2 · **Status: ✅ Done (Sep 30, 2026; scenario data completed Oct 2, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 30, 2026; scenario data completed Oct 2, 2026)**
 
 ## Goals
 
 - The whole base box: every Flight Log scenario, module and Special Ability, playable online.
-- A module hook system the expansion (Phase 8) can build on without touching core rules.
+- A module hook system the expansion (Sky Team 09) can build on without touching core rules.
 - Game UI polished enough for regular play on phones.
 
 ## Feature scope
 
 - **In:** `RuleModule` hook system; Kerosene, Kerosene leak, Intern, Wind, Real-time, Ice brakes; Traffic die and Turns on the approach track; the six Special Abilities; scenario data; scenario picker; module UI on phone and desktop.
-- **Out:** Turbulence expansion content (Phase 8).
+- **Out:** Turbulence expansion content (Sky Team 09).
 
 ## Technical tasks
 
@@ -52,4 +52,4 @@
 - [x] Board animations kept (sliding markers, fading planes)
 - [x] Tests independent of which scenarios are active
 
-See [game rules reference](../reference/game-rules.md) for every module rule and the open assumptions.
+See [game rules reference](../../reference/game-rules.md) for every module rule and the open assumptions.

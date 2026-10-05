@@ -1,6 +1,6 @@
-# Phase 5: Robustness
+# Sky Team 06: Robustness
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 29, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 29, 2026)**
 
 ## Goals
 
@@ -10,7 +10,7 @@
 ## Feature scope
 
 - **In:** reconnect tokens, presence, idempotent requests, idle room sweep, per-IP room limit, leaving mid-game.
-- **Out:** surviving a server restart (Phase 11).
+- **Out:** surviving a server restart (Sky Team 12).
 
 ## Technical tasks
 

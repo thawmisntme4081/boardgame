@@ -1,8 +1,8 @@
-# Phase 19: A second, small game
+# Second game 01: A second, small game
 
-[← Master plan](../PLAN.md) · Milestone M6 · **Status: ⏳ Not started** · Effort: **medium**
+[← Second game epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium**
 
-Design reference: [multi-game proposal](../proposals/multi-game-platform.md), sections 2 and 7 (step F).
+Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 2 and 7 (step F).
 
 ## Goals
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 ## Feature scope
 
 - **In:** one small game with simultaneous commit-then-reveal and N players. Which game is to be decided with the user; an original or public-domain game avoids licensing questions.
-- **Out:** large games (Phase 21); bots.
+- **Out:** large games (their own epics: Pandemic, Isle of Skye, Twilight Struggle); bots.
 
 ## Technical tasks
 

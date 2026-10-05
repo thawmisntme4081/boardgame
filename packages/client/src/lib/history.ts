@@ -10,7 +10,7 @@ import {
 
 /** One finished game, from this player's point of view. */
 export interface GameRecord {
-  /** Format version, so an account import (Phase 18) can read old records. */
+  /** Format version, so an account import (Platform 06) can read old records. */
   v: 1;
   scenario: string;
   seat: Seat;

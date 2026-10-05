@@ -1,6 +1,6 @@
-# Phase 4: React client
+# Sky Team 05: React client
 
-[← Master plan](../PLAN.md) · Milestone M1 · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
 
 ## Goals
 

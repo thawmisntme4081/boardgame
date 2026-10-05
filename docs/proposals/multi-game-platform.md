@@ -167,7 +167,7 @@ Two families of events, with the game's payload typed by generics:
 | **Match runner** | owns a match's state; serializes moves through one queue per match; calls `validate` → `apply` → `view` for each seat; broadcasts; appends to the log | spread across handlers |
 | **Scheduler** | arms timers from `schedule(state)`, sends system moves, re-arms on load | `syncRoundTimer`, `scheduleAutoRoll` |
 | **Game registry** | `Map<gameId, GameDefinition>`; lists games for the lobby | `SCENARIOS` lookup |
-| **Store** | event log + snapshots behind an interface (`MatchStore`), in-memory for tests | Phase 11 plan (`RoomStore`) |
+| **Store** | event log + snapshots behind an interface (`MatchStore`), in-memory for tests | Sky Team 12 plan (`RoomStore`) |
 
 Per-match serialization (an actor or mailbox per match) is what makes scaling safe later: there is exactly one writer per match, wherever it runs.
 
@@ -183,11 +183,11 @@ match_snapshots(match_id, n, state jsonb)             -- every ~50 moves and at 
 ```
 
 - **Load** = latest snapshot + replay of the later moves.
-- **Replay and history** (Phase 18) fall out for free: the Flight Log reads `matches` and `outcome`.
+- **Replay and history** (Platform 06) fall out for free: the Flight Log reads `matches` and `outcome`.
 - **Debugging**: a bug report is a match id; replay it locally with the exact seed.
 - **Rules upgrades**: a match records `rules_version`; `migrate` upgrades old snapshots, or old matches finish on the old version.
 
-**Storage (decided Oct 4, 2026): SQLite** on a Fly.io volume, through Drizzle, backed up with Litestream. The site stays private (friends only), so one machine with auto stop/start is enough even with four games, accounts and history; SQLite has no extra service, no second cold start and no free-tier quota. **Postgres** becomes the choice only if the site goes public or needs several instances (Phase 20); `MatchStore` and Drizzle keep that move to a data copy plus a driver switch.
+**Storage (decided Oct 4, 2026): SQLite** on a Fly.io volume, through Drizzle, backed up with Litestream. The site stays private (friends only), so one machine with auto stop/start is enough even with four games, accounts and history; SQLite has no extra service, no second cold start and no free-tier quota. **Postgres** becomes the choice only if the site goes public or needs several instances (Platform 07); `MatchStore` and Drizzle keep that move to a data copy plus a driver switch.
 
 **Auto stop/start:** the machine stops when nobody is connected, so no timer runs while everyone is away. Scheduled moves are stored with their due time and applied when the match is next loaded or touched; notifications for long games (if added) come from an outside cron (e.g. a Cloudflare Worker) that wakes the app.
 
@@ -263,25 +263,25 @@ Sizing note: a board-game match is tiny (kilobytes of state, a move every few se
 
 ## 6. Cross-cutting concerns
 
-- **Identity:** guest seats with tokens (as now) stay first-class; accounts (Phase 18) attach a user id to a seat. Spectators need no seat.
+- **Identity:** guest seats with tokens (as now) stay first-class; accounts (Platform 06) attach a user id to a seat. Spectators need no seat.
 - **Security:** Zod envelope plus each game's `moveSchema`; per-IP room caps and rate limits in the gateway; `E2E_HOOKS`-style test hooks stay test-only.
 - **Observability:** structured logs keyed by `matchId`; metrics for active matches, moves per second, reconnects, and validation rejections per game.
-- **Licensing:** Pandemic, Isle of Skye and Twilight Struggle (like Sky Team) are published, trademarked games. Hosting them publicly needs the publishers' permission; a private, invite-only deployment for friends is a different risk level than a public site. This affects whether a public launch (Phase 12) includes these games.
+- **Licensing:** Pandemic, Isle of Skye and Twilight Struggle (like Sky Team) are published, trademarked games. Hosting them publicly needs the publishers' permission; a private, invite-only deployment for friends is a different risk level than a public site. This affects whether a public launch (Sky Team 13) includes these games.
 
 ## 7. Migration plan (each step ships, Sky Team keeps working)
 
 | Step | Phase | Work | Risk |
 | --- | --- | --- | --- |
-| **A. Engine contract** | 13 | create `packages/engine`; wrap today's Sky Team rules in a `GameDefinition` adapter (`setup = createGame`, `apply` = dispatch over a move union, `view = viewFor`) | low: an adapter, no rule changes |
-| **B. Moves for everything** | 14 | turn `ready`, `pick-ability`, `confirm`, round-timer expiry and Total Trust's auto-roll into moves and `schedule` entries; take `timed`, `autoRollAt`, `rolesChosen`, `pick` and `confirmed` off `Room` and into game state | medium: touches timers; existing tests catch regressions |
-| **C. Generic protocol** | 15 | replace the `game:*` events with `match:move` / `match:view`; client and server switch in one release | medium |
-| **D. Persistence** | 16 | Phase 11's store turned into the event log + snapshots behind `MatchStore` | medium |
-| **E. Client split** | 17 | platform shell + `games/sky-team/client`; router (TanStack Router, routes in 4.5) with a game picker page; i18n namespaces; game-specific UI state into a game slice | medium: mostly moving files (the recent refactor already grouped cockpit and tray) |
-| **F. Second game** | 19 | a small game first (e.g. a simple simultaneous-reveal card game) to prove simultaneous moves and N seats before investing in a large game | low |
-| **G. Big games** | 21+ | Pandemic (N seats, out-of-turn events), then Twilight Struggle (prompts, long games, maybe async play) | high: rules size, not architecture |
-| **H. Scale-out** | 20 | stage 2 above, only when metrics ask for it | medium |
+| **A. Engine contract** | Platform 01 | create `packages/engine`; wrap today's Sky Team rules in a `GameDefinition` adapter (`setup = createGame`, `apply` = dispatch over a move union, `view = viewFor`) | low: an adapter, no rule changes |
+| **B. Moves for everything** | Platform 02 | turn `ready`, `pick-ability`, `confirm`, round-timer expiry and Total Trust's auto-roll into moves and `schedule` entries; take `timed`, `autoRollAt`, `rolesChosen`, `pick` and `confirmed` off `Room` and into game state | medium: touches timers; existing tests catch regressions |
+| **C. Generic protocol** | Platform 03 | replace the `game:*` events with `match:move` / `match:view`; client and server switch in one release | medium |
+| **D. Persistence** | Platform 04 | Sky Team 12's store turned into the event log + snapshots behind `MatchStore` | medium |
+| **E. Client split** | Platform 05 | platform shell + `games/sky-team/client`; router (TanStack Router, routes in 4.5) with a game picker page; i18n namespaces; game-specific UI state into a game slice | medium: mostly moving files (the recent refactor already grouped cockpit and tray) |
+| **F. Second game** | Second game epic | a small game first (e.g. a simple simultaneous-reveal card game) to prove simultaneous moves and N seats before investing in a large game | low |
+| **G. Big games** | One epic per game | Pandemic (N seats, out-of-turn events), then Twilight Struggle (prompts, long games, maybe async play) | high: rules size, not architecture |
+| **H. Scale-out** | Platform 07 | stage 2 above, only when metrics ask for it | medium |
 
-Steps A–E are a refactor of the existing app. Steps F–G add product. Accounts (Phase 18) sit between them. Order decided Oct 4, 2026: Sky Team is finished and deployed first (Phases 10–12), so Phase 11's store is reworked into the match log in Phase 16; keeping it behind an interface keeps that rework small.
+Steps A–E are a refactor of the existing app. Steps F–G add product. Accounts (Platform 06) sit between them. Order decided Oct 4, 2026: Sky Team is finished and deployed first (Sky Team 11–13), so Sky Team 12's store is reworked into the match log in Platform 04; keeping it behind an interface keeps that rework small.
 
 ## 8. What changes in the project rules (CLAUDE.md)
 
@@ -311,8 +311,8 @@ Steps A–E are a refactor of the existing app. Steps F–G add product. Account
 
 1. ~~**Public or private?**~~ Settled Oct 4, 2026: private (Cloudflare Access). A public site with published games needs licenses; a private, invite-only site changes priorities (accounts, moderation, scale).
 2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favours the event log and adds notifications.
-3. **Accounts:** required for every player, or guests plus optional accounts (as planned in Phase 18)?
+3. **Accounts:** required for every player, or guests plus optional accounts (as planned in Platform 06)?
 4. **Bots:** will any game need computer players (solo Pandemic, practice Twilight Struggle)? That decides whether stage 3 matters.
-5. ~~**Storage:**~~ Settled Oct 4, 2026: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Phase 20 happens.
+5. ~~**Storage:**~~ Settled Oct 4, 2026: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Platform 07 happens.
 6. **Second game:** which small game should prove the engine before the big ones?
-7. ~~**Order:**~~ Settled Oct 4, 2026: finish Sky Team first (Phases 10–12), then the platform phases 13–21, numbered in execution order.
+7. ~~**Order:**~~ Settled Oct 4, 2026: finish Sky Team first (Sky Team 11–13), then the Platform epic, then one epic per game (restructured into epics Oct 5, 2026).

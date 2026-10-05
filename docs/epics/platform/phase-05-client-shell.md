@@ -1,8 +1,8 @@
-# Phase 17: Client shell and router
+# Platform 05: Client shell and router
 
-[← Master plan](../PLAN.md) · Milestone M6 · **Status: ⏳ Not started** · Effort: **medium-high**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium-high**
 
-Design reference: [multi-game proposal](../proposals/multi-game-platform.md), sections 4.5 and 4.6 (step E).
+Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 4.5 and 4.6 (step E).
 
 ## Goals
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 ## Feature scope
 
 - **In:** TanStack Router with the routes in the proposal (`/`, `/play/:gameId`, `/r/:code`, `/m/:matchId`, `/history`, `/u/:userId` later); the `GameClientModule` contract (`Board`, `SetupForm`, `Summary`, `locales`); `games/sky-team/client` (cockpit, tray, tracks, preflight, svgs); a shared design-system package; i18n split into a platform namespace and one per game; game-specific UI state (`selectedDieId`, `coffeeDelta`, `internSlot`, `rerollPick`) in a Sky Team store slice.
-- **Out:** new games (Phase 19); accounts pages (Phase 18).
+- **Out:** new games (Second game 01); accounts pages (Platform 06).
 
 ## Technical tasks
 

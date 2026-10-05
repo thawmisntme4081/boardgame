@@ -1,8 +1,8 @@
-# Phase 15: Generic protocol
+# Platform 03: Generic protocol
 
-[← Master plan](../PLAN.md) · Milestone M6 · **Status: ⏳ Not started** · Effort: **medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium**
 
-Design reference: [multi-game proposal](../proposals/multi-game-platform.md), sections 4.2 and 4.3 (step C).
+Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 4.2 and 4.3 (step C).
 
 ## Goals
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 ## Feature scope
 
 - **In:** a `packages/protocol` (envelope types + Zod); `room:create { game, config }`; `match:move { matchId, seq, move }` validated by the game's `moveSchema`; `match:view { matchId, version, view }`; a match runner with one serialized queue per match; a game registry.
-- **Out:** several server instances (Phase 20); storage (Phase 16).
+- **Out:** several server instances (Platform 07); storage (Platform 04).
 
 ## Technical tasks
 

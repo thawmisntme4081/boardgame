@@ -1,8 +1,8 @@
-# Phase 13: Engine contract
+# Platform 01: Engine contract
 
-[← Master plan](../PLAN.md) · Milestone M6 · **Status: ⏳ Not started** · Effort: **low-medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **low-medium**
 
-Design reference: [multi-game proposal](../proposals/multi-game-platform.md), sections 4.1 and 4.6 (step A).
+Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 4.1 and 4.6 (step A).
 
 ## Goals
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 ## Feature scope
 
 - **In:** a new `packages/engine` (the `GameDefinition` types, `Actor`, `Outcome`, `Result`, the seeded RNG moved from shared); a Sky Team adapter (`setup = createGame`, `apply` = dispatch over a Sky Team move union, `view = viewFor`, `outcome` from the phase); the engine test kit.
-- **Out:** protocol changes (Phase 15); moving timers into the game (Phase 14); new repository layout for the client (Phase 17).
+- **Out:** protocol changes (Platform 03); moving timers into the game (Platform 02); new repository layout for the client (Platform 05).
 
 ## Technical tasks
 
@@ -20,7 +20,7 @@ Design reference: [multi-game proposal](../proposals/multi-game-platform.md), se
 2. Define Sky Team's move union (`place`, `spend-reroll`, `reroll`, `ability`, `ready`, `pick-ability`, `confirm`) with one Zod `moveSchema`.
 3. Write the Sky Team definition as an adapter over the existing rule functions (no rule rewrites); `actors` from `phase`, `currentSeat` and `rerollPending`.
 4. Engine test kit: random play through `GameDefinition` only, determinism (same seed and moves → same state), JSON round trip of every state, view-leak check from a per-game list of secret fields. Run it on Sky Team.
-5. Move `packages/shared` towards `games/sky-team/rules` (the move can happen here or in Phase 17; decide when starting).
+5. Move `packages/shared` towards `games/sky-team/rules` (the move can happen here or in Platform 05; decide when starting).
 
 ## Checklist
 
