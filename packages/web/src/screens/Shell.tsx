@@ -3,7 +3,7 @@ import { Button } from '@platform/ui/components/button';
 import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { joinRoom } from '../api';
 
@@ -52,7 +52,7 @@ export function JoinForm({ name, initialCode = '' }: { name: string; initialCode
   const [busy, setBusy] = useState(false);
   const ready = name.trim().length > 0 && code.length === 4;
 
-  const onJoin = async (event: FormEvent) => {
+  const onJoin = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!ready) return;
     setBusy(true);
