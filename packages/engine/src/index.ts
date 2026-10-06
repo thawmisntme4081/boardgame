@@ -167,3 +167,16 @@ export function nextDue<S>(definition: { schedule?(state: S): { at: number }[] }
   const times = (definition.schedule?.(state) ?? []).map((entry) => entry.at);
   return times.length > 0 ? Math.min(...times) : null;
 }
+
+/**
+ * Rebuilds a state from an earlier one and the moves made since, in order, each with the
+ * context it was made in. The match log loads this way (a snapshot, then the later moves).
+ */
+export function replay<S, M, V, C>(
+  definition: GameDefinition<S, M, V, C>,
+  state: S,
+  moves: readonly PlayedMove<M>[],
+): S {
+  for (const { move, by, at } of moves) state = definition.apply(state, move, { by, at });
+  return state;
+}

@@ -1,7 +1,9 @@
-import { randomInt, randomUUID } from 'node:crypto';
+import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 import {
   nextDue,
+  replay,
   runDue,
+  type GameDefinition,
   type Mover,
   type PlayedMove,
   type SeatId,
@@ -18,7 +20,14 @@ import {
   type GameSettings,
   type GameState,
 } from './games';
-import { fromStored, toStored, type RoomStore } from './store';
+import {
+  fromStored,
+  hashToken,
+  toStored,
+  type LoadedMatch,
+  type MatchStore,
+  type StoredRoom,
+} from './store';
 
 /** No I or O, so codes can't be misread as 1 or 0. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -26,10 +35,14 @@ export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 /** The game a room plays when `room:create` names none (the only one so far). */
 export const DEFAULT_GAME = 'sky-team';
 
+/** A snapshot of the state goes into the match log every this many changes (and at the end). */
+export const SNAPSHOT_EVERY = 50;
+
 export interface Player {
   seat: SeatId;
   name: string;
-  token: string;
+  /** The rejoin token, hashed: the player holds the token itself. */
+  tokenHash: string;
   socketId: string | null;
   /** Created the room (or stayed when the creator left): runs the setup. */
   creator: boolean;
@@ -39,11 +52,13 @@ export interface Player {
 
 /** The game being played in a room. A rematch starts a new match in the same room. */
 export interface Match {
-  /** `<room code>-<number>`: a move or rematch for another match is refused or ignored. */
+  /** Unique for good (room codes come back once a room is gone): `<code>-<number>-<random>`. */
   id: string;
   number: number;
-  /** Accepted changes so far: views carry it, so a client drops older ones. */
+  /** Accepted changes so far: views carry it, and it numbers the moves in the match log. */
   version: number;
+  /** The match this one replaced in the room: a late "play again" for it changes nothing. */
+  previousId?: string;
 }
 
 export interface Room {
@@ -73,10 +88,10 @@ export interface RoomOptions {
   /** The server's own settings per game (shorter timers in tests and dev). */
   settings?: GameSettings;
   /**
-   * Where rooms are kept between restarts (SQLite in production). Without one, rooms live
-   * in memory only and a restart ends every game.
+   * Where rooms and their match logs are kept between restarts (SQLite in production).
+   * Without one, rooms live in memory only and a restart ends every game.
    */
-  store?: RoomStore;
+  store?: MatchStore;
 }
 
 export const DEFAULT_IDLE_TTL_MS = 30 * 60_000;
@@ -85,6 +100,8 @@ export const DEFAULT_MAX_ROOMS_PER_IP = 5;
 export interface Seated {
   room: Room;
   player: Player;
+  /** The player's rejoin token: only on the create or join that made it (and on a rejoin). */
+  token?: string;
 }
 
 /** A refusal: a platform code, or the game's own reason for refusing a move. */
@@ -93,7 +110,26 @@ export type Result<T, E = PlatformError> = { ok: true; value: T } | { ok: false;
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
 
-const matchId = (code: string, number: number) => `${code}-${number}`;
+const newMatchId = (code: string, number: number) =>
+  `${code}-${number}-${randomBytes(4).toString('hex')}`;
+
+/**
+ * A match from its log: the latest snapshot, then the moves made after it. A match saved by
+ * an older rules version goes through the game's `migrate` first; without one it cannot be
+ * loaded (`undefined`).
+ */
+export function restoreMatch<S, M, V, C>(
+  definition: GameDefinition<S, M, V, C>,
+  loaded: LoadedMatch,
+): { state: S; version: number } | undefined {
+  const { match, snapshot, moves } = loaded;
+  let state: S;
+  if (match.rulesVersion === definition.version) state = snapshot.state as S;
+  else if (definition.migrate) state = definition.migrate(snapshot.state, match.rulesVersion);
+  else return undefined;
+  const played = moves.map(({ move, by, at }) => ({ move: move as M, by, at }));
+  return { state: replay(definition, state, played), version: moves.at(-1)?.n ?? snapshot.n };
+}
 
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
@@ -104,7 +140,7 @@ export class RoomManager {
   private readonly newSeed: () => number;
   private readonly idleTtlMs: number;
   private readonly maxRoomsPerIp: number;
-  private readonly store: RoomStore | undefined;
+  private readonly store: MatchStore | undefined;
   readonly games: GameRegistry;
   /** Rooms changed since the last write; saved together on the next tick. */
   private readonly dirty = new Set<string>();
@@ -120,14 +156,44 @@ export class RoomManager {
     this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
     this.games = createRegistry(options.settings);
     this.store = options.store;
-    // Saved rooms come back with every player offline (they rejoin with their token). The
-    // server may have been stopped for days, so idle rooms are swept straight away. A room
-    // whose game is no longer hosted is dropped.
-    for (const stored of this.store?.loadAll() ?? []) {
-      if (this.games.has(stored.gameId)) this.rooms.set(stored.code, fromStored(stored));
-      else this.store?.delete(stored.code);
-    }
+    this.load();
     this.sweep();
+  }
+
+  /**
+   * Saved rooms come back with every player offline (they rejoin with their token), each
+   * with its match rebuilt from the log. The server may have been stopped for days, so idle
+   * rooms are swept straight after. A room whose game is no longer hosted, or whose match
+   * cannot be loaded, is dropped; so is an open match no room points to any more.
+   */
+  private load(): void {
+    const { store } = this;
+    if (!store) return;
+    for (const stored of store.loadRooms()) {
+      const room = this.restore(stored);
+      if (room) this.rooms.set(room.code, room);
+      else {
+        store.deleteRoom(stored.code);
+        store.endMatch(stored.match.id, 'abandoned', null, this.now());
+      }
+    }
+    const current = new Set([...this.rooms.values()].map((r) => r.match.id));
+    for (const match of store.listOpen()) {
+      if (!current.has(match.id)) store.endMatch(match.id, 'abandoned', null, this.now());
+    }
+  }
+
+  private restore(stored: StoredRoom): Room | undefined {
+    const entry = this.games.get(stored.gameId);
+    const loaded = entry && this.store?.loadMatch(stored.match.id);
+    const restored = entry && loaded && restoreMatch(entry.definition, loaded);
+    if (!entry || !loaded || !restored) return undefined;
+    const room = fromStored(stored, restored.state);
+    room.match.version = restored.version;
+    // A match that ended just before the server stopped is closed in the log too.
+    const outcome = entry.definition.outcome(room.game);
+    if (outcome && loaded.match.status === 'open') this.endInLog(room);
+    return room;
   }
 
   /** The registry entry of the room's game. */
@@ -147,8 +213,9 @@ export class RoomManager {
   }
 
   /**
-   * Saves the room after it changed. The write happens on the next tick, after the reply
-   * and the broadcast, and several changes in a row are saved once.
+   * Saves the room (players, the current match) after it changed. The write happens on the
+   * next tick, after the reply and the broadcast, and several changes in a row are saved once.
+   * The match log itself is written as each change happens.
    */
   save(room: Room): void {
     if (!this.store || this.closed) return;
@@ -158,36 +225,41 @@ export class RoomManager {
     setImmediate(() => this.flush());
   }
 
-  /** Writes every pending change now (also on shutdown). */
+  /** Writes every pending room change now (also on shutdown). */
   flush(): void {
     this.flushQueued = false;
     if (!this.store || this.closed) return;
     for (const code of this.dirty) {
       const room = this.rooms.get(code);
-      if (room) this.store.save(toStored(room));
+      if (room) this.store.saveRoom(toStored(room));
     }
     this.dirty.clear();
   }
 
   /**
-   * Shutdown: writes what is pending, stops the rooms' timers (the times are in the saved
-   * games, and the next start re-arms them) and closes the store. Safe to call twice.
+   * Shutdown: snapshots every open match (so the next start, perhaps on newer rules, loads
+   * from the state itself), writes what is pending, stops the timers (the times are in the
+   * saved games, and the next start re-arms them) and closes the store. Safe to call twice.
    */
   close(): void {
     if (this.closed) return;
+    for (const room of this.rooms.values()) {
+      if (this.entry(room).definition.outcome(room.game) === null) this.snapshot(room);
+    }
     this.flush();
     this.closed = true;
     for (const room of this.rooms.values()) clearTimeout(room.timer);
     this.store?.close();
   }
 
-  /** A room is gone for good: stop its timer and remove it from the store too. */
+  /** A room is gone for good: stop its timer, remove it from the store, close its match. */
   private forget(room: Room): void {
     clearTimeout(room.timer);
     room.timer = undefined;
     this.rooms.delete(room.code);
     this.dirty.delete(room.code);
-    this.store?.delete(room.code);
+    this.store?.deleteRoom(room.code);
+    this.abandonIfOpen(room);
   }
 
   get size(): number {
@@ -225,21 +297,23 @@ export class RoomManager {
     if (fromIp >= this.maxRoomsPerIp) return err('too-many-rooms');
     const code = this.newCode();
     const seat = entry.definition.meta.seats[0]!;
+    const seed = this.newSeed();
     const room: Room = {
       code,
       gameId,
       players: {},
       config,
-      match: { id: matchId(code, 1), number: 1, version: 0 },
-      game: entry.definition.setup({ config, seats: [seat], host: seat, seed: this.newSeed() }),
+      match: { id: newMatchId(code, 1), number: 1, version: 0 },
+      game: entry.definition.setup({ config, seats: [seat], host: seat, seed }),
       creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
     };
     this.rooms.set(code, room);
-    const player = this.seat(room, seat, name, socketId);
+    const { player, token } = this.seat(room, seat, name, socketId);
     player.creator = true;
-    return ok({ room, player });
+    this.startInLog(room, seed);
+    return ok({ room, player, token });
   }
 
   join(code: string, name: string, socketId: string): Result<Seated> {
@@ -248,18 +322,20 @@ export class RoomManager {
     if (!room) return err('room-not-found');
     const free = this.seats(room).find((seat) => !room.players[seat]);
     if (!free) return err('room-full');
-    const player = this.seat(room, free, name, socketId);
+    const { player, token } = this.seat(room, free, name, socketId);
     this.tell(room, { type: 'table:join', seat: free });
-    return ok({ room, player });
+    this.seatsInLog(room);
+    return ok({ room, player, token });
   }
 
   /** Puts a returning player back in their seat on a new socket. */
   rejoin(code: string, token: string, socketId: string): Result<Seated> {
     const room = this.rooms.get(code);
     if (!room) return err('room-not-found');
+    const tokenHash = hashToken(token);
     const player = this.seats(room)
       .map((seat) => room.players[seat])
-      .find((p) => p?.token === token);
+      .find((p) => p?.tokenHash === tokenHash);
     if (!player) return err('bad-token');
     const current = this.sockets.get(socketId);
     if (current && (current.code !== code || current.seat !== player.seat)) {
@@ -269,7 +345,14 @@ export class RoomManager {
     player.socketId = socketId;
     this.sockets.set(socketId, { code, seat: player.seat });
     this.touch(room);
-    return ok({ room, player });
+    return ok({ room, player, token });
+  }
+
+  /** The seat that holds `token` in room `code`, if any (to find its old connection). */
+  seatOf(code: string, token: string): Player | undefined {
+    const room = this.rooms.get(code);
+    const tokenHash = hashToken(token);
+    return room && Object.values(room.players).find((p) => p?.tokenHash === tokenHash);
   }
 
   /** Marks the player offline; the seat stays reserved for `rejoin`. */
@@ -331,19 +414,21 @@ export class RoomManager {
    */
   rematch(room: Room, config: GameConfig = room.config): void {
     const { definition } = this.entry(room);
+    this.abandonIfOpen(room);
     const seats = this.seats(room).filter((seat) => room.players[seat]);
     const host = seats.find((seat) => room.players[seat]!.creator) ?? seats[0]!;
+    const seed = this.newSeed();
     room.config = config;
-    room.game = definition.setup({
-      config,
-      seats,
-      host,
-      seed: this.newSeed(),
-      previous: room.game,
-    });
+    room.game = definition.setup({ config, seats, host, seed, previous: room.game });
     const number = room.match.number + 1;
-    room.match = { id: matchId(room.code, number), number, version: 0 };
+    room.match = {
+      id: newMatchId(room.code, number),
+      number,
+      version: 0,
+      previousId: room.match.id,
+    };
     for (const seat of seats) room.players[seat]!.seq = 0;
+    this.startInLog(room, seed);
     this.touch(room);
   }
 
@@ -366,7 +451,7 @@ export class RoomManager {
       this.rematch(room, config);
       return ok(undefined);
     }
-    if (seenMatch === matchId(room.code, room.match.number - 1)) {
+    if (seenMatch === room.match.previousId) {
       if (!started && !same) this.rematch(room, config);
       return ok(undefined);
     }
@@ -385,35 +470,36 @@ export class RoomManager {
   }
 
   /**
-   * A move, checked and applied by the game at the current time. Call `runDue` first, so a
-   * move that arrives after the deadline finds the round already over.
+   * A move, checked and applied by the game at the current time, and written to the match
+   * log. Call `runDue` first, so a move that arrives after the deadline finds the round over.
    */
   move(room: Room, by: Mover, move: GameMove): Result<void, string> {
     const { definition } = this.entry(room);
     const ctx = { by, at: this.now() };
     const check = definition.validate(room.game, move, ctx);
     if (!check.ok) return err(check.reason);
-    room.game = definition.apply(room.game, move, ctx);
-    room.match.version++;
+    this.accept(room, { move, ...ctx });
     this.touch(room);
     return ok(undefined);
   }
 
   /** Makes the game's scheduled moves that are due now. Returns the moves made. */
   runDue(room: Room): PlayedMove<GameMove>[] {
-    const due = runDue(this.entry(room).definition, room.game, this.now());
-    room.game = due.state;
-    room.match.version += due.moves.length;
+    const { definition } = this.entry(room);
+    const due = runDue(definition, room.game, this.now());
+    // Applied again one by one, so each lands in the log with its own number.
+    for (const played of due.moves) this.accept(room, played);
     return due.moves;
   }
 
   /**
    * Replaces the game state from outside the rules (the E2E test route only): the version
-   * moves on, so clients take the new view.
+   * moves on, clients take the new view, and the log gets a snapshot (no move made it).
    */
   replaceGame(room: Room, game: GameState): void {
     room.game = game;
     room.match.version++;
+    this.snapshot(room);
     this.touch(room);
   }
 
@@ -457,6 +543,7 @@ export class RoomManager {
       this.moveTo(room, player, seat);
     }
     this.tell(room, move);
+    this.seatsInLog(room);
     return ok(undefined);
   }
 
@@ -468,11 +555,69 @@ export class RoomManager {
   private tell(room: Room, move: TableMove): void {
     const { definition } = this.entry(room);
     const ctx = { by: 'system', at: this.now() } as const;
-    if (definition.validate(room.game, move, ctx).ok) {
-      room.game = definition.apply(room.game, move, ctx);
-      room.match.version++;
-    }
+    if (definition.validate(room.game, move, ctx).ok) this.accept(room, { move, ...ctx });
     this.touch(room);
+  }
+
+  /**
+   * Applies an accepted move: the state and version move on, the move goes into the match log
+   * (before anyone sees it), with a snapshot now and then and when the game ends.
+   */
+  private accept(room: Room, played: PlayedMove<GameMove>): void {
+    const { definition } = this.entry(room);
+    const wasOver = definition.outcome(room.game) !== null;
+    room.game = definition.apply(room.game, played.move, played);
+    const n = ++room.match.version;
+    this.store?.appendMove(room.match.id, { n, move: played.move, by: played.by, at: played.at });
+    if (!wasOver && definition.outcome(room.game) !== null) this.endInLog(room);
+    else if (n % SNAPSHOT_EVERY === 0) this.snapshot(room);
+  }
+
+  private snapshot(room: Room): void {
+    this.store?.saveSnapshot(room.match.id, { n: room.match.version, state: room.game });
+  }
+
+  /** A new match in the log: its record, the state after setup, and the seats. */
+  private startInLog(room: Room, seed: number): void {
+    if (!this.store) return;
+    const { definition } = this.entry(room);
+    this.store.createMatch(
+      {
+        id: room.match.id,
+        roomCode: room.code,
+        gameId: room.gameId,
+        rulesVersion: definition.version,
+        config: room.config,
+        seed,
+        status: 'open',
+        createdAt: this.now(),
+        endedAt: null,
+        outcome: null,
+      },
+      { n: room.match.version, state: room.game },
+    );
+    this.seatsInLog(room);
+  }
+
+  private seatsInLog(room: Room): void {
+    const seats = Object.values(room.players)
+      .filter((p) => p !== undefined)
+      .map(({ seat, name, tokenHash }) => ({ seat, name, tokenHash }));
+    this.store?.saveSeats(room.match.id, seats);
+  }
+
+  /** The game ended: its final state and outcome go into the log. */
+  private endInLog(room: Room): void {
+    const outcome = this.entry(room).definition.outcome(room.game);
+    this.snapshot(room);
+    this.store?.endMatch(room.match.id, 'over', outcome, this.now());
+  }
+
+  /** The room moves on (or goes) before its match ended: the match is abandoned. */
+  private abandonIfOpen(room: Room): void {
+    if (this.entry(room).definition.outcome(room.game) !== null) return;
+    this.snapshot(room);
+    this.store?.endMatch(room.match.id, 'abandoned', null, this.now());
   }
 
   private moveTo(room: Room, player: Player, seat: SeatId): void {
@@ -481,12 +626,25 @@ export class RoomManager {
     if (player.socketId) this.sockets.set(player.socketId, { code: room.code, seat });
   }
 
-  private seat(room: Room, seat: SeatId, name: string, socketId: string): Player {
-    const player: Player = { seat, name, token: randomUUID(), socketId, creator: false, seq: 0 };
+  private seat(
+    room: Room,
+    seat: SeatId,
+    name: string,
+    socketId: string,
+  ): { player: Player; token: string } {
+    const token = randomUUID();
+    const player: Player = {
+      seat,
+      name,
+      tokenHash: hashToken(token),
+      socketId,
+      creator: false,
+      seq: 0,
+    };
     room.players[seat] = player;
     this.sockets.set(socketId, { code: room.code, seat });
     this.touch(room);
-    return player;
+    return { player, token };
   }
 
   private newCode(): string {

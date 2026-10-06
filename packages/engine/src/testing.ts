@@ -4,6 +4,7 @@ import { deepStrictEqual } from 'node:assert/strict';
 import { nextRandom } from './rng';
 import {
   isTableMove,
+  replay,
   type GameDefinition,
   type Outcome,
   type PlayedMove,
@@ -166,8 +167,7 @@ export function checkReplay<S, M, V, C>(
   options: KitOptions<S, M, V, C>,
   played: PlayedGame<S, M>,
 ): void {
-  let state = setup(options);
-  for (const move of played.moves) state = options.definition.apply(state, move.move, move);
+  const state = replay(options.definition, setup(options), played.moves);
   deepStrictEqual(
     state,
     played.final,

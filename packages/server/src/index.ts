@@ -5,7 +5,7 @@ import { createGameServer } from './app';
 import { log, setErrorReporter } from './log';
 import { DEFAULT_IDLE_TTL_MS, DEFAULT_MAX_ROOMS_PER_IP, RoomManager } from './rooms';
 import { siteGate } from './siteGate';
-import { databaseFile, SqliteRoomStore } from './store';
+import { databaseFile, SqliteMatchStore } from './store';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const production = process.env.NODE_ENV === 'production';
@@ -40,7 +40,7 @@ const rooms = new RoomManager({
   ...(roundTimerSeconds > 0 && {
     settings: { 'sky-team': { roundTimerMs: roundTimerSeconds * 1000 } },
   }),
-  ...(dbFile && { store: new SqliteRoomStore(dbFile) }),
+  ...(dbFile && { store: new SqliteMatchStore(dbFile) }),
 });
 
 // Same path from src/ (tsx) and dist/ (built): packages/client/dist.

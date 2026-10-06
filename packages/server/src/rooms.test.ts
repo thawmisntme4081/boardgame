@@ -13,11 +13,14 @@ function unwrap<T>(result: { ok: true; value: T } | { ok: false; error: string }
 describe('RoomManager', () => {
   it('creates a room with a 4-letter code and seats the creator as pilot', () => {
     const rooms = new RoomManager();
-    const { room, player } = unwrap(rooms.create('Ana', 's1'));
+    const { room, player, token } = unwrap(rooms.create('Ana', 's1'));
     expect(room.code).toMatch(/^[A-Z]{4}$/);
     expect([...room.code].every((c) => ROOM_CODE_ALPHABET.includes(c))).toBe(true);
     expect(player).toMatchObject({ seat: 'pilot', name: 'Ana', socketId: 's1', creator: true });
-    expect(player.token).toMatch(UUID);
+    expect(token).toMatch(UUID);
+    // Only a hash of the token is kept.
+    expect(player.tokenHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(JSON.stringify(room)).not.toContain(token!);
     // Round 1 waits until the crew has chosen roles and abilities.
     expect(room.game.phase).toBe('setup');
     expect(rooms.size).toBe(1);
@@ -34,10 +37,11 @@ describe('RoomManager', () => {
 
   it('seats the second player as co-pilot and refuses a third', () => {
     const rooms = new RoomManager();
-    const { room } = unwrap(rooms.create('Ana', 's1'));
+    const first = unwrap(rooms.create('Ana', 's1'));
+    const { room } = first;
     const second = unwrap(rooms.join(room.code, 'Ben', 's2'));
     expect(second.player.seat).toBe('copilot');
-    expect(second.player.token).not.toBe(room.players.pilot!.token);
+    expect(second.token).not.toBe(first.token);
     expect(rooms.join(room.code, 'Cat', 's3')).toEqual({ ok: false, error: 'room-full' });
     expect(rooms.join('ZZZZ', 'Cat', 's3')).toEqual({ ok: false, error: 'room-not-found' });
   });
@@ -51,7 +55,7 @@ describe('RoomManager', () => {
 
   it('keeps the seat after a disconnect and restores it with the token', () => {
     const rooms = new RoomManager();
-    const { room, player } = unwrap(rooms.create('Ana', 's1'));
+    const { room, player, token } = unwrap(rooms.create('Ana', 's1'));
     rooms.disconnect('s1');
     expect(player.socketId).toBeNull();
     expect(rooms.bySocket('s1')).toBeUndefined();
@@ -61,7 +65,7 @@ describe('RoomManager', () => {
       ok: false,
       error: 'bad-token',
     });
-    const back = unwrap(rooms.rejoin(room.code, player.token, 's9'));
+    const back = unwrap(rooms.rejoin(room.code, token!, 's9'));
     expect(back.player).toBe(player);
     expect(player.socketId).toBe('s9');
     expect(rooms.bySocket('s9')?.player).toBe(player);
@@ -69,8 +73,8 @@ describe('RoomManager', () => {
 
   it('moves a seat to the new socket when rejoining without a disconnect', () => {
     const rooms = new RoomManager();
-    const { room, player } = unwrap(rooms.create('Ana', 's1'));
-    unwrap(rooms.rejoin(room.code, player.token, 's2'));
+    const { room, token } = unwrap(rooms.create('Ana', 's1'));
+    unwrap(rooms.rejoin(room.code, token!, 's2'));
     expect(rooms.bySocket('s1')).toBeUndefined();
     expect(rooms.bySocket('s2')?.player.seat).toBe('pilot');
   });
@@ -113,8 +117,7 @@ describe('RoomManager', () => {
   it('frees the seat on leave and restarts the game for the partner', () => {
     let seed = 100;
     const rooms = new RoomManager({ seed: () => seed++ });
-    const { room } = unwrap(rooms.create('Ana', 's1'));
-    const pilotToken = room.players.pilot!.token;
+    const { room, token: pilotToken } = unwrap(rooms.create('Ana', 's1'));
     unwrap(rooms.join(room.code, 'Ben', 's2'));
     room.game.crew.ready.copilot = true;
     room.game = { ...room.game, round: 3, log: [{ type: 'round-end', round: 2 }] };
@@ -125,7 +128,7 @@ describe('RoomManager', () => {
     expect(rooms.bySocket('s1')).toBeUndefined();
     expect(room.game).toMatchObject({ round: 1, phase: 'setup', log: [], rngSeed: 101 });
     expect(room.game.crew).toMatchObject({ host: 'copilot', ready: { copilot: false } });
-    expect(rooms.rejoin(room.code, pilotToken, 's9')).toEqual({ ok: false, error: 'bad-token' });
+    expect(rooms.rejoin(room.code, pilotToken!, 's9')).toEqual({ ok: false, error: 'bad-token' });
 
     // Someone new takes the free pilot seat.
     expect(unwrap(rooms.join(room.code, 'Cat', 's3')).player.seat).toBe('pilot');

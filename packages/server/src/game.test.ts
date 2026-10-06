@@ -54,14 +54,15 @@ async function seatedRoom(seed = 1) {
   for (const seat of ['pilot', 'copilot'] as const) {
     clients[seat].on('match:view', ({ view: view }) => views[seat].push(view));
   }
-  const { code } = joined(
+  const pilot = joined(
     await clients.pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
   );
+  const { code } = pilot;
   const copilotView = nextView(clients.copilot);
-  joined(await clients.copilot.emitWithAck('room:join', { code, name: 'Ben' }));
+  const copilot = joined(await clients.copilot.emitWithAck('room:join', { code, name: 'Ben' }));
   await copilotView;
   const room = () => server!.rooms.get(code)!;
-  return { clients, views, code, room };
+  return { clients, views, code, room, tokens: { pilot, copilot } };
 }
 
 /** Resolves on the first view that has been rolled (placing). */
@@ -330,7 +331,7 @@ describe('room:rematch', () => {
 
 describe('robustness', () => {
   it('rejoining mid-round resumes exactly where the player was', async () => {
-    const { clients, room, code } = await seatedRoom();
+    const { clients, room, code, tokens } = await seatedRoom();
     await bothReady(clients);
     const die = room().game.dice.pilot[1]!;
     expectOk(
@@ -342,7 +343,7 @@ describe('robustness', () => {
       }),
     );
     const before = viewFor(room().game, 'pilot');
-    const token = room().players.pilot!.token;
+    const { token } = tokens.pilot;
 
     clients.pilot.disconnect();
     const back = await server!.connect();

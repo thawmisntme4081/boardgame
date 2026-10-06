@@ -59,11 +59,11 @@ function parse<S extends z.ZodType>(schema: S, payload: unknown): z.output<S> | 
   return parsed.success ? parsed.data : undefined;
 }
 
-const joined = ({ room, player }: Seated): JoinResult => ({
+const joined = ({ room, player, token }: Seated): JoinResult => ({
   ok: true,
   code: room.code,
   seat: player.seat,
-  token: player.token,
+  token: token ?? '',
   matchId: room.match.id,
   seq: player.seq,
 });
@@ -171,10 +171,7 @@ export function registerHandlers(
     on('room:rejoin', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(rejoinRoomSchema, payload);
       if (!data) return reply({ ok: false, error: 'bad-request' });
-      const previous = rooms.get(data.code);
-      const oldSocketId = previous
-        ? Object.values(previous.players).find((p) => p?.token === data.token)?.socketId
-        : undefined;
+      const oldSocketId = rooms.seatOf(data.code, data.token)?.socketId;
       const result = rooms.rejoin(data.code, data.token, socket.id);
       if (!result.ok) return reply(result);
       // A stale connection for the same seat stops receiving room traffic.

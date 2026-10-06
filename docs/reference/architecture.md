@@ -42,7 +42,17 @@ flowchart LR
 
 Each move flows through the server, then each player receives their own filtered view.
 
-**Saving rooms (Sky Team 12):** every accepted change ends in `broadcastRoom`, which also queues `rooms.save(room)`. On the next tick the room manager writes the changed rooms through its `RoomStore` (`store.ts`): `SqliteRoomStore` (Drizzle on `better-sqlite3`, WAL mode, one table `rooms(code, json, version, updated_at)`) when `DATA_DIR` is set, nothing otherwise; `MemoryRoomStore` in tests. A saved room holds the players (with rejoin tokens), the `GameState` and the room's own flags; socket ids and timers are never saved. On start the rooms load with every player offline, idle ones are swept, and their timers are re-armed. Rows saved in another `ROOM_FORMAT` are dropped. Shutdown (SIGINT/SIGTERM, as Fly sends when it stops the machine) flushes pending saves.
+**Saving rooms and matches (Sky Team 12, then Platform 04's match log):** a match is stored as a log, not as its latest state. `MatchStore` (`store.ts`; `SqliteMatchStore` on `better-sqlite3` through Drizzle, WAL mode, when `DATA_DIR` is set; `MemoryMatchStore` in tests) holds:
+
+| Table | Holds |
+| --- | --- |
+| `rooms` | one JSON row per live room (`ROOM_FORMAT` 4): game id, players (name, seat, creator, last `seq`, a SHA-256 hash of the rejoin token), config, current match id / number / version |
+| `matches` | one row per match: room code, game id, `rules_version`, config, seed, status (`open`, `over`, `abandoned`), created / ended times, outcome |
+| `match_seats` | who sat in each seat (name, token hash) |
+| `match_moves` | every accepted change: `n` (the match's version after it), `by` (a seat or `system`), the move, `at` |
+| `match_snapshots` | the state at `n`: after setup (`n` 0), every 50 changes, at the end, and for every open match on shutdown |
+
+Every accepted change goes through `RoomManager.accept`, which applies it, bumps the version and appends it to `match_moves` before the broadcast. The room row is saved on the next tick. Loading a match is `restoreMatch`: the latest snapshot, then the moves after it replayed with the engine's `replay` (a match from an older `rules_version` goes through the game's `migrate` first; without one the room is dropped). Closing or sweeping a room deletes its row and marks an open match `abandoned`; matches stay for history and replay. On start, rooms load with every player offline, idle ones are swept, open matches no room points to are abandoned, and timers are re-armed. The schema is a list of SQL steps (`MIGRATIONS`, tracked in SQLite's `user_version`); format-3 room rows (Sky Team 12, the whole game inside) are converted into a room and a match on first start, so games in progress survive the upgrade.
 
 ## Repository layout
 
@@ -75,7 +85,7 @@ boardgame/
 │   │       ├── games.ts        # game registry: definition, lobby schema, server settings
 │   │       ├── rooms.ts        # rooms, matches, seq and versions, scheduler
 │   │       ├── handlers.ts     # room:* and match:move, for every game
-│   │       └── store.ts        # saved rooms (SQLite / memory)
+│   │       └── store.ts        # MatchStore: rooms + match log (SQLite / memory)
 │   └── client/
 │       └── src/
 │           ├── main.tsx

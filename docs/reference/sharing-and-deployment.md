@@ -71,6 +71,8 @@ Decided Oct 4, 2026 (built in [Sky Team 13](../epics/sky-team/phase-13-deploy.md
 | Auto stop/start | `auto_stop_machines = "suspend"` (or `"stop"`), `auto_start_machines = true`, `min_machines_running = 0`: the machine runs only while someone is connected; the first visit after idle waits a moment while it wakes |
 | Database | SQLite in a file on a 1 GB Fly volume (`DATA_DIR=/data`), through Drizzle |
 | Backups | Litestream replicating to object storage (Cloudflare R2 free tier, or Fly Tigris) |
+
+**What the database holds (Platform 04):** the live rooms (`rooms`) and every match as a log (`matches`, `match_seats`, `match_moves`, `match_snapshots`; see [architecture](architecture.md)). Finished matches stay, for history and replay. A Sky Team match takes about 30 KB (measured Oct 6, 2026 on 20 random games: about 60 changes and 3–4 snapshots of 4–9 KB each; 28 KB per match in the file), so the 1 GB volume holds some thirty thousand matches; prune old ones if it ever fills. The first start after deploying Platform 04 migrates the schema by itself and converts the rooms saved by the previous version, so games in progress continue; rejoin tokens are stored only as hashes from then on.
 | Access | A shared site password (`SITE_PASSWORD`, decided Oct 6, 2026): the page asks for it once per browser (signed cookie, 30 days, renewed on each visit; 5 wrong tries lock an address for 5 minutes) and the game connection is refused without it; `noindex` + `robots.txt`. Later, optionally: an own domain on Cloudflare with Cloudflare Access (email allowlist) |
 | Errors | Sentry free plan |
 
