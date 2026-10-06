@@ -50,6 +50,8 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 ## Workflow
 
+How much to test: the full run (`pnpm test` + `pnpm e2e`) only at the end of a phase (below). Small UI tweaks (labels, styling, animations): typecheck, format and lint only; tests when the user asks. Other changes outside a phase: only the affected package's tests (`npx vitest run --project @sky/client`, `@sky/server`, `@sky/shared`, `@platform/engine` or `@platform/protocol`; one file or `-t "<name>"` for a single test), and one Playwright test (`-g "<name>"`) only if the change is visible in a full game. CI still runs everything on every push to `main`.
+
 When a phase is done (its "Done when" check verified, plus `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm build` passing):
 
 - Tick that phase's checklist in its `docs/epics/<epic>/phase-NN-*.md` file. Leave unfinished items unticked and say why. Add a "✅ Verified <date>" note to its "Done when" line, and update the phase's status in the epic's `EPIC.md` table (and the epic's row in `docs/PLAN.md` when the epic's status changes). `docs/PLAN.md` "Order" has two Mermaid diagrams: the epics, and the current epic's phases; update their status marks too, and switch the second one to the next epic when an epic is done.

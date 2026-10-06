@@ -563,19 +563,27 @@ describe('traffic die', () => {
       },
     });
     render(<DiceTray view={view} presence={presence()} />);
-    // Only the black dice show; where the planes went is read out, not written.
-    expect(
-      screen.getByRole('status', {
-        name: /rolled 4, a plane 3 spaces ahead; rolled 2, no planes left to add/,
-      }),
-    ).toBeInTheDocument();
+    // A label and the black dice, each named by its value for screen readers.
+    expect(screen.getByText('Traffic dice')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Traffic die: 4' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Traffic die: 2' })).toBeInTheDocument();
     render(<ApproachTrack view={view} />);
     expect(screen.getAllByText('Added by the traffic die')).toHaveLength(1);
   });
 
+  it('labels a single roll "Traffic die"', () => {
+    const view = makeView('pilot', {
+      rolled: false,
+      patch: { traffic: [{ roll: 3, space: 2 }] },
+    });
+    render(<DiceTray view={view} presence={presence()} />);
+    expect(screen.getByText('Traffic die')).toBeInTheDocument();
+  });
+
   it('says nothing when no traffic die rolled', () => {
     render(<DiceTray view={makeView('pilot', { rolled: false })} presence={presence()} />);
-    expect(screen.queryByText(/Traffic:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Traffic dic?e$/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /^Traffic die/ })).not.toBeInTheDocument();
   });
 });
 

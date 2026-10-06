@@ -65,7 +65,9 @@ function PlacingDice({ view }: { view: PlayerView }) {
         const shown = (isSelected ? die.value + coffeeDelta : die.value) as DieValue;
         return (
           <DieButton
-            key={die.id}
+            // A new value (a reroll, turbulence) is a new die on screen, so it tumbles in;
+            // coffee changes only `shown`, which keeps the die still.
+            key={`${die.id}:${die.value}`}
             value={shown}
             seat={view.seat}
             pressed={isSelected}

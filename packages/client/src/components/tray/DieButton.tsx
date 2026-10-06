@@ -1,5 +1,6 @@
 import type { DieValue, Seat } from '@sky/shared';
 import { cn } from '@/lib/utils';
+import { useRolledValue } from '@/lib/useRolledValue';
 import { DieFace } from '@/svgs/DieFace';
 
 /** The look of the die (or Intern token) in hand: lifted, with a dark ring. */
@@ -25,6 +26,7 @@ export function DieButton({
   onClick: () => void;
   className?: string;
 }) {
+  const face = useRolledValue(value);
   return (
     <button
       type="button"
@@ -34,7 +36,8 @@ export function DieButton({
       onClick={onClick}
       className={cn('rounded-xl p-0.5 transition', className)}
     >
-      <DieFace value={value} seat={seat} kind={kind} className="size-11" />
+      {/* Rolls (random faces) when it appears: a roll, or a reroll (the tray keys dice by value). */}
+      <DieFace value={face} seat={seat} kind={kind} className="size-11" />
     </button>
   );
 }

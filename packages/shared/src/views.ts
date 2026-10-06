@@ -77,6 +77,18 @@ export interface PlayerView {
   swap: { seat: Seat; value: DieValue } | null;
   /** The crew's choices (roles, picks, confirms, ready): public. */
   crew: GameState['crew'];
+  /** The round's latest placed die (public: it is on the board), or `null` before the first. */
+  lastPlace: { seat: Seat; slot: SlotId; value: DieValue } | null;
+}
+
+/** The latest die placed this round, from the log (the die's id and the log stay secret). */
+function lastPlaceOf(state: GameState): PlayerView['lastPlace'] {
+  for (let i = state.log.length - 1; i >= 0; i--) {
+    const event = state.log[i]!;
+    if (event.round !== state.round) return null;
+    if (event.type === 'place') return { seat: event.seat, slot: event.slot, value: event.value };
+  }
+  return null;
 }
 
 /**
@@ -123,6 +135,7 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     bonus: state.bonus && { die: { ...state.bonus.die } },
     swap: state.swap && { seat: state.swap.seat, value: state.swap.value },
     crew: structuredClone(state.crew),
+    lastPlace: lastPlaceOf(state),
   };
   if (state.endReason) view.endReason = state.endReason;
   if (state.landingFailures) view.landingFailures = [...state.landingFailures];

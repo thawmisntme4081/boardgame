@@ -204,6 +204,42 @@ html {
   }
 }
 
+/* A plane the traffic dice just added drops onto its space. */
+@keyframes drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.6rem) scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0.1rem) scale(1.06);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* Then it pulses black and red. */
+@keyframes traffic-plane {
+  0%,
+  100% {
+    fill: oklch(20.5% 0 0); /* neutral-900 */
+  }
+  50% {
+    fill: oklch(63.7% 0.237 25.331); /* red-500 */
+  }
+}
+/* The same on a dark board: light grey and red. */
+@keyframes traffic-plane-dark {
+  0%,
+  100% {
+    fill: oklch(97% 0 0); /* neutral-100 */
+  }
+  50% {
+    fill: oklch(63.7% 0.237 25.331); /* red-500 */
+  }
+}
+
 /* Kerosene burned: the "−N" rises and fades over the gauge. */
 @keyframes kerosene-burn {
   0% {

@@ -1,30 +1,39 @@
-// Short notes in the dice tray: traffic, weather, Total Trust, timers, dice set aside.
-import { REAL_TIME_MS, type AltitudeSpace, type PlayerView } from '@sky/shared';
+import { REAL_TIME_MS, type AltitudeSpace, type DieValue, type PlayerView } from '@sky/shared';
 import { EyeOff, VolumeX, Waves } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatClock } from '@/lib/clock';
+import { useRolledValue } from '@/lib/useRolledValue';
 import { DieFace } from '@/svgs/DieFace';
-import { spacesAhead } from './text';
 
-/** The traffic die rolled at the start of the round, and where each plane went. */
 export function TrafficNews({ view }: { view: PlayerView }) {
   const { t } = useTranslation();
+
   if (view.traffic.length === 0) return null;
-  // Only the black dice on screen; where each plane went stays readable for screen readers.
-  const news = view.traffic
-    .map(({ roll, space }) =>
-      space === null
-        ? t('tray.trafficNoPlanes', { roll })
-        : t('tray.trafficRolled', { roll, where: spacesAhead(view, space) }),
-    )
-    .join('; ');
   return (
-    <span role="status" aria-label={`${t('tray.traffic')} ${news}`} className="flex gap-1">
-      {view.traffic.map(({ roll }, i) => (
-        <DieFace key={i} value={roll} seat="pilot" kind="traffic" className="size-8" />
-      ))}
-    </span>
+    <div role="status" className="flex flex-col gap-2">
+      <p className="text-sm font-medium">
+        {t('tray.trafficLabel', { count: view.traffic.length })}
+      </p>
+      <span className="flex gap-2">
+        {view.traffic.map(({ roll }, i) => (
+          <span
+            key={i}
+            role="img"
+            aria-label={t('tray.trafficDie', { value: roll })}
+            className="p-0.5"
+          >
+            <TrafficDieFace value={roll} />
+          </span>
+        ))}
+      </span>
+    </div>
   );
+}
+
+/** A traffic die rolled at the start of the round: it rolls like the players' dice. */
+function TrafficDieFace({ value }: { value: DieValue }) {
+  const face = useRolledValue(value);
+  return <DieFace value={face} seat="pilot" kind="traffic" className="size-11" />;
 }
 
 /** Turbulence and Bad Visibility together make a storm. */

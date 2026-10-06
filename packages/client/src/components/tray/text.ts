@@ -4,17 +4,10 @@ import {
   diceToPlace,
   nextInternToken,
   otherSeat,
+  SLOTS,
   type PlayerView,
 } from '@sky/shared';
 import { t } from '@/i18n';
-
-/** Where a traffic plane landed, from your own approach space. */
-export function spacesAhead(view: PlayerView, space: number): string {
-  const ahead = space - view.approachIndex;
-  if (space === view.approachPlanes.length - 1) return t('tray.onAirport');
-  if (ahead === 0) return t('tray.onYourSpace');
-  return t('tray.spacesAhead', { count: ahead });
-}
 
 /** The placing tray's status line: what you (or your partner) are doing now. */
 export function placingText(view: PlayerView, partner: string, placingToken: boolean): string {
@@ -41,6 +34,15 @@ export function placingText(view: PlayerView, partner: string, placingToken: boo
   // Engines out: the dice beyond the round's limit stay in the tray, unused.
   if (diceToPlace(view.placed, view.scenario, view.seat, view.myDice.length) === 0) {
     return t('tray.diceDone', { count: dicePerRound(view.scenario) });
+  }
+  // What the partner just did, so it is not missed; the first die of a round has nothing to say.
+  const last = view.lastPlace;
+  if (last && last.seat !== view.seat) {
+    return t('tray.yourTurnAfter', {
+      name: partner,
+      value: last.value,
+      slot: t(`slot.group.${SLOTS[last.slot].group}`),
+    });
   }
   return t('tray.yourTurn');
 }

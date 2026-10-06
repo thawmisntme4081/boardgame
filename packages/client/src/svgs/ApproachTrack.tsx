@@ -89,6 +89,13 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
   const stacked = planes.some((_, i) => (scenario.traffic?.[i] ?? 0) > 0 && scenario.turns?.[i]);
   const height = effects ? (stacked ? 72 : 64) : 50;
   const hereTraffic = scenario.traffic?.[here] ?? 0;
+  // Strategy phase: how many planes the traffic dice just added to each space.
+  const addedPlanes: Record<number, number> = {};
+  if (view.phase === 'strategy') {
+    for (const { space } of view.traffic) {
+      if (space !== null) addedPlanes[space] = (addedPlanes[space] ?? 0) + 1;
+    }
+  }
   const hereTurn = scenario.turns?.[here];
   const hereAlarms = scenario.alarms?.[here] ?? 0;
   const hereTrust = (scenario.totalTrust?.[here] ?? 0) > 0;
@@ -228,17 +235,30 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
 
         {planes.map((count, i) => (
           <g key={i} className={fade(i)}>
-            {Array.from({ length: SHOWN }, (_, k) => (
-              <g
-                key={k}
-                className={cn(
-                  'transition-[opacity,translate] duration-500 ease-out',
-                  k >= count && '-translate-y-3 opacity-0',
-                )}
-              >
-                <Plane x={i * CELL + CELL / 2} y={14 + k * 12} />
-              </g>
-            ))}
+            {Array.from({ length: SHOWN }, (_, k) => {
+              // The top planes of a space are the ones the traffic dice just added there.
+              const added = k < count && k >= count - (addedPlanes[i] ?? 0);
+              return (
+                <g
+                  key={k}
+                  className={cn(
+                    'transition-[opacity,translate] duration-500 ease-out',
+                    k >= count && '-translate-y-3 opacity-0',
+                    added && 'origin-center animate-[drop-in_0.5s_ease-out] transform-fill',
+                  )}
+                >
+                  <Plane
+                    x={i * CELL + CELL / 2}
+                    y={14 + k * 12}
+                    // Dropped in, then pulsing black and light red until the dice are rolled.
+                    className={cn(
+                      added &&
+                        'animate-[traffic-plane_1.2s_ease-in-out_0.5s_infinite] dark:animate-[traffic-plane-dark_1.2s_ease-in-out_0.5s_infinite]',
+                    )}
+                  />
+                </g>
+              );
+            })}
             {count > SHOWN && (
               <text
                 x={i * CELL + CELL - 6}
