@@ -9,7 +9,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGame } from '@/store';
-import { catalogScenario, makeView, presence, resetStore } from '@/test/fixtures';
+import { catalogScenario, makeView, presence, resetStore, crew } from '@/test/fixtures';
 import { Cockpit } from './cockpit/Cockpit';
 import { DiceTray } from './tray/DiceTray';
 import { GameOverDialog } from './GameOverDialog';
@@ -120,11 +120,12 @@ describe('DiceTray', () => {
   });
 
   it('has the "Roll dice" button in the strategy phase; it waits for the partner once pressed', async () => {
-    const view = makeView('pilot', { rolled: false });
-    const { rerender } = render(<DiceTray view={view} presence={presence(false, true)} />);
+    const view = (pilot: boolean, copilot: boolean) =>
+      makeView('pilot', { rolled: false, patch: { crew: crew({ ready: { pilot, copilot } }) } });
+    const { rerender } = render(<DiceTray view={view(false, true)} presence={presence()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Roll dice' }));
     expect(api.ready).toHaveBeenCalled();
-    rerender(<DiceTray view={view} presence={presence(true, false)} />);
+    rerender(<DiceTray view={view(true, false)} presence={presence()} />);
     expect(screen.getByRole('button', { name: 'Waiting for Ben…' })).toBeDisabled();
   });
 

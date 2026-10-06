@@ -14,9 +14,8 @@ import { abilityText } from '@/scenarioText';
 /** The creator picks a seat; the partner sees the choice (their own seat turns solid). */
 function RoleChoice({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const { t } = useTranslation();
-  const me = presence?.[view.seat];
-  const chosen = me?.rolesChosen === true;
-  const creator = me?.creator === true;
+  const chosen = view.crew.rolesChosen;
+  const creator = presence?.[view.seat]?.creator === true;
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-medium">
@@ -67,8 +66,10 @@ function AbilityChoice({ view, presence }: { view: PlayerView; presence: Presenc
       <legend className="mb-2 text-sm font-medium">{intro}</legend>
       <div className="grid grid-cols-1 gap-2 tablet:grid-cols-2 desktop:grid-cols-3">
         {ABILITY_IDS.map((ability) => {
-          const mine = me?.pick === ability;
-          const theirs = partner?.pick === ability && (count === 2 || partner.creator);
+          const mine = view.crew.picks[view.seat] === ability;
+          const theirs =
+            view.crew.picks[partnerSeat] === ability &&
+            (count === 2 || view.crew.host === partnerSeat);
           const { name, rule } = abilityText(ability);
           return (
             <button
@@ -110,12 +111,12 @@ function AbilityChoice({ view, presence }: { view: PlayerView; presence: Presenc
 /** Both players confirm; round 1 (and its traffic die) starts once both have. */
 function ConfirmRow({ view, presence }: { view: PlayerView; presence: Presence | null }) {
   const { t } = useTranslation();
-  const me = presence?.[view.seat];
-  const partner = partnerOf(view, presence).info;
-  const ready = Boolean(partner) && me?.rolesChosen === true && abilitiesChosen(view);
+  const { seat: partnerSeat, info: partner } = partnerOf(view, presence);
+  const { rolesChosen, confirmed } = view.crew;
+  const ready = Boolean(partner) && rolesChosen && abilitiesChosen(view);
   const missing = !partner
     ? t('preflight.waitingPartner')
-    : me?.rolesChosen !== true
+    : !rolesChosen
       ? t('preflight.chooseRoles')
       : !abilitiesChosen(view)
         ? t('preflight.chooseAbilities')
@@ -124,15 +125,15 @@ function ConfirmRow({ view, presence }: { view: PlayerView; presence: Presence |
     <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 border-t pt-3">
       <p className="mr-auto text-sm text-muted-foreground" role="status">
         {missing ??
-          (me?.confirmed
+          (confirmed[view.seat]
             ? t('preflight.waitingConfirm', { name: partner?.name ?? '' })
-            : partner?.confirmed
+            : partner && confirmed[partnerSeat]
               ? t('preflight.partnerConfirmed', { name: partner.name })
               : '')}
       </p>
       <Button
         className="h-11"
-        disabled={!ready || me?.confirmed === true}
+        disabled={!ready || confirmed[view.seat]}
         onClick={() => void confirmSetup()}
       >
         {t('preflight.confirm')}

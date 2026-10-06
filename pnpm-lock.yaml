@@ -308,6 +308,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@platform/engine':
+        specifier: workspace:*
+        version: link:../engine
       '@sentry/node':
         specifier: ^11.4.0
         version: 11.4.0(@babel/core@7.29.7(supports-color@10.2.2))(rollup@4.63.5)

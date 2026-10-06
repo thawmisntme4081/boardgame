@@ -6,7 +6,7 @@ All events are typed once in `packages/shared/src/events.ts` (`ClientToServer`, 
 
 | Direction | Event | Payload | Server response |
 | --- | --- | --- | --- |
-| Client → Server | `room:create` | `{ name, timer?, scenario?, abilities? }` (`timer: true` for a timed game; scenario id, YUL by default; exactly the scenario's number of abilities, or the first ones by default) | ack `{ ok, code, seat, token }` |
+| Client → Server | `room:create` | `{ name, timer?, scenario? }` (`timer: true` for a timed game; scenario id, YUL by default; the Special Abilities are picked in the game) | ack `{ ok, code, seat, token }` |
 | Client → Server | `room:join` | `{ code, name }` | ack `{ ok, code, seat, token }` or `{ ok:false, error }` |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack + fresh `game:view` |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, partner's game restarts; empty room deleted |
@@ -21,7 +21,7 @@ All events are typed once in `packages/shared/src/events.ts` (`ClientToServer`, 
 | Client → Server | `game:reroll` | `{ dieIds }` | ack; rerolls your chosen dice (may be none) |
 | Client → Server | `game:rematch` | `{ scenario? }` | ack; new game, same room and seats (same scenario unless given); before the first roll it only switches the scenario; `game-not-over` otherwise |
 | Server → Client | `game:view` | `PlayerView` | to each seat after every change |
-| Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, ready }` or `null` | on join/leave/ready/every change |
+| Server → Client | `room:presence` | `{ pilot, copilot }`: `{ name, online, creator }` or `null` | on join/leave and every change |
 
 Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room error (`bad-request`, `not-in-room`, `game-not-over`, `too-many-rooms`, …) or the `MoveError` from the shared rules.
 
@@ -30,12 +30,13 @@ Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a room e
 `viewFor(state, seat)` is the only way state leaves the server:
 
 - Your own unplaced dice: full values.
-- Presence (`room:presence`): per seat the name, online, ready, `creator`, the player's ability `pick`, `rolesChosen` and `confirmed` (public: chosen in the open before round 1). New games start in the `setup` phase (`createGame(..., { setup: true })`). The game's `abilities` follow the picks until the first roll; a new game keeps the last picks as its starting point.
+- Presence (`room:presence`): per seat only platform facts: the name, online and `creator` (Platform 02). The game's own choices are in the view's `crew` (public: chosen in the open): `host` (the creator's seat), `seated`, `rolesChosen`, each seat's `picks`, `confirmed` and `ready`. New games start in the `setup` phase. The game's `abilities` follow the picks until the first roll; a new game keeps the last picks of those still seated as its starting point.
+- Every `game:*` event except `game:rematch` is a game move: the server turns `game:<type>` and its payload into `{ type, ...payload }`, checks it with Sky Team's `moveSchema` (`bad-request` if malformed) and runs it through `validate` / `apply` at the server's time. `room:choose-seat` stays a room event: the server checks the creator, the game checks the phase (`table:choose-seat`), then the players move.
 - Partner's unplaced dice: a count only (`partnerDiceLeft: 3`, Bad Visibility's set-aside dice included; `setAside` gives both seats' set-aside counts).
 - Placed dice, tracks, coffee, altitude, the finished round's board (`lastRound`): public.
 - Module state (kerosene, intern tokens, wind, the Alarm board's face-up and face-down tokens, Total Trust's `autoRoll`), the traffic die rolls, the Synchronization traffic die and the die offered for Working Together: public (face up at the table).
 - `rngSeed` and the log's future rolls: never sent. Turbulence adds no secret: a flipped Alarm token and a set-aside die are drawn from the RNG only when they come into play.
-- Total Trust: when a round ends on a Total Trust space, the next view has `autoRoll: true` and no `game:ready` is needed; the server rolls the dice once the `NEXT_TURN_MS` (5 s) pause is over (`scheduleAutoRoll`, one timeout per room shared with the round timer).
+- Total Trust: when a round ends on a Total Trust space, the next view has `autoRoll: true` and no `game:ready` is needed; the server rolls the dice once the `NEXT_TURN_MS` (5 s) pause is over: the game keeps the time (`autoRollAt`, not in the view) and `schedule` returns the `roll`; the room's one timer arms whichever scheduled move is next.
 - Log events added for Turbulence: `weather` (a player's hand after Turbulence or Bad Visibility changed it) and `alarm` (a token flipped). Move errors added: `alarm-blocked`, `alarm-not-active`.
 
 ## Repeated requests

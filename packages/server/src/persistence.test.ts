@@ -48,18 +48,14 @@ const room = (code: string, patch: Partial<Room> = {}): Room => ({
       name: 'Ana',
       token: 'token-ana',
       socketId: 'socket-1',
-      ready: false,
       creator: true,
-      pick: null,
-      confirmed: false,
     },
   },
+  config: { scenario: YUL.id, timerMs: null, autoRollDelayMs: 5_000 },
   game: createGame(YUL, 7, { setup: true }),
   creatorIp: '1.2.3.4',
   createdAt: 1,
   lastActivity: 2,
-  timed: false,
-  rolesChosen: true,
   ...patch,
 });
 
@@ -87,11 +83,10 @@ describe.each([
 describe('saved room format', () => {
   it('never saves the connection or the timer, and loads every player offline', () => {
     const timer = setTimeout(() => {}, 0);
-    const stored = toStored(room('ABCD', { roundTimer: timer, autoRollAt: 123 }));
+    const stored = toStored(room('ABCD', { timer }));
     clearTimeout(timer);
     expect(stored.players.pilot).not.toHaveProperty('socketId');
-    expect(stored).not.toHaveProperty('roundTimer');
-    expect(stored.autoRollAt).toBe(123);
+    expect(stored).not.toHaveProperty('timer');
     expect(fromStored(stored).players.pilot!.socketId).toBeNull();
   });
 
@@ -165,12 +160,8 @@ describe('room manager with a store', () => {
 describe('a restart in the middle of a game', () => {
   /** A real server on a SQLite file; `restart` closes it and starts a new one on the same file. */
   async function serverOn(file: string, roundTimerMs?: number) {
-    const rooms = new RoomManager({
-      seed: () => 3,
-      store: new SqliteRoomStore(file),
-      ...(roundTimerMs && { roundTimerMs }),
-    });
-    const server = await startTestServer(rooms);
+    const rooms = new RoomManager({ seed: () => 3, store: new SqliteRoomStore(file) });
+    const server = await startTestServer(rooms, { ...(roundTimerMs && { roundTimerMs }) });
     servers.push(server);
     return server;
   }

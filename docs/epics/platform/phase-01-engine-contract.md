@@ -31,11 +31,8 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 ## Open questions
 
 - Assumption (to confirm): `view` takes the clock (`view(state, viewer, now)`), so Sky Team's time left in a timed round stays a pure function of its arguments. The proposal's signature had no `now`.
-- Assumption (to confirm): `roll` is a system move: in the live game the server rolls when both players are ready (or by itself with Total Trust); "ready" becomes a seat move in Platform 02.
 - Assumption (to confirm): the spectator view is not supported yet (`view` throws for `'spectator'`); it comes with the platform's rooms.
 - Assumption (to confirm): the kit's random moves come from each game's own generator (`nextMove`, here the existing random agent); the contract has no "list every legal move" function, since some games (Twilight Struggle) have too many to list.
-- Assumption (to confirm): Total Trust's auto-roll is not in `schedule` yet: its time (`autoRollAt`) lives on the room until Platform 02.
-- Assumption (to confirm): the duplicate-`place` no-op stays in the socket handler (it reads the log); Platform 02 decides whether `validate` owns it.
 
 ## Checklist
 

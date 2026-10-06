@@ -3,30 +3,28 @@
 // timers belong to one process and are never saved.
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
-import type { GameState } from '@sky/shared';
 import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type { GameConfig, GameState } from './games';
 import type { Player, Room } from './rooms';
 
 /**
  * The saved room format. Bump it when `StoredRoom` (or `GameState`) changes in a way old
  * rows cannot be read as: rooms saved in another format are dropped instead of loaded wrongly.
  */
-export const ROOM_FORMAT = 1;
+export const ROOM_FORMAT = 2;
 
 /** A room as saved: everything but the connection and the in-process timer. */
 export interface StoredRoom {
   code: string;
   players: Partial<Record<Player['seat'], Omit<Player, 'socketId'>>>;
+  config: GameConfig;
   game: GameState;
   creatorIp: string;
   createdAt: number;
   lastActivity: number;
-  timed: boolean;
-  rolesChosen: boolean;
-  autoRollAt?: number;
 }
 
 export interface RoomStore {
@@ -48,13 +46,11 @@ export function toStored(room: Room): StoredRoom {
   return {
     code: room.code,
     players,
+    config: room.config,
     game: room.game,
     creatorIp: room.creatorIp,
     createdAt: room.createdAt,
     lastActivity: room.lastActivity,
-    timed: room.timed,
-    rolesChosen: room.rolesChosen,
-    ...(room.autoRollAt !== undefined && { autoRollAt: room.autoRollAt }),
   };
 }
 

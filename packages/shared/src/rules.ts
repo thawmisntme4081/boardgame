@@ -313,6 +313,24 @@ export function roundTimeLeft(state: GameState, now: number): number | null {
 }
 
 /**
+ * Total Trust: a strategy phase without discussion rolls by itself `autoRollDelayMs` after
+ * it began. Call after every change with its time: it sets the roll's time when such a phase
+ * begins and clears it otherwise. The same state object comes back when nothing changes.
+ */
+export function armAutoRoll(state: GameState, now: number): GameState {
+  const waiting = state.phase === 'strategy' && state.autoRoll;
+  if (waiting === (state.autoRollAt !== null)) return state;
+  return { ...state, autoRollAt: waiting ? now + state.autoRollDelayMs : null };
+}
+
+/** Total Trust: whether the dice may roll by themselves at `now`. */
+export function canAutoRoll(state: GameState, now: number): MoveCheck {
+  if (state.phase !== 'strategy') return fail('not-strategy');
+  if (state.autoRollAt === null || now < state.autoRollAt) return fail('not-strategy');
+  return OK;
+}
+
+/**
  * If the round's time has run out at `now`, the players lose ('time-up'); with the
  * Real-time module the round ends instead and unplaced dice are lost. Otherwise the
  * same state object comes back, so callers can tell nothing changed.
@@ -393,6 +411,8 @@ export function rollDice(state: GameState): GameState {
   s.phase = 'placing';
   s.lastRound = null;
   s.currentSeat = currentAltitude(s).first;
+  s.crew.ready = { pilot: false, copilot: false };
+  s.autoRollAt = null;
   s.log.push({ type: 'roll', round: s.round, dice: structuredClone(s.dice) });
   return s;
 }

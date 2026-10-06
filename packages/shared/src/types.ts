@@ -220,6 +220,22 @@ export type GameEvent =
   | { type: 'round-end'; round: number }
   | { type: 'game-end'; round: number; result: 'won' | 'lost'; reason?: EndReason };
 
+/** The crew's choices, made with the seats the platform knows about. */
+export interface Crew {
+  /** The seat of the player who created the game: picks the card when there is only one. */
+  host: Seat;
+  /** Who is at the table. */
+  seated: Record<Seat, boolean>;
+  /** Before round 1: the host has chosen who flies which seat. */
+  rolesChosen: boolean;
+  /** Before round 1: the Special Ability card each player picked (kept for a rematch). */
+  picks: Record<Seat, AbilityId | null>;
+  /** Before round 1: happy with the roles and abilities. */
+  confirmed: Record<Seat, boolean>;
+  /** Strategy phase: done talking; the dice roll once both are ready. */
+  ready: Record<Seat, boolean>;
+}
+
 export interface GameState {
   scenario: Scenario;
   phase: Phase;
@@ -280,6 +296,12 @@ export interface GameState {
   timerMs: number | null;
   /** When the current round's time runs out (ms since epoch), while a timed round is placing. */
   deadline: number | null;
+  /** Total Trust: when the dice roll by themselves (ms since epoch), while such a strategy phase waits. */
+  autoRollAt: number | null;
+  /** Total Trust: the pause between the end of a round and the automatic roll. */
+  autoRollDelayMs: number;
+  /** The crew's choices before round 1, and who is ready to roll. All public. */
+  crew: Crew;
   log: GameEvent[];
   endReason?: EndReason;
   /** Every failed landing condition when the final round is lost. */
@@ -317,6 +339,13 @@ export type MoveError =
   | 'no-partner-dice'
   | 'dice-limit'
   | 'not-setup'
+  // Before round 1: roles and Special Abilities.
+  | 'setup-closed'
+  | 'not-your-pick'
+  | 'ability-taken'
+  | 'abilities-missing'
+  | 'no-partner'
+  | 'roles-missing'
   | 'alarm-blocked'
   | 'alarm-not-active'
   | 'no-swap';

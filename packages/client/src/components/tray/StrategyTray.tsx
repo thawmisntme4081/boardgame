@@ -42,7 +42,7 @@ export function StrategyTray({ view, presence }: { view: PlayerView; presence: P
       {/* Total Trust: no button, the dice roll by themselves. */}
       {!view.autoRoll && (
         <ReadyButton
-          ready={presence?.[view.seat]?.ready ?? false}
+          ready={view.crew.ready[view.seat]}
           partnerName={partnerOf(view, presence).name}
         />
       )}

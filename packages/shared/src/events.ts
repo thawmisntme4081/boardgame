@@ -12,14 +12,8 @@ export type ErrorCode =
   | 'not-strategy'
   | 'game-not-over'
   | 'too-many-rooms'
-  // Before round 1: roles and Special Abilities.
-  | 'setup-closed'
-  | 'not-your-pick'
-  | 'ability-taken'
-  | 'abilities-missing'
-  | 'no-partner'
-  | 'not-creator'
-  | 'roles-missing';
+  // Before round 1: only the creator chooses the seats.
+  | 'not-creator';
 
 export type JoinResult =
   { ok: true; code: string; seat: Seat; token: string } | { ok: false; error: ErrorCode };
@@ -27,19 +21,12 @@ export type JoinResult =
 /** Room errors, or the rule that rejected a move (see `MoveError`). */
 export type AckResult = { ok: true } | { ok: false; error: ErrorCode | MoveError };
 
+/** Platform facts only: the game's own (picks, ready, confirmed) are in the view's `crew`. */
 export interface PlayerInfo {
   name: string;
   online: boolean;
-  /** Ready to roll: the strategy discussion is over for this player. */
-  ready: boolean;
-  /** Created the game: picks the card when the scenario allows only one Special Ability. */
+  /** Created the game (or stayed when the creator left): runs the setup. */
   creator: boolean;
-  /** Before round 1: the Special Ability card this player picked. */
-  pick: AbilityId | null;
-  /** Before round 1: the creator has chosen who flies which seat. */
-  rolesChosen: boolean;
-  /** Before round 1: this player confirmed the roles and abilities. */
-  confirmed: boolean;
 }
 
 /**

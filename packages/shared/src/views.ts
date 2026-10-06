@@ -75,6 +75,8 @@ export interface PlayerView {
   bonus: { die: Die } | null;
   /** Working Together: the die on the card is face up, so both players see its value. */
   swap: { seat: Seat; value: DieValue } | null;
+  /** The crew's choices (roles, picks, confirms, ready): public. */
+  crew: GameState['crew'];
 }
 
 /**
@@ -120,6 +122,7 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     traffic: state.traffic.map((t) => ({ ...t })),
     bonus: state.bonus && { die: { ...state.bonus.die } },
     swap: state.swap && { seat: state.swap.seat, value: state.swap.value },
+    crew: structuredClone(state.crew),
   };
   if (state.endReason) view.endReason = state.endReason;
   if (state.landingFailures) view.landingFailures = [...state.landingFailures];

@@ -16,7 +16,14 @@ export default defineConfig({
   },
   projects: [
     { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
-    { name: 'iPhone 13', use: { ...devices['iPhone 13'] } },
+    {
+      name: 'iPhone 13',
+      use: { ...devices['iPhone 13'] },
+      // WebKit is the slowest browser here: with every worker busy, drawing the board after a
+      // reload or a new view can take longer than the default 5 s (the network part is done in
+      // under half a second). Its checks may wait longer; the other devices keep 5 s.
+      expect: { timeout: 15_000 },
+    },
     { name: 'Pixel 7', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {

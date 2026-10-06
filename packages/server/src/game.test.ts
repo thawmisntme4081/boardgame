@@ -105,7 +105,9 @@ describe('a full game over sockets', () => {
     const { clients, views, room } = await seatedRoom(seed);
     const agent = createRandomAgent(seed);
     await takeOff(clients.pilot, clients.copilot);
-    let mirror: GameState = beginGame(createGame(YUL, seed, { setup: true }));
+    // The same game in process; the room's crew differs only in the roles being chosen.
+    const { crew } = room().game;
+    let mirror: GameState = { ...beginGame(createGame(YUL, seed, { setup: true })), crew };
     let actions = 0;
 
     while (!isGameOver(room().game)) {
@@ -134,7 +136,7 @@ describe('a full game over sockets', () => {
 
     const end = room().game;
     expect(end).toEqual(mirror);
-    expect(end).toEqual(playRandomGame(seed));
+    expect(end).toEqual({ ...playRandomGame(seed), crew });
     expect(end.round).toBeGreaterThanOrEqual(6);
     expect(actions).toBeGreaterThan(40);
 
@@ -307,12 +309,13 @@ describe('game:rematch', () => {
     });
 
     room().game = { ...room().game, phase: 'lost', endReason: 'spin', round: 4, axis: 3 };
-    room().players.pilot!.ready = true;
+    room().game.crew.ready.pilot = true;
     const view = next(clients.copilot, 'game:view');
     expectOk(await clients.copilot.emitWithAck('game:rematch', {}));
     expect(await view).toMatchObject({ phase: 'setup', round: 1, axis: 0, seat: 'copilot' });
     expect(room().code).toBe(code);
-    expect(room().players.pilot).toMatchObject({ name: 'Ana', ready: false });
+    expect(room().players.pilot).toMatchObject({ name: 'Ana' });
+    expect(room().game.crew.ready).toEqual({ pilot: false, copilot: false });
     expect(room().game.log).toEqual([]);
   });
 });
@@ -464,7 +467,7 @@ describe('robustness', () => {
 describe('round timer', () => {
   /** A room created with or without the timer, both players seated, views recorded. */
   async function timedRoom(timer: boolean, roundTimerMs: number) {
-    server = await startTestServer(new RoomManager({ seed: () => 1, roundTimerMs }));
+    server = await startTestServer(new RoomManager({ seed: () => 1 }), { roundTimerMs });
     const pilot = await server.connect();
     const copilot = await server.connect();
     const views: Record<Seat, PlayerView[]> = { pilot: [], copilot: [] };
@@ -537,13 +540,13 @@ describe('round timer', () => {
     expect(room().game).toMatchObject({ phase: 'strategy', round: 2, deadline: null });
     await new Promise((r) => setTimeout(r, 1_700)); // past the old deadline
     expect(room().game).toMatchObject({ phase: 'strategy', round: 2 });
-    expect(room().roundTimer).toBeUndefined();
+    expect(room().timer).toBeUndefined();
   });
 });
 
 describe('total trust', () => {
   it('rolls the next round by itself once the pause is over, with nobody pressing "Roll dice"', async () => {
-    server = await startTestServer(new RoomManager({ seed: () => 1, nextTurnMs: 200 }));
+    server = await startTestServer(new RoomManager({ seed: () => 1 }), { autoRollDelayMs: 200 });
     const pilot = await server.connect();
     const copilot = await server.connect();
     const views: PlayerView[] = [];
@@ -589,7 +592,7 @@ describe('total trust', () => {
     expect(views.at(-1)).toMatchObject({ phase: 'strategy', round: 2, autoRoll: true });
     await waitFor(() => views.at(-1)?.phase === 'placing', 'the automatic roll');
     expect(views.at(-1)).toMatchObject({ round: 2 });
-    expect(room().autoRollAt).toBeUndefined();
+    expect(room().game.autoRollAt).toBeNull();
   });
 });
 

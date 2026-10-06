@@ -1,40 +1,25 @@
 import {
-  cancelSwap,
-  canCancelSwap,
-  canPlaceDie,
-  canUseAbility,
-  useAbility,
-  canRerollDice,
-  canSpendReroll,
-  isGameOver,
-  placeDie,
-  rerollDice,
-  expireRoundTimer,
-  rollDice,
-  startRoundTimer,
-  SEATS,
-  spendReroll,
-  viewFor,
+  ROUND_TIMER_MS,
+  YUL,
   type AckResult,
   type ClientToServer,
   type JoinResult,
+  type Presence,
+  type Seat,
   type ServerToClient,
 } from '@sky/shared';
 import type { Server, Socket } from 'socket.io';
 import type { z } from 'zod';
+import { game, type GameConfig, type GameMove } from './games';
 import { log, reportError } from './log';
-import { resolveSetup, type Room, type RoomManager, type Seated, type Setup } from './rooms';
+import type { Room, RoomManager, Seated } from './rooms';
 import {
-  abilitySchema,
+  chooseSeatSchema,
   createRoomSchema,
   emptySchema,
   joinRoomSchema,
-  pickAbilitySchema,
-  placeSchema,
   rejoinRoomSchema,
   rematchSchema,
-  rerollSchema,
-  chooseSeatSchema,
 } from './schemas';
 
 export type GameServer = Server<ClientToServer, ServerToClient>;
@@ -42,72 +27,23 @@ type GameSocket = Socket<ClientToServer, ServerToClient>;
 
 /**
  * Sends each seat its presence (marked with its seat), then its own filtered view. Every
- * accepted change ends here, so this is also where the room is saved (off the reply path).
+ * accepted change ends here, so this is also where the room is saved (off the reply path)
+ * and the timer for the game's next scheduled move is armed.
  */
 export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): void {
   rooms.save(room);
-  const presence = rooms.presence(room);
-  for (const seat of SEATS) {
+  rooms.arm(room);
+  const presence = rooms.presence(room) as Presence;
+  const now = Date.now();
+  for (const seat of game.meta.seats) {
     const socketId = room.players[seat]?.socketId;
     if (!socketId) continue;
-    io.to(socketId).emit('room:presence', { ...presence, you: seat });
-    io.to(socketId).emit('game:view', viewFor(room.game, seat));
+    io.to(socketId).emit('room:presence', { ...presence, you: seat as Seat });
+    io.to(socketId).emit('game:view', game.view(room.game, seat, now));
   }
 }
 
-/**
- * Keeps one timeout per room in step with the game: when a timed round runs out, the players
- * lose; with Total Trust, the next round's dice roll by themselves once the "Next turn" pause
- * is over. Either way everyone gets fresh views. Call after anything that changes the game.
- */
-export function syncRoundTimer(io: GameServer, rooms: RoomManager, room: Room): void {
-  clearTimeout(room.roundTimer);
-  room.roundTimer = undefined;
-  const { phase, deadline, autoRoll } = room.game;
-  if (phase === 'strategy' && autoRoll) return scheduleAutoRoll(io, rooms, room);
-  room.autoRollAt = undefined;
-  if (phase !== 'placing' || deadline === null) return;
-  room.roundTimer = setTimeout(
-    () => {
-      room.roundTimer = undefined;
-      if (rooms.get(room.code) !== room) return; // the room was closed meanwhile
-      const next = expireRoundTimer(room.game, Date.now());
-      if (next !== room.game) {
-        room.game = next;
-        syncRoundTimer(io, rooms, room); // Real-time: the next round may roll by itself
-        broadcastRoom(io, rooms, room);
-      } else {
-        syncRoundTimer(io, rooms, room); // woke a moment early: wait again
-      }
-    },
-    Math.max(0, deadline - Date.now()),
-  );
-  room.roundTimer.unref?.();
-}
-
 /** Clients may omit the ack or send junk; never let that throw. */
-/** Total Trust: no strategy discussion, so the server rolls once the pause is over. */
-function scheduleAutoRoll(io: GameServer, rooms: RoomManager, room: Room): void {
-  room.autoRollAt ??= Date.now() + rooms.nextTurnMs;
-  room.roundTimer = setTimeout(
-    () => {
-      room.roundTimer = undefined;
-      if (rooms.get(room.code) !== room) return; // the room was closed meanwhile
-      if (room.game.phase !== 'strategy' || !room.game.autoRoll) return;
-      room.autoRollAt = undefined;
-      room.game = startRoundTimer(rollDice(room.game), Date.now());
-      for (const seat of SEATS) {
-        const player = room.players[seat];
-        if (player) player.ready = false;
-      }
-      syncRoundTimer(io, rooms, room);
-      broadcastRoom(io, rooms, room);
-    },
-    Math.max(0, room.autoRollAt - Date.now()),
-  );
-  room.roundTimer.unref?.();
-}
-
 function replier<R>(ack: unknown): (result: R) => void {
   return typeof ack === 'function' ? (ack as (result: R) => void) : () => {};
 }
@@ -120,15 +56,20 @@ function parse<S extends z.ZodType>(schema: S, payload: unknown): z.output<S> | 
 const joined = ({ room, player }: Seated): JoinResult => ({
   ok: true,
   code: room.code,
-  seat: player.seat,
+  seat: player.seat as Seat,
   token: player.token,
 });
 
 const OK: AckResult = { ok: true };
+const refused = (error: string): AckResult => ({ ok: false, error }) as AckResult;
 
 export interface HandlerOptions {
   /** Behind a proxy (Render, Railway, Fly), read the client IP from X-Forwarded-For. */
   trustProxy?: boolean;
+  /** Length of a timed round (tests and dev shorten it). */
+  roundTimerMs?: number;
+  /** Total Trust: the pause before the server rolls (tests shorten it). */
+  autoRollDelayMs?: number;
 }
 
 /** The address used for the per-IP room limit. */
@@ -138,16 +79,47 @@ export function clientIp(socket: GameSocket, trustProxy = false): string {
   return (trustProxy && first) || socket.handshake.address || 'unknown';
 }
 
-const sameSetup = (room: Room, setup: Setup) => room.game.scenario.id === setup.scenario.id;
-
 /** A game that has not started: the rematch someone else already asked for. */
 const isFresh = (room: Room) => room.game.phase === 'setup';
+
+/** The Sky Team events that are game moves: `game:<type>` with the move's fields. */
+const MOVE_EVENTS = [
+  'game:ready',
+  'game:pick-ability',
+  'game:confirm',
+  'game:place',
+  'game:spend-reroll',
+  'game:reroll',
+  'game:ability',
+  'game:cancel-swap',
+] as const satisfies readonly (keyof ClientToServer)[];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export function registerHandlers(
   io: GameServer,
   rooms: RoomManager,
   options: HandlerOptions = {},
 ): void {
+  const roundTimerMs = options.roundTimerMs ?? ROUND_TIMER_MS;
+  /** The lobby's choices as the game's setup, checked by its `configSchema`. */
+  const configFor = (
+    request: { scenario?: string | undefined; timer?: boolean | undefined },
+    base?: GameConfig,
+  ): GameConfig | undefined => {
+    const parsed = game.configSchema.safeParse({
+      ...base,
+      scenario: request.scenario ?? base?.scenario ?? YUL.id,
+      ...(request.timer !== undefined && { timerMs: request.timer ? roundTimerMs : null }),
+      ...(options.autoRollDelayMs && { autoRollDelayMs: options.autoRollDelayMs }),
+    });
+    return parsed.success ? parsed.data : undefined;
+  };
+
+  // A scheduled move (time up, Total Trust's roll) changed a game: everyone sees it.
+  rooms.onScheduled = (room) => broadcastRoom(io, rooms, room);
+
   io.on('connection', (socket: GameSocket) => {
     /** Wraps a handler so a bug answers `bad-request` instead of crashing the process. */
     const on = <R extends JoinResult | AckResult>(
@@ -168,58 +140,55 @@ export function registerHandlers(
     };
 
     /**
-     * An event from a seated player: parse with Zod, run `handle`, and broadcast fresh
-     * views when it succeeds. A failure changes nothing.
+     * An event from a seated player: parse it, run `handle`, and broadcast fresh views when
+     * it succeeds. A failure changes nothing.
      */
-    const onSeated = <S extends z.ZodType>(
+    const onSeated = <T>(
       event: keyof ClientToServer,
-      schema: S,
-      handle: (data: z.output<S>, seated: Seated) => AckResult,
+      parsePayload: (payload: unknown) => T | undefined,
+      handle: (data: T, seated: Seated) => AckResult,
     ) =>
       on<AckResult>(event, (payload, reply) => {
-        const parsed = schema.safeParse(payload);
-        if (!parsed.success) return reply({ ok: false, error: 'bad-request' });
+        const data = parsePayload(payload);
+        if (data === undefined) return reply({ ok: false, error: 'bad-request' });
         const seated = rooms.bySocket(socket.id);
         if (!seated) return reply({ ok: false, error: 'not-in-room' });
+        const { room } = seated;
         // A move that arrives after the round's time ran out finds the game already lost.
-        const expired = expireRoundTimer(seated.room.game, Date.now());
-        if (expired !== seated.room.game) {
-          seated.room.game = expired;
-          syncRoundTimer(io, rooms, seated.room);
-          broadcastRoom(io, rooms, seated.room);
-        }
-        const wasOver = isGameOver(seated.room.game);
-        const result = handle(parsed.data, seated);
-        const where = { event, room: seated.room.code, seat: seated.player.seat };
+        if (rooms.runDue(room).length > 0) broadcastRoom(io, rooms, room);
+        const wasOver = game.outcome(room.game) !== null;
+        const result = handle(data, seated);
+        const where = { event, room: room.code, seat: seated.player.seat };
         if (!result.ok) log.info({ ...where, error: result.error }, 'move rejected');
         if (result.ok) {
-          rooms.touch(seated.room);
-          syncRoundTimer(io, rooms, seated.room);
-          const { game } = seated.room;
-          if (!wasOver && isGameOver(game)) {
+          rooms.touch(room);
+          const outcome = game.outcome(room.game);
+          if (!wasOver && outcome) {
             log.info(
-              { ...where, scenario: game.scenario.id, result: game.phase, round: game.round },
+              { ...where, scenario: room.config.scenario, outcome, round: room.game.round },
               'game ended',
             );
           }
         }
         reply(result);
-        if (result.ok) broadcastRoom(io, rooms, seated.room);
+        if (result.ok) broadcastRoom(io, rooms, room);
       });
 
     on('room:create', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(createRoomSchema, payload);
-      const setup = data && resolveSetup(data);
-      if (!data || !setup) return reply({ ok: false, error: 'bad-request' });
-      const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy), {
-        timer: data.timer ?? false,
-        setup,
-      });
+      const config = data && configFor({ ...data, timer: data.timer ?? false });
+      if (!data || !config) return reply({ ok: false, error: 'bad-request' });
+      const result = rooms.create(
+        data.name,
+        socket.id,
+        clientIp(socket, options.trustProxy),
+        config,
+      );
       if (!result.ok) return reply(result);
       void socket.join(result.value.room.code);
       reply(joined(result.value));
       log.info(
-        { room: result.value.room.code, scenario: setup.scenario.id, timer: data.timer ?? false },
+        { room: result.value.room.code, scenario: config.scenario, timer: config.timerMs !== null },
         'room created',
       );
       broadcastRoom(io, rooms, result.value.room);
@@ -241,7 +210,7 @@ export function registerHandlers(
       if (!data) return reply({ ok: false, error: 'bad-request' });
       const previous = rooms.get(data.code);
       const oldSocketId = previous
-        ? SEATS.map((s) => previous.players[s]).find((p) => p?.token === data.token)?.socketId
+        ? Object.values(previous.players).find((p) => p?.token === data.token)?.socketId
         : undefined;
       const result = rooms.rejoin(data.code, data.token, socket.id);
       if (!result.ok) return reply(result);
@@ -262,100 +231,70 @@ export function registerHandlers(
       void socket.leave(left.room.code);
       reply(OK);
       log.info({ room: left.room.code, seat: left.player.seat, closed: left.closed }, 'seat left');
-      syncRoundTimer(io, rooms, left.room); // the game restarted (or the room closed)
       // The partner sees the empty seat and a fresh game, ready for someone new.
       if (!left.closed) broadcastRoom(io, rooms, left.room);
     });
 
-    onSeated('game:ready', emptySchema, (_data, { room, player }) => {
-      if (room.game.phase !== 'strategy') return { ok: false, error: 'not-strategy' };
-      player.ready = true;
-      if (SEATS.every((seat) => room.players[seat]?.ready)) {
-        // Timed games: the round countdown starts with the roll.
-        room.game = startRoundTimer(rollDice(room.game), Date.now());
-        for (const seat of SEATS) room.players[seat]!.ready = false;
-      }
-      return OK;
-    });
+    onSeated(
+      'room:choose-seat',
+      (payload) => parse(chooseSeatSchema, payload),
+      ({ seat }, { room, player }) => {
+        const result = rooms.chooseSeat(room, player, seat);
+        return result.ok ? OK : refused(result.error);
+      },
+    );
 
-    onSeated('game:pick-ability', pickAbilitySchema, ({ ability }, { room, player }) => {
-      const result = rooms.pickAbility(room, player, ability);
-      return result.ok ? OK : { ok: false, error: result.error };
-    });
-
-    onSeated('room:choose-seat', chooseSeatSchema, ({ seat }, { room, player }) => {
-      const result = rooms.chooseSeat(room, player, seat);
-      return result.ok ? OK : { ok: false, error: result.error };
-    });
-
-    onSeated('game:confirm', emptySchema, (_data, { room, player }) => {
-      const result = rooms.confirm(room, player);
-      return result.ok ? OK : { ok: false, error: result.error };
-    });
-
-    onSeated('game:place', placeSchema, (intent, { room, player }) => {
-      // A double tap sends the same move twice; the repeat is accepted and changes nothing.
-      const repeat = room.game.log.some(
-        (e) =>
-          e.type === 'place' &&
-          e.seat === player.seat &&
-          e.dieId === intent.dieId &&
-          e.slot === intent.slot,
+    // Every game event is a move: its payload plus the event's name as the type.
+    for (const event of MOVE_EVENTS) {
+      const type = event.slice('game:'.length);
+      onSeated(
+        event,
+        (payload) => {
+          if (payload !== undefined && !isRecord(payload)) return undefined;
+          const parsed = game.moveSchema.safeParse({ ...payload, type });
+          return parsed.success ? (parsed.data as GameMove) : undefined;
+        },
+        (move, { room, player }) => {
+          if (move.type === 'place' && isRepeat(room, player.seat, move)) return OK;
+          const result = rooms.move(room, player.seat, move);
+          return result.ok ? OK : refused(result.error);
+        },
       );
-      if (repeat) return OK;
-      const check = canPlaceDie(room.game, player.seat, intent);
-      if (!check.ok) return { ok: false, error: check.reason };
-      // Axis, engines and the end of the round (landing included) resolve inside placeDie.
-      room.game = placeDie(room.game, player.seat, intent);
-      return OK;
-    });
+    }
 
-    onSeated('game:spend-reroll', emptySchema, (_data, { room, player }) => {
-      const check = canSpendReroll(room.game);
-      if (!check.ok) return { ok: false, error: check.reason };
-      room.game = spendReroll(room.game, player.seat);
-      return OK;
-    });
-
-    onSeated('game:reroll', rerollSchema, ({ dieIds }, { room, player }) => {
-      const check = canRerollDice(room.game, player.seat, dieIds);
-      if (!check.ok) return { ok: false, error: check.reason };
-      room.game = rerollDice(room.game, player.seat, dieIds);
-      return OK;
-    });
-
-    onSeated('game:ability', abilitySchema, (action, { room, player }) => {
-      const check = canUseAbility(room.game, player.seat, action);
-      if (!check.ok) return { ok: false, error: check.reason };
-      room.game = useAbility(room.game, player.seat, action);
-      return OK;
-    });
-
-    onSeated('game:cancel-swap', emptySchema, (_data, { room, player }) => {
-      const check = canCancelSwap(room.game, player.seat);
-      if (!check.ok) return { ok: false, error: check.reason };
-      room.game = cancelSwap(room.game, player.seat);
-      return OK;
-    });
-
-    onSeated('game:rematch', rematchSchema, (data = {}, { room }) => {
-      const asked = data.scenario !== undefined;
-      const setup = asked ? resolveSetup(data) : undefined;
-      if (asked && !setup) return { ok: false, error: 'bad-request' };
-      if (isFresh(room)) {
-        // Before the first roll the scenario may still change; the second "Fly again" of a
-        // pair finds the new game and changes nothing.
-        if (setup && !sameSetup(room, setup)) rooms.rematch(room, setup);
+    onSeated(
+      'game:rematch',
+      (payload) => {
+        const parsed = rematchSchema.safeParse(payload);
+        return parsed.success ? (parsed.data ?? {}) : undefined;
+      },
+      (data, { room }) => {
+        const asked = data.scenario !== undefined;
+        const config = asked ? configFor(data, room.config) : undefined;
+        if (asked && !config) return { ok: false, error: 'bad-request' };
+        if (isFresh(room)) {
+          // Before the first roll the scenario may still change; the second "Fly again" of a
+          // pair finds the new game and changes nothing.
+          if (config && config.scenario !== room.config.scenario) rooms.rematch(room, config);
+          return OK;
+        }
+        if (game.outcome(room.game) === null) return { ok: false, error: 'game-not-over' };
+        rooms.rematch(room, config);
         return OK;
-      }
-      if (!isGameOver(room.game)) return { ok: false, error: 'game-not-over' };
-      rooms.rematch(room, setup);
-      return OK;
-    });
+      },
+    );
 
     socket.on('disconnect', () => {
       const seated = rooms.disconnect(socket.id);
-      if (seated) io.to(seated.room.code).emit('room:presence', rooms.presence(seated.room));
+      if (seated)
+        io.to(seated.room.code).emit('room:presence', rooms.presence(seated.room) as Presence);
     });
   });
+}
+
+/** A double tap sends the same die twice; the repeat is accepted and changes nothing. */
+function isRepeat(room: Room, seat: string, move: Extract<GameMove, { type: 'place' }>): boolean {
+  return room.game.log.some(
+    (e) => e.type === 'place' && e.seat === seat && e.dieId === move.dieId && e.slot === move.slot,
+  );
 }

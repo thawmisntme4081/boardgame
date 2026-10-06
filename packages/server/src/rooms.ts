@@ -1,57 +1,56 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import {
-  beginGame,
-  createGame,
-  NEXT_TURN_MS,
-  ROUND_TIMER_MS,
-  SCENARIOS,
-  otherSeat,
-  SEATS,
-  YUL,
-  type AbilityId,
-  type ErrorCode,
-  type GameSetup,
-  type GameState,
-  type Presence,
-  type Scenario,
-  type Seat,
-} from '@sky/shared';
+  nextDue,
+  runDue,
+  type Mover,
+  type PlayedMove,
+  type SeatId,
+  type TableMove,
+} from '@platform/engine';
+import { game, type GameConfig, type GameMove, type GameState } from './games';
 import { ROOM_CODE_LENGTH } from './schemas';
 import { fromStored, toStored, type RoomStore } from './store';
 
 /** No I or O, so codes can't be misread as 1 or 0. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
+/** Room errors; a refused move answers with the game's own reason code. */
+export type RoomError =
+  | 'room-not-found'
+  | 'room-full'
+  | 'bad-token'
+  | 'already-in-room'
+  | 'too-many-rooms'
+  | 'not-creator';
+
 export interface Player {
-  seat: Seat;
+  seat: SeatId;
   name: string;
   token: string;
   socketId: string | null;
-  ready: boolean;
-  /** Created the game (or stayed when the creator left): picks a single Special Ability. */
+  /** Created the game (or stayed when the creator left): runs the setup. */
   creator: boolean;
-  /** Before round 1: the Special Ability card this player picked. */
-  pick: AbilityId | null;
-  /** Before round 1: happy with the roles and abilities. */
-  confirmed: boolean;
 }
 
 export interface Room {
   code: string;
-  players: Partial<Record<Seat, Player>>;
+  players: Partial<Record<SeatId, Player>>;
+  /** The setup the game was created with; a rematch starts from it. */
+  config: GameConfig;
   game: GameState;
   /** Counted against the per-IP room limit while the room exists. */
   creatorIp: string;
   createdAt: number;
   lastActivity: number;
-  /** The creator turned the round timer on in the lobby. */
-  timed: boolean;
-  /** Before round 1: the creator has chosen who flies which seat. */
-  rolesChosen: boolean;
-  /** The pending "time ran out" check of a timed round, or Total Trust's roll (see `syncRoundTimer`). */
-  roundTimer?: ReturnType<typeof setTimeout>;
-  /** Total Trust: when the server rolls the next round's dice (ms since epoch). */
-  autoRollAt?: number;
+  /** The armed timer for the game's next scheduled move (never saved; see `arm`). */
+  timer?: ReturnType<typeof setTimeout>;
+}
+
+/** Platform facts about a seat; the game's own (picks, ready…) are in its view. */
+export interface SeatInfo {
+  name: string;
+  online: boolean;
+  creator: boolean;
 }
 
 export interface RoomOptions {
@@ -61,47 +60,11 @@ export interface RoomOptions {
   idleTtlMs?: number;
   /** Live rooms one IP address may have created at once. */
   maxRoomsPerIp?: number;
-  /** Length of a timed round (tests and dev shorten it). */
-  roundTimerMs?: number;
-  /** Total Trust: the pause before the server rolls (tests shorten it). */
-  nextTurnMs?: number;
   /**
    * Where rooms are kept between restarts (SQLite in production). Without one, rooms live
    * in memory only and a restart ends every game.
    */
   store?: RoomStore;
-}
-
-/** A checked scenario: `resolveSetup` turns a request into one. */
-export interface Setup {
-  scenario: Scenario;
-}
-
-/** Checks a requested scenario: a known one, YUL by default. */
-export function resolveSetup({ scenario: id }: GameSetup): Setup | undefined {
-  const scenario = id === undefined ? YUL : SCENARIOS[id];
-  return scenario ? { scenario } : undefined;
-}
-
-/** The scenario as the catalog lists it (a game's copy may have been changed by its modules). */
-const setupOf = (game: GameState): Setup => ({
-  scenario: SCENARIOS[game.scenario.id] ?? game.scenario,
-});
-
-/** Before round 1: the crew is choosing roles and abilities. */
-export const isSetupOpen = (game: GameState): boolean => game.phase === 'setup';
-
-/**
- * The Special Abilities the picks make: with two cards, each player's own; with one, the
- * creator's. Fewer than the scenario allows until everyone has picked.
- */
-export function pickedAbilities(room: Room): AbilityId[] {
-  const count = room.game.scenario.abilities;
-  const players = SEATS.map((seat) => room.players[seat]).filter((p) => p !== undefined);
-  const picks = (count === 1 ? players.filter((p) => p.creator) : players)
-    .map((p) => p.pick)
-    .filter((pick) => pick !== null);
-  return [...new Set(picks)].slice(0, count);
 }
 
 export const DEFAULT_IDLE_TTL_MS = 30 * 60_000;
@@ -112,36 +75,35 @@ export interface Seated {
   player: Player;
 }
 
-type Result<T> = { ok: true; value: T } | { ok: false; error: ErrorCode };
+export type Result<T, E = RoomError> = { ok: true; value: T } | { ok: false; error: E };
 
-const ok = <T>(value: T): Result<T> => ({ ok: true, value });
-const err = <T>(error: ErrorCode): Result<T> => ({ ok: false, error });
+const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
+const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
+
+const SEATS = game.meta.seats;
 
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
   /** Which room and seat each connected socket occupies. */
-  private readonly sockets = new Map<string, { code: string; seat: Seat }>();
+  private readonly sockets = new Map<string, { code: string; seat: SeatId }>();
 
   private readonly now: () => number;
   private readonly newSeed: () => number;
   private readonly idleTtlMs: number;
   private readonly maxRoomsPerIp: number;
-  private readonly roundTimerMs: number;
-  /** Total Trust: how long after the round ends the server rolls the dice. */
-  readonly nextTurnMs: number;
   private readonly store: RoomStore | undefined;
   /** Rooms changed since the last write; saved together on the next tick. */
   private readonly dirty = new Set<string>();
   private flushQueued = false;
   private closed = false;
+  /** Called when a scheduled move changed a game (the server sends fresh views). */
+  onScheduled: (room: Room) => void = () => {};
 
   constructor(options: RoomOptions = {}) {
     this.now = options.now ?? Date.now;
     this.newSeed = options.seed ?? (() => randomInt(2 ** 31));
     this.idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_TTL_MS;
     this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
-    this.roundTimerMs = options.roundTimerMs ?? ROUND_TIMER_MS;
-    this.nextTurnMs = options.nextTurnMs ?? NEXT_TURN_MS;
     this.store = options.store;
     // Saved rooms come back with every player offline (they rejoin with their token). The
     // server may have been stopped for days, so idle rooms are swept straight away.
@@ -180,22 +142,24 @@ export class RoomManager {
   }
 
   /**
-   * Shutdown: writes what is pending, stops the rooms' timers (their deadlines are saved
-   * and re-armed by the next start) and closes the store. Safe to call twice.
+   * Shutdown: writes what is pending, stops the rooms' timers (the times are in the saved
+   * games, and the next start re-arms them) and closes the store. Safe to call twice.
    */
   close(): void {
     if (this.closed) return;
     this.flush();
     this.closed = true;
-    for (const room of this.rooms.values()) clearTimeout(room.roundTimer);
+    for (const room of this.rooms.values()) clearTimeout(room.timer);
     this.store?.close();
   }
 
-  /** A room is gone for good: remove it from the store too. */
-  private forget(code: string): void {
-    this.rooms.delete(code);
-    this.dirty.delete(code);
-    this.store?.delete(code);
+  /** A room is gone for good: stop its timer and remove it from the store too. */
+  private forget(room: Room): void {
+    clearTimeout(room.timer);
+    room.timer = undefined;
+    this.rooms.delete(room.code);
+    this.dirty.delete(room.code);
+    this.store?.delete(room.code);
   }
 
   get size(): number {
@@ -213,32 +177,29 @@ export class RoomManager {
     return room && player ? { room, player } : undefined;
   }
 
-  /** The creator takes the pilot seat and chooses the scenario and whether the game is timed. */
+  /** The creator takes the first seat and chooses the setup. */
   create(
     name: string,
     socketId: string,
     ip = 'unknown',
-    { timer = false, setup = { scenario: YUL } }: { timer?: boolean; setup?: Setup } = {},
+    config: GameConfig = game.configSchema.parse({}),
   ): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const fromIp = [...this.rooms.values()].filter((r) => r.creatorIp === ip).length;
     if (fromIp >= this.maxRoomsPerIp) return err('too-many-rooms');
     const code = this.newCode();
+    const seat = SEATS[0]!;
     const room: Room = {
       code,
       players: {},
-      game: createGame(setup.scenario, this.newSeed(), {
-        timerMs: timer ? this.roundTimerMs : null,
-        setup: true,
-      }),
-      timed: timer,
-      rolesChosen: false,
+      config,
+      game: game.setup({ config, seats: [seat], host: seat, seed: this.newSeed() }),
       creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
     };
     this.rooms.set(code, room);
-    const player = this.seat(room, 'pilot', name, socketId);
+    const player = this.seat(room, seat, name, socketId);
     player.creator = true;
     return ok({ room, player });
   }
@@ -249,7 +210,9 @@ export class RoomManager {
     if (!room) return err('room-not-found');
     const free = SEATS.find((seat) => !room.players[seat]);
     if (!free) return err('room-full');
-    return ok({ room, player: this.seat(room, free, name, socketId) });
+    const player = this.seat(room, free, name, socketId);
+    this.tell(room, { type: 'table:join', seat: free });
+    return ok({ room, player });
   }
 
   /** Puts a returning player back in their seat on a new socket. */
@@ -287,14 +250,13 @@ export class RoomManager {
     const { room, player } = seated;
     this.sockets.delete(socketId);
     delete room.players[player.seat];
-    if (SEATS.every((seat) => !room.players[seat])) {
-      this.forget(room.code);
+    const stayed = SEATS.map((seat) => room.players[seat]).filter((p) => p !== undefined);
+    if (stayed.length === 0) {
+      this.forget(room);
       return { room, player, closed: true };
     }
-    // The one who stays now runs the setup, and roles are chosen again with the newcomer.
-    const stayed = room.players[otherSeat(player.seat)];
-    if (stayed) stayed.creator = true;
-    room.rolesChosen = false;
+    // The one who stays now runs the setup.
+    if (!stayed.some((p) => p.creator)) stayed[0]!.creator = true;
     this.rematch(room);
     return { room, player, closed: false };
   }
@@ -306,116 +268,90 @@ export class RoomManager {
     for (const room of this.rooms.values()) {
       const anyoneOnline = SEATS.some((seat) => room.players[seat]?.socketId);
       if (!anyoneOnline && room.lastActivity <= cutoff) {
-        this.forget(room.code);
+        this.forget(room);
         removed.push(room.code);
       }
     }
     return removed;
   }
 
-  presence(room: Room): Presence {
-    const info = (seat: Seat) => {
+  presence(room: Room): Record<SeatId, SeatInfo | null> {
+    const info = (seat: SeatId): SeatInfo | null => {
       const p = room.players[seat];
-      return p
-        ? {
-            name: p.name,
-            online: p.socketId !== null,
-            ready: p.ready,
-            creator: p.creator,
-            pick: p.pick,
-            rolesChosen: room.rolesChosen,
-            confirmed: p.confirmed,
-          }
-        : null;
+      return p ? { name: p.name, online: p.socketId !== null, creator: p.creator } : null;
     };
-    return { pilot: info('pilot'), copilot: info('copilot') };
-  }
-
-  bothSeated(room: Room): boolean {
-    return SEATS.every((seat) => room.players[seat]);
-  }
-
-  /** Same room and seats, fresh game: the same scenario unless `setup` picks another. */
-  rematch(room: Room, setup: Setup = setupOf(room.game)): void {
-    // A rematch (or a restart after someone leaves) keeps the timed/untimed choice; a
-    // Real-time scenario sets its own timer, so the room remembers the lobby choice.
-    room.game = createGame(setup.scenario, this.newSeed(), {
-      timerMs: room.timed ? this.roundTimerMs : null,
-      setup: true,
-    });
-    // The last picks are the starting point for the new game's choice.
-    this.syncAbilities(room);
-    this.touch(room);
-  }
-
-  /** Copies the picks into the game, and cancels any confirm given for the old choice. */
-  private syncAbilities(room: Room): void {
-    room.game = { ...room.game, abilities: pickedAbilities(room) };
-    for (const seat of SEATS) {
-      const player = room.players[seat];
-      if (player) {
-        player.ready = false;
-        player.confirmed = false;
-      }
-    }
-  }
-
-  /** Before round 1: pick (or, with `null`, take back) your Special Ability card. */
-  pickAbility(room: Room, player: Player, ability: AbilityId | null): Result<void> {
-    if (!isSetupOpen(room.game)) return err('setup-closed');
-    const count = room.game.scenario.abilities;
-    if (count === 0 || (count === 1 && !player.creator)) return err('not-your-pick');
-    const partner = room.players[otherSeat(player.seat)];
-    if (ability !== null && count === 2 && partner?.pick === ability) return err('ability-taken');
-    player.pick = ability;
-    this.syncAbilities(room);
-    this.touch(room);
-    return ok(undefined);
-  }
-
-  /** Before round 1, rolling needs every Special Ability card chosen. */
-  abilitiesChosen(room: Room): boolean {
-    return room.game.abilities.length === room.game.scenario.abilities;
-  }
-
-  /** Before round 1: the creator takes `seat`; the partner (now or later) gets the other one. */
-  chooseSeat(room: Room, player: Player, seat: Seat): Result<void> {
-    if (!isSetupOpen(room.game)) return err('setup-closed');
-    if (!player.creator) return err('not-creator');
-    if (seat !== player.seat) {
-      const partner = room.players[seat];
-      delete room.players[player.seat];
-      if (partner) {
-        partner.seat = player.seat;
-        room.players[partner.seat] = partner;
-        if (partner.socketId)
-          this.sockets.set(partner.socketId, { code: room.code, seat: partner.seat });
-      }
-      player.seat = seat;
-      room.players[seat] = player;
-      if (player.socketId) this.sockets.set(player.socketId, { code: room.code, seat });
-    }
-    room.rolesChosen = true;
-    this.syncAbilities(room);
-    this.touch(room);
-    return ok(undefined);
+    return Object.fromEntries(SEATS.map((seat) => [seat, info(seat)]));
   }
 
   /**
-   * Before round 1: this player is happy with the roles and abilities. Once both have
-   * confirmed, round 1 starts: the traffic die rolls and the strategy discussion begins.
+   * Same room and seats, fresh game: from the room's setup, or `config` when given (it then
+   * becomes the room's setup). The game may carry choices over from the previous one.
    */
-  confirm(room: Room, player: Player): Result<void> {
-    if (!isSetupOpen(room.game)) return err('setup-closed');
-    if (!this.bothSeated(room)) return err('no-partner');
-    if (!room.rolesChosen) return err('roles-missing');
-    if (!this.abilitiesChosen(room)) return err('abilities-missing');
-    player.confirmed = true;
-    if (SEATS.every((seat) => room.players[seat]?.confirmed)) {
-      room.game = beginGame(room.game);
-      for (const seat of SEATS) room.players[seat]!.confirmed = false;
-    }
+  rematch(room: Room, config: GameConfig = room.config): void {
+    const seats = SEATS.filter((seat) => room.players[seat]);
+    const host = seats.find((seat) => room.players[seat]!.creator) ?? seats[0]!;
+    room.config = config;
+    room.game = game.setup({ config, seats, host, seed: this.newSeed(), previous: room.game });
     this.touch(room);
+  }
+
+  /**
+   * A move, checked and applied by the game at the current time. Call `runDue` first, so a
+   * move that arrives after the deadline finds the round already over.
+   */
+  move(room: Room, by: Mover, move: GameMove): Result<void, string> {
+    const at = this.now();
+    const ctx = { by, at };
+    const check = game.validate(room.game, move, ctx);
+    if (!check.ok) return err(check.reason);
+    room.game = game.apply(room.game, move, ctx);
+    this.touch(room);
+    return ok(undefined);
+  }
+
+  /** Makes the game's scheduled moves that are due now. Returns the moves made. */
+  runDue(room: Room): PlayedMove<GameMove>[] {
+    const due = runDue(game, room.game, this.now());
+    room.game = due.state;
+    return due.moves;
+  }
+
+  /**
+   * Arms one timer for the game's next scheduled move (a timed round running out, an
+   * automatic roll), replacing any earlier one. When it fires, the due moves are made and
+   * `onScheduled` hears about it. Call after anything that changes a game.
+   */
+  arm(room: Room): void {
+    clearTimeout(room.timer);
+    room.timer = undefined;
+    if (this.closed || this.rooms.get(room.code) !== room) return;
+    const at = nextDue(game, room.game);
+    if (at === null) return;
+    room.timer = setTimeout(
+      () => {
+        room.timer = undefined;
+        if (this.closed || this.rooms.get(room.code) !== room) return; // closed meanwhile
+        if (this.runDue(room).length > 0) this.onScheduled(room);
+        else this.arm(room); // woke a moment early: wait again
+      },
+      Math.max(0, at - this.now()),
+    );
+    room.timer.unref?.();
+  }
+
+  /** Before the game starts: the creator takes `seat`; whoever sat there takes theirs. */
+  chooseSeat(room: Room, player: Player, seat: SeatId): Result<void, string> {
+    if (!player.creator) return err('not-creator');
+    const move: TableMove = { type: 'table:choose-seat', seat };
+    const check = game.validate(room.game, move, { by: 'system', at: this.now() });
+    if (!check.ok) return err(check.reason);
+    if (seat !== player.seat) {
+      const partner = room.players[seat];
+      delete room.players[player.seat];
+      if (partner) this.moveTo(room, partner, player.seat);
+      this.moveTo(room, player, seat);
+    }
+    this.tell(room, move);
     return ok(undefined);
   }
 
@@ -423,17 +359,21 @@ export class RoomManager {
     room.lastActivity = this.now();
   }
 
-  private seat(room: Room, seat: Seat, name: string, socketId: string): Player {
-    const player: Player = {
-      seat,
-      name,
-      token: randomUUID(),
-      socketId,
-      ready: false,
-      creator: false,
-      pick: null,
-      confirmed: false,
-    };
+  /** Tells the game about its table (a join, a seat choice) as a system move. */
+  private tell(room: Room, move: TableMove): void {
+    const ctx = { by: 'system', at: this.now() } as const;
+    if (game.validate(room.game, move, ctx).ok) room.game = game.apply(room.game, move, ctx);
+    this.touch(room);
+  }
+
+  private moveTo(room: Room, player: Player, seat: SeatId): void {
+    player.seat = seat;
+    room.players[seat] = player;
+    if (player.socketId) this.sockets.set(player.socketId, { code: room.code, seat });
+  }
+
+  private seat(room: Room, seat: SeatId, name: string, socketId: string): Player {
+    const player: Player = { seat, name, token: randomUUID(), socketId, creator: false };
     room.players[seat] = player;
     this.sockets.set(socketId, { code: room.code, seat });
     this.touch(room);

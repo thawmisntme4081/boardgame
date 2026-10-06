@@ -2,13 +2,13 @@
 import type { AddressInfo } from 'node:net';
 import type { ClientToServer, ServerToClient } from '@sky/shared';
 import { io as connectClient, type Socket } from 'socket.io-client';
-import { createGameServer } from './app';
+import { createGameServer, type ServerOptions } from './app';
 import type { RoomManager } from './rooms';
 
 export type Client = Socket<ServerToClient, ClientToServer>;
 
-export async function startTestServer(rooms?: RoomManager) {
-  const server = createGameServer(rooms);
+export async function startTestServer(rooms?: RoomManager, options: ServerOptions = {}) {
+  const server = createGameServer(rooms, options);
   await new Promise<void>((resolve) => server.httpServer.listen(0, resolve));
   const { port } = server.httpServer.address() as AddressInfo;
   const url = `http://localhost:${port}`;

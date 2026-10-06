@@ -1,8 +1,8 @@
-import type { Presence } from '@sky/shared';
+import type { Crew, Presence } from '@sky/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { catalogScenario, makeView, presence, resetStore } from '@/test/fixtures';
+import { catalogScenario, crew, makeView, presence, resetStore } from '@/test/fixtures';
 import { DiceTray } from './tray/DiceTray';
 import { Preflight } from './Preflight';
 
@@ -19,26 +19,23 @@ beforeEach(() => {
 });
 
 /** Ana (pilot) created the game; Ben is the co-pilot. */
-const setup = (
-  patch: { pilot?: object; copilot?: object; rolesChosen?: boolean } = {},
-): Presence => {
+const setup = (): Presence => {
   const p = presence();
-  const rolesChosen = patch.rolesChosen ?? true;
-  return {
-    pilot: { ...p.pilot!, creator: true, rolesChosen, ...patch.pilot },
-    copilot: { ...p.copilot!, rolesChosen, ...patch.copilot },
-  };
+  return { pilot: { ...p.pilot!, creator: true }, copilot: p.copilot };
 };
 
-const before = (seat: 'pilot' | 'copilot', scenario?: string) =>
-  makeView(seat, { rolled: false, scenario, patch: { phase: 'setup' } });
+/** Before round 1, with the seats chosen unless `choices` says otherwise. */
+const before = (seat: 'pilot' | 'copilot', scenario?: string, choices: Partial<Crew> = {}) =>
+  makeView(seat, { rolled: false, scenario, patch: { phase: 'setup', crew: crew(choices) } });
 
 describe('Preflight', () => {
   const two = () => catalogScenario((s) => s.abilities === 2);
   const one = () => catalogScenario((s) => s.abilities === 1);
 
   it('lets the creator choose the seats; the partner only sees them', async () => {
-    render(<Preflight view={before('pilot')} presence={setup({ rolesChosen: false })} />);
+    render(
+      <Preflight view={before('pilot', undefined, { rolesChosen: false })} presence={setup()} />,
+    );
     const pilot = screen.getByRole('button', { name: 'Pilot' });
     expect(pilot).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(screen.getByRole('button', { name: 'Co-pilot' }));
@@ -58,8 +55,8 @@ describe('Preflight', () => {
   it('lets each player pick a card when there are two, but not the partner’s', async () => {
     render(
       <Preflight
-        view={before('copilot', two().id)}
-        presence={setup({ pilot: { pick: 'control' } })}
+        view={before('copilot', two().id, { picks: { pilot: 'control', copilot: null } })}
+        presence={setup()}
       />,
     );
     expect(screen.getByText('Special Abilities: each of you picks one card.')).toBeInTheDocument();
@@ -79,16 +76,23 @@ describe('Preflight', () => {
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
     expect(screen.getByText('Choose the Special Abilities.')).toBeInTheDocument();
 
-    const picked = makeView('pilot', {
-      rolled: false,
-      scenario: two().id,
-      abilities: ['control', 'mastery'],
-      patch: { phase: 'setup' },
-    });
-    rerender(<Preflight view={picked} presence={setup()} />);
+    const picked = (confirmed = false) =>
+      makeView('pilot', {
+        rolled: false,
+        scenario: two().id,
+        abilities: ['control', 'mastery'],
+        patch: {
+          phase: 'setup',
+          crew: crew({
+            picks: { pilot: 'control', copilot: 'mastery' },
+            confirmed: { pilot: confirmed, copilot: false },
+          }),
+        },
+      });
+    rerender(<Preflight view={picked()} presence={setup()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(api.confirmSetup).toHaveBeenCalled();
-    rerender(<Preflight view={picked} presence={setup({ pilot: { confirmed: true } })} />);
+    rerender(<Preflight view={picked(true)} presence={setup()} />);
     expect(screen.getByText('Waiting for Ben to confirm.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
   });

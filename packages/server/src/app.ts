@@ -1,16 +1,10 @@
 import { existsSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
 import path from 'node:path';
-import type { GameState } from '@sky/shared';
+import { armAutoRoll, type GameState } from '@sky/shared';
 import express from 'express';
 import { Server } from 'socket.io';
-import {
-  broadcastRoom,
-  registerHandlers,
-  syncRoundTimer,
-  type GameServer,
-  type HandlerOptions,
-} from './handlers';
+import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
 import type { AccessCheck } from './access';
 import { log } from './log';
 import { RoomManager } from './rooms';
@@ -85,17 +79,17 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
     }),
   });
   registerHandlers(io, rooms, options);
-  // Rooms loaded from the store: re-arm their round timers and Total Trust rolls. A deadline
-  // that passed while the server was down expires at once.
-  for (const room of rooms.all()) syncRoundTimer(io, rooms, room);
+  // Rooms loaded from the store: re-arm their scheduled moves (round timers, Total Trust
+  // rolls). A deadline that passed while the server was down expires at once.
+  for (const room of rooms.all()) rooms.arm(room);
 
   if (options.e2eHooks) {
     // Merges a partial game state into a room, then sends everyone fresh views.
     app.post('/__e2e/rooms/:code/game', express.json(), (req, res) => {
       const room = rooms.get(req.params.code);
       if (!room) return void res.status(404).json({ ok: false });
-      room.game = { ...room.game, ...(req.body as Partial<GameState>) };
-      syncRoundTimer(io, rooms, room);
+      // A prepared Total Trust strategy phase still rolls by itself.
+      room.game = armAutoRoll({ ...room.game, ...(req.body as Partial<GameState>) }, Date.now());
       broadcastRoom(io, rooms, room);
       res.json({ ok: true });
     });

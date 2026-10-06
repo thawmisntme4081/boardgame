@@ -21,7 +21,7 @@ This is a personal/learning project on a private, invite-only site: if it is eve
 | Epic | Goal | Phases | Status | Needs |
 | --- | --- | --- | --- | --- |
 | [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | ✅ Done (Oct 6, 2026); live at `boardgames-dom-mam.fly.dev` | — |
-| [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | 🚧 In progress (01 done) | Sky Team |
+| [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | 🚧 In progress (01–02 done) | Sky Team |
 | [Second game](epics/second-game/EPIC.md) | A small 2–4 player game with simultaneous moves, proving the platform | 01 | ⏳ Not started | Platform 01–05 |
 | [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op | planned | ⏳ Not started | Platform, Second game |
 | [Isle of Skye](epics/isle-of-skye/EPIC.md) | Isle of Skye, 2–5 players | planned | ⏳ Not started | Platform, Second game |
@@ -31,16 +31,54 @@ Status legend: ✅ done · 🚧 in progress · ⏳ not started.
 
 ## Order
 
+**Epics:**
+
 ```mermaid
 flowchart LR
-  ST[Sky Team 01–12 ✅] --> ST13[Sky Team 13 Deploy ✅]
-  ST13 --> P1[Platform 01–03<br/>contract, moves, protocol]
-  P1 --> P4[Platform 04 Match log] --> P5[Platform 05 Client shell]
-  P5 --> P6[Platform 06 Accounts]
-  P5 --> G2[Second game]
-  G2 --> BIG[Pandemic · Isle of Skye · Twilight Struggle]
-  P4 -.-> P7[Platform 07 Scale-out<br/>only if needed]
+  ST[Sky Team ✅] --> P[Platform 🚧]
+  P -->|01–05| G2[Second game ⏳]
+  G2 --> PAN[Pandemic ⏳]
+  G2 --> SKY[Isle of Skye ⏳]
+  G2 --> TS[Twilight Struggle ⏳]
+  classDef done fill:#dcfce7,stroke:#16a34a,color:#14532d
+  classDef doing fill:#fef9c3,stroke:#ca8a04,color:#713f12
+  classDef todo fill:#f3f4f6,stroke:#9ca3af,color:#374151
+  class ST done
+  class P doing
+  class G2,PAN,SKY,TS todo
 ```
+
+The large games' order is open; each needs the Second game first.
+
+**Current epic: [Platform](epics/platform/EPIC.md):**
+
+```mermaid
+flowchart TB
+  subgraph R1[" "]
+    direction LR
+    P1[01 Engine contract ✅] --> P2[02 Everything is a move ✅]
+    P2 --> P3[03 Generic protocol 🚧]
+    P3 --> P4[04 Match log ⏳]
+  end
+  subgraph R2[" "]
+    direction LR
+    P5[05 Client shell ⏳] --> P6[06 Accounts ⏳]
+    P5 --> G2([Second game])
+    P7[07 Scale-out ⏳]
+  end
+  P4 --> P5
+  P4 -.->|only if needed| P7
+  style R1 fill:none,stroke:none
+  style R2 fill:none,stroke:none
+  classDef done fill:#dcfce7,stroke:#16a34a,color:#14532d
+  classDef doing fill:#fef9c3,stroke:#ca8a04,color:#713f12
+  classDef todo fill:#f3f4f6,stroke:#9ca3af,color:#374151
+  class P1,P2 done
+  class P3 doing
+  class P4,P5,P6,P7,G2 todo
+```
+
+Update the second diagram when a phase changes status, and replace it with the next epic's phases when the current one is done. It wraps by rows: each row is an invisible `subgraph` with `direction LR` (about four phases per row), and the link from a row's last phase to the next row's first goes outside the subgraphs.
 
 - **Sky Team first** (decided Oct 4, 2026): Sky Team 12–13 finish and ship Sky Team before the platform work starts.
 - **Hosting and storage decided (Oct 4, 2026):** a private site on one Fly.io machine with auto stop/start, SQLite on a Fly volume (Drizzle, Litestream backups), Cloudflare Access in front; about $1.50–2.50/month plus the domain. This holds for the whole platform; Postgres only if Platform 07 happens.
@@ -76,7 +114,7 @@ A new epic gets a folder `epics/<game>/` with an `EPIC.md` and a row in the tabl
 - [Architecture](reference/architecture.md): stack, data flow, repository layout, handler pattern.
 - [Game state and rules](reference/game-rules.md): Sky Team's files, numbers, modules, abilities, placeholders, assumptions.
 - [Socket.IO protocol](reference/protocol.md): events, acks, hidden information, idempotency.
-- [Responsive UI](reference/ui.md): layouts per screen size, touch and mobile behaviour.
+- [Responsive UI](reference/ui.md): layouts per screen size, touch and mobile behavior.
 - [Testing strategy](reference/testing.md): test layers, rules for tests, device checks.
 - [Sharing and deployment](reference/sharing-and-deployment.md): Cloudflare tunnel, chosen hosting, Docker, environment variables.
 - [Multi-game platform proposal](proposals/multi-game-platform.md): target architecture for the Platform epic.

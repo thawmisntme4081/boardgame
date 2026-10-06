@@ -5,7 +5,9 @@ import {
   SCENARIOS,
   viewFor,
   YUL,
+  freshCrew,
   type AbilityId,
+  type Crew,
   type Scenario,
   type DieValue,
   type GameState,
@@ -53,25 +55,16 @@ export function catalogScenario(match: (s: Scenario) => boolean): Scenario {
   return found;
 }
 
-export const presence = (pilotReady = false, copilotReady = false): Presence => ({
-  pilot: {
-    name: 'Ana',
-    online: true,
-    ready: pilotReady,
-    creator: false,
-    pick: null,
-    rolesChosen: true,
-    confirmed: false,
-  },
-  copilot: {
-    name: 'Ben',
-    online: true,
-    ready: copilotReady,
-    creator: false,
-    pick: null,
-    rolesChosen: true,
-    confirmed: false,
-  },
+export const presence = (): Presence => ({
+  pilot: { name: 'Ana', online: true, creator: false },
+  copilot: { name: 'Ben', online: true, creator: false },
+});
+
+/** The crew with the seats chosen (the pilot hosting), changed by `patch`. */
+export const crew = (patch: Partial<Crew> = {}): Crew => ({
+  ...freshCrew(),
+  rolesChosen: true,
+  ...patch,
 });
 
 export function resetStore(): void {

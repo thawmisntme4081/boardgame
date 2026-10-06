@@ -1,7 +1,8 @@
 import { ABILITY_IDS, freshAbilityUse } from './abilities';
 import { modulesOf } from './modules';
-import { PLANE_TOKENS, startRound } from './rules';
-import type { AbilityId, GameState, Scenario } from './types';
+import { freshCrew } from './crew';
+import { NEXT_TURN_MS, PLANE_TOKENS, startRound } from './rules';
+import type { AbilityId, Crew, GameState, Scenario } from './types';
 
 /** Blue Aerodynamics marker starts between 4 and 5. */
 export const AERO_BLUE_START = 4;
@@ -18,6 +19,10 @@ export interface GameOptions {
   timerMs?: number | null;
   /** Special Ability cards the players chose (the scenario says how many). */
   abilities?: readonly AbilityId[];
+  /** Total Trust: the pause before the dice roll by themselves (tests shorten it). */
+  autoRollDelayMs?: number;
+  /** The crew as the platform seated it (everyone seated, the pilot hosting, by default). */
+  crew?: Crew;
 }
 
 function validateScenario(scenario: Scenario): void {
@@ -44,7 +49,13 @@ function validateScenario(scenario: Scenario): void {
 export function createGame(
   catalogScenario: Scenario,
   seed: number,
-  { timerMs = null, abilities = [], setup = false }: GameOptions = {},
+  {
+    timerMs = null,
+    abilities = [],
+    setup = false,
+    autoRollDelayMs = NEXT_TURN_MS,
+    crew = freshCrew(),
+  }: GameOptions = {},
 ): GameState {
   // Modules may change the altitude track (Altitude 5000 starts one space lower).
   const scenario: Scenario = {
@@ -101,6 +112,9 @@ export function createGame(
     log: [],
     timerMs,
     deadline: null,
+    autoRollAt: null,
+    autoRollDelayMs,
+    crew: structuredClone(crew),
   };
   const modules = modulesOf(scenario);
   for (const module of modules) module.setup?.(state, modules);

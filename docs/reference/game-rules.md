@@ -39,7 +39,7 @@ Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { d
 
 ## Optional round timer (online extra)
 
-The game creator can turn on a timer in the lobby (off by default). From the roll until the round's last die is placed the players have `ROUND_TIMER_MS` (3 minutes); if it runs out, the game is lost (`endReason: 'time-up'`). `GameState.timerMs` holds the setting and `deadline` the running round's end; `startRoundTimer(state, now)` starts it after `rollDice`, `expireRoundTimer(state, now)` ends the game once `now` reaches the deadline, and ending the round or the game clears it. The server keeps one timeout per room (`syncRoundTimer`) and also checks the deadline before every move. Views carry `timerMs` and `roundTimeLeftMs` (relative, so a wrong device clock does not matter).
+The game creator can turn on a timer in the lobby (off by default). From the roll until the round's last die is placed the players have `ROUND_TIMER_MS` (3 minutes); if it runs out, the game is lost (`endReason: 'time-up'`). `GameState.timerMs` holds the setting and `deadline` the running round's end; `startRoundTimer(state, now)` starts it after `rollDice`, `expireRoundTimer(state, now)` ends the game once `now` reaches the deadline, and ending the round or the game clears it. The definition's `schedule` returns a `time-up` move at the deadline; the server arms one timer per room for the next scheduled move (`RoomManager.arm`) and makes every due move before each player move (`runDue`), each at its own time. Views carry `timerMs` and `roundTimeLeftMs` (relative, so a wrong device clock does not matter).
 
 ## Flight Log scenarios and modules
 

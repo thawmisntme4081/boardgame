@@ -53,7 +53,7 @@ describe('room:create', () => {
     expect(result.token).toMatch(/^[0-9a-f-]{36}$/);
     expect(await view).toMatchObject({ seat: 'pilot', phase: 'setup', round: 1 });
     expect(await presence).toMatchObject({
-      pilot: { name: 'Ana', online: true, ready: false },
+      pilot: { name: 'Ana', online: true, creator: true },
       copilot: null,
     });
   });
@@ -95,8 +95,8 @@ describe('room:join', () => {
     const presence = next(pilot, 'room:presence');
     await copilot.emitWithAck('room:join', { code, name: 'Ben' });
     expect(await presence).toMatchObject({
-      pilot: { name: 'Ana', online: true, ready: false },
-      copilot: { name: 'Ben', online: true, ready: false },
+      pilot: { name: 'Ana', online: true, creator: true },
+      copilot: { name: 'Ben', online: true, creator: false },
     });
   });
 
@@ -133,9 +133,9 @@ describe('game:ready', () => {
   it('rolls once both players are ready and hides the partner dice', async () => {
     const { pilot, copilot } = await twoPlayers();
 
-    const presence = next(copilot, 'room:presence');
+    const view = next(copilot, 'game:view');
     expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: true });
-    expect((await presence).pilot?.ready).toBe(true);
+    expect((await view).crew.ready.pilot).toBe(true);
 
     const pilotView = next(pilot, 'game:view');
     const copilotView = next(copilot, 'game:view');
@@ -158,12 +158,9 @@ describe('game:ready', () => {
   it('resets readiness after the roll and refuses ready while placing', async () => {
     const { pilot, copilot } = await twoPlayers();
     await pilot.emitWithAck('game:ready', {});
-    const presence = next(pilot, 'room:presence');
+    const view = next(pilot, 'game:view');
     await copilot.emitWithAck('game:ready', {});
-    expect(await presence).toMatchObject({
-      pilot: { ready: false },
-      copilot: { ready: false },
-    });
+    expect((await view).crew.ready).toEqual({ pilot: false, copilot: false });
     expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: false, error: 'not-strategy' });
   });
 
