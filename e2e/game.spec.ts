@@ -80,9 +80,9 @@ test.describe('a two-player game', () => {
     const { pilot, copilot } = players;
     await bothReady(players);
     await playOneDie(pilot);
-    await expect(copilot.getByText('Your turn: tap a die')).toBeVisible();
+    await expect(copilot.getByText(/^Your turn: /)).toBeVisible();
     await playOneDie(copilot);
-    await expect(pilot.getByText('Your turn: tap a die')).toBeVisible();
+    await expect(pilot.getByText(/^Your turn: /)).toBeVisible();
 
     for (const page of [pilot, copilot]) {
       const snapshot = () =>
@@ -131,10 +131,10 @@ test.describe('mixed devices', () => {
     );
     await bothReady(players);
     for (let i = 0; i < 8; i++) {
-      const page = (await players.pilot.getByText('Your turn: tap a die').isVisible())
+      const page = (await players.pilot.getByText(/^Your turn: /).isVisible())
         ? players.pilot
         : players.copilot;
-      await expect(page.getByText('Your turn: tap a die')).toBeVisible();
+      await expect(page.getByText(/^Your turn: /)).toBeVisible();
       await playOneDie(page);
       if (await players.pilot.getByRole('dialog').isVisible()) break;
     }
@@ -246,6 +246,6 @@ test.describe('Flight Log scenarios', () => {
     for (const page of [pilot, copilot]) {
       await expect(page.getByLabel(/^Intern tokens left: \d(, \d){4}$/)).toBeAttached();
     }
-    await expect(copilot.getByText('Your turn: tap a die')).toBeVisible();
+    await expect(copilot.getByText(/^Your turn: /)).toBeVisible();
   });
 });

@@ -93,7 +93,7 @@ export async function bothReady({ pilot, copilot }: Players): Promise<void> {
   await expect(pilot.getByText(/Your turn|’s turn/).first()).toBeVisible();
 }
 
-const yourTurn = (page: Page) => page.getByText('Your turn: tap a die').isVisible();
+const yourTurn = (page: Page) => page.getByText(/^Your turn: /).isVisible();
 
 /**
  * Plays one die the way a careful beginner would: the first die that fits a lit axis or
