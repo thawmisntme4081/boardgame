@@ -1,0 +1,90 @@
+import {
+  createGame,
+  rollDice,
+  SCENARIO_LIST,
+  SCENARIOS,
+  viewFor,
+  YUL,
+  freshCrew,
+  type AbilityId,
+  type Crew,
+  type Scenario,
+  type DieValue,
+  type GameState,
+  type PlayerView,
+  type Presence,
+  type Seat,
+} from '@sky/rules';
+import { useSkyTeam } from '../store';
+
+export function makeView(
+  seat: Seat,
+  opts: {
+    pilot?: DieValue[];
+    copilot?: DieValue[];
+    patch?: Partial<GameState>;
+    rolled?: boolean;
+    /** A scenario id, or YUL with these fields replaced (e.g. `{ modules: ['intern'] }`). */
+    scenario?: string | Partial<Scenario>;
+    abilities?: AbilityId[];
+  } = {},
+): PlayerView {
+  const scenario =
+    typeof opts.scenario === 'string'
+      ? SCENARIOS[opts.scenario]!
+      : opts.scenario
+        ? { ...YUL, id: 'test', ...opts.scenario }
+        : YUL;
+  let state = createGame(scenario, 1, {
+    abilities: opts.abilities ?? [],
+  });
+  if (opts.rolled !== false) {
+    state = rollDice(state);
+    state.dice = {
+      pilot: (opts.pilot ?? [2, 3, 4, 5]).map((value, i) => ({ id: `p${i + 1}`, value })),
+      copilot: (opts.copilot ?? [2, 3, 4, 5]).map((value, i) => ({ id: `c${i + 1}`, value })),
+    };
+  }
+  return viewFor({ ...state, ...opts.patch }, seat);
+}
+
+/** The first active scenario that matches, for tests that need a real (selectable) one. */
+export function catalogScenario(match: (s: Scenario) => boolean): Scenario {
+  const found = SCENARIO_LIST.find(match);
+  if (!found) throw new Error('no active scenario matches this test');
+  return found;
+}
+
+export const presence = (): Presence => ({
+  pilot: { name: 'Ana', online: true, creator: false },
+  copilot: { name: 'Ben', online: true, creator: false },
+});
+
+/** The crew with the seats chosen (the pilot hosting), changed by `patch`. */
+export const crew = (patch: Partial<Crew> = {}): Crew => ({
+  ...freshCrew(),
+  rolesChosen: true,
+  ...patch,
+});
+
+/** The last view `showView` passed on, as the platform would (to tell rounds apart). */
+let shown: PlayerView | null = null;
+
+/** A view arriving from the server: the game's store follows it, as in the app. */
+export function showView(view: PlayerView): void {
+  useSkyTeam.getState().onView(view, shown, null);
+  shown = view;
+}
+
+export function resetStore(): void {
+  shown = null;
+  useSkyTeam.setState({
+    selectedDieId: null,
+    coffeeDelta: 0,
+    internSlot: null,
+    rerollPick: [],
+    roundDeadline: null,
+    nextTurnAt: null,
+    history: [],
+  });
+}

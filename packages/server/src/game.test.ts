@@ -12,8 +12,8 @@ import {
   type PlayerView,
   type Scenario,
   type Seat,
-} from '@sky/shared';
-import { applyAgentAction, createRandomAgent, playRandomGame } from '@sky/shared/random-play';
+} from '@sky/rules';
+import { applyAgentAction, createRandomAgent, playRandomGame } from '@sky/rules/random-play';
 import { afterEach, describe, expect, it } from 'vitest';
 import { RoomManager } from './rooms';
 import {

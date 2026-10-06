@@ -2,13 +2,13 @@
 
 [← Master plan](../PLAN.md)
 
-One wire protocol for every game (Platform 03). `packages/protocol` (`@platform/protocol`) defines the events, their Zod payload schemas and the generic types `ClientEvents<Seat, Move, Config, Reason>` / `ServerEvents<Seat, View>`; each game fills in its own types. Sky Team's are in `packages/shared/src/events.ts` (`ClientToServer`, `ServerToClient`), used by both `Server<...>` and `Socket<...>`, so a renamed event breaks the build instead of the game.
+One wire protocol for every game (Platform 03). `packages/protocol` (`@platform/protocol`) defines the events, their Zod payload schemas and the generic types `ClientEvents<Seat, Move, Config, Reason>` / `ServerEvents<Seat, View>`; each game fills in its own types. Sky Team's are in `games/sky-team/rules/src/events.ts` (`ClientToServer`, `ServerToClient`), used by both `Server<...>` and `Socket<...>`, so a renamed event breaks the build instead of the game.
 
 ## Platform events
 
 | Direction | Event | Payload | Server response |
 | --- | --- | --- | --- |
-| Client → Server | `room:create` | `{ name, game, config? }` (`game`: the registry id, `'sky-team'`; `config`: the lobby's choices, checked by the game's lobby schema, then its `configSchema` with the server's settings on top) | ack `{ ok, code, seat, token, matchId, seq }`; `unknown-game`, `bad-request` (bad config), `too-many-rooms` |
+| Client → Server | `room:create` | `{ name, game, config? }` (`game`: the registry id, `'sky-team'`; `config`: the lobby's choices, checked by the game's lobby schema, then its `configSchema` with the server's settings on top) | ack `{ ok, code, game, seat, token, matchId, seq }` (`game`: which client module to load); `unknown-game`, `bad-request` (bad config), `too-many-rooms` |
 | Client → Server | `room:join` | `{ code, name }` | ack as above, or `{ ok:false, error }` (`room-not-found`, `room-full`) |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack as above (`seq`: the last move counter accepted from this seat in this match) + fresh presence and view |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, a new match starts for whoever stays; empty room deleted |
@@ -16,7 +16,7 @@ One wire protocol for every game (Platform 03). `packages/protocol` (`@platform/
 | Client → Server | `room:rematch` | `{ matchId, config? }` (`matchId`: the match the player was looking at; `config`: changes to the lobby's choices) | ack; see "Rematch" below |
 | Client → Server | `match:move` | `{ matchId, seq, move }` | ack `{ ok }` or `{ ok:false, error }`: `stale-match` (another match), `bad-request` (fails the game's `moveSchema`), or the game's own reason (e.g. `not-your-turn`) |
 | Server → Client | `room:presence` | `{ <seat>: { name, online, creator } \| null, you? }` | to each seat on every change (`you`: that seat); on a disconnect to the room |
-| Server → Client | `match:view` | `{ matchId, version, view }` | to each seat after every change; `view` is that seat's own (`definition.view`) |
+| Server → Client | `match:view` | `{ matchId, version, seat, view }` (`seat`: whose view it is) | to each seat after every change; `view` is that seat's own (`definition.view`) |
 
 Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a platform code (`PlatformError`: `bad-request`, `room-not-found`, `room-full`, `bad-token`, `not-in-room`, `already-in-room`, `too-many-rooms`, `unknown-game`, `not-creator`, `stale-match`, `game-not-over`) or the game's reason for refusing a move (Sky Team: a `MoveError` from the shared rules).
 
@@ -28,7 +28,7 @@ Every ack is `{ ok: true }` or `{ ok: false, error }`, where `error` is a platfo
 
 ## Sky Team moves (`match:move`)
 
-`move` is one of Sky Team's player moves (`skyTeamMoveSchema` in `packages/shared/src/definition.ts`):
+`move` is one of Sky Team's player moves (`skyTeamMoveSchema` in `games/sky-team/rules/src/definition.ts`):
 
 | `move` | Meaning |
 | --- | --- |

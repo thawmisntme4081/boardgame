@@ -50,7 +50,7 @@ Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 ## Languages
 
 - English and Vietnamese (`i18next` + `react-i18next`). English is the default whatever the browser language. `LanguageSwitch` (lobby card and status bar) changes the language without a reload, saves it in `localStorage` (`sky-team-language`) and sets `<html lang>`. Each player picks their own language.
-- Every client string lives in `packages/client/src/locales/{en,vi}.json`; keys are typed from `en.json`. The server and rules send codes only (`MoveError`, `EndReason`, ids); the client turns them into text (`messages.ts`, `scenarioText.ts`). Numbers use `formatNumber` (`6.000 ft` in Vietnamese).
+- Every client string lives in a namespace's `en.json`, `vi.json` and `fr.json`: the platform's in `packages/ui/src/locales`, Sky Team's in `games/sky-team/client/src/locales`; keys are typed from both `en.json` files (`i18next.d.ts`). The server and rules send codes only (`MoveError`, `EndReason`, ids); the client turns them into text (`messages.ts`, `scenarioText.ts`). Numbers use `formatNumber` (`6.000 ft` in Vietnamese).
 
 ## Touch interaction
 

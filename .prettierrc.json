@@ -3,6 +3,6 @@
   "trailingComma": "all",
   "printWidth": 100,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindStylesheet": "./packages/client/src/index.css",
+  "tailwindStylesheet": "./packages/web/src/index.css",
   "tailwindFunctions": ["cn", "cva"]
 }

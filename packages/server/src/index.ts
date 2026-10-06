@@ -43,8 +43,8 @@ const rooms = new RoomManager({
   ...(dbFile && { store: new SqliteMatchStore(dbFile) }),
 });
 
-// Same path from src/ (tsx) and dist/ (built): packages/client/dist.
-const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../client/dist');
+// Same path from src/ (tsx) and dist/ (built): packages/web/dist.
+const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/dist');
 
 const { httpServer } = createGameServer(rooms, {
   trustProxy,

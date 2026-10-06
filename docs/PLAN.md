@@ -21,7 +21,7 @@ This is a personal/learning project on a private, invite-only site: if it is eve
 | Epic | Goal | Phases | Status | Needs |
 | --- | --- | --- | --- | --- |
 | [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | ✅ Done (Oct 6, 2026); live at `boardgames-dom-mam.fly.dev` | — |
-| [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | 🚧 In progress (01–04 done) | Sky Team |
+| [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | 🚧 In progress (01–05 done) | Sky Team |
 | [Second game](epics/second-game/EPIC.md) | A small 2–4 player game with simultaneous moves, proving the platform | 01 | ⏳ Not started | Platform 01–05 |
 | [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op | planned | ⏳ Not started | Platform, Second game |
 | [Isle of Skye](epics/isle-of-skye/EPIC.md) | Isle of Skye, 2–5 players | planned | ⏳ Not started | Platform, Second game |
@@ -62,7 +62,7 @@ flowchart TB
   end
   subgraph R2[" "]
     direction LR
-    P5[05 Client shell 🚧] --> P6[06 Accounts ⏳]
+    P5[05 Client shell ✅] --> P6[06 Accounts 🚧]
     P5 --> G2([Second game])
     P7[07 Scale-out ⏳]
   end
@@ -73,9 +73,9 @@ flowchart TB
   classDef done fill:#dcfce7,stroke:#16a34a,color:#14532d
   classDef doing fill:#fef9c3,stroke:#ca8a04,color:#713f12
   classDef todo fill:#f3f4f6,stroke:#9ca3af,color:#374151
-  class P1,P2,P3,P4 done
-  class P5 doing
-  class P6,P7,G2 todo
+  class P1,P2,P3,P4,P5 done
+  class P6 doing
+  class P7,G2 todo
 ```
 
 Update the second diagram when a phase changes status, and replace it with the next epic's phases when the current one is done. It wraps by rows: each row is an invisible `subgraph` with `direction LR` (about four phases per row), and the link from a row's last phase to the next row's first goes outside the subgraphs.

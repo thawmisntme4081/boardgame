@@ -1,0 +1,25 @@
+{
+  "name": "@sky/rules",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./random-play": "./src/random-play.ts",
+    "./definition": "./src/definition.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "random-play": "tsx scripts/random-play.ts"
+  },
+  "devDependencies": {
+    "fast-check": "^4.10.2",
+    "tsx": "^4.23.15"
+  },
+  "dependencies": {
+    "@platform/engine": "workspace:*",
+    "@platform/protocol": "workspace:*",
+    "zod": "^4.6.5"
+  }
+}

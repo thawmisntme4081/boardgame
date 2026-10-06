@@ -1,0 +1,416 @@
+{
+  "seat": {
+    "pilot": "Phi công",
+    "copilot": "Cơ phó",
+    "pilotLower": "phi công",
+    "copilotLower": "cơ phó",
+    "either": "1 trong 2"
+  },
+  "lobby": {
+    "roundTimer": "Đồng hồ mỗi vòng",
+    "roundTimerHint": "{{time}} để đặt hết xúc xắc mỗi vòng, nếu không sẽ thua",
+    "waitingFor_pilot": "Đang chờ phi công của bạn",
+    "waitingFor_copilot": "Đang chờ cơ phó của bạn",
+    "timedGame": " Ván có giờ: {{time}} mỗi vòng."
+  },
+  "scenario": {
+    "label": "Kịch bản",
+    "chooseAbilities_other": "Chọn {{count}} kỹ năng đặc biệt",
+    "abilityCount_other": "{{count}} kỹ năng"
+  },
+  "difficulty": {
+    "green": "Hạ cánh thường lệ",
+    "yellow": "Điều kiện đặc biệt",
+    "red": "Chỉ dành cho phi công ưu tú",
+    "black": "Hạ cánh anh hùng"
+  },
+  "status": {
+    "round": "Vòng {{round}}/{{rounds}} · {{altitude}} ft",
+    "final": "Cuối",
+    "youAre": "Bạn là <seat>{{seat}}</seat>",
+    "partnerOnline": "{{name}} đang online",
+    "partnerOffline": "{{name}} đang offline",
+    "reconnecting": "Đang kết nối lại…",
+    "offline": "Mất kết nối",
+    "strategy": "Thời gian bàn chiến thuật",
+    "yourTurn": "Lượt của bạn",
+    "partnersTurn": "Lượt của {{name}}",
+    "landed": "Đã hạ cánh!",
+    "crashed": "Rơi máy bay",
+    "noTalking": "Không trao đổi!!!",
+    "timeLeft": "Thời gian còn lại của vòng: {{time}}",
+    "nextTurn": "Vòng sau sau {{seconds}} giây",
+    "nextTurnLabel": "Vòng sau bắt đầu sau {{seconds}} giây",
+    "totalTrust": "Tin tưởng tuyệt đối"
+  },
+  "leave": {
+    "button": "Rời ván",
+    "title": "Rời ván chơi này?",
+    "body": "Bạn sẽ nhường lại chỗ ngồi và ván của {{name}} bắt đầu lại, chờ người chơi mới. Nếu chỉ muốn tạm dừng, hãy đóng thẻ: chỗ của bạn được giữ trong 30 phút.",
+    "stay": "Ở lại",
+    "confirm": "Rời ván"
+  },
+  "tray": {
+    "yourDice": "Xúc xắc của bạn",
+    "rollDice": "Đổ xúc xắc",
+    "waitingFor": "Đang chờ {{name}}…",
+    "realTime": "Thời gian thực: {{time}} để đặt xúc xắc sau khi đổ; xúc xắc chưa đặt sẽ bị mất.",
+    "timedGame": "Ván có giờ: {{time}} để đặt hết xúc xắc sau khi đổ, nếu không sẽ thua.",
+    "abilities": "Kỹ năng:",
+    "trafficLabel_one": "Xúc xắc giao thông",
+    "trafficLabel_other": "Xúc xắc giao thông",
+    "rerollIntro": "Đổ lại: chọn các xúc xắc muốn đổ lại (một lần).",
+    "rerollDie": "Xúc xắc {{value}}",
+    "rerollDieChosen": "Xúc xắc {{value}}, sẽ đổ lại",
+    "rerollButton": "Đổ lại {{count}}",
+    "rerollNone": "Đổ lại",
+    "keepAll": "Giữ tất cả",
+    "coffee": "Cà phê",
+    "coffeeMinus": "Dùng cà phê: trừ 1",
+    "coffeePlus": "Dùng cà phê: cộng 1",
+    "flipTo": "Lật thành {{value}}",
+    "rerollThisDie": "Đổ lại xúc xắc này",
+    "swapFor": "Đổi lấy {{value}}",
+    "offerSwap": "Đề nghị đổi",
+    "swapWaiting": "Phối hợp: đang chờ {{name}} đổi với {{value}} của bạn.",
+    "swapOffered": "{{name}} đề nghị đổi một {{value}}: chọn một xúc xắc của bạn, rồi bấm Đổi.",
+    "syncPlace": "Đồng bộ: đặt xúc xắc giao thông vào bất kỳ ô trống nào.",
+    "syncPartner": "{{name}} đang đặt xúc xắc giao thông…",
+    "internToken": "Thẻ thực tập sinh {{value}}: chạm vào một ô đang sáng để đặt.",
+    "partnerPlacing_other": "{{name}} đang đặt xúc xắc… (còn {{count}} viên)",
+    "partnerPlacingRerolling_other": "{{name}} đang đặt xúc xắc… (còn {{count}} viên, đang đổ lại)",
+    "yourTurn": "Lượt của bạn: chọn một xúc xắc, rồi một ô đang sáng.",
+    "yourTurnAfter": "Lượt của bạn: {{name}} vừa đặt {{value}} vào {{slot}}.",
+    "allPlaced": "Bạn đã đặt hết xúc xắc.",
+    "trafficDie": "Xúc xắc giao thông: {{value}}",
+    "yourDie": "Xúc xắc của bạn: {{value}}",
+    "noDiceLeft": "Hết xúc xắc",
+    "cancelIntern": "Hủy thực tập sinh",
+    "cancelSwap": "Huỷ đổi",
+    "spendReroll": "Dùng một lượt đổ lại (còn {{count}})",
+    "rerollToken": "Đổ lại ({{count}})",
+    "winConditions": "Điều kiện thắng",
+    "winConditionsIntro": "Hạ cánh ở vòng cuối, sau xúc xắc cuối cùng, khi:",
+    "internTokenHeld": "Thẻ thực tập sinh: {{value}}",
+    "diceDone_other": "Bạn đã đặt đủ {{count}} xúc xắc; số còn lại không dùng trong vòng này.",
+    "totalTrust": "Tin tưởng tuyệt đối: vòng này không bàn chiến thuật. Xúc xắc tự đổ."
+  },
+  "cockpit": {
+    "axis": "Trục",
+    "axisHint": "Độ chênh lệch giữa giá trị hai viên xúc xắc này sẽ dịch chuyển thanh thăng bằng sang bên có giá trị lớn hơn",
+    "engines": "Động cơ",
+    "enginesFinal": "Vòng cuối: tốc độ phải dưới mức phanh",
+    "enginesWind": "Cộng tổng số xúc xắc động cơ + tốc độ gió",
+    "enginesHint": "Cộng tổng số nút của 2 xúc xắc",
+    "radio": "Radio",
+    "radioHint": "Loại bỏ ngay 1 máy bay nằm ở ô được đếm tới đó",
+    "landingGear": "Càng đáp",
+    "flaps": "Cánh tà",
+    "brakes": "Phanh",
+    "concentration": "Tập trung",
+    "concentrationHint": "Xúc xắc bất kỳ: +1 cà phê (tối đa 3)",
+    "coffeeCount": "{{count}} cà phê",
+    "brakeMarker": "Vạch phanh",
+    "blueMarker": "Vạch khí động học xanh",
+    "orangeMarker": "Vạch khí động học cam",
+    "switch": "Công tắc {{n}}",
+    "deployed": "{{label}}: đã bật",
+    "notDeployed": "{{label}}: chưa bật",
+    "mandatory": "Bắt buộc",
+    "isMandatory": "{{title}} là bắt buộc",
+    "about": "Về {{title}}",
+    "mandatoryBody": "Mỗi vòng phải đặt đủ hai xúc xắc ở đây. Nếu vòng kết thúc mà thiếu xúc xắc ở trục hoặc động cơ, máy bay sẽ rơi.",
+    "axisEngines": "Trục & Động cơ"
+  },
+  "slot": {
+    "group": {
+      "axis": "Trục",
+      "engines": "Động cơ",
+      "radio": "Radio",
+      "gear": "Càng đáp",
+      "flaps": "Cánh tà",
+      "brakes": "Phanh",
+      "concentration": "Tập trung",
+      "kerosene": "Nhiên liệu",
+      "intern": "Thực tập sinh",
+      "iceBrakes": "Phanh băng",
+      "alarm": "Báo động"
+    },
+    "above": " phía trên",
+    "below": " phía dưới",
+    "needs": ", cần {{values}}",
+    "or": " hoặc ",
+    "label": "{{group}} {{n}}{{row}} ({{who}}{{needs}})",
+    "placed": "{{label}}: {{value}}",
+    "internToken": " (thẻ thực tập sinh)",
+    "trafficDie": " (xúc xắc giao thông)",
+    "covered": "{{label}}: bị kẹt, không đặt xúc xắc",
+    "blockedBy": ", bị khóa bởi {{alarm}}",
+    "and": " và ",
+    "alarmLabel": "{{alarm}} ({{who}}{{needs}})"
+  },
+  "modules": {
+    "kerosene": "Nhiên liệu",
+    "keroseneLeak": "Rò rỉ nhiên liệu",
+    "keroseneLeakHint": "Mỗi vòng: Nhiên liệu mất = chênh lệch động cơ + 1",
+    "keroseneHint": "Giá trị dốt = giá trị xúc xắc; không đặt = −6",
+    "keroseneLeft": "còn {{left}} / {{total}}",
+    "keroseneEmpty": ": hết",
+    "wind": "Gió",
+    "windHint": "Xoay theo độ nghiêng của trục",
+    "windOnEngines": "Tốc độ gió {{speed}}",
+    "windLabel": "Gió {{speed}} cộng vào động cơ",
+    "intern": "Thực tập sinh",
+    "internHint": "Xúc xắc ≠ thẻ kế tiếp · thẻ đặt vào ô nào của bạn cũng được",
+    "internLeft": "Thẻ thực tập sinh còn lại: {{tokens}}",
+    "internTrained": "Thực tập sinh đã được đào tạo xong",
+    "trained": "Đã đào tạo xong!",
+    "iceBrakes": "Phanh băng",
+    "iceBrakesHint": "Cả 2 xúc xắc phải đặt cùng 1 turn. Hàng trên bắt buộc là phi công, hàng dưới có thể là 1 trong 2. Phải vượt qua 5 để hạ cánh.",
+    "iceBrake": "Phanh băng {{n}}"
+  },
+  "moduleText": {
+    "kerosene": {
+      "name": "Nhiên liệu",
+      "rule": "Xúc xắc đặt vào ô Nhiên liệu đốt đúng số đó; vòng nào không đặt thì đốt 6. Hết nhiên liệu: thua."
+    },
+    "kerosene-leak": {
+      "name": "Rò rỉ nhiên liệu",
+      "rule": "Không có ô Nhiên liệu: mỗi vòng đốt chênh lệch giữa hai xúc xắc động cơ + 1."
+    },
+    "intern": {
+      "name": "Thực tập sinh",
+      "rule": "Xúc xắc (khác số của thẻ kế tiếp) đặt vào ô Thực tập sinh của bạn sẽ lấy một thẻ; đặt thẻ đó như một xúc xắc. Phải đào tạo đủ 6 thẻ trước khi hạ cánh."
+    },
+    "wind": {
+      "name": "Gió",
+      "rule": "Sau bước trục, vòng gió xoay theo độ nghiêng; tốc độ gió cộng vào động cơ."
+    },
+    "real-time": {
+      "name": "Thời gian thực",
+      "rule": "60 giây mỗi vòng kể từ khi đổ; xúc xắc chưa đặt sẽ bị mất."
+    },
+    "ice-brakes": {
+      "name": "Phanh băng",
+      "rule": "Cặp 2, 3, 4, 5 ở trên và dưới đường phanh, từ trái sang phải, trong cùng một vòng. Phải vượt qua 5 để hạ cánh."
+    },
+    "wind-reversed": {
+      "name": "Gió ngược",
+      "rule": "Mô-đun Gió đặt ngược: máy bay bắt đầu ở phía đối diện của vòng gió, nên mọi tốc độ gió đều đảo chiều (gió ngược)."
+    },
+    "altitude-5000": {
+      "name": "Bắt đầu ở 5.000 ft",
+      "rule": "Ván chơi bắt đầu ở 5.000 ft thay vì 6.000: không có thẻ đổ lại ban đầu và ít hơn một vòng."
+    },
+    "engines-out": {
+      "name": "Động cơ tắt",
+      "rule": "Không có động cơ: mỗi người đổ 4 xúc xắc nhưng chỉ đặt 3, và máy bay lướt thêm một ô ở cuối mỗi vòng. Hạ cánh khi phanh băng đã qua 5 (không xét tốc độ)."
+    },
+    "alarms": {
+      "name": "Báo động",
+      "rule": "Biểu tượng Báo động ở ô tiếp cận của bạn lật ngẫu nhiên một thẻ khi bắt đầu vòng: Hành động đó không nhận xúc xắc cho đến khi đặt đúng xúc xắc in trên thẻ (đúng màu và số, được dùng cà phê). Báo động không ngăn hạ cánh."
+    },
+    "total-trust": {
+      "name": "Tin tưởng tuyệt đối",
+      "rule": "Vòng kết thúc ở ô Tin tưởng tuyệt đối thì bỏ bàn chiến thuật ở vòng sau: xúc xắc tự đổ."
+    },
+    "belly-landing": {
+      "name": "Hạ cánh bằng bụng",
+      "rule": "Càng đáp bị kẹt: không đặt xúc xắc vào đó và hạ cánh không cần càng đáp. Chỉ dùng báo động Cánh tà, Radio cơ phó và Tập trung."
+    }
+  },
+  "abilityText": {
+    "adaptation": {
+      "name": "Thích ứng",
+      "rule": "Mỗi người chơi được dùng một lần duy nhất trong ván: lật một viên xúc xắc chưa đặt của mình sang mặt đối diện."
+    },
+    "anticipation": {
+      "name": "Đón đầu",
+      "rule": "Mỗi vòng, trước khi đặt viên xúc xắc đầu tiên, Người chơi đi trước có thể đổ lại một viên xúc xắc của mình."
+    },
+    "control": {
+      "name": "Kiểm soát",
+      "rule": "Nếu bạn đặt 2 viên xúc xắc cùng giá trị vào TRỤC, nhận ngay một token Cà phê."
+    },
+    "mastery": {
+      "name": "Thành thạo",
+      "rule": "Nếu bạn đặt 2 viên xúc xắc cùng giá trị vào ĐỘNG CƠ, nhận ngay một token Đổ lại (nếu vẫn còn token)."
+    },
+    "synchronization": {
+      "name": "Đồng bộ",
+      "rule": "Nếu bạn đã đặt ít nhất một viên xúc xắc vào Càng đáp và một viên vào Cánh tà, hãy đổ ngay xúc xắc Traffic. Đặt nó vào bất kỳ ô trống nào trên Bảng điều khiển, không cần đúng màu, và áp dụng hiệu ứng như một viên xúc xắc bình thường. Đây được tính là một hành động thêm trong lượt này."
+    },
+    "working-together": {
+      "name": "Đồng lòng",
+      "rule": "Mỗi vòng một lần, vào bất kỳ lúc nào, một người chơi có thể đặt một viên xúc xắc của mình lên Kỹ năng này. Người còn lại BẮT BUỘC cũng phải đặt một viên của mình lên đây (nếu còn). Hai người hoán đổi giá trị của 2 viên rồi lấy lại."
+    }
+  },
+  "tracks": {
+    "altitude": "Độ cao ({{altitude}} ft)",
+    "altitudeLabel": "Độ cao {{altitude}} ft, vòng {{round}} trên {{rounds}}",
+    "approach": "Đường tiếp cận · {{name}}",
+    "approachLabel": "Đường tiếp cận: còn {{spaces}} ô đến sân bay. Số máy bay mỗi ô từ đây: {{planes}}",
+    "currentSpace": ". Ô hiện tại: {{text}}",
+    "hereTraffic": "xúc xắc giao thông {{count}}× mỗi vòng ở đây",
+    "hereTurn": "để tiến lên, {{text}}",
+    "trafficTitle_other": "Giao thông: đổ xúc xắc giao thông {{count}} lần ở đây",
+    "turnTitle": "Rẽ: {{text}}",
+    "turnMustBe": "trục phải ở {{positions}}",
+    "turnLevel": "cân bằng",
+    "turnTowardPilot": "{{count}} về phía phi công",
+    "turnTowardCopilot": "{{count}} về phía cơ phó",
+    "addedByTraffic": "Thêm bởi xúc xắc giao thông",
+    "axisLevel": "Trục cân bằng",
+    "axisTiltedPilot": "Trục nghiêng {{count}} về phía phi công",
+    "axisTiltedCopilot": "Trục nghiêng {{count}} về phía cơ phó",
+    "axisTurn": "Rẽ: để tiến lên, trục phải ở {{positions}}",
+    "speedLabel": "Tốc độ {{speed}}. Từ {{blue}} trở xuống: đứng yên; đến {{orange}}: 1 ô; cao hơn: 2 ô. Phanh dừng được tốc độ đến {{brake}}.",
+    "speedNotSet": "chưa có",
+    "speedTitle": "Tốc độ {{speed}}",
+    "alarmTitle_other": "Báo động: {{count}} thẻ lật khi bắt đầu mỗi vòng ở đây",
+    "trustTitle": "Tin tưởng tuyệt đối: vòng kết thúc ở đây sẽ bỏ bàn chiến thuật vòng sau",
+    "hereAlarm_other": "{{count}} báo động lật khi bắt đầu mỗi vòng ở đây",
+    "hereTrust": "Tin tưởng tuyệt đối sau vòng kết thúc ở đây"
+  },
+  "gameOver": {
+    "landed": "Hạ cánh êm!",
+    "crashed": "Rơi máy bay",
+    "landedAt": "Bạn đã hạ cánh xuống {{airport}} ở vòng {{round}}.",
+    "crashedAt": "Vòng {{round}} · {{altitude}} ft",
+    "done": "hoàn thành",
+    "leave": "Rời đi",
+    "flyAgain": "Bay lại"
+  },
+  "flightLog": {
+    "open": "Nhật ký bay",
+    "title": "Nhật ký bay",
+    "intro": "Các ván của bạn trên thiết bị này.",
+    "tabLog": "Nhật ký bay",
+    "tabHistory": "Lịch sử",
+    "color": "Màu",
+    "code": "Mã",
+    "scenario": "Kịch bản",
+    "pilot": "Phi công (T/B)",
+    "copilot": "Cơ phó (T/B)",
+    "cell": "{{seat}}: thắng {{won}}, thua {{lost}}",
+    "notPlayed": "{{seat}}: chưa chơi",
+    "landed": "đã hạ cánh",
+    "empty": "Chưa có ván nào. Các ván đã xong sẽ hiện ở đây.",
+    "won": "Hạ cánh",
+    "lost": "Rơi máy bay",
+    "entry": "là {{seat}} cùng {{partner}} · vòng {{rounds}}",
+    "entryAlone": "là {{seat}} · vòng {{rounds}}"
+  },
+  "errors": {
+    "unknown": "Đã có lỗi xảy ra.",
+    "not-strategy": "Xúc xắc đã được đổ.",
+    "game-over": "Ván chơi đã kết thúc.",
+    "not-placing": "Chưa đổ xúc xắc.",
+    "not-your-turn": "Hãy chờ đồng đội đặt xúc xắc.",
+    "unknown-die": "Xúc xắc này không phải của bạn.",
+    "unknown-slot": "Ô này không tồn tại.",
+    "slot-taken": "Ô này đã có xúc xắc.",
+    "wrong-seat": "Ô này của đồng đội bạn.",
+    "bad-coffee": "Số cà phê không hợp lệ.",
+    "not-enough-coffee": "Không đủ cà phê.",
+    "value-out-of-range": "Xúc xắc phải nằm trong khoảng 1 đến 6.",
+    "value-not-allowed": "Ô này cần một số khác.",
+    "out-of-order": "Hãy bật theo đúng thứ tự.",
+    "no-reroll": "Hết lượt đổ lại.",
+    "reroll-pending": "Đang có một lượt đổ lại.",
+    "no-reroll-pending": "Bạn không có lượt đổ lại nào để dùng.",
+    "bad-reroll": "Mỗi xúc xắc chỉ được chọn một lần.",
+    "slot-not-allowed": "Xúc xắc giao thông phải đặt trên bảng điều khiển.",
+    "no-intern-token": "Thực tập sinh đã được đào tạo xong.",
+    "intern-same-value": "Xúc xắc không được trùng số với thẻ thực tập sinh kế tiếp.",
+    "bad-token-slot": "Không đặt được thẻ thực tập sinh vào đó.",
+    "bonus-pending": "Cơ phó phải đặt xúc xắc giao thông trước.",
+    "swap-pending": "Hãy hoàn tất lượt đổi Phối hợp trước.",
+    "ability-unavailable": "Ván này không có kỹ năng đó.",
+    "ability-used": "Kỹ năng này đã được dùng.",
+    "not-first-player": "Chỉ người đi trước mới dùng được Đoán trước.",
+    "first-die-placed": "Đoán trước phải dùng trước xúc xắc đầu tiên của bạn.",
+    "no-partner-dice": "Đồng đội của bạn không còn xúc xắc để đổi.",
+    "dice-limit": "Bạn đã đặt đủ 3 xúc xắc trong vòng này.",
+    "alarm-blocked": "Báo động đang khóa Hành động này. Hãy tắt nó trên bảng Báo động trước.",
+    "alarm-not-active": "Báo động này đang không kêu.",
+    "setup-closed": "Ván chơi đã bắt đầu: chỗ ngồi và kỹ năng đã cố định.",
+    "not-your-pick": "Đồng đội của bạn chọn thẻ này.",
+    "ability-taken": "Đồng đội của bạn đã chọn thẻ này.",
+    "abilities-missing": "Hãy chọn Kỹ năng đặc biệt trước.",
+    "no-partner": "Hãy chờ đồng đội vào phòng.",
+    "roles-missing": "Hãy chọn chỗ ngồi trước.",
+    "not-setup": "Ván chơi đã bắt đầu.",
+    "no-swap": "Bạn không có lời mời đổi nào để huỷ."
+  },
+  "endReasons": {
+    "spin": "Trục nghiêng quá mức: máy bay rơi vào vòng xoáy.",
+    "collision": "Bạn đâm vào một máy bay khác trên đường tiếp cận.",
+    "overshoot": "Bạn bay quá sân bay.",
+    "missed-airport": "Bạn hết độ cao trước khi tới sân bay.",
+    "mandatory-missing": "Một vòng kết thúc mà thiếu xúc xắc ở trục hoặc động cơ.",
+    "landing-traffic": "Vẫn còn máy bay trên đường tiếp cận.",
+    "landing-gear": "Càng đáp chưa hạ hết.",
+    "landing-flaps": "Cánh tà chưa mở hết.",
+    "landing-axis": "Máy bay chưa cân bằng.",
+    "landing-brakes": "Tốc độ quá cao so với phanh.",
+    "time-up": "Hết giờ trước khi đặt xong xúc xắc.",
+    "kerosene": "Bạn đã hết nhiên liệu.",
+    "turn": "Máy bay không rẽ đúng hướng trên đường tiếp cận.",
+    "landing-intern": "Thực tập sinh chưa được đào tạo xong.",
+    "landing-ice-brakes": "Phanh băng chưa được bật hết."
+  },
+  "win": {
+    "landing-traffic": "Không còn máy bay trên đường tiếp cận",
+    "landing-gear": "Đã hạ hết càng đáp",
+    "landing-flaps": "Đã mở hết cánh tà",
+    "landing-axis": "Trục cân bằng",
+    "landing-brakes": "Tốc độ không vượt quá phanh",
+    "landing-intern": "Thực tập sinh đã được đào tạo xong",
+    "landing-ice-brakes": "Đã mở hết phanh băng"
+  },
+  "alarms": {
+    "title": "Báo động",
+    "hint": "Biểu tượng Báo động ở ô của bạn lật ngẫu nhiên một thẻ khi bắt đầu vòng. Hành động của thẻ bị khóa cho đến khi bạn đặt xúc xắc in trên thẻ.",
+    "faceDown": "Thẻ báo động úp",
+    "cleared": "{{alarm}}: đã tắt",
+    "name": {
+      "concentration": "báo động Tập trung",
+      "brakes": "báo động Phanh",
+      "gear": "báo động Càng đáp",
+      "flaps": "báo động Cánh tà",
+      "radioPilot": "báo động Radio phi công",
+      "radioCopilot": "báo động Radio cơ phó"
+    },
+    "board": "Bảng báo động: {{active}} đang kêu, {{faceDown}} thẻ úp"
+  },
+  "weather": {
+    "turbulence": "Nhiễu động",
+    "badVisibility": "Tầm nhìn kém",
+    "turbulenceRule": "Nhiễu động: mỗi xúc xắc bạn đặt sẽ đổ lại các xúc xắc còn lại của bạn.",
+    "badVisibilityRule": "Tầm nhìn kém: bạn cầm 2 xúc xắc; mỗi lần đặt tiếp theo sẽ lấy thêm một xúc xắc để riêng.",
+    "stormRule": "Bão: bạn cầm 2 xúc xắc; mỗi lần đặt lấy thêm một xúc xắc để riêng và đổ lại cả tay.",
+    "setAside_other": "{{count}} xúc xắc để riêng",
+    "altitudeWeather": "{{altitude}} ft: {{weather}}",
+    "turbulenceLobby": "mỗi xúc xắc bạn đặt sẽ đổ lại các xúc xắc còn lại của bạn (ở {{altitudes}} ft).",
+    "badVisibilityLobby": "bạn cầm 2 xúc xắc; mỗi lần đặt lấy thêm một xúc xắc để riêng (ở {{altitudes}} ft)."
+  },
+  "preflight": {
+    "title": "Trước khi cất cánh",
+    "abilitiesEach": "Kỹ năng đặc biệt: mỗi người chọn một thẻ.",
+    "abilitiesYou": "Kỹ năng đặc biệt: bạn chọn thẻ.",
+    "abilitiesPartner": "Kỹ năng đặc biệt: {{name}} chọn thẻ.",
+    "yourPick": "Bạn chọn",
+    "partnersPick": "{{name}} chọn",
+    "roles": "Vai trò",
+    "rolesYou": "Chọn chỗ ngồi của bạn:",
+    "rolesPartner": "{{name}} chọn chỗ ngồi.",
+    "confirm": "Xác nhận",
+    "waitingPartner": "Đang chờ đồng đội vào phòng.",
+    "chooseRoles": "Chưa chọn chỗ ngồi.",
+    "chooseAbilities": "Hãy chọn Kỹ năng đặc biệt.",
+    "waitingConfirm": "Đang chờ {{name}} xác nhận.",
+    "partnerConfirmed": "{{name}} đã xác nhận.",
+    "trayNote": "Chọn chỗ ngồi và Kỹ năng đặc biệt ở trên, rồi xác nhận."
+  }
+}

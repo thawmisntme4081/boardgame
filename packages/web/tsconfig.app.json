@@ -1,0 +1,36 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@sky/rules": ["../../games/sky-team/rules/src/index.ts"],
+      "@platform/engine": ["../engine/src/index.ts"],
+      "@platform/protocol": ["../protocol/src/index.ts"],
+      "@platform/ui/*": ["../ui/src/*"],
+      "@sky/client": ["../../games/sky-team/client/src/index.ts"],
+      "@sky/client/*": ["../../games/sky-team/client/src/*"]
+    }
+  },
+  "include": [
+    "src",
+    "../../games/sky-team/rules/src",
+    "../engine/src",
+    "../protocol/src",
+    "../ui/src",
+    "../../games/sky-team/client/src"
+  ],
+  "exclude": [
+    "../../games/sky-team/rules/src/**/*.test.ts",
+    "../engine/src/**/*.test.ts",
+    "../engine/src/testing.ts",
+    "../../games/sky-team/client/src/**/*.test.ts",
+    "../../games/sky-team/client/src/**/*.test.tsx",
+    "../../games/sky-team/client/src/test",
+    "../../games/sky-team/client/src/test-setup.ts"
+  ]
+}

@@ -15,10 +15,13 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "@sky/shared": ["./packages/shared/src/index.ts"],
+      "@sky/rules": ["./games/sky-team/rules/src/index.ts"],
+      "@sky/client": ["./games/sky-team/client/src/index.ts"],
+      "@sky/client/*": ["./games/sky-team/client/src/*"],
       "@platform/engine": ["./packages/engine/src/index.ts"],
       "@platform/engine/testing": ["./packages/engine/src/testing.ts"],
-      "@platform/protocol": ["./packages/protocol/src/index.ts"]
+      "@platform/protocol": ["./packages/protocol/src/index.ts"],
+      "@platform/ui/*": ["./packages/ui/src/*"]
     }
   }
 }

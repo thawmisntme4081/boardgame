@@ -32,7 +32,7 @@ export async function startGame(
   const pilot = await (await browser.newContext(pilotDevice)).newPage();
   const copilot = await (await browser.newContext(copilotDevice)).newPage();
 
-  await pilot.goto('/');
+  await pilot.goto('/play/sky-team');
   await pilot.getByLabel('Your name').fill('Ana');
   if (scenario) {
     await pilot.getByRole('combobox', { name: 'Scenario' }).click();

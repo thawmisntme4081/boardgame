@@ -13,14 +13,14 @@
     "@sentry/node": "^11.4.0",
     "@platform/engine": "workspace:*",
     "@platform/protocol": "workspace:*",
-    "@sky/shared": "workspace:*",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.3",
     "express": "^5.2.1",
     "jose": "^6.2.12",
     "pino": "^10.4.0",
     "socket.io": "^4.8.4",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "@sky/rules": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

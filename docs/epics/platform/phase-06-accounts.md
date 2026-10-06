@@ -17,6 +17,7 @@ Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-1
 
 ## Technical tasks
 
+0. First (decided Oct 7, 2026): switch the shell to TanStack Router's file-based routes, before adding the new pages. Add `@tanstack/router-plugin` to `packages/web/vite.config.ts`; move the routes of `packages/web/src/router.tsx` to `src/routes/` (`__root.tsx`, `index.tsx`, `play.$gameId.tsx`, `r.$code.tsx`), keeping the redirect of a seated player to their room (`beforeLoad`) and the not-found redirect to `/`; build the router (and the tests' `renderAt`) from the generated `routeTree.gen.ts`, committed and left out of Prettier and ESLint; shell tests and E2E green before going on.
 1. Sign-in via an auth library storing users in the platform's SQLite database (e.g. Better Auth): Google or GitHub, or email one-time codes if an email service is added. No passwords stored.
 2. Sessions in an httpOnly cookie, read by Express and the Socket.IO handshake; seats linked to accounts; guests unaffected.
 3. Flight Log records per account: when a match ends, the server writes one record per seated account (game, scenario, seat, outcome, round, date) into a `flight_log` table; the history page reads it; per-game summary cards from each game's `Summary` component. Guests keep the local Flight Log (Sky Team 11).
@@ -25,6 +26,7 @@ Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-1
 
 ## Checklist
 
+- [ ] File-based routes (`src/routes/`), behaviour unchanged
 - [ ] Sign-in provider set up (OAuth app credentials from the user)
 - [ ] Sessions for HTTP and sockets; seats linked to accounts; guests unaffected
 - [ ] Flight Log per account (written at match end), history and profile pages

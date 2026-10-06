@@ -10,8 +10,8 @@ import {
   type GameState,
   type JoinResult,
   type Seat,
-} from '@sky/shared';
-import { createRandomAgent } from '@sky/shared/random-play';
+} from '@sky/rules';
+import { createRandomAgent } from '@sky/rules/random-play';
 import Database from 'better-sqlite3';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';

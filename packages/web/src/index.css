@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import '@platform/ui/theme.css';
+/* Every installed game's stylesheet (its tokens, grids and animations). */
+@import '@sky/client/styles.css';
+
+/* Classes used in the kit and in every installed game. */
+@source '../../ui/src';
+@source '../../../games/sky-team/client/src';

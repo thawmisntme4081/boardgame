@@ -1,0 +1,116 @@
+/* Sky Team's own look: seat colours and cockpit lights (as Tailwind tokens), the cockpit and
+   game grids, and its animations. Imported by the platform shell's stylesheet. */
+@theme {
+  /* Seat colors and cockpit lights, usable as utilities and as SVG fills. */
+  --color-pilot: oklch(0.55 0.17 255);
+  --color-pilot-soft: oklch(0.93 0.04 255);
+  --color-copilot: oklch(0.7 0.17 55);
+  --color-copilot-soft: oklch(0.95 0.05 70);
+  --color-light-on: oklch(0.72 0.19 145);
+  --color-light-off: oklch(0.85 0 0);
+  --color-danger: oklch(0.6 0.22 25);
+  --color-plane: oklch(0.45 0.02 260);
+}
+
+/* A space either player can use (concentration): half pilot blue, half co-pilot orange,
+   fill and border. Two background layers, because a border cannot have two colors. */
+.slot-shared {
+  border-color: transparent;
+  background:
+    linear-gradient(90deg, var(--color-pilot-soft) 50%, var(--color-copilot-soft) 50%) padding-box,
+    linear-gradient(
+        90deg,
+        color-mix(in oklch, var(--color-pilot) 60%, transparent) 50%,
+        color-mix(in oklch, var(--color-copilot) 70%, transparent) 50%
+      )
+      border-box;
+}
+
+/* Desktop cockpit: the areas and columns depend on the modules in play (`desktopGrid` in
+   Cockpit.tsx). Smaller screens keep the seat-ordered grid from the Cockpit component. */
+.cockpit-grid {
+  @variant desktop {
+    grid-template-columns: var(--cockpit-columns);
+    grid-template-areas: var(--cockpit-areas);
+  }
+}
+
+/*
+ * Mobile-first game layout; the same components move between grid areas. The page scrolls
+ * normally; the status bar and dice tray are sticky (see Game.tsx), so no viewport height is
+ * needed. min-height uses svh (never taller than the visible screen) to keep a short game
+ * filling it.
+ */
+.game-grid {
+  display: grid;
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr auto;
+  grid-template-areas: 'status' 'tracks' 'cockpit' 'tray';
+
+  @variant tablet {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: 'status status' 'tracks tray' 'cockpit tray';
+  }
+
+  /* One centred column in a container: tracks above the cockpit, dice tray below. */
+  @variant desktop {
+    max-width: min(100%, calc(72rem + var(--module-columns, 0) * 7.75rem));
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas: 'status' 'tracks' 'cockpit' 'tray';
+  }
+}
+
+/* A plane the traffic dice just added drops onto its space. */
+@keyframes drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.6rem) scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0.1rem) scale(1.06);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* Then it pulses black and red. */
+@keyframes traffic-plane {
+  0%,
+  100% {
+    fill: oklch(20.5% 0 0); /* neutral-900 */
+  }
+  50% {
+    fill: oklch(63.7% 0.237 25.331); /* red-500 */
+  }
+}
+/* The same on a dark board: light grey and red. */
+@keyframes traffic-plane-dark {
+  0%,
+  100% {
+    fill: oklch(97% 0 0); /* neutral-100 */
+  }
+  50% {
+    fill: oklch(63.7% 0.237 25.331); /* red-500 */
+  }
+}
+
+/* Kerosene burned: the "−N" rises and fades over the gauge. */
+@keyframes kerosene-burn {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}

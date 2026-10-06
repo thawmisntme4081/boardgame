@@ -8,8 +8,8 @@ test('each player picks a language: a Vietnamese pilot and an English co-pilot p
   const pilot = await (await browser.newContext(device)).newPage();
   const copilot = await (await browser.newContext(device)).newPage();
 
-  // English by default; the pilot switches to Vietnamese in the lobby.
-  await pilot.goto('/');
+  // English by default; the pilot switches to Vietnamese on the game's page.
+  await pilot.goto('/play/sky-team');
   await expect(pilot.locator('html')).toHaveAttribute('lang', 'en');
   await pilot.getByRole('combobox', { name: 'Language' }).click();
   await pilot.getByRole('option', { name: 'Tiếng Việt' }).click();

@@ -58,6 +58,8 @@ export type JoinResult<Seat extends string = string> =
   | {
       ok: true;
       code: string;
+      /** The room's game (its id in the registry): which client module to load. */
+      game: string;
       seat: Seat;
       token: string;
       /** The current match, and the last `seq` the server accepted from this seat in it. */
@@ -91,9 +93,11 @@ export type Presence<Seat extends string = string> = Record<Seat, SeatInfo | nul
  * One player's view of a match. `version` counts the match's accepted changes: a client keeps
  * the newest it has and drops older ones. Every view is complete, so a missed one loses nothing.
  */
-export interface MatchView<View> {
+export interface MatchView<View, Seat extends string = string> {
   matchId: string;
   version: number;
+  /** The seat this view is for (seats can change before the game starts). */
+  seat: Seat;
   view: View;
 }
 
@@ -129,5 +133,5 @@ export interface ClientEvents<Seat extends string, Move, Config, Reason extends 
 /** Server → client. */
 export interface ServerEvents<Seat extends string, View> {
   'room:presence': (presence: Presence<Seat>) => void;
-  'match:view': (view: MatchView<View>) => void;
+  'match:view': (view: MatchView<View, Seat>) => void;
 }

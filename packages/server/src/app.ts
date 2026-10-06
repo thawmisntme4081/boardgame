@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
 import path from 'node:path';
-import { armAutoRoll, type GameState } from '@sky/shared';
+import { armAutoRoll, type GameState } from '@sky/rules';
 import express from 'express';
 import { Server } from 'socket.io';
 import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
@@ -13,7 +13,7 @@ import type { SiteGate } from './siteGate';
 export interface ServerOptions extends HandlerOptions {
   /** How often idle rooms are swept; 0 turns the sweep off (tests call `rooms.sweep()`). */
   sweepIntervalMs?: number;
-  /** Built client (`packages/client/dist`) to serve, with `index.html` for any other page. */
+  /** Built client (`packages/web/dist`) to serve, with `index.html` for any other page. */
   clientDir?: string;
   /**
    * Test-only routes for end-to-end tests (set up a game state). Never enable in

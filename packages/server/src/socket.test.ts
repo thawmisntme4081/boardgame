@@ -1,4 +1,4 @@
-import type { JoinResult, PlayerView } from '@sky/shared';
+import type { JoinResult, PlayerView } from '@sky/rules';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { move, next, nextView, startTestServer, takeOff, type Client } from './test-server';
 

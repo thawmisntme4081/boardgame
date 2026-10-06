@@ -1,14 +1,14 @@
 // The game registry: the only place the platform code learns which games it hosts. A room
 // names its game by id; the lobby's choices and the server's own settings make its config.
 import type { GameDefinition } from '@platform/engine';
-import type { GameState as SkyTeamState } from '@sky/shared';
+import type { GameState as SkyTeamState } from '@sky/rules';
 import {
   skyTeam,
   skyTeamLobbySchema,
   type SkyTeamConfig,
   type SkyTeamMove,
-} from '@sky/shared/definition';
-import type { PlayerView } from '@sky/shared';
+} from '@sky/rules/definition';
+import type { PlayerView } from '@sky/rules';
 import type { ZodType } from 'zod';
 import type { EndedStatus } from './store';
 

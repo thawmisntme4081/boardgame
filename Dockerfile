@@ -10,7 +10,7 @@ RUN pnpm install --frozen-lockfile
 # Optional: client error tracking (fly deploy --build-arg VITE_SENTRY_DSN=...).
 ARG VITE_SENTRY_DSN
 RUN pnpm build
-RUN rm -rf node_modules packages/*/node_modules \
+RUN rm -rf node_modules packages/*/node_modules games/*/*/node_modules \
   && pnpm install --prod --frozen-lockfile --filter @sky/server...
 
 # --- Run: Node, Litestream and the built files only.
@@ -29,12 +29,12 @@ ENV NODE_ENV=production \
     DATA_DIR=/data \
     PORT=8080 \
     TRUST_PROXY=1
-# The server finds the client at ../../client/dist from its own dist folder.
+# The server finds the client at ../../web/dist from its own dist folder.
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/server/package.json ./packages/server/package.json
 COPY --from=build /app/packages/server/node_modules ./packages/server/node_modules
 COPY --from=build /app/packages/server/dist ./packages/server/dist
-COPY --from=build /app/packages/client/dist ./packages/client/dist
+COPY --from=build /app/packages/web/dist ./packages/web/dist
 COPY deploy/litestream.yml /etc/litestream.yml
 COPY deploy/start.sh /app/start.sh
 RUN chmod +x /app/start.sh

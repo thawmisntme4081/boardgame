@@ -7,7 +7,7 @@ import type {
   PlayerMove,
   PlayerView,
   ServerToClient,
-} from '@sky/shared';
+} from '@sky/rules';
 import { io as connectClient, type Socket } from 'socket.io-client';
 import { createGameServer, type ServerOptions } from './app';
 import type { RoomManager } from './rooms';

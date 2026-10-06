@@ -1,6 +1,6 @@
 import { devices, expect, test } from '@playwright/test';
-import { DIFFICULTY_NAMES, SCENARIO_LIST } from '../packages/shared/src/scenarios';
-import type { Scenario } from '../packages/shared/src/types';
+import { DIFFICULTY_NAMES, SCENARIO_LIST } from '../games/sky-team/rules/src/scenarios';
+import type { Scenario } from '../games/sky-team/rules/src/types';
 import {
   bothReady,
   deviceOptions,
@@ -152,7 +152,7 @@ test.describe('round timer', () => {
     const pilot = await (await browser.newContext(device)).newPage();
     const copilot = await (await browser.newContext(device)).newPage();
 
-    await pilot.goto('/');
+    await pilot.goto('/play/sky-team');
     await pilot.getByLabel('Your name').fill('Ana');
     await pilot.getByRole('switch', { name: /Round timer/ }).click();
     await pilot.getByRole('button', { name: 'Create a game' }).click();

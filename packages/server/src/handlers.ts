@@ -44,6 +44,7 @@ export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): v
     io.to(socketId).emit('match:view', {
       matchId,
       version,
+      seat,
       view: definition.view(room.game, seat, now),
     });
   }
@@ -62,6 +63,7 @@ function parse<S extends z.ZodType>(schema: S, payload: unknown): z.output<S> | 
 const joined = ({ room, player, token }: Seated): JoinResult => ({
   ok: true,
   code: room.code,
+  game: room.gameId,
   seat: player.seat,
   token: token ?? '',
   matchId: room.match.id,

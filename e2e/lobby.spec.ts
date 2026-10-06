@@ -1,8 +1,18 @@
 import { expect, test } from '@playwright/test';
 import { deviceOptions } from './helpers';
 
-test('create a game and see the invite code', async ({ page }) => {
+test('pick Sky Team, create a game and see the invite code', async ({ page }) => {
+  // The game picker loads without any game's code: the board comes with the game's page.
+  const scripts: string[] = [];
+  page.on('request', (request) => {
+    if (request.resourceType() === 'script') scripts.push(request.url());
+  });
   await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Board games' })).toBeVisible();
+  expect(scripts.filter((url) => url.includes('/assets/sky-team-'))).toEqual([]);
+
+  await page.getByRole('link', { name: /^Sky Team/ }).click();
+  await expect(page).toHaveURL(/\/play\/sky-team$/);
   const create = page.getByRole('button', { name: 'Create a game' });
   await expect(create).toBeDisabled();
   await page.getByLabel('Your name').fill('Ana');
@@ -33,7 +43,7 @@ test('the creator chooses the seats before round 1; the traffic die waits for bo
   const device = deviceOptions(testInfo.project.use);
   const pilot = await (await browser.newContext(device)).newPage();
   const copilot = await (await browser.newContext(device)).newPage();
-  await pilot.goto('/');
+  await pilot.goto('/play/sky-team');
   await pilot.getByLabel('Your name').fill('Ana');
   await pilot.getByRole('button', { name: 'Create a game' }).click();
   // Wait for the waiting room: the lobby's own "Game code" field would match too.

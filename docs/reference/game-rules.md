@@ -4,7 +4,7 @@
 
 The whole game is one serialisable `GameState` object plus pure functions that return a new state; no rule lives in React or in socket handlers.
 
-## Files (`packages/shared/src`)
+## Files (`games/sky-team/rules/src`)
 
 | File | Contents |
 | --- | --- |
@@ -18,7 +18,7 @@ The whole game is one serialisable `GameState` object plus pure functions that r
 | `rng.ts` | mulberry32; `rngSeed` + `rngState` live in the state, so `rngSeed` + `log` replay a game |
 | `views.ts` | `PlayerView`, `viewFor(state, seat)`, `canPlaceInView` and `canUseAbilityInView` (the client's copies of the checks, read from the view) |
 | `events.ts` | Socket.IO protocol types (see [protocol](protocol.md)) |
-| `random-play.ts` | Random agent (`createRandomAgent`, `applyAgentAction`) and `playRandomGame`, imported as `@sky/shared/random-play`; used by fuzzing, the socket full-game test and `pnpm --filter @sky/shared random-play` |
+| `random-play.ts` | Random agent (`createRandomAgent`, `applyAgentAction`) and `playRandomGame`, imported as `@sky/rules/random-play`; used by fuzzing, the socket full-game test and `pnpm --filter @sky/rules random-play` |
 
 Rule functions are pure (they return a new state). `canPlaceDie(state, seat, { dieId, slot, coffeeDelta })` returns `{ ok: true }` or `{ ok: false, reason }`; `placeDie` throws `RuleError` on an illegal move. Axis and engines resolve **as soon as the second die is placed** (as the rulebook says); `placeDie` ends the round by itself once nobody can place another die. When a round ends, its dice and speed stay in `lastRound` until the next roll. In the final round, the game ends as a win as soon as ending the round would land the plane (all landing conditions met and no end-of-round loss, e.g. Kerosene); the dice still in hand are not needed (user rule, Oct 4, 2026).
 
@@ -43,7 +43,7 @@ The game creator can turn on a timer in the lobby (off by default). From the rol
 
 ## Flight Log scenarios and modules
 
-A `Scenario` has an airport, a color (`green` Routine, `yellow` Exceptional, `red` Elite, `black` Heroic), its altitude track (green/yellow or red/black side), its approach track (`approach` planes, optional `traffic` icons and `turns`), its `modules` and how many Special Ability cards the players choose. Modules are `RuleModule` objects in `packages/shared/src/modules`; the rules call their hooks at fixed points (`altitudes`, `dicePerRound`, `approachPerRound`, `waivedLanding`, `alarmTokens`, `setup`, `startOfRound`, `checkAnySlot`, `checkSlot`, `checkMove`, `place`, `afterAxis`, `speedBonus`, `endOfRound`, `landing`, `brakeThresholds`, `timeUpEndsRound`) and a module only reacts to its own slots. `rules.ts` never tests for a module by name. Module state lives in `GameState` (`kerosene`, `intern`, `wind`) and is public in the view.
+A `Scenario` has an airport, a color (`green` Routine, `yellow` Exceptional, `red` Elite, `black` Heroic), its altitude track (green/yellow or red/black side), its approach track (`approach` planes, optional `traffic` icons and `turns`), its `modules` and how many Special Ability cards the players choose. Modules are `RuleModule` objects in `games/sky-team/rules/src/modules`; the rules call their hooks at fixed points (`altitudes`, `dicePerRound`, `approachPerRound`, `waivedLanding`, `alarmTokens`, `setup`, `startOfRound`, `checkAnySlot`, `checkSlot`, `checkMove`, `place`, `afterAxis`, `speedBonus`, `endOfRound`, `landing`, `brakeThresholds`, `timeUpEndsRound`) and a module only reacts to its own slots. `rules.ts` never tests for a module by name. Module state lives in `GameState` (`kerosene`, `intern`, `wind`) and is public in the view.
 
 | Module / effect | Rule as implemented |
 | --- | --- |

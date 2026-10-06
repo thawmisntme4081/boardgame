@@ -56,29 +56,20 @@ Every accepted change goes through `RoomManager.accept`, which applies it, bumps
 
 ## Repository layout
 
+Since Platform 05: the platform in `packages/`, each game in `games/<id>/`.
+
 ```
 boardgame/
-├── package.json            # pnpm workspaces root
+├── package.json            # pnpm workspaces root (packages/*, games/*/*)
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
 ├── packages/
 │   ├── protocol/               # @platform/protocol: events, payload schemas, error codes
-│   ├── engine/                 # @platform/engine: game-agnostic, no Sky Team code
+│   ├── engine/                 # @platform/engine: game-agnostic, no game code
 │   │   └── src/
-│   │       ├── index.ts        # GameDefinition contract: Actor, Outcome, Result, ScheduledMove
+│   │       ├── index.ts        # GameDefinition contract, runDue, replay
 │   │       ├── rng.ts          # seeded RNG (mulberry32) every game uses
 │   │       └── testing.ts      # engine test kit (@platform/engine/testing)
-│   ├── shared/
-│   │   └── src/
-│   │       ├── definition.ts   # Sky Team as a GameDefinition (@sky/shared/definition)
-│   │       ├── types.ts        # GameState, Seat, Slot, events
-│   │       ├── state.ts        # createGame()
-│   │       ├── rules.ts        # canPlaceDie, placeDie, endRound, checkLanding
-│   │       ├── views.ts        # viewFor(state, seat)
-│   │       ├── scenarios.ts    # airport configs as data
-│   │       ├── modules/        # Flight Log modules as rule hooks
-│   │       ├── abilities.ts    # Special Ability actions
-│   │       └── rng.ts          # Sky Team's die (rollDie) on the engine RNG
 │   ├── server/
 │   │   └── src/
 │   │       ├── index.ts        # Express + Socket.IO bootstrap
@@ -86,24 +77,45 @@ boardgame/
 │   │       ├── rooms.ts        # rooms, matches, seq and versions, scheduler
 │   │       ├── handlers.ts     # room:* and match:move, for every game
 │   │       └── store.ts        # MatchStore: rooms + match log (SQLite / memory)
-│   └── client/
+│   ├── ui/                     # @platform/ui: the client kit every game builds with
+│   │   └── src/
+│   │       ├── components/     # shadcn components (added here)
+│   │       ├── theme.css       # Tailwind theme: fonts, colour tokens, dark mode, breakpoints
+│   │       ├── i18n.ts         # the one i18next instance; addLocales(namespace, texts)
+│   │       ├── locales/        # the platform namespace: en, vi, fr
+│   │       ├── LanguageSwitch.tsx
+│   │       ├── game.ts         # GameClientModule / PlatformApi contract
+│   │       └── utils.ts        # cn
+│   └── web/                    # @platform/web: the client shell (built and served)
 │       └── src/
-│           ├── main.tsx
-│           ├── socket.ts       # typed socket instance
-│           ├── store.ts        # Zustand store for the view
-│           ├── api.ts          # socket events → store; actions (create, join, place, …)
-│           ├── session.ts      # saved seat token, invite links
-│           ├── screens/        # Lobby (+ waiting room), Game
-│           ├── lib/            # moves, setup, seat styles, shared classes, small hooks
-│           ├── components/     # Panel, Slot, StatusBar, Preflight, GameOverDialog,
-│           │   │               # ScenarioPicker (+ components/ui from shadcn)
-│           │   ├── cockpit/    # Cockpit (dispatcher), layout (order + desktop grid),
-│           │   │               # panels (base game), ModulePanels, Slots
-│           │   └── tray/       # DiceTray (by phase): Strategy/Reroll/PlacingTray, DieButton,
-│           │                   # notes, popovers, CoffeeControl, AbilityActions, text
-│           └── svgs/           # one SVG drawing per file: DieFace, FlightInstrument,
-│                               # AltitudeTrack, ApproachTrack, WindRing, markers, Plane,
-│                               # InternBadge, Switch (+ geometry helpers)
+│           ├── main.tsx, App.tsx   # site password gate, then the router
+│           ├── router.tsx      # /, /play/:gameId, /r/:code (TanStack Router)
+│           ├── games.ts        # installed games; lazy module loading (useGameModule)
+│           ├── api.ts          # socket events -> store; rooms, match:move, platformServices
+│           ├── store.ts        # usePlatform: connection, session, match view, presence
+│           ├── presence.ts     # partner offline / back / left / joined toasts
+│           ├── session.ts      # saved seat token (with the game id), invite links
+│           ├── index.css       # the one Tailwind entry: theme + every game's styles.css
+│           └── screens/        # Picker, Play (a game's lobby), Room (+ waiting room),
+│                               # SitePassword, Shell (card, name, join form, connecting)
+├── games/
+│   └── sky-team/
+│       ├── rules/              # @sky/rules: the rules (createGame, placeDie, modules,
+│       │   └── src/            # scenarios…), definition.ts (@sky/rules/definition),
+│       │                       # events.ts (protocol aliases), random-play
+│       └── client/             # @sky/client: Sky Team's UI, one lazy chunk
+│           └── src/
+│               ├── index.ts    # the GameClientModule (skyTeamClient)
+│               ├── api.ts      # moves through the injected PlatformApi
+│               ├── store.ts    # useSkyTeam: selection, coffee, intern, rerolls, timers, Flight Log
+│               ├── i18n.ts, locales/   # the sky-team namespace
+│               ├── SetupForm.tsx, WaitingInfo.tsx
+│               ├── screens/Game.tsx    # the Board
+│               ├── components/ # cockpit/, tray/, Slot, Panel, StatusBar, Preflight,
+│               │               # GameOverDialog, ScenarioPicker, FlightLog
+│               ├── svgs/       # DieFace, FlightInstrument, tracks, WindRing, markers…
+│               ├── lib/        # moves, setup, history, seat styles, small hooks
+│               └── styles.css  # seat colours, cockpit and game grids, animations
 ├── e2e/                        # Playwright tests
 └── .github/workflows/ci.yml
 ```
@@ -114,9 +126,20 @@ boardgame/
 
 Moves are checked and applied with a context `{ by, at }`: the platform stamps the time, so timers stay pure and replays exact. The platform tells a game about its table with two engine-defined system moves, `table:join` and `table:choose-seat` (the game says whether a seat change is still allowed; the platform then moves the players). `setup` gets the seats taken, the `host` and the `previous` game at the table, so a rematch or a restart can carry choices over. `runDue` makes the scheduled moves that are due, each at its own time.
 
-Sky Team implements it in `packages/shared/src/definition.ts` (`skyTeam`, exported as `@sky/shared/definition` only, so the client bundle does not include it). Seat moves: `pick-ability`, `confirm`, `ready`, `place`, `spend-reroll`, `reroll`, `ability`, `cancel-swap`; the crew rules are in `crew.ts`, their state in `GameState.crew`. System moves: `roll` (Total Trust, at `autoRollAt`) and `time-up` (at the round's deadline), both from `schedule`; the second `ready` rolls the dice itself.
+Sky Team implements it in `games/sky-team/rules/src/definition.ts` (`skyTeam`, exported as `@sky/rules/definition` only, so the client bundle does not include it). Seat moves: `pick-ability`, `confirm`, `ready`, `place`, `spend-reroll`, `reroll`, `ability`, `cancel-swap`; the crew rules are in `crew.ts`, their state in `GameState.crew`. System moves: `roll` (Total Trust, at `autoRollAt`) and `time-up` (at the round's deadline), both from `schedule`; the second `ready` rolls the dice itself.
 
 **Rooms (Platform 02):** `rooms.ts` knows only the engine and the registry (`games.ts`). A room holds the players (seat, name, token, socket, creator), the `config` it was set up with, the game state and one timer. `move(room, by, move)` validates and applies at the current time; `arm(room)` sets the timer for the earliest scheduled move, and when it fires `runDue` makes the due moves and `onScheduled` broadcasts. `broadcastRoom` saves and re-arms after every accepted change; on start every loaded room is armed (a deadline that passed while the server was down fires at once).
+
+## Client shell (Platform 05)
+
+The web package is a shell that knows games only through `GameClientModule` (`@platform/ui/game`):
+
+- **Pages** (TanStack Router): `/` the game picker; `/play/:gameId` the game's lobby: name, join by code, the game's `SetupForm`, "Create a game"; `/r/:code` a room: the join form for an invite link, then (seated) connecting, the waiting room with the game's `WaitingInfo` while a seat is empty, then the game's `Board`. A seated player is redirected to their room; leaving goes back to `/play/<game>`.
+- **Loading:** `games.ts` lists the installed games; `loadGame(id)` imports a game's module once (a separate chunk, `assets/<game>-*.js`), registers its texts (`addLocales`) and hands it the shell's services (`connect(platformServices)`). The picker and the password page load no game code.
+- **State:** `usePlatform` (the shell) holds the connection, the session (with the game id), the latest `match:view` envelope and presence. Each game has its own store; the shell calls the module's `onView(view, before, presence)` before showing a new view, and `reset()` when the player leaves.
+- **Services:** a game sends moves with `platform.send(move)` (the shell adds the match id and `seq`, and shows refusals through the game's `errorText` or its own), and asks for `chooseSeat`, `rematch`, `leave`.
+- **Texts:** one i18next instance in `@platform/ui/i18n`: the `platform` namespace (default) for the shell, one per game.
+- **Styles:** `packages/web/src/index.css` is the single Tailwind entry: the kit's `theme.css`, each game's `styles.css`, and `@source` for the kit and each game.
 
 ## Server handler pattern
 

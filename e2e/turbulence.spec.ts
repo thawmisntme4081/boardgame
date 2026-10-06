@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { YUL } from '../packages/shared/src/scenarios';
+import { YUL } from '../games/sky-team/rules/src/scenarios';
 import { bothReady, deviceOptions, setGame, startGame } from './helpers';
 
 test('an alarm blocks the flaps until the pilot clears it with a blue 4', async ({

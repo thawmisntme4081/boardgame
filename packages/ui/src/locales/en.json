@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "Board games",
+    "tagline": "Play board games online with friends.",
+    "chooseGame": "Choose a game",
+    "allGames": "All games",
+    "language": "Language"
+  },
+  "games": {
+    "sky-team": {
+      "name": "Sky Team",
+      "blurb": "Two players, cooperative: land the plane together without talking."
+    }
+  },
+  "gate": {
+    "intro": "Private site. Enter the password to play.",
+    "password": "Password",
+    "enter": "Enter",
+    "wrong": "Wrong password.",
+    "tooMany": "Too many tries. Wait a few minutes, then try again.",
+    "error": "The server did not answer. Try again."
+  },
+  "lobby": {
+    "yourName": "Your name",
+    "gameCode": "Game code",
+    "join": "Join",
+    "or": "or",
+    "create": "Create a game",
+    "sendCode": "Send them this code or the invite link.",
+    "gameCodeLabel": "Game code {{spelled}}",
+    "shareInvite": "Share invite",
+    "cancel": "Cancel",
+    "connecting": "Connecting to your game…"
+  },
+  "toast": {
+    "noAnswer": "The server did not answer. Check your connection.",
+    "inviteCopied": "Invite link copied",
+    "shareText": "Join my game",
+    "partnerLeft": "{{name}} left the game. Share the code to fly with someone else.",
+    "partnerJoined": "{{name}} joined the game.",
+    "partnerOffline": "{{name}} lost connection. Their seat is kept for them.",
+    "partnerBack": "{{name}} is back."
+  },
+  "errors": {
+    "unknown": "Something went wrong.",
+    "bad-request": "That request was not understood.",
+    "room-not-found": "No game with that code.",
+    "room-full": "That game already has two players.",
+    "bad-token": "Your seat could not be restored.",
+    "not-in-room": "You are not in a game.",
+    "already-in-room": "You are already in a game.",
+    "game-not-over": "The game is not over yet.",
+    "unknown-game": "This server does not host that game.",
+    "stale-match": "That game has moved on: your screen is up to date again, try once more.",
+    "too-many-rooms": "You have too many open games. Finish or leave one first.",
+    "not-creator": "Only the game’s creator chooses the seats."
+  }
+}

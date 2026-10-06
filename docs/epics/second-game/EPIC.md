@@ -19,4 +19,5 @@ A small game fits in one phase. If it grows (variants, expansions, more language
 ## Order and dependencies
 
 - Needs [Platform 01–05](../platform/EPIC.md) (contract, moves, protocol, match log, client shell).
+- Layout (from Platform 05): the game lives in `games/<id>/rules` (its `GameDefinition`, run by the engine kit) and `games/<id>/client` (a `GameClientModule`: `Board`, `SetupForm`, `WaitingInfo`, `locales` as the `<id>` namespace, `styles.css`), registered in `packages/server/src/games.ts` and `packages/web/src/games.ts` (plus the platform's `games.<id>` texts for the picker, and an `@import` / `@source` in `packages/web/src/index.css`). Sky Team is the example to copy.
 - Comes before the large-game epics.

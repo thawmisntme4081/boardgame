@@ -12,7 +12,7 @@ export default tseslint.config(
       '**/coverage/**',
       'playwright-report/**',
       'test-results/**',
-      'packages/client/src/components/ui/**',
+      'packages/ui/src/components/**',
     ],
   },
   js.configs.recommended,
@@ -27,7 +27,11 @@ export default tseslint.config(
     languageOptions: { sourceType: 'commonjs', globals: globals.node },
   },
   {
-    files: ['packages/client/**/*.{ts,tsx}'],
+    files: [
+      'packages/web/**/*.{ts,tsx}',
+      'packages/ui/**/*.{ts,tsx}',
+      'games/*/client/**/*.{ts,tsx}',
+    ],
     languageOptions: { globals: globals.browser },
     plugins: {
       'react-hooks': reactHooks,

@@ -11,7 +11,7 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 | Engine kit | Vitest + `@platform/engine/testing` | Each game through its `GameDefinition` only: random games where every move passes `moveSchema` and `validate`, every state and view is plain JSON data, views leak nothing (a per-game `findLeaks`), and replaying the moves from the seed gives the same final state. Every scheduled move must be valid at its own time. Sky Team: every scenario through the setup, "ready" and Total Trust rolls, plus timed games with scheduled time-ups | Every push |
 | Scheduler | Vitest fake timers | `RoomManager.arm` / `runDue`: a timed round ends exactly at its deadline, a due move goes before the next player move at its own time, Total Trust rolls after the pause, nothing fires after `close` | Every push |
 | Integration | Vitest + `socket.io-client` | Real server on a random port, two clients: join, play, reconnect, illegal moves rejected; a restart on the same SQLite file mid-game (identical views after rejoining; a timed round whose deadline passed while down ends at once) | Every push |
-| Component | React Testing Library | Dice tray, valid-slot highlighting, module panels, dialogs, lobby | Every push |
+| Component | React Testing Library | Sky Team's UI in `games/sky-team/client` (dice tray, valid-slot highlighting, module panels, dialogs, its lobby options and waiting-room heading, its store and texts); the shell in `packages/web` (picker, a game's page, rooms, the password gate, language switching, the platform store and texts) rendered through the real routes (`renderAt(path)`) | Every push |
 | End-to-end | Playwright | Two browser contexts on Desktop Chrome, iPhone 13 (WebKit), Pixel 7: lobby, full game, landing, refresh, leaving, module games | Every push to `main` and every PR (after the `check` job) |
 | Lighthouse | Lighthouse CI | Mobile audit of the lobby and invite page | CI (Linux) only |
 | Manual | Two machines | Latency, reconnects on mobile data, UX feel | Before each release |
@@ -32,4 +32,4 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 
 ## Commands
 
-`pnpm test` (Vitest), `pnpm e2e` (Playwright; builds and starts the server on port 3100 with `GAME_SEED=1`, `E2E_HOOKS=1`, `ROOMS_PER_IP=1000`), `pnpm lighthouse` (CI only), `pnpm --filter @sky/shared random-play [games] [firstSeed] [scenario id | all]`.
+`pnpm test` (Vitest), `pnpm e2e` (Playwright; builds and starts the server on port 3100 with `GAME_SEED=1`, `E2E_HOOKS=1`, `ROOMS_PER_IP=1000`), `pnpm lighthouse` (CI only), `pnpm --filter @sky/rules random-play [games] [firstSeed] [scenario id | all]`.

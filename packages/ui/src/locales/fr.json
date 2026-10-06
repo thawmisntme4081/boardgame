@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "Jeux de société",
+    "tagline": "Jouez à des jeux de société en ligne entre amis.",
+    "chooseGame": "Choisissez un jeu",
+    "allGames": "Tous les jeux",
+    "language": "Langue"
+  },
+  "games": {
+    "sky-team": {
+      "name": "Sky Team",
+      "blurb": "Deux joueurs, coopératif : posez l’avion ensemble sans vous parler."
+    }
+  },
+  "gate": {
+    "intro": "Site privé. Entrez le mot de passe pour jouer.",
+    "password": "Mot de passe",
+    "enter": "Entrer",
+    "wrong": "Mot de passe incorrect.",
+    "tooMany": "Trop d’essais. Attendez quelques minutes, puis réessayez.",
+    "error": "Le serveur n’a pas répondu. Réessayez."
+  },
+  "lobby": {
+    "yourName": "Votre nom",
+    "gameCode": "Code de la partie",
+    "join": "Rejoindre",
+    "or": "ou",
+    "create": "Créer une partie",
+    "sendCode": "Envoyez-lui ce code ou le lien d’invitation.",
+    "gameCodeLabel": "Code de la partie {{spelled}}",
+    "shareInvite": "Partager l’invitation",
+    "cancel": "Annuler",
+    "connecting": "Connexion à votre partie…"
+  },
+  "toast": {
+    "noAnswer": "Le serveur n’a pas répondu. Vérifiez votre connexion.",
+    "inviteCopied": "Lien d’invitation copié",
+    "shareText": "Rejoins ma partie",
+    "partnerLeft": "{{name}} a quitté la partie. Partagez le code pour voler avec quelqu’un d’autre.",
+    "partnerJoined": "{{name}} a rejoint la partie.",
+    "partnerOffline": "{{name}} a perdu la connexion. Son poste lui est gardé.",
+    "partnerBack": "{{name}} est de retour."
+  },
+  "errors": {
+    "unknown": "Une erreur s’est produite.",
+    "bad-request": "Cette demande n’a pas été comprise.",
+    "room-not-found": "Aucune partie avec ce code.",
+    "room-full": "Cette partie a déjà deux joueurs.",
+    "bad-token": "Votre poste n’a pas pu être rétabli.",
+    "not-in-room": "Vous n’êtes dans aucune partie.",
+    "already-in-room": "Vous êtes déjà dans une partie.",
+    "game-not-over": "La partie n’est pas encore terminée.",
+    "unknown-game": "Ce serveur ne propose pas ce jeu.",
+    "stale-match": "La partie a changé : votre écran est à jour, réessayez.",
+    "too-many-rooms": "Vous avez trop de parties ouvertes. Terminez-en ou quittez-en une d’abord.",
+    "not-creator": "Seul le créateur de la partie choisit les postes."
+  }
+}

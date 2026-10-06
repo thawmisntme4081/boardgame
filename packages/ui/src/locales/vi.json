@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "Board game",
+    "tagline": "Chơi board game trực tuyến cùng bạn bè.",
+    "chooseGame": "Chọn một trò chơi",
+    "allGames": "Tất cả trò chơi",
+    "language": "Ngôn ngữ"
+  },
+  "games": {
+    "sky-team": {
+      "name": "Sky Team",
+      "blurb": "Hai người, hợp tác: cùng hạ cánh máy bay mà không nói chuyện."
+    }
+  },
+  "gate": {
+    "intro": "Trang riêng tư. Nhập mật khẩu để vào chơi.",
+    "password": "Mật khẩu",
+    "enter": "Vào chơi",
+    "wrong": "Sai mật khẩu.",
+    "tooMany": "Thử sai quá nhiều lần. Hãy chờ vài phút rồi thử lại.",
+    "error": "Máy chủ không phản hồi. Hãy thử lại."
+  },
+  "lobby": {
+    "yourName": "Tên",
+    "gameCode": "Mã phòng",
+    "join": "Tham gia",
+    "or": "hoặc",
+    "create": "Tạo ván mới",
+    "sendCode": "Gửi cho họ mã này hoặc đường dẫn mời.",
+    "gameCodeLabel": "Mã phòng {{spelled}}",
+    "shareInvite": "Chia sẻ lời mời",
+    "cancel": "Hủy",
+    "connecting": "Đang kết nối…"
+  },
+  "toast": {
+    "noAnswer": "Máy chủ không phản hồi. Hãy kiểm tra kết nối.",
+    "inviteCopied": "Đã sao chép đường dẫn mời",
+    "shareText": "Vào chơi cùng mình nhé",
+    "partnerLeft": "{{name}} đã rời ván. Chia sẻ mã để bay cùng người khác.",
+    "partnerJoined": "{{name}} đã tham gia.",
+    "partnerOffline": "{{name}} mất kết nối. Chỗ của họ vẫn được giữ.",
+    "partnerBack": "{{name}} đã quay lại."
+  },
+  "errors": {
+    "unknown": "Đã có lỗi xảy ra.",
+    "bad-request": "Yêu cầu không hợp lệ.",
+    "room-not-found": "Không có ván nào với mã này.",
+    "room-full": "Ván này đã đủ hai người chơi.",
+    "bad-token": "Không khôi phục được chỗ ngồi của bạn.",
+    "not-in-room": "Bạn không ở trong ván nào.",
+    "already-in-room": "Bạn đã ở trong một ván khác.",
+    "game-not-over": "Ván chơi chưa kết thúc.",
+    "unknown-game": "Máy chủ này không có trò chơi đó.",
+    "stale-match": "Ván chơi đã thay đổi: màn hình vừa được cập nhật, hãy thử lại.",
+    "too-many-rooms": "Bạn đang mở quá nhiều ván. Hãy chơi xong hoặc rời một ván trước.",
+    "not-creator": "Chỉ người tạo ván mới được chọn chỗ ngồi."
+  }
+}
