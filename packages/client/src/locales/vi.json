@@ -4,6 +4,14 @@
     "tagline": "Cùng nhau hạ cánh: một phi công, một cơ phó, không nói chuyện khi đã đổ xúc xắc.",
     "language": "Ngôn ngữ"
   },
+  "gate": {
+    "intro": "Trang riêng tư. Nhập mật khẩu để vào chơi.",
+    "password": "Mật khẩu",
+    "enter": "Vào chơi",
+    "wrong": "Sai mật khẩu.",
+    "tooMany": "Thử sai quá nhiều lần. Hãy chờ vài phút rồi thử lại.",
+    "error": "Máy chủ không phản hồi. Hãy thử lại."
+  },
   "seat": {
     "pilot": "Phi công",
     "copilot": "Cơ phó",

@@ -87,5 +87,6 @@ export function resetStore(): void {
     roundDeadline: null,
     nextTurnAt: null,
     history: [],
+    siteAccess: 'open',
   });
 }

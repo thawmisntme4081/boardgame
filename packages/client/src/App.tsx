@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { startConnection } from '@/api';
+import { checkSiteAccess, startConnection } from '@/api';
 import { Toaster } from '@/components/ui/sonner';
 import { Connecting, Lobby, WaitingRoom } from '@/screens/Lobby';
+import { SitePassword } from '@/screens/SitePassword';
 import { useGame } from '@/store';
 
 // The board is the heavy part; the lobby loads without it.
@@ -32,10 +33,23 @@ function Screen() {
 }
 
 export function App() {
-  useEffect(startConnection, []);
+  const siteAccess = useGame((s) => s.siteAccess);
+  // A private site asks for its password before anything else; the game connects after.
+  useEffect(() => {
+    void checkSiteAccess().then((ok) => useGame.getState().setSiteAccess(ok ? 'open' : 'locked'));
+  }, []);
+  useEffect(() => {
+    if (siteAccess === 'open') startConnection();
+  }, [siteAccess]);
   return (
     <>
-      <Screen />
+      {siteAccess === 'checking' ? (
+        <Connecting />
+      ) : siteAccess === 'locked' ? (
+        <SitePassword />
+      ) : (
+        <Screen />
+      )}
       <Toaster position="top-center" />
     </>
   );

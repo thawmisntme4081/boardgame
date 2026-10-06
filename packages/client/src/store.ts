@@ -4,6 +4,7 @@ import { loadHistory, saveRecord, type GameRecord } from './lib/history';
 import { loadSession, type Session } from './session';
 
 export type Connection = 'connecting' | 'online' | 'offline';
+export type SiteAccess = 'checking' | 'locked' | 'open';
 
 /**
  * The latest server view plus local UI state. Nothing here decides a rule: moves are
@@ -33,6 +34,8 @@ export interface GameStore {
   nextTurnAt: number | null;
   /** Finished games saved on this device, newest first. */
   history: GameRecord[];
+  /** The site password gate: being checked, waiting for the password, or open. */
+  siteAccess: SiteAccess;
 
   setConnection: (connection: Connection) => void;
   setSession: (session: Session | null) => void;
@@ -43,6 +46,7 @@ export interface GameStore {
   setInternSlot: (slot: SlotId | null) => void;
   toggleRerollPick: (dieId: string) => void;
   addRecord: (record: GameRecord) => void;
+  setSiteAccess: (siteAccess: SiteAccess) => void;
   leave: () => void;
 }
 
@@ -59,6 +63,7 @@ export const useGame = create<GameStore>()((set) => ({
   roundDeadline: null,
   nextTurnAt: null,
   history: loadHistory(),
+  siteAccess: 'checking',
 
   setConnection: (connection) => set({ connection }),
   setSession: (session) => set({ session }),
@@ -110,6 +115,7 @@ export const useGame = create<GameStore>()((set) => ({
         : [...s.rerollPick, dieId],
     })),
   addRecord: (record) => set({ history: saveRecord(record) }),
+  setSiteAccess: (siteAccess) => set({ siteAccess }),
   leave: () =>
     set({
       session: null,

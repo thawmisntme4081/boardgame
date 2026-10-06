@@ -15,7 +15,7 @@ import { formatClock } from '@/lib/clock';
 import { DEFAULT_SETUP, scenarioSummary } from '@/lib/setup';
 import { codeFromPath, inviteUrl, loadName } from '@/session';
 
-function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-muted/40 p-4">
       <div className="w-full max-w-sm">{children}</div>

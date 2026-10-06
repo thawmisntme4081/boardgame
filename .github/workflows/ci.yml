@@ -52,3 +52,20 @@ jobs:
             test-results/
             .lighthouseci/
           retention-days: 7
+
+  # Deploys main to Fly.io once every check and Playwright pass. Off until the repository
+  # variable FLY_DEPLOY is "true" and the secret FLY_API_TOKEN exists (see
+  # docs/reference/sharing-and-deployment.md). A deploy restarts the one machine for a few
+  # seconds: players reconnect and nothing is lost.
+  deploy:
+    name: Deploy to Fly.io
+    needs: e2e
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.FLY_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    concurrency: deploy-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only --ha=false --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

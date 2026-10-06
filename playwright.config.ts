@@ -30,6 +30,9 @@ export default defineConfig({
       ROOMS_PER_IP: '1000',
       // Timed games run out in 5 s here, so the timer test does not wait 3 minutes.
       ROUND_TIMER_SECONDS: '5',
+      // A log line per room and move slows the server when its output is piped to the test
+      // runner (writes to a pipe block on Windows); warnings are enough here.
+      LOG_LEVEL: 'warn',
     },
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

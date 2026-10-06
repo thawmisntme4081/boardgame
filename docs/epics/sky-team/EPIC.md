@@ -6,7 +6,7 @@
 
 An online, cooperative, 2-player version of the board game Sky Team: a pilot and a co-pilot land a plane by placing dice in silence, each on their own device (phone, tablet or desktop). Complete with every scenario and module of the base box and the Turbulence expansion, three languages, saved games, and a private deployment friends can use any time.
 
-**Epic done when:** Sky Team 13 (deploy) is verified: a friend in another city signs in through Cloudflare Access and plays a full game on the private URL.
+**Epic done when:** Sky Team 13 (deploy) is verified: a friend in another city enters the site password and plays a full game on the private site.
 
 ## Phases
 
@@ -24,7 +24,7 @@ An online, cooperative, 2-player version of the board game Sky Team: a pilot and
 | 10 | [I18n (EN + VI + FR)](phase-10-i18n.md) | ✅ Done (French Oct 5, 2026) | Medium (FR: low-medium) |
 | 11 | [Game history (local)](phase-11-history.md) | ✅ Done (Oct 4, 2026) | Low |
 | 12 | [Persistence](phase-12-persistence.md) | ✅ Done (Oct 5, 2026) | Medium-low |
-| 13 | [Deploy](phase-13-deploy.md) | ⏳ Not started | Medium |
+| 13 | [Deploy](phase-13-deploy.md) | 🚧 Repository side done; account steps left | Medium |
 
 Milestones reached: playable online base game (01–07, Sep 29, 2026); complete base box (08, Oct 2, 2026); Turbulence expansion (09, Oct 4, 2026).
 

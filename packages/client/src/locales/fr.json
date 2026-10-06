@@ -4,6 +4,14 @@
     "tagline": "Posez l’avion ensemble : un pilote, un copilote, plus un mot une fois les dés lancés.",
     "language": "Langue"
   },
+  "gate": {
+    "intro": "Site privé. Entrez le mot de passe pour jouer.",
+    "password": "Mot de passe",
+    "enter": "Entrer",
+    "wrong": "Mot de passe incorrect.",
+    "tooMany": "Trop d’essais. Attendez quelques minutes, puis réessayez.",
+    "error": "Le serveur n’a pas répondu. Réessayez."
+  },
   "seat": {
     "pilot": "Pilote",
     "copilot": "Copilote",

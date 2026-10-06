@@ -53,9 +53,47 @@ function setUrl(path: string): void {
 
 let started = false;
 
+/**
+ * The site password gate: whether this browser may connect (always, when the server has no
+ * password). A network failure counts as open: the server still refuses the socket.
+ */
+export async function checkSiteAccess(): Promise<boolean> {
+  try {
+    const res = await fetch('/auth/status', { credentials: 'same-origin' });
+    const data = (await res.json()) as { ok?: boolean };
+    return data.ok !== false;
+  } catch {
+    return true;
+  }
+}
+
+export type PasswordResult = 'ok' | 'wrong-password' | 'too-many-tries' | 'unknown';
+
+/** Sends the site password; a correct one sets the site cookie (kept 30 days, renewed). */
+export async function enterSitePassword(password: string): Promise<PasswordResult> {
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const data = (await res.json()) as { ok?: boolean; error?: string };
+    if (data.ok) return 'ok';
+    return data.error === 'wrong-password' || data.error === 'too-many-tries'
+      ? data.error
+      : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 /** Wires socket events into the store and connects. Safe to call more than once. */
 export function startConnection(): void {
-  if (started) return;
+  if (started) {
+    if (!socket.connected) socket.connect();
+    return;
+  }
   started = true;
   const store = useGame.getState;
 
@@ -64,6 +102,15 @@ export function startConnection(): void {
     void rejoin();
   });
   socket.on('disconnect', () => store().setConnection('offline'));
+  // Refused by the site password (a new password, an expired cookie): ask for it again
+  // instead of retrying forever.
+  socket.on('connect_error', () => {
+    void checkSiteAccess().then((ok) => {
+      if (ok) return;
+      socket.disconnect();
+      store().setSiteAccess('locked');
+    });
+  });
   socket.io.on('reconnect_attempt', () => store().setConnection('connecting'));
   socket.on('game:view', (view) => {
     // Seats can be swapped before round 1: keep the saved seat in step.

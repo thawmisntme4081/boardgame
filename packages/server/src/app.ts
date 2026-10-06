@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage } from 'node:http';
 import path from 'node:path';
 import type { GameState } from '@sky/shared';
 import express from 'express';
@@ -11,7 +11,10 @@ import {
   type GameServer,
   type HandlerOptions,
 } from './handlers';
+import type { AccessCheck } from './access';
+import { log } from './log';
 import { RoomManager } from './rooms';
+import type { SiteGate } from './siteGate';
 
 export interface ServerOptions extends HandlerOptions {
   /** How often idle rooms are swept; 0 turns the sweep off (tests call `rooms.sweep()`). */
@@ -23,18 +26,64 @@ export interface ServerOptions extends HandlerOptions {
    * production: they let anyone rewrite a game.
    */
   e2eHooks?: boolean;
+  /**
+   * The private site's login gate (Cloudflare Access): pages and socket connections without
+   * a valid Access token are refused. `/health` and `/robots.txt` stay open.
+   */
+  accessCheck?: AccessCheck;
+  /**
+   * The private site's shared password (`SITE_PASSWORD`): socket connections need the
+   * cookie a correct password gives. Pages load for anyone; they hold no game data.
+   */
+  siteGate?: SiteGate;
 }
 
 /** Express + Socket.IO on one HTTP server. Not listening yet, so tests can pick a port. */
 export function createGameServer(rooms = new RoomManager(), options: ServerOptions = {}) {
   const app = express();
 
+  // A private site: search engines must not list it, whatever address they find.
+  app.use((_req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
+
   app.get('/health', (_req, res) => {
     res.json({ ok: true, rooms: rooms.size });
   });
 
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  });
+
+  const { accessCheck } = options;
+  if (accessCheck) {
+    app.use((req, res, next) => {
+      void accessCheck(req).then((ok) => (ok ? next() : res.status(403).send('Forbidden')));
+    });
+  }
+
+  // The password screen asks here first; without a site password the gate is open.
+  const { siteGate } = options;
+  if (siteGate) app.use(siteGate.router);
+  else app.get('/auth/status', (_req, res) => void res.json({ gate: false, ok: true }));
+
+  // The socket handshake is an HTTP request too: it needs every gate that is on.
+  const gates: ((req: IncomingMessage) => boolean | Promise<boolean>)[] = [];
+  if (accessCheck) gates.push(accessCheck);
+  if (siteGate) gates.push((req) => siteGate.check(req));
+
   const httpServer = createServer(app);
-  const io: GameServer = new Server(httpServer);
+  const io: GameServer = new Server(httpServer, {
+    ...(gates.length > 0 && {
+      allowRequest: (req, callback) => {
+        void Promise.all(gates.map((gate) => gate(req))).then((results) => {
+          const ok = results.every(Boolean);
+          callback(ok ? null : 'forbidden', ok);
+        });
+      },
+    }),
+  });
   registerHandlers(io, rooms, options);
   // Rooms loaded from the store: re-arm their round timers and Total Trust rolls. A deadline
   // that passed while the server was down expires at once.
@@ -66,7 +115,7 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   if (sweepMs > 0) {
     const timer = setInterval(() => {
       const removed = rooms.sweep();
-      if (removed.length > 0) console.log(`removed idle rooms: ${removed.join(', ')}`);
+      if (removed.length > 0) log.info({ rooms: removed }, 'idle rooms removed');
     }, sweepMs);
     timer.unref();
     httpServer.on('close', () => clearInterval(timer));

@@ -4,6 +4,14 @@
     "tagline": "Land the plane together: one pilot, one co-pilot, no talking once the dice are rolled.",
     "language": "Language"
   },
+  "gate": {
+    "intro": "Private site. Enter the password to play.",
+    "password": "Password",
+    "enter": "Enter",
+    "wrong": "Wrong password.",
+    "tooMany": "Too many tries. Wait a few minutes, then try again.",
+    "error": "The server did not answer. Try again."
+  },
   "seat": {
     "pilot": "Pilot",
     "copilot": "Co-pilot",

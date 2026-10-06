@@ -22,6 +22,7 @@ import {
 } from '@sky/shared';
 import type { Server, Socket } from 'socket.io';
 import type { z } from 'zod';
+import { log, reportError } from './log';
 import { resolveSetup, type Room, type RoomManager, type Seated, type Setup } from './rooms';
 import {
   abilitySchema,
@@ -159,7 +160,8 @@ export function registerHandlers(
         try {
           handle(payload, reply);
         } catch (error) {
-          console.error(`[${event}] handler failed`, error);
+          log.error({ event, err: error }, 'handler failed');
+          reportError(error);
           reply({ ok: false, error: 'bad-request' } as R);
         }
       }) as never);
@@ -186,10 +188,20 @@ export function registerHandlers(
           syncRoundTimer(io, rooms, seated.room);
           broadcastRoom(io, rooms, seated.room);
         }
+        const wasOver = isGameOver(seated.room.game);
         const result = handle(parsed.data, seated);
+        const where = { event, room: seated.room.code, seat: seated.player.seat };
+        if (!result.ok) log.info({ ...where, error: result.error }, 'move rejected');
         if (result.ok) {
           rooms.touch(seated.room);
           syncRoundTimer(io, rooms, seated.room);
+          const { game } = seated.room;
+          if (!wasOver && isGameOver(game)) {
+            log.info(
+              { ...where, scenario: game.scenario.id, result: game.phase, round: game.round },
+              'game ended',
+            );
+          }
         }
         reply(result);
         if (result.ok) broadcastRoom(io, rooms, seated.room);
@@ -206,6 +218,10 @@ export function registerHandlers(
       if (!result.ok) return reply(result);
       void socket.join(result.value.room.code);
       reply(joined(result.value));
+      log.info(
+        { room: result.value.room.code, scenario: setup.scenario.id, timer: data.timer ?? false },
+        'room created',
+      );
       broadcastRoom(io, rooms, result.value.room);
     });
 
@@ -216,6 +232,7 @@ export function registerHandlers(
       if (!result.ok) return reply(result);
       void socket.join(result.value.room.code);
       reply(joined(result.value));
+      log.info({ room: result.value.room.code, seat: result.value.player.seat }, 'room joined');
       broadcastRoom(io, rooms, result.value.room);
     });
 
@@ -232,6 +249,7 @@ export function registerHandlers(
       if (oldSocketId && oldSocketId !== socket.id) io.in(oldSocketId).socketsLeave(data.code);
       void socket.join(data.code);
       reply(joined(result.value));
+      log.info({ room: data.code, seat: result.value.player.seat }, 'seat rejoined');
       broadcastRoom(io, rooms, result.value.room);
     });
 
@@ -243,6 +261,7 @@ export function registerHandlers(
       if (!left) return reply({ ok: false, error: 'not-in-room' });
       void socket.leave(left.room.code);
       reply(OK);
+      log.info({ room: left.room.code, seat: left.player.seat, closed: left.closed }, 'seat left');
       syncRoundTimer(io, rooms, left.room); // the game restarted (or the room closed)
       // The partner sees the empty seat and a fresh game, ready for someone new.
       if (!left.closed) broadcastRoom(io, rooms, left.room);

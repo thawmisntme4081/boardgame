@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.github
+.vite
+coverage
+test-results
+playwright-report
+.lighthouseci
+*.sqlite
+*.sqlite-*
+.env
+.env.*

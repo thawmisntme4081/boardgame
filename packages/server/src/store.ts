@@ -157,4 +157,4 @@ export class SqliteRoomStore implements RoomStore {
 }
 
 /** The database file inside `DATA_DIR` (the Fly volume in production). */
-export const databaseFile = (dataDir: string): string => path.join(dataDir, 'sky-team.sqlite');
+export const databaseFile = (dataDir: string): string => path.join(dataDir, 'boardgames.sqlite');

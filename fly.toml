@@ -1,0 +1,43 @@
+# Fly.io: one small machine in Singapore that stops when nobody is connected.
+# The app is created once with `fly apps create boardgames-dom-mam`; secrets are set with
+# `fly secrets set` (see docs/reference/sharing-and-deployment.md, "Going live").
+app = "boardgames-dom-mam"
+primary_region = "sin"
+# The server writes pending saves on SIGINT/SIGTERM before exiting.
+kill_signal = "SIGINT"
+kill_timeout = "10s"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  DATA_DIR = "/data"
+  PORT = "8080"
+  TRUST_PROXY = "1"
+  LOG_LEVEL = "info"
+  ROOM_TTL_MINUTES = "30"
+  ROOMS_PER_IP = "5"
+
+# The SQLite volume: it belongs to one machine, so the app runs on exactly one.
+[mounts]
+  source = "boardgames_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Pay only while someone is connected: stop when idle, start on the next visit.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
