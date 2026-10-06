@@ -52,8 +52,14 @@ boardgame/
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
 ├── packages/
+│   ├── engine/                 # @platform/engine: game-agnostic, no Sky Team code
+│   │   └── src/
+│   │       ├── index.ts        # GameDefinition contract: Actor, Outcome, Result, ScheduledMove
+│   │       ├── rng.ts          # seeded RNG (mulberry32) every game uses
+│   │       └── testing.ts      # engine test kit (@platform/engine/testing)
 │   ├── shared/
 │   │   └── src/
+│   │       ├── definition.ts   # Sky Team as a GameDefinition (@sky/shared/definition)
 │   │       ├── types.ts        # GameState, Seat, Slot, events
 │   │       ├── state.ts        # createGame()
 │   │       ├── rules.ts        # canPlaceDie, placeDie, endRound, checkLanding
@@ -61,7 +67,7 @@ boardgame/
 │   │       ├── scenarios.ts    # airport configs as data
 │   │       ├── modules/        # Flight Log modules as rule hooks
 │   │       ├── abilities.ts    # Special Ability actions
-│   │       └── rng.ts          # seedable dice roller
+│   │       └── rng.ts          # Sky Team's die (rollDie) on the engine RNG
 │   ├── server/
 │   │   └── src/
 │   │       ├── index.ts        # Express + Socket.IO bootstrap
@@ -89,6 +95,12 @@ boardgame/
 ├── e2e/                        # Playwright tests
 └── .github/workflows/ci.yml
 ```
+
+## Engine contract (Platform 01)
+
+`packages/engine` defines what a game gives the platform: `GameDefinition<S, M, V, C>` with `configSchema` and `moveSchema` (Zod), `setup({ config, seats, seed })`, `actors(state)` (who may act: a `turn`, a `simultaneous` choice or a `prompt`), `validate(state, move, by)` and `apply(state, move, by)` (`by` is a seat or `'system'`), `view(state, viewer, now)`, `schedule(state)` (moves the platform must make later), `outcome(state)` and `migrate`. Every function is pure; moves carry their time (`at`), so nothing reads the clock but the caller.
+
+Sky Team implements it in `packages/shared/src/definition.ts` (`skyTeam`) as a thin adapter over the existing rule functions. Seat moves: `place`, `spend-reroll`, `reroll`, `ability`, `cancel-swap`. System moves: `begin` (round 1 starts), `roll` (both players ready, or Total Trust), `time-up` (scheduled at the round's deadline). Seat choice, ability picks, Confirm and "ready" stay room state until Platform 02. In Platform 01 nothing on the server calls the adapter yet: the socket handlers still call the rule functions directly, and the adapter is exported from `@sky/shared/definition` only, so the client bundle does not include it.
 
 ## Server handler pattern
 

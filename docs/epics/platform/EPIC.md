@@ -1,6 +1,6 @@
 # Epic: Platform
 
-[← Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Design: [multi-game proposal](../../proposals/multi-game-platform.md)
+[← Master plan](../../PLAN.md) · **Status: 🚧 In progress (01 done)** · Design: [multi-game proposal](../../proposals/multi-game-platform.md)
 
 ## Goal
 
@@ -12,7 +12,7 @@ Turn the Sky Team app into a game-agnostic platform, like Board Game Arena: play
 
 | # | Phase | Status | Effort |
 | --- | --- | --- | --- |
-| 01 | [Engine contract](phase-01-engine-contract.md) | ⏳ Not started | Low-medium |
+| 01 | [Engine contract](phase-01-engine-contract.md) | ✅ Done (Oct 6, 2026) | Low-medium |
 | 02 | [Everything is a move](phase-02-everything-is-a-move.md) | ⏳ Not started | Medium |
 | 03 | [Generic protocol](phase-03-generic-protocol.md) | ⏳ Not started | Medium |
 | 04 | [Match log (persistence for every game)](phase-04-match-log.md) | ⏳ Not started | Medium |

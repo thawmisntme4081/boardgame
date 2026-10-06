@@ -4,7 +4,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 ## Stack (decided)
 
-- TypeScript strict everywhere, pnpm workspaces monorepo: `packages/shared`, `packages/server`, `packages/client`
+- TypeScript strict everywhere, pnpm workspaces monorepo: `packages/engine` (`@platform/engine`, game-agnostic), `packages/shared`, `packages/server`, `packages/client`
 - Server: Node 20+, Express, Socket.IO, Zod for every incoming payload
 - Client: React + Vite, Tailwind CSS v4 (`@tailwindcss/vite`), Zustand for the latest server view
 - shadcn/ui ONLY for lobby, dialogs, toasts, tooltip/popover, select/tabs. Add components one at a time with `pnpm dlx shadcn@latest add <name>` in `packages/client`. The cockpit board, dice, tracks and alarm board are custom components (Tailwind + SVG).
@@ -16,7 +16,8 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 - The server is the referee. Clients send intents only (`game:place { dieId, slot, coffeeDelta }`); the server validates with the shared rules and broadcasts.
 - All game rules live as pure functions in `packages/shared` (`createGame`, `rollDice`, `canPlaceDie`, `placeDie`, `resolveRound`, `checkLanding`). No rules in React components or socket handlers. The client highlights moves with `canPlaceInView`, which runs the same `checkPlacement` on the player's view.
 - `viewFor(state, seat)` is the ONLY way state leaves the server. A player never receives the partner's unplaced dice values, the RNG seed, or future rolls.
-- Seedable RNG; tests use fixed seeds. Log every accepted move for replay.
+- Seedable RNG (`nextRandom` in `@platform/engine`; Sky Team's `rollDie` in shared); tests use fixed seeds. Log every accepted move for replay.
+- Engine contract (Platform 01): `packages/engine` holds `GameDefinition` (`setup`, `actors`, `validate`, `apply`, `view(state, viewer, now)`, `schedule`, `outcome`, Zod `configSchema` / `moveSchema`) and the test kit (`@platform/engine/testing`). It never imports a game. Sky Team's adapter is `skyTeam` in `packages/shared/src/definition.ts`, imported only as `@sky/shared/definition` (never from the shared index, so the client bundle stays without it); seat moves `place`, `spend-reroll`, `reroll`, `ability`, `cancel-swap`, system moves `begin`, `roll`, `time-up` (carrying `at`). Socket handlers still call the rule functions until Platform 02. A rule change must keep `definition.test.ts` (the kit on every scenario) passing.
 - Modules only through hooks: a module's rules live in its `RuleModule` (`packages/shared/src/modules`), its slots declare `module` (or `coveredBy`) in `slots.ts`, and its state is a public `GameState` field. `rules.ts` calls hooks; it never tests for a module by name.
 - No in-game chat (removed at the user's request): players talk outside the app in the strategy phase and press "Roll dice"; do not add chat back unless asked.
 - Rooms are saved between restarts (Sky Team 12): `RoomStore` in `packages/server/src/store.ts` (SQLite through Drizzle when `DATA_DIR` is set, nothing saved otherwise, as in dev and tests). Every accepted change reaches `broadcastRoom`, which queues `rooms.save(room)` for the next tick; closing or sweeping a room deletes it; `rooms.close()` flushes on SIGINT/SIGTERM. Saved: players with rejoin tokens, `GameState`, `timed`, `rolesChosen`, `autoRollAt`; never socket ids or timers. On start, rooms load with everyone offline, idle ones are swept, and `syncRoundTimer` re-arms timers (a passed deadline expires at once). Change the saved shape → bump `ROOM_FORMAT` (old rows are dropped). Run a single server instance.

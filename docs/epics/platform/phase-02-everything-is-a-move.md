@@ -21,6 +21,7 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 3. Total Trust: the auto-roll after `NEXT_TURN_MS` becomes a scheduled system move.
 4. Generic scheduler: arms timers from `schedule(state)` after every accepted move, cancels stale ones, re-arms on load.
 5. Remove `timed`, `autoRollAt`, `roundTimer` and `rolesChosen` from `Room`.
+6. The socket handlers call `skyTeam.validate` / `apply` (from `@sky/shared/definition`, Platform 01) instead of the rule functions. Add the new seat moves (`choose-seat`, `pick-ability`, `confirm`, `ready`) to `skyTeamMoveSchema`; `ready` then leads to the system `roll`. Decide whether the duplicate-`place` no-op moves into `validate` (Platform 01 left it in the handler).
 
 ## Checklist
 

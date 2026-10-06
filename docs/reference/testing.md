@@ -8,6 +8,7 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 | --- | --- | --- | --- |
 | Unit | Vitest | Every rule, module and ability, `viewFor`, scenarios | Every save, every push |
 | Property / fuzz | Vitest + fast-check | Random legal games on every scenario never throw and keep invariants; dice never leak | Every push |
+| Engine kit | Vitest + `@platform/engine/testing` | Each game through its `GameDefinition` only: random games where every move passes `moveSchema` and `validate`, every state and view is plain JSON data, views leak nothing (a per-game `findLeaks`), and replaying the moves from the seed gives the same final state. Sky Team: every scenario, plus timed games with scheduled time-ups | Every push |
 | Integration | Vitest + `socket.io-client` | Real server on a random port, two clients: join, play, reconnect, illegal moves rejected; a restart on the same SQLite file mid-game (identical views after rejoining; a timed round whose deadline passed while down ends at once) | Every push |
 | Component | React Testing Library | Dice tray, valid-slot highlighting, module panels, dialogs, lobby | Every push |
 | End-to-end | Playwright | Two browser contexts on Desktop Chrome, iPhone 13 (WebKit), Pixel 7: lobby, full game, landing, refresh, leaving, module games | Every push to `main` and every PR (after the `check` job) |

@@ -21,7 +21,7 @@ This is a personal/learning project on a private, invite-only site: if it is eve
 | Epic | Goal | Phases | Status | Needs |
 | --- | --- | --- | --- | --- |
 | [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | ✅ Done (Oct 6, 2026); live at `boardgames-dom-mam.fly.dev` | — |
-| [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | ⏳ Not started | Sky Team |
+| [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | 🚧 In progress (01 done) | Sky Team |
 | [Second game](epics/second-game/EPIC.md) | A small 2–4 player game with simultaneous moves, proving the platform | 01 | ⏳ Not started | Platform 01–05 |
 | [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op | planned | ⏳ Not started | Platform, Second game |
 | [Isle of Skye](epics/isle-of-skye/EPIC.md) | Isle of Skye, 2–5 players | planned | ⏳ Not started | Platform, Second game |

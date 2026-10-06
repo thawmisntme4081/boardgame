@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "@sky/shared": ["./packages/shared/src/index.ts"]
+      "@sky/shared": ["./packages/shared/src/index.ts"],
+      "@platform/engine": ["./packages/engine/src/index.ts"],
+      "@platform/engine/testing": ["./packages/engine/src/testing.ts"]
     }
   }
 }
