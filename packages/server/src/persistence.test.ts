@@ -134,6 +134,29 @@ describe.each([
     expect(store.loadMatch('nope')).toBeUndefined();
   });
 
+  it("deletes one game's abandoned matches older than the cutoff, with their log", () => {
+    const store = open();
+    store.createMatch(record('OTHER', { gameId: 'twilight-struggle' }), { n: 0, state: {} });
+    store.endMatch('OTHER', 'abandoned', null, 100);
+    for (const id of ['OLD', 'NEW', 'DONE']) {
+      store.createMatch(record(id), { n: 0, state: {} });
+      store.appendMove(id, { n: 1, move: {}, by: 'pilot', at: 1 });
+    }
+    store.endMatch('OLD', 'abandoned', null, 100);
+    store.endMatch('NEW', 'abandoned', null, 300);
+    store.endMatch('DONE', 'over', { kind: 'coop', won: true, reasons: [] }, 100);
+    expect(store.pruneEnded('sky-team', 'abandoned', 200)).toBe(1);
+    expect(store.loadMatch('OLD')).toBeUndefined();
+    expect(store.loadMatch('NEW')).toBeDefined();
+    expect(store.loadMatch('DONE')).toBeDefined();
+    // Another game's abandoned match is not this game's to delete.
+    expect(store.loadMatch('OTHER')).toBeDefined();
+    expect(store.pruneEnded('sky-team', 'abandoned', 200)).toBe(0);
+    // Finished matches go by their own rule.
+    expect(store.pruneEnded('sky-team', 'over', 200)).toBe(1);
+    expect(store.loadMatch('DONE')).toBeUndefined();
+  });
+
   it('lists the open matches, and records how one ended', () => {
     const store = open();
     store.createMatch(record('M1'), { n: 0, state: {} });

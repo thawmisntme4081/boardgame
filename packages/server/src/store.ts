@@ -8,7 +8,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { Outcome } from '@platform/engine';
 import Database from 'better-sqlite3';
-import { and, asc, desc, eq, gt } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, lt } from 'drizzle-orm';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { GameConfig } from './games';
@@ -40,6 +40,7 @@ export interface StoredRoom {
 }
 
 export type MatchStatus = 'open' | 'over' | 'abandoned';
+export type EndedStatus = Exclude<MatchStatus, 'open'>;
 
 export interface MatchRecord {
   id: string;
@@ -100,6 +101,11 @@ export interface MatchStore {
   ): void;
   loadMatch(matchId: string): LoadedMatch | undefined;
   listOpen(): MatchRecord[];
+  /**
+   * Deletes `gameId`'s matches that ended as `status` before `before`, with their seats, moves
+   * and snapshots. Returns how many.
+   */
+  pruneEnded(gameId: string, status: EndedStatus, before: number): number;
   close(): void;
 }
 
@@ -266,6 +272,18 @@ export class MemoryMatchStore implements MatchStore {
     return [...this.matches.values()]
       .map((json) => JSON.parse(json) as MatchRecord)
       .filter((m) => m.status === 'open');
+  }
+
+  pruneEnded(gameId: string, status: EndedStatus, before: number): number {
+    let removed = 0;
+    for (const [id, json] of this.matches) {
+      const match = JSON.parse(json) as MatchRecord;
+      if (match.gameId !== gameId || match.status !== status) continue;
+      if ((match.endedAt ?? 0) >= before) continue;
+      for (const table of [this.matches, this.seats, this.moves, this.snapshots]) table.delete(id);
+      removed++;
+    }
+    return removed;
   }
 
   close(): void {}
@@ -551,6 +569,24 @@ export class SqliteMatchStore implements MatchStore {
       .where(eq(matchesTable.status, 'open'))
       .all()
       .map(toRecord);
+  }
+
+  pruneEnded(gameId: string, status: EndedStatus, before: number): number {
+    const old = and(
+      eq(matchesTable.gameId, gameId),
+      eq(matchesTable.status, status),
+      lt(matchesTable.endedAt, before),
+    );
+    const ids = this.db.select({ id: matchesTable.id }).from(matchesTable).where(old).all();
+    if (ids.length === 0) return 0;
+    const list = ids.map((r) => r.id);
+    this.sqlite.transaction(() => {
+      this.db.delete(matchSeatsTable).where(inArray(matchSeatsTable.matchId, list)).run();
+      this.db.delete(matchMovesTable).where(inArray(matchMovesTable.matchId, list)).run();
+      this.db.delete(matchSnapshotsTable).where(inArray(matchSnapshotsTable.matchId, list)).run();
+      this.db.delete(matchesTable).where(inArray(matchesTable.id, list)).run();
+    })();
+    return list.length;
   }
 
   close(): void {

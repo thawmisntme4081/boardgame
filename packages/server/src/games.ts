@@ -10,6 +10,7 @@ import {
 } from '@sky/shared/definition';
 import type { PlayerView } from '@sky/shared';
 import type { ZodType } from 'zod';
+import type { EndedStatus } from './store';
 
 // One game for now, so the platform's types are its types. The Second game epic widens them
 // (each room then carries its game's types behind the registry).
@@ -24,7 +25,20 @@ export interface GameEntry {
   lobby: ZodType<Partial<GameConfig>>;
   /** The server's own settings for this game (round lengths…); players cannot change them. */
   settings: Partial<GameConfig>;
+  /**
+   * How long an ended match stays in the store, by how it ended; then it is deleted, log and
+   * all. A status left out is kept for good (long games played over days must not lose one).
+   */
+  keepEnded?: Partial<Record<EndedStatus, number>>;
 }
+
+const DAY_MS = 24 * 60 * 60_000;
+
+/**
+ * Sky Team is played in one sitting, and each player's Flight Log keeps their own record: an
+ * unfinished game goes after a day, a finished one after 30 days (time to look into a bug).
+ */
+const SKY_TEAM_KEEP_ENDED = { abandoned: DAY_MS, over: 30 * DAY_MS };
 
 export type GameRegistry = ReadonlyMap<string, GameEntry>;
 
@@ -35,7 +49,12 @@ export function createRegistry(settings: GameSettings = {}): GameRegistry {
   return new Map<string, GameEntry>([
     [
       skyTeam.id,
-      { definition: skyTeam, lobby: skyTeamLobbySchema, settings: settings[skyTeam.id] ?? {} },
+      {
+        definition: skyTeam,
+        lobby: skyTeamLobbySchema,
+        settings: settings[skyTeam.id] ?? {},
+        keepEnded: SKY_TEAM_KEEP_ENDED,
+      },
     ],
   ]);
 }

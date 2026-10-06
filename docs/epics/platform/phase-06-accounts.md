@@ -1,4 +1,4 @@
-# Platform 06: Accounts and match history
+# Platform 06: Accounts (the Flight Log goes with you)
 
 [← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **high**
 
@@ -6,30 +6,29 @@ Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-1
 
 ## Goals
 
-- Optional accounts, so history follows a player across devices and games; guests keep playing without one.
-- Match history for every game, read from the match store; Sky Team's Flight Log is one game's view of it.
+- Optional accounts, so a player's Flight Log and their seat follow them across devices; guests keep playing without one.
+- **Decided Oct 6, 2026:** the history a player keeps is the Flight Log (one small record per game: scenario, seat, result, round, date), stored in the account, not the server's match log. Sky Team's matches are deleted 30 days after they end (`keepEnded` in the registry), so history cannot be read from `matches`.
 
 ## Feature scope
 
-- **In:** sign-in, sessions for HTTP and sockets, seats linked to accounts, history and profile pages (`/history`, `/u/:userId`), import of the device's Sky Team 11 history, account deletion.
+- **In:** sign-in, sessions for HTTP and sockets, seats linked to accounts, the Flight Log stored per account (written by the server when a match ends, for every seated account), a history page reading it, a profile (display name), import of the device's Sky Team 11 history on first sign-in, account deletion.
+- **Out (decided Oct 6, 2026):** history read from the match store, and the replay viewer (old matches are deleted).
 - **Out:** public leaderboards; social features (friends lists, chat).
 
 ## Technical tasks
 
 1. Sign-in via an auth library storing users in the platform's SQLite database (e.g. Better Auth): Google or GitHub, or email one-time codes if an email service is added. No passwords stored.
 2. Sessions in an httpOnly cookie, read by Express and the Socket.IO handshake; seats linked to accounts; guests unaffected.
-3. History from `matches` + `outcome` (written once per match by the match runner); per-game summary cards from each game's `Summary` component.
+3. Flight Log records per account: when a match ends, the server writes one record per seated account (game, scenario, seat, outcome, round, date) into a `flight_log` table; the history page reads it; per-game summary cards from each game's `Summary` component. Guests keep the local Flight Log (Sky Team 11).
 4. Profile (display name); import of the local history from Sky Team 11 on first sign-in.
 5. Account hygiene: sign out, delete account and history, sign-in rate limits, no session ids in logs.
-6. Optional: replay viewer from the stored seed and move log.
 
 ## Checklist
 
 - [ ] Sign-in provider set up (OAuth app credentials from the user)
 - [ ] Sessions for HTTP and sockets; seats linked to accounts; guests unaffected
-- [ ] History and profile pages
+- [ ] Flight Log per account (written at match end), history and profile pages
 - [ ] Local-history import, sign out, delete account
 - [ ] Tests (mocked auth in unit/integration, one Playwright sign-in flow against a test provider)
-- [ ] Optional: replay viewer
 
 **Done when:** the same history appears after signing in on another device.

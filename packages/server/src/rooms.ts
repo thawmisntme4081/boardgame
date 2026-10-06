@@ -25,6 +25,7 @@ import {
   hashToken,
   toStored,
   type LoadedMatch,
+  type EndedStatus,
   type MatchStore,
   type StoredRoom,
 } from './store';
@@ -386,8 +387,16 @@ export class RoomManager {
     return { room, player, closed: false };
   }
 
-  /** Deletes rooms that nobody is connected to and that have been idle too long. */
+  /**
+   * Deletes rooms that nobody is connected to and that have been idle too long, and the ended
+   * matches each game no longer keeps (its `keepEnded`).
+   */
   sweep(): string[] {
+    for (const [gameId, { keepEnded = {} }] of this.games) {
+      for (const [status, ms] of Object.entries(keepEnded) as [EndedStatus, number][]) {
+        if (!this.closed) this.store?.pruneEnded(gameId, status, this.now() - ms);
+      }
+    }
     const cutoff = this.now() - this.idleTtlMs;
     const removed: string[] = [];
     for (const room of this.rooms.values()) {

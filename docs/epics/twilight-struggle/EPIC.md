@@ -27,3 +27,7 @@ Each phase gets its own `phase-NN-<name>.md` file here when it starts. The ruleb
 ## Order and dependencies
 
 - Needs the [Platform epic](../platform/EPIC.md) and the [Second game epic](../second-game/EPIC.md).
+
+## Requirements noted early
+
+- **Long games and the platform's timings (noted Oct 6, 2026):** a room nobody is connected to is swept after `ROOM_TTL_MINUTES` (30 minutes) and its match marked abandoned; Sky Team is played in one sitting, Twilight Struggle over days. Before this epic, make the idle time a per-game setting in the registry (`games.ts`, next to `abandonedTtlMs`), and leave `abandonedTtlMs` unset (or long) for Twilight Struggle so a paused game is never deleted.

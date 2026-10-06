@@ -8,6 +8,7 @@ import {
   type Presence,
 } from '@sky/shared';
 import { RotateCcw, X } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cancelSwap, spendReroll } from '@/api';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,39 @@ import { SetAsideDice, WeatherNote } from './notes';
 import { AbilityList, WinConditions } from './popovers';
 import { placingText } from './text';
 
+interface RollCounts {
+  /** Whether the last view had a Working Together offer waiting. */
+  swap: boolean;
+  /** Per die id: its last value, and how many times it rolled since it appeared. */
+  dice: Record<string, { value: DieValue; rolls: number }>;
+}
+
+function nextRollCounts(seen: RollCounts, view: PlayerView): RollCounts {
+  // The offer was answered: the values that changed were swapped, not rolled.
+  const swapped = seen.swap && view.swap === null;
+  const dice: RollCounts['dice'] = {};
+  for (const { id, value } of view.myDice) {
+    const was = seen.dice[id];
+    const rolled = was !== undefined && was.value !== value && !swapped;
+    dice[id] = { value, rolls: (was?.rolls ?? 0) + (rolled ? 1 : 0) };
+  }
+  return { swap: view.swap !== null, dice };
+}
+
+/**
+ * A key per die that changes when the die is rolled again (a reroll, Turbulence, Adaptation),
+ * so its face rolls; a Working Together swap changes the value without rolling it.
+ */
+function useRollKeys(view: PlayerView): (id: string) => string {
+  const [seen, setSeen] = useState<RollCounts>(() =>
+    nextRollCounts({ swap: false, dice: {} }, view),
+  );
+  const next = nextRollCounts(seen, view);
+  // Adjusting state while rendering, when the view changed (React's pattern for derived state).
+  if (JSON.stringify(next) !== JSON.stringify(seen)) setSeen(next);
+  return (id) => `${id}:${next.dice[id]?.rolls ?? 0}`;
+}
+
 /** What you hold: the Intern token or traffic die in play, your dice, and dice set aside. */
 function PlacingDice({ view }: { view: PlayerView }) {
   const selectedDieId = useGame((s) => s.selectedDieId);
@@ -30,6 +64,7 @@ function PlacingDice({ view }: { view: PlayerView }) {
   const selectDie = useGame((s) => s.selectDie);
   const internSlot = useGame((s) => s.internSlot);
   const { t } = useTranslation();
+  const rollKey = useRollKeys(view);
   // Synchronization: the co-pilot holds the black traffic die until it is placed.
   const trafficDie = view.seat === 'copilot' ? view.bonus?.die : undefined;
   // Training the intern: the token the die on the Intern space collects, waiting for a space.
@@ -65,9 +100,8 @@ function PlacingDice({ view }: { view: PlayerView }) {
         const shown = (isSelected ? die.value + coffeeDelta : die.value) as DieValue;
         return (
           <DieButton
-            // A new value (a reroll, turbulence) is a new die on screen, so it tumbles in;
-            // coffee changes only `shown`, which keeps the die still.
-            key={`${die.id}:${die.value}`}
+            // A die rolled again gets a new key, so its face rolls; coffee and a swap do not.
+            key={rollKey(die.id)}
             value={shown}
             seat={view.seat}
             pressed={isSelected}

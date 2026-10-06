@@ -207,8 +207,15 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
               aria-label={t(view.brakes > i ? 'cockpit.deployed' : 'cockpit.notDeployed', {
                 label: t('modules.iceBrake', { n: i + 2 }),
               })}
-              className="block h-0.5 w-11 rounded-full bg-muted-foreground desktop:w-12"
-            />
+              className="h-2 w-10 overflow-hidden rounded-full bg-muted-foreground/25"
+            >
+              <span
+                className={cn(
+                  'block h-full origin-left rounded-full bg-light-on transition-transform duration-700 ease-out',
+                  view.brakes > i ? 'scale-x-100' : 'scale-x-0',
+                )}
+              />
+            </span>
           ),
           <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />,
         )}
