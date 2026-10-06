@@ -1,6 +1,6 @@
 # Epic: Sky Team
 
-[← Master plan](../../PLAN.md) · **Status: 🚧 In progress (01–12 done)**
+[← Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 6, 2026)**
 
 ## Goal
 
@@ -24,9 +24,9 @@ An online, cooperative, 2-player version of the board game Sky Team: a pilot and
 | 10 | [I18n (EN + VI + FR)](phase-10-i18n.md) | ✅ Done (French Oct 5, 2026) | Medium (FR: low-medium) |
 | 11 | [Game history (local)](phase-11-history.md) | ✅ Done (Oct 4, 2026) | Low |
 | 12 | [Persistence](phase-12-persistence.md) | ✅ Done (Oct 5, 2026) | Medium-low |
-| 13 | [Deploy](phase-13-deploy.md) | 🚧 Repository side done; account steps left | Medium |
+| 13 | [Deploy](phase-13-deploy.md) | ✅ Done (Oct 6, 2026) | Medium |
 
-Milestones reached: playable online base game (01–07, Sep 29, 2026); complete base box (08, Oct 2, 2026); Turbulence expansion (09, Oct 4, 2026).
+Milestones reached: playable online base game (01–07, Sep 29, 2026); complete base box (08, Oct 2, 2026); Turbulence expansion (09, Oct 4, 2026); live on the private site `https://boardgames-dom-mam.fly.dev` (13, Oct 6, 2026). Epic done Oct 6, 2026; one follow-up left open: the first month's Fly bill (Sky Team 13).
 
 ## Order and dependencies
 

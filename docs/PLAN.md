@@ -20,7 +20,7 @@ This is a personal/learning project on a private, invite-only site: if it is eve
 
 | Epic | Goal | Phases | Status | Needs |
 | --- | --- | --- | --- | --- |
-| [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | 🚧 In progress (01–12 done) | — |
+| [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | ✅ Done (Oct 6, 2026); live at `boardgames-dom-mam.fly.dev` | — |
 | [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–07 | ⏳ Not started | Sky Team |
 | [Second game](epics/second-game/EPIC.md) | A small 2–4 player game with simultaneous moves, proving the platform | 01 | ⏳ Not started | Platform 01–05 |
 | [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op | planned | ⏳ Not started | Platform, Second game |
@@ -33,7 +33,7 @@ Status legend: ✅ done · 🚧 in progress · ⏳ not started.
 
 ```mermaid
 flowchart LR
-  ST[Sky Team 01–12 ✅] --> ST13[Sky Team 13 Deploy]
+  ST[Sky Team 01–12 ✅] --> ST13[Sky Team 13 Deploy ✅]
   ST13 --> P1[Platform 01–03<br/>contract, moves, protocol]
   P1 --> P4[Platform 04 Match log] --> P5[Platform 05 Client shell]
   P5 --> P6[Platform 06 Accounts]
@@ -47,7 +47,7 @@ flowchart LR
 - **Platform 01–03 are a refactor:** Sky Team must play exactly as before at the end of each.
 - **Large games** come one epic at a time, after the second game has proved the platform; their order is open.
 
-Suggested next steps: Sky Team 13 (deploy) → Platform 01–06 → Second game → the large games.
+Suggested next steps: Platform 01–06 → Second game → the large games. (Sky Team is done and live; follow-up: check the first month's Fly bill in early November 2026.)
 
 ## Game epic template
 

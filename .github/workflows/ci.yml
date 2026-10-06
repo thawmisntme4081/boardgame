@@ -1,9 +1,16 @@
 name: CI
 
+# A push or pull request that only changes Markdown (docs, CLAUDE.md) runs nothing: no checks,
+# no deploy. As soon as any other file changes, everything runs. One-off: "[skip ci]" in the
+# commit message skips a run too.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
 
 jobs:
   check:

@@ -106,7 +106,7 @@ Tick each box as it is done. **(you)** marks what only the owner can do (account
 **4. Backup secrets (you set the keys; never paste them in a chat)**
 
 - [x] `fly secrets set LITESTREAM_REPLICA_URL=s3://boardgames-backup/main LITESTREAM_ENDPOINT=https://<account id>.r2.cloudflarestorage.com LITESTREAM_ACCESS_KEY_ID=<id> LITESTREAM_SECRET_ACCESS_KEY=<secret>` (or one at a time with `--stage`, then `fly secrets deploy`: a partial set would start Litestream without its keys)
-- [ ] Optional: `fly secrets set SENTRY_DSN=...`
+- [x] Optional: `fly secrets set SENTRY_DSN=...` (server project, EU region; plus the GitHub variable `VITE_SENTRY_DSN` for the browser project)
 - [x] Never set `GAME_SEED` or `E2E_HOOKS` (`fly secrets list` shows only the four Litestream secrets)
 - [x] `fly logs` after the restart: no "the database is not backed up" warning; Litestream logs "snapshot written" and "wal segment written" (Oct 6, 2026)
 
@@ -128,19 +128,19 @@ Tick each box as it is done. **(you)** marks what only the owner can do (account
 
 - [x] `fly tokens create deploy --app boardgames-dom-mam --name github-actions` → repository secret `FLY_API_TOKEN` (a repository secret, not an environment secret: the deploy job uses no environment)
 - [x] Repository variable `FLY_DEPLOY` = `true` (and `VITE_SENTRY_DSN` if wanted)
-- [ ] A push to `main` deploys after the checks pass
+- [x] A push to `main` deploys after the checks pass (first CI deploy Oct 6, 2026)
 
 **8. Checks**
 
 - [x] Two browsers play a round on the live site over WebSockets (`wss://…/socket.io/?transport=websocket`, not long-polling)
 - [x] The machine suspends by itself when nobody is connected (seen on Oct 6, 2026)
-- [ ] On a phone: open the link, sign in with the PIN, create a game, play a round with a friend
-- [ ] After about 10 minutes idle, open the link again: it wakes within a few seconds
+- [x] On a phone: open the link, enter the password, create a game, play a round with a friend (Oct 6, 2026)
+- [x] After about 10 minutes idle, open the link again: it wakes within a few seconds (Oct 6, 2026)
 - [x] Backup restore: `fly ssh console -C "litestream restore -config /etc/litestream.yml -o /tmp/check.sqlite /data/boardgames.sqlite"`, then `fly ssh console -C "ls -l /tmp/check.sqlite /data/boardgames.sqlite"` shows the same size; clean up with `fly ssh console -C "sh -c 'rm -f /tmp/check.sqlite*'"` (done Oct 6, 2026: same size, SQLite integrity check ok)
 
 **9. Billing (you)**
 
-- [ ] Turn on Fly's billing alerts
+- [ ] Check the 'current month to date bill' in the Fly dashboard now and then (Fly has no billing alerts, per its cost-management docs; if the organization's Billing page shows a Budgets option, set one, e.g. $5/month)
 - [ ] Check the first month's bill (expected about $1.50–2.50 plus the domain)
 
 **10. Later, optional: own domain and Cloudflare Access** (stronger: an email allowlist instead of one shared password; about $10/year for the domain)
