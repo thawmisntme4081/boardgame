@@ -7,36 +7,53 @@ import {
   type SeatId,
   type TableMove,
 } from '@platform/engine';
-import { game, type GameConfig, type GameMove, type GameState } from './games';
-import { ROOM_CODE_LENGTH } from './schemas';
+import { ROOM_CODE_LENGTH, type PlatformError, type SeatInfo } from '@platform/protocol';
+import {
+  configFor,
+  createRegistry,
+  type GameConfig,
+  type GameEntry,
+  type GameMove,
+  type GameRegistry,
+  type GameSettings,
+  type GameState,
+} from './games';
 import { fromStored, toStored, type RoomStore } from './store';
 
 /** No I or O, so codes can't be misread as 1 or 0. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
-/** Room errors; a refused move answers with the game's own reason code. */
-export type RoomError =
-  | 'room-not-found'
-  | 'room-full'
-  | 'bad-token'
-  | 'already-in-room'
-  | 'too-many-rooms'
-  | 'not-creator';
+/** The game a room plays when `room:create` names none (the only one so far). */
+export const DEFAULT_GAME = 'sky-team';
 
 export interface Player {
   seat: SeatId;
   name: string;
   token: string;
   socketId: string | null;
-  /** Created the game (or stayed when the creator left): runs the setup. */
+  /** Created the room (or stayed when the creator left): runs the setup. */
   creator: boolean;
+  /** The last `match:move` counter accepted from this player in the current match. */
+  seq: number;
+}
+
+/** The game being played in a room. A rematch starts a new match in the same room. */
+export interface Match {
+  /** `<room code>-<number>`: a move or rematch for another match is refused or ignored. */
+  id: string;
+  number: number;
+  /** Accepted changes so far: views carry it, so a client drops older ones. */
+  version: number;
 }
 
 export interface Room {
   code: string;
+  /** The game's id in the registry. */
+  gameId: string;
   players: Partial<Record<SeatId, Player>>;
-  /** The setup the game was created with; a rematch starts from it. */
+  /** The setup of the current match; a rematch starts from it. */
   config: GameConfig;
+  match: Match;
   game: GameState;
   /** Counted against the per-IP room limit while the room exists. */
   creatorIp: string;
@@ -46,13 +63,6 @@ export interface Room {
   timer?: ReturnType<typeof setTimeout>;
 }
 
-/** Platform facts about a seat; the game's own (picks, ready…) are in its view. */
-export interface SeatInfo {
-  name: string;
-  online: boolean;
-  creator: boolean;
-}
-
 export interface RoomOptions {
   now?: () => number;
   seed?: () => number;
@@ -60,6 +70,8 @@ export interface RoomOptions {
   idleTtlMs?: number;
   /** Live rooms one IP address may have created at once. */
   maxRoomsPerIp?: number;
+  /** The server's own settings per game (shorter timers in tests and dev). */
+  settings?: GameSettings;
   /**
    * Where rooms are kept between restarts (SQLite in production). Without one, rooms live
    * in memory only and a restart ends every game.
@@ -75,12 +87,13 @@ export interface Seated {
   player: Player;
 }
 
-export type Result<T, E = RoomError> = { ok: true; value: T } | { ok: false; error: E };
+/** A refusal: a platform code, or the game's own reason for refusing a move. */
+export type Result<T, E = PlatformError> = { ok: true; value: T } | { ok: false; error: E };
 
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
 
-const SEATS = game.meta.seats;
+const matchId = (code: string, number: number) => `${code}-${number}`;
 
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
@@ -92,6 +105,7 @@ export class RoomManager {
   private readonly idleTtlMs: number;
   private readonly maxRoomsPerIp: number;
   private readonly store: RoomStore | undefined;
+  readonly games: GameRegistry;
   /** Rooms changed since the last write; saved together on the next tick. */
   private readonly dirty = new Set<string>();
   private flushQueued = false;
@@ -104,13 +118,27 @@ export class RoomManager {
     this.newSeed = options.seed ?? (() => randomInt(2 ** 31));
     this.idleTtlMs = options.idleTtlMs ?? DEFAULT_IDLE_TTL_MS;
     this.maxRoomsPerIp = options.maxRoomsPerIp ?? DEFAULT_MAX_ROOMS_PER_IP;
+    this.games = createRegistry(options.settings);
     this.store = options.store;
     // Saved rooms come back with every player offline (they rejoin with their token). The
-    // server may have been stopped for days, so idle rooms are swept straight away.
+    // server may have been stopped for days, so idle rooms are swept straight away. A room
+    // whose game is no longer hosted is dropped.
     for (const stored of this.store?.loadAll() ?? []) {
-      this.rooms.set(stored.code, fromStored(stored));
+      if (this.games.has(stored.gameId)) this.rooms.set(stored.code, fromStored(stored));
+      else this.store?.delete(stored.code);
     }
     this.sweep();
+  }
+
+  /** The registry entry of the room's game. */
+  entry(room: Room): GameEntry {
+    const entry = this.games.get(room.gameId);
+    if (!entry) throw new Error(`room ${room.code} plays unknown game ${room.gameId}`);
+    return entry;
+  }
+
+  private seats(room: Room): readonly SeatId[] {
+    return this.entry(room).definition.meta.seats;
   }
 
   /** Every room, e.g. to re-arm their timers after a restart. */
@@ -177,23 +205,33 @@ export class RoomManager {
     return room && player ? { room, player } : undefined;
   }
 
-  /** The creator takes the first seat and chooses the setup. */
+  /**
+   * The creator takes the game's first seat. `request.config` holds the lobby's choices,
+   * checked by the game; the server's settings for the game are added on top.
+   */
   create(
     name: string,
     socketId: string,
     ip = 'unknown',
-    config: GameConfig = game.configSchema.parse({}),
+    request: { game?: string; config?: unknown } = {},
   ): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
+    const gameId = request.game ?? DEFAULT_GAME;
+    const entry = this.games.get(gameId);
+    if (!entry) return err('unknown-game');
+    const config = configFor(entry, request.config);
+    if (!config) return err('bad-request');
     const fromIp = [...this.rooms.values()].filter((r) => r.creatorIp === ip).length;
     if (fromIp >= this.maxRoomsPerIp) return err('too-many-rooms');
     const code = this.newCode();
-    const seat = SEATS[0]!;
+    const seat = entry.definition.meta.seats[0]!;
     const room: Room = {
       code,
+      gameId,
       players: {},
       config,
-      game: game.setup({ config, seats: [seat], host: seat, seed: this.newSeed() }),
+      match: { id: matchId(code, 1), number: 1, version: 0 },
+      game: entry.definition.setup({ config, seats: [seat], host: seat, seed: this.newSeed() }),
       creatorIp: ip,
       createdAt: this.now(),
       lastActivity: this.now(),
@@ -208,7 +246,7 @@ export class RoomManager {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const room = this.rooms.get(code);
     if (!room) return err('room-not-found');
-    const free = SEATS.find((seat) => !room.players[seat]);
+    const free = this.seats(room).find((seat) => !room.players[seat]);
     if (!free) return err('room-full');
     const player = this.seat(room, free, name, socketId);
     this.tell(room, { type: 'table:join', seat: free });
@@ -219,7 +257,9 @@ export class RoomManager {
   rejoin(code: string, token: string, socketId: string): Result<Seated> {
     const room = this.rooms.get(code);
     if (!room) return err('room-not-found');
-    const player = SEATS.map((seat) => room.players[seat]).find((p) => p?.token === token);
+    const player = this.seats(room)
+      .map((seat) => room.players[seat])
+      .find((p) => p?.token === token);
     if (!player) return err('bad-token');
     const current = this.sockets.get(socketId);
     if (current && (current.code !== code || current.seat !== player.seat)) {
@@ -241,8 +281,8 @@ export class RoomManager {
   }
 
   /**
-   * The player gives up their seat for good. An empty room is deleted; otherwise the
-   * game restarts, so whoever takes the free seat starts fresh with the one who stayed.
+   * The player gives up their seat for good. An empty room is deleted; otherwise a new match
+   * starts, so whoever takes the free seat starts fresh with the one who stayed.
    */
   leave(socketId: string): (Seated & { closed: boolean }) | undefined {
     const seated = this.bySocket(socketId);
@@ -250,7 +290,9 @@ export class RoomManager {
     const { room, player } = seated;
     this.sockets.delete(socketId);
     delete room.players[player.seat];
-    const stayed = SEATS.map((seat) => room.players[seat]).filter((p) => p !== undefined);
+    const stayed = this.seats(room)
+      .map((seat) => room.players[seat])
+      .filter((p) => p !== undefined);
     if (stayed.length === 0) {
       this.forget(room);
       return { room, player, closed: true };
@@ -266,7 +308,7 @@ export class RoomManager {
     const cutoff = this.now() - this.idleTtlMs;
     const removed: string[] = [];
     for (const room of this.rooms.values()) {
-      const anyoneOnline = SEATS.some((seat) => room.players[seat]?.socketId);
+      const anyoneOnline = this.seats(room).some((seat) => room.players[seat]?.socketId);
       if (!anyoneOnline && room.lastActivity <= cutoff) {
         this.forget(room);
         removed.push(room.code);
@@ -280,19 +322,66 @@ export class RoomManager {
       const p = room.players[seat];
       return p ? { name: p.name, online: p.socketId !== null, creator: p.creator } : null;
     };
-    return Object.fromEntries(SEATS.map((seat) => [seat, info(seat)]));
+    return Object.fromEntries(this.seats(room).map((seat) => [seat, info(seat)]));
   }
 
   /**
-   * Same room and seats, fresh game: from the room's setup, or `config` when given (it then
-   * becomes the room's setup). The game may carry choices over from the previous one.
+   * A new match in the same room and seats: from the room's setup, or `config` when given (it
+   * then becomes the room's setup). The game may carry choices over from the previous match.
    */
   rematch(room: Room, config: GameConfig = room.config): void {
-    const seats = SEATS.filter((seat) => room.players[seat]);
+    const { definition } = this.entry(room);
+    const seats = this.seats(room).filter((seat) => room.players[seat]);
     const host = seats.find((seat) => room.players[seat]!.creator) ?? seats[0]!;
     room.config = config;
-    room.game = game.setup({ config, seats, host, seed: this.newSeed(), previous: room.game });
+    room.game = definition.setup({
+      config,
+      seats,
+      host,
+      seed: this.newSeed(),
+      previous: room.game,
+    });
+    const number = room.match.number + 1;
+    room.match = { id: matchId(room.code, number), number, version: 0 };
+    for (const seat of seats) room.players[seat]!.seq = 0;
     this.touch(room);
+  }
+
+  /**
+   * A player's "play again" while looking at match `seenMatch`, with optional changes to the
+   * setup. Before play begins it only changes the setup (or nothing, if it is the same); after
+   * that, the match must be over. A second request for a match the partner already replaced
+   * changes nothing, unless it asks for another setup and the new match has not started.
+   */
+  requestRematch(room: Room, seenMatch: string, request?: unknown): Result<void> {
+    const entry = this.entry(room);
+    const config = request === undefined ? room.config : configFor(entry, request, room.config);
+    if (!config) return err('bad-request');
+    const { definition } = entry;
+    const started = definition.started?.(room.game) ?? true;
+    const same = JSON.stringify(config) === JSON.stringify(room.config);
+    if (seenMatch === room.match.id) {
+      if (started && definition.outcome(room.game) === null) return err('game-not-over');
+      if (!started && same) return ok(undefined);
+      this.rematch(room, config);
+      return ok(undefined);
+    }
+    if (seenMatch === matchId(room.code, room.match.number - 1)) {
+      if (!started && !same) this.rematch(room, config);
+      return ok(undefined);
+    }
+    return err('stale-match');
+  }
+
+  /**
+   * A player's move from `match:move`: a `seq` already accepted is a harmless repeat (a
+   * resend after a reconnect); otherwise the game checks and applies it.
+   */
+  play(room: Room, player: Player, seq: number, move: GameMove): Result<void, string> {
+    if (seq <= player.seq) return ok(undefined);
+    const result = this.move(room, player.seat, move);
+    if (result.ok) player.seq = seq;
+    return result;
   }
 
   /**
@@ -300,20 +389,32 @@ export class RoomManager {
    * move that arrives after the deadline finds the round already over.
    */
   move(room: Room, by: Mover, move: GameMove): Result<void, string> {
-    const at = this.now();
-    const ctx = { by, at };
-    const check = game.validate(room.game, move, ctx);
+    const { definition } = this.entry(room);
+    const ctx = { by, at: this.now() };
+    const check = definition.validate(room.game, move, ctx);
     if (!check.ok) return err(check.reason);
-    room.game = game.apply(room.game, move, ctx);
+    room.game = definition.apply(room.game, move, ctx);
+    room.match.version++;
     this.touch(room);
     return ok(undefined);
   }
 
   /** Makes the game's scheduled moves that are due now. Returns the moves made. */
   runDue(room: Room): PlayedMove<GameMove>[] {
-    const due = runDue(game, room.game, this.now());
+    const due = runDue(this.entry(room).definition, room.game, this.now());
     room.game = due.state;
+    room.match.version += due.moves.length;
     return due.moves;
+  }
+
+  /**
+   * Replaces the game state from outside the rules (the E2E test route only): the version
+   * moves on, so clients take the new view.
+   */
+  replaceGame(room: Room, game: GameState): void {
+    room.game = game;
+    room.match.version++;
+    this.touch(room);
   }
 
   /**
@@ -325,7 +426,7 @@ export class RoomManager {
     clearTimeout(room.timer);
     room.timer = undefined;
     if (this.closed || this.rooms.get(room.code) !== room) return;
-    const at = nextDue(game, room.game);
+    const at = nextDue(this.entry(room).definition, room.game);
     if (at === null) return;
     room.timer = setTimeout(
       () => {
@@ -342,8 +443,12 @@ export class RoomManager {
   /** Before the game starts: the creator takes `seat`; whoever sat there takes theirs. */
   chooseSeat(room: Room, player: Player, seat: SeatId): Result<void, string> {
     if (!player.creator) return err('not-creator');
+    if (!this.seats(room).includes(seat)) return err('bad-request');
     const move: TableMove = { type: 'table:choose-seat', seat };
-    const check = game.validate(room.game, move, { by: 'system', at: this.now() });
+    const check = this.entry(room).definition.validate(room.game, move, {
+      by: 'system',
+      at: this.now(),
+    });
     if (!check.ok) return err(check.reason);
     if (seat !== player.seat) {
       const partner = room.players[seat];
@@ -361,8 +466,12 @@ export class RoomManager {
 
   /** Tells the game about its table (a join, a seat choice) as a system move. */
   private tell(room: Room, move: TableMove): void {
+    const { definition } = this.entry(room);
     const ctx = { by: 'system', at: this.now() } as const;
-    if (game.validate(room.game, move, ctx).ok) room.game = game.apply(room.game, move, ctx);
+    if (definition.validate(room.game, move, ctx).ok) {
+      room.game = definition.apply(room.game, move, ctx);
+      room.match.version++;
+    }
     this.touch(room);
   }
 
@@ -373,7 +482,7 @@ export class RoomManager {
   }
 
   private seat(room: Room, seat: SeatId, name: string, socketId: string): Player {
-    const player: Player = { seat, name, token: randomUUID(), socketId, creator: false };
+    const player: Player = { seat, name, token: randomUUID(), socketId, creator: false, seq: 0 };
     room.players[seat] = player;
     this.sockets.set(socketId, { code: room.code, seat });
     this.touch(room);

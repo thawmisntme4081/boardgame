@@ -45,7 +45,7 @@ import {
 } from './rules';
 import { SCENARIOS, YUL } from './scenarios';
 import { SLOT_IDS } from './slots';
-import { createGame } from './state';
+import { createGame, ROUND_TIMER_MS } from './state';
 import { SEATS, type GameState, type Seat } from './types';
 import { viewFor, type PlayerView } from './views';
 
@@ -93,12 +93,20 @@ export const skyTeamConfigSchema = z.object({
     .string()
     .refine((id) => Object.hasOwn(SCENARIOS, id), 'unknown-scenario')
     .default(YUL.id),
-  /** Round timer in ms, or `null` for an untimed game. */
-  timerMs: z.number().int().positive().nullable().default(null),
-  /** Total Trust: the pause before the automatic roll (tests and dev shorten it). */
+  /** The lobby's choice: every round must be placed within `roundTimerMs`. */
+  timer: z.boolean().default(false),
+  /** Server setting: the length of a timed round (tests and dev shorten it). */
+  roundTimerMs: z.number().int().positive().default(ROUND_TIMER_MS),
+  /** Server setting: Total Trust's pause before the automatic roll (tests shorten it). */
   autoRollDelayMs: z.number().int().positive().default(NEXT_TURN_MS),
 });
 export type SkyTeamConfig = z.infer<typeof skyTeamConfigSchema>;
+
+/** What a player may choose in the lobby; the rest of the config are server settings. */
+export const skyTeamLobbySchema = z
+  .object({ scenario: z.string().min(1).max(20), timer: z.boolean() })
+  .partial();
+export type SkyTeamLobby = z.infer<typeof skyTeamLobbySchema>;
 
 const OK: Result = { ok: true };
 const fail = (reason: string): Result => ({ ok: false, reason });
@@ -247,7 +255,7 @@ export const skyTeam: GameDefinition<GameState, SkyTeamMove, PlayerView, SkyTeam
     }
     const state = createGame(SCENARIOS[config.scenario]!, seed, {
       setup: true,
-      timerMs: config.timerMs,
+      timerMs: config.timer ? config.roundTimerMs : null,
       autoRollDelayMs: config.autoRollDelayMs,
       crew,
     });
@@ -267,5 +275,6 @@ export const skyTeam: GameDefinition<GameState, SkyTeamMove, PlayerView, SkyTeam
     return viewFor(state, viewer, now);
   },
   schedule,
+  started: (state) => state.phase !== 'setup',
   outcome,
 };

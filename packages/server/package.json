@@ -12,6 +12,7 @@
   "dependencies": {
     "@sentry/node": "^11.4.0",
     "@platform/engine": "workspace:*",
+    "@platform/protocol": "workspace:*",
     "@sky/shared": "workspace:*",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.3",

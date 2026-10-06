@@ -14,7 +14,7 @@ import {
   type RoomStore,
   type StoredRoom,
 } from './store';
-import { next, startTestServer, takeOff, type Client } from './test-server';
+import { move, nextView, startTestServer, takeOff, type Client } from './test-server';
 
 const dirs: string[] = [];
 const tempFile = () => {
@@ -49,9 +49,12 @@ const room = (code: string, patch: Partial<Room> = {}): Room => ({
       token: 'token-ana',
       socketId: 'socket-1',
       creator: true,
+      seq: 0,
     },
   },
-  config: { scenario: YUL.id, timerMs: null, autoRollDelayMs: 5_000 },
+  gameId: 'sky-team',
+  config: { scenario: YUL.id, timer: false, roundTimerMs: 180_000, autoRollDelayMs: 5_000 },
+  match: { id: `${code}-1`, number: 1, version: 0 },
   game: createGame(YUL, 7, { setup: true }),
   creatorIp: '1.2.3.4',
   createdAt: 1,
@@ -160,8 +163,12 @@ describe('room manager with a store', () => {
 describe('a restart in the middle of a game', () => {
   /** A real server on a SQLite file; `restart` closes it and starts a new one on the same file. */
   async function serverOn(file: string, roundTimerMs?: number) {
-    const rooms = new RoomManager({ seed: () => 3, store: new SqliteRoomStore(file) });
-    const server = await startTestServer(rooms, { ...(roundTimerMs && { roundTimerMs }) });
+    const rooms = new RoomManager({
+      seed: () => 3,
+      store: new SqliteRoomStore(file),
+      ...(roundTimerMs && { settings: { 'sky-team': { roundTimerMs } } }),
+    });
+    const server = await startTestServer(rooms);
     servers.push(server);
     return server;
   }
@@ -169,12 +176,14 @@ describe('a restart in the middle of a game', () => {
   async function startGame(server: Awaited<ReturnType<typeof serverOn>>, timer = false) {
     const pilot = await server.connect();
     const copilot = await server.connect();
-    const ana = joined(await pilot.emitWithAck('room:create', { name: 'Ana', timer }));
+    const ana = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team', config: { timer } }),
+    );
     const ben = joined(await copilot.emitWithAck('room:join', { code: ana.code, name: 'Ben' }));
     await takeOff(pilot, copilot);
-    expectOk(await pilot.emitWithAck('game:ready', {}));
-    const rolled = next(pilot, 'game:view');
-    expectOk(await copilot.emitWithAck('game:ready', {}));
+    expectOk(await move(pilot, { type: 'ready' }));
+    const rolled = nextView(pilot);
+    expectOk(await move(copilot, { type: 'ready' }));
     await rolled;
     return {
       code: ana.code,
@@ -185,7 +194,7 @@ describe('a restart in the middle of a game', () => {
 
   async function rejoin(server: Awaited<ReturnType<typeof serverOn>>, code: string, token: string) {
     const client: Client = await server.connect();
-    const view = next(client, 'game:view');
+    const view = nextView(client);
     joined(await client.emitWithAck('room:rejoin', { code, token }));
     return view;
   }
@@ -199,9 +208,7 @@ describe('a restart in the middle of a game', () => {
     const seat: Seat = game.currentSeat!;
     const die = game.dice[seat][0]!;
     const slot = seat === 'pilot' ? 'axisPilot' : 'axisCopilot';
-    expectOk(
-      await clients[seat].emitWithAck('game:place', { dieId: die.id, slot, coffeeDelta: 0 }),
-    );
+    expectOk(await move(clients[seat], { type: 'place', dieId: die.id, slot, coffeeDelta: 0 }));
     await new Promise((resolve) => setImmediate(resolve));
     const before = first.rooms.get(code)!.game;
     first.rooms.close();
@@ -219,11 +226,7 @@ describe('a restart in the middle of a game', () => {
     const otherDie = before.dice[other][0]!;
     const otherSlot = other === 'pilot' ? 'axisPilot' : 'axisCopilot';
     expectOk(
-      await client.emitWithAck('game:place', {
-        dieId: otherDie.id,
-        slot: otherSlot,
-        coffeeDelta: 0,
-      }),
+      await move(client, { type: 'place', dieId: otherDie.id, slot: otherSlot, coffeeDelta: 0 }),
     );
   });
 

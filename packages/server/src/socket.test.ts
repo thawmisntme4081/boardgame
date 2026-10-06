@@ -1,6 +1,6 @@
 import type { JoinResult, PlayerView } from '@sky/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { next, startTestServer, takeOff, type Client } from './test-server';
+import { move, next, nextView, startTestServer, takeOff, type Client } from './test-server';
 
 const expectOk = (result: unknown) => expect(result).toEqual({ ok: true });
 
@@ -23,9 +23,9 @@ function joined(result: JoinResult) {
 async function twoPlayers() {
   const pilot = await server.connect();
   const copilot = await server.connect();
-  const created = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
-  const pilotView = next(pilot, 'game:view');
-  const copilotView = next(copilot, 'game:view');
+  const created = joined(await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }));
+  const pilotView = nextView(pilot);
+  const copilotView = nextView(copilot);
   const join = joined(await copilot.emitWithAck('room:join', { code: created.code, name: 'Ben' }));
   const views = await Promise.all([pilotView, copilotView]);
   // Round 1 starts once the creator has chosen the seats and both have confirmed.
@@ -44,9 +44,11 @@ describe('http', () => {
 describe('room:create', () => {
   it('returns a code, the pilot seat and a token, then a view and presence', async () => {
     const pilot = await server.connect();
-    const view = next(pilot, 'game:view');
+    const view = nextView(pilot);
     const presence = next(pilot, 'room:presence');
-    const result = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
+    const result = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+    );
 
     expect(result.code).toMatch(/^[A-HJ-NP-Z]{4}$/);
     expect(result.seat).toBe('pilot');
@@ -60,7 +62,7 @@ describe('room:create', () => {
 
   it('rejects a malformed payload without crashing', async () => {
     const socket = await server.connect();
-    expect(await socket.emitWithAck('room:create', { name: '' })).toEqual({
+    expect(await socket.emitWithAck('room:create', { name: '', game: 'sky-team' })).toEqual({
       ok: false,
       error: 'bad-request',
     });
@@ -69,8 +71,11 @@ describe('room:create', () => {
       error: 'bad-request',
     });
     // No ack function at all: the server must survive and keep answering.
-    (socket.emit as (event: string, payload: unknown) => void)('room:create', { name: 'Ana' });
-    expect(await socket.emitWithAck('room:create', { name: 'Ana' })).toEqual({
+    (socket.emit as (event: string, payload: unknown) => void)('room:create', {
+      name: 'Ana',
+      game: 'sky-team',
+    });
+    expect(await socket.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' })).toEqual({
       ok: false,
       error: 'already-in-room',
     });
@@ -91,7 +96,9 @@ describe('room:join', () => {
   it('tells both players who is seated', async () => {
     const pilot = await server.connect();
     const copilot = await server.connect();
-    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+    );
     const presence = next(pilot, 'room:presence');
     await copilot.emitWithAck('room:join', { code, name: 'Ben' });
     expect(await presence).toMatchObject({
@@ -103,7 +110,9 @@ describe('room:join', () => {
   it('accepts a lowercase code', async () => {
     const pilot = await server.connect();
     const copilot = await server.connect();
-    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+    );
     const result = await copilot.emitWithAck('room:join', {
       code: code.toLowerCase(),
       name: 'Ben',
@@ -129,17 +138,17 @@ describe('room:join', () => {
   });
 });
 
-describe('game:ready', () => {
+describe('match:move: ready', () => {
   it('rolls once both players are ready and hides the partner dice', async () => {
     const { pilot, copilot } = await twoPlayers();
 
-    const view = next(copilot, 'game:view');
-    expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: true });
+    const view = nextView(copilot);
+    expect(await move(pilot, { type: 'ready' })).toEqual({ ok: true });
     expect((await view).crew.ready.pilot).toBe(true);
 
-    const pilotView = next(pilot, 'game:view');
-    const copilotView = next(copilot, 'game:view');
-    expect(await copilot.emitWithAck('game:ready', {})).toEqual({ ok: true });
+    const pilotView = nextView(pilot);
+    const copilotView = nextView(copilot);
+    expect(await move(copilot, { type: 'ready' })).toEqual({ ok: true });
     const views: PlayerView[] = await Promise.all([pilotView, copilotView]);
 
     for (const view of views) {
@@ -157,61 +166,67 @@ describe('game:ready', () => {
 
   it('resets readiness after the roll and refuses ready while placing', async () => {
     const { pilot, copilot } = await twoPlayers();
-    await pilot.emitWithAck('game:ready', {});
-    const view = next(pilot, 'game:view');
-    await copilot.emitWithAck('game:ready', {});
+    await move(pilot, { type: 'ready' });
+    const view = nextView(pilot);
+    await move(copilot, { type: 'ready' });
     expect((await view).crew.ready).toEqual({ pilot: false, copilot: false });
-    expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: false, error: 'not-strategy' });
+    expect(await move(pilot, { type: 'ready' })).toEqual({ ok: false, error: 'not-strategy' });
   });
 
   it('waits for the partner and both confirms before round 1 starts', async () => {
     const pilot = await server.connect();
     const copilot = await server.connect();
-    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
-    expect(await pilot.emitWithAck('game:confirm', {})).toEqual({ ok: false, error: 'no-partner' });
-    expect(await pilot.emitWithAck('game:ready', {})).toEqual({ ok: false, error: 'not-strategy' });
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+    );
+    expect(await move(pilot, { type: 'confirm' })).toEqual({ ok: false, error: 'no-partner' });
+    expect(await move(pilot, { type: 'ready' })).toEqual({ ok: false, error: 'not-strategy' });
     await copilot.emitWithAck('room:join', { code, name: 'Ben' });
     expect(await copilot.emitWithAck('room:choose-seat', { seat: 'pilot' })).toEqual({
       ok: false,
       error: 'not-creator',
     });
-    expect(await pilot.emitWithAck('game:confirm', {})).toEqual({
+    expect(await move(pilot, { type: 'confirm' })).toEqual({
       ok: false,
       error: 'roles-missing',
     });
     expectOk(await pilot.emitWithAck('room:choose-seat', { seat: 'pilot' }));
-    expectOk(await pilot.emitWithAck('game:confirm', {}));
+    expectOk(await move(pilot, { type: 'confirm' }));
     const started = new Promise<PlayerView>((resolve) =>
-      copilot.on('game:view', (v) => v.phase === 'strategy' && resolve(v)),
+      copilot.on('match:view', ({ view: v }) => v.phase === 'strategy' && resolve(v)),
     );
-    expectOk(await copilot.emitWithAck('game:confirm', {}));
+    expectOk(await move(copilot, { type: 'confirm' }));
     expect((await started).round).toBe(1);
   });
 
   it('needs a seat', async () => {
     const socket = await server.connect();
-    expect(await socket.emitWithAck('game:ready', {})).toEqual({ ok: false, error: 'not-in-room' });
+    expect(await move(socket, { type: 'ready' })).toEqual({ ok: false, error: 'not-in-room' });
   });
 });
 
 describe('room:rejoin', () => {
   it('shows the partner offline, then restores the seat on a new connection', async () => {
     const { pilot, copilot, created } = await twoPlayers();
-    await pilot.emitWithAck('game:ready', {});
-    await copilot.emitWithAck('game:ready', {});
+    await move(pilot, { type: 'ready' });
+    await move(copilot, { type: 'ready' });
 
     const offline = next(copilot, 'room:presence');
     pilot.disconnect();
     expect((await offline).pilot).toMatchObject({ name: 'Ana', online: false });
 
     const returning: Client = await server.connect();
-    const view = next(returning, 'game:view');
+    const view = nextView(returning);
     const online = next(copilot, 'room:presence');
     const result = await returning.emitWithAck('room:rejoin', {
       code: created.code,
       token: created.token,
     });
-    expect(result).toEqual(created);
+    // The same seat and match; `seq` is the last move counter the server took from this seat
+    // ("ready" above), so the returning client carries on from there.
+    if (!result.ok || !created.ok) throw new Error('expected both joins to succeed');
+    expect(result).toEqual({ ...created, seq: result.seq });
+    expect(result.seq).toBeGreaterThan(created.seq);
     expect(await view).toMatchObject({ seat: 'pilot', phase: 'placing' });
     expect((await view).myDice).toHaveLength(4);
     expect((await online).pilot).toMatchObject({ online: true });
@@ -231,6 +246,62 @@ describe('room:rejoin', () => {
     ).toEqual({ ok: false, error: 'room-not-found' });
     expect(
       await stranger.emitWithAck('room:rejoin', { code: created.code, token: 'nope' }),
+    ).toEqual({ ok: false, error: 'bad-request' });
+  });
+});
+
+describe('the match envelope', () => {
+  /** Every envelope a client receives, in order. */
+  function envelopes(client: Client) {
+    const seen: { matchId: string; version: number; view: PlayerView }[] = [];
+    client.on('match:view', (envelope) => seen.push(envelope));
+    return seen;
+  }
+
+  it('numbers each change of a match, so views only move forward', async () => {
+    const { pilot, copilot, created } = await twoPlayers();
+    const seen = envelopes(pilot);
+    await move(pilot, { type: 'ready' });
+    await move(copilot, { type: 'ready' });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(seen.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(seen.map((e) => e.matchId))).toEqual(new Set([created.matchId]));
+    const versions = seen.map((e) => e.version);
+    expect(versions).toEqual([...versions].sort((a, b) => a - b));
+    expect(versions.at(-1)!).toBeGreaterThan(versions[0]!);
+  });
+
+  it('refuses a move for another match, and a game the server does not host', async () => {
+    const { pilot } = await twoPlayers();
+    expect(
+      await pilot.emitWithAck('match:move', {
+        matchId: 'ZZZZ-1',
+        seq: 999_999,
+        move: { type: 'ready' },
+      }),
+    ).toEqual({ ok: false, error: 'stale-match' });
+    const other = await server.connect();
+    expect(await other.emitWithAck('room:create', { name: 'Cat', game: 'chess' })).toEqual({
+      ok: false,
+      error: 'unknown-game',
+    });
+    expect(
+      await other.emitWithAck('room:create', {
+        name: 'Cat',
+        game: 'sky-team',
+        config: { scenario: 'nowhere' },
+      }),
+    ).toEqual({ ok: false, error: 'bad-request' });
+  });
+
+  it('refuses a move the game does not know', async () => {
+    const { pilot, created } = await twoPlayers();
+    expect(
+      await pilot.emitWithAck('match:move', {
+        matchId: created.matchId,
+        seq: 999_998,
+        move: { type: 'teleport' } as never,
+      }),
     ).toEqual({ ok: false, error: 'bad-request' });
   });
 });

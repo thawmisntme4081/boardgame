@@ -1,11 +1,53 @@
 // Helpers for integration tests: a real server on a random port and typed clients.
 import type { AddressInfo } from 'node:net';
-import type { ClientToServer, ServerToClient } from '@sky/shared';
+import type {
+  AckResult,
+  ClientToServer,
+  GameSetup,
+  PlayerMove,
+  PlayerView,
+  ServerToClient,
+} from '@sky/shared';
 import { io as connectClient, type Socket } from 'socket.io-client';
 import { createGameServer, type ServerOptions } from './app';
 import type { RoomManager } from './rooms';
 
 export type Client = Socket<ServerToClient, ClientToServer>;
+
+/** The match each client last saw a view of: its moves and rematches name it. */
+const seenMatch = new WeakMap<Client, string>();
+
+/**
+ * One counter for every client in the test process, so a new connection for a seat (a
+ * rejoin, a restarted server) always sends a `seq` above the ones the seat already used.
+ */
+let lastSeq = 0;
+
+function track(socket: Client): void {
+  socket.on('match:view', ({ matchId }) => seenMatch.set(socket, matchId));
+}
+
+/** A move on the match this client is looking at, with a new `seq`. */
+export function move(client: Client, move: PlayerMove): Promise<AckResult> {
+  return moveWithSeq(client, ++lastSeq, move);
+}
+
+/** A move with a chosen `seq`: the same one twice is a resend. */
+export function moveWithSeq(client: Client, seq: number, move: PlayerMove): Promise<AckResult> {
+  const matchId = seenMatch.get(client) ?? 'none';
+  return client.emitWithAck('match:move', { matchId, seq, move });
+}
+
+/** "Fly again" from the match this client is looking at, optionally with a new setup. */
+export function rematch(client: Client, config?: GameSetup): Promise<AckResult> {
+  const matchId = seenMatch.get(client) ?? 'none';
+  return client.emitWithAck('room:rematch', { matchId, ...(config && { config }) });
+}
+
+/** Resolves with the next view this client receives. Call before triggering it. */
+export function nextView(client: Client): Promise<PlayerView> {
+  return new Promise((resolve) => client.once('match:view', ({ view }) => resolve(view)));
+}
 
 export async function startTestServer(rooms?: RoomManager, options: ServerOptions = {}) {
   const server = createGameServer(rooms, options);
@@ -20,6 +62,7 @@ export async function startTestServer(rooms?: RoomManager, options: ServerOption
     async connect(): Promise<Client> {
       const socket: Client = connectClient(url, { transports: ['websocket'], forceNew: true });
       clients.push(socket);
+      track(socket);
       await new Promise<void>((resolve, reject) => {
         socket.once('connect', resolve);
         socket.once('connect_error', reject);
@@ -49,6 +92,6 @@ export function next<E extends keyof ServerToClient>(
  */
 export async function takeOff(pilot: Client, copilot: Client): Promise<void> {
   await pilot.emitWithAck('room:choose-seat', { seat: 'pilot' });
-  await pilot.emitWithAck('game:confirm', {});
-  await copilot.emitWithAck('game:confirm', {});
+  await move(pilot, { type: 'confirm' });
+  await move(copilot, { type: 'confirm' });
 }

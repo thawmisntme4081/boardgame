@@ -1,11 +1,13 @@
 // Everything that talks to the server. Components call these; only the server changes the game.
 import {
+  SKY_TEAM,
   SLOTS,
   type AbilityAction,
   type AbilityId,
   type AckResult,
   type GameSetup,
   type JoinResult,
+  type PlayerMove,
   type SlotId,
   type Seat,
 } from '@sky/shared';
@@ -30,6 +32,12 @@ async function withTimeout<R>(request: () => Promise<R>): Promise<R | null> {
 }
 
 const emit = () => socket.timeout(ACK_TIMEOUT_MS);
+
+/**
+ * The match on screen: its id, the newest view version seen, and the last move counter this
+ * client used (it only goes up, so a reload or a new match never reuses one).
+ */
+const match = { id: null as string | null, version: -1, seq: 0 };
 
 /** Requests still waiting for their ack, so a double tap does not send a second one. */
 const pending = new Set<string>();
@@ -112,7 +120,11 @@ export function startConnection(): void {
     });
   });
   socket.io.on('reconnect_attempt', () => store().setConnection('connecting'));
-  socket.on('game:view', (view) => {
+  socket.on('match:view', ({ matchId, version, view }) => {
+    // Views are complete, so only the newest counts: an older one of the same match is dropped.
+    if (matchId === match.id && version < match.version) return;
+    match.id = matchId;
+    match.version = version;
     // Seats can be swapped before round 1: keep the saved seat in step.
     const { session } = store();
     if (session && session.seat !== view.seat) {
@@ -150,10 +162,20 @@ async function rejoin(): Promise<void> {
   const result = await withTimeout(() =>
     emit().emitWithAck('room:rejoin', { code: session.code, token: session.token }),
   );
+  if (result?.ok) followMatch(result);
   if (result && !result.ok) {
     toast.error(errorText(result.error));
     forgetSession();
   }
+}
+
+/** A join or rejoin names the current match and the last move counter the seat used. */
+function followMatch(result: Extract<JoinResult, { ok: true }>): void {
+  if (result.matchId !== match.id) {
+    match.id = result.matchId;
+    match.version = -1;
+  }
+  match.seq = Math.max(match.seq, result.seq);
 }
 
 function onJoined(result: JoinResult | null, name: string): boolean {
@@ -162,6 +184,7 @@ function onJoined(result: JoinResult | null, name: string): boolean {
     toast.error(errorText(result.error));
     return false;
   }
+  followMatch(result);
   const session = { code: result.code, token: result.token, seat: result.seat, name };
   saveSession(session);
   useGame.getState().setSession(session);
@@ -179,7 +202,7 @@ export async function createRoom(
   setup: GameSetup = {},
 ): Promise<boolean> {
   const result = await withTimeout(() =>
-    emit().emitWithAck('room:create', { name, timer, ...setup }),
+    emit().emitWithAck('room:create', { name, game: SKY_TEAM, config: { ...setup, timer } }),
   );
   return onJoined(result, name);
 }
@@ -189,18 +212,27 @@ export async function joinRoom(code: string, name: string): Promise<boolean> {
   return onJoined(result, name);
 }
 
-export const ready = () => run('ready', () => emit().emitWithAck('game:ready', {}));
+/**
+ * Sends a move for the match on screen, with this client's next move counter: a resend of the
+ * same request (after a reconnect) carries the same `seq`, so the server applies it once.
+ */
+const sendMove = (key: string, move: PlayerMove) =>
+  run(key, () =>
+    emit().emitWithAck('match:move', { matchId: match.id ?? '', seq: ++match.seq, move }),
+  );
+
+export const ready = () => sendMove('ready', { type: 'ready' });
 
 /** Before round 1: pick your Special Ability card (`null` takes it back). */
 export const pickAbility = (ability: AbilityId | null) =>
-  run('pick-ability', () => emit().emitWithAck('game:pick-ability', { ability }));
+  sendMove('pick-ability', { type: 'pick-ability', ability });
 
 /** Before round 1: the creator takes a seat (the partner gets the other). */
 export const chooseSeat = (seat: Seat) =>
   run('choose-seat', () => emit().emitWithAck('room:choose-seat', { seat }));
 
 /** Before round 1: confirm roles and abilities; round 1 starts once both have. */
-export const confirmSetup = () => run('confirm', () => emit().emitWithAck('game:confirm', {}));
+export const confirmSetup = () => sendMove('confirm', { type: 'confirm' });
 
 /**
  * Places the selected die, with its draft coffee, on `slot`. An Intern space takes two
@@ -216,29 +248,31 @@ export async function placeSelected(slot: SlotId): Promise<boolean> {
   const intent = internSlot
     ? { dieId: selectedDieId, slot: internSlot, coffeeDelta, tokenSlot: slot }
     : { dieId: selectedDieId, slot, coffeeDelta };
-  return run('place', () => emit().emitWithAck('game:place', intent));
+  return sendMove('place', { type: 'place', ...intent });
 }
 
 /** Adaptation, Anticipation or Working Together, on one of your dice. */
 export const playAbility = (action: AbilityAction) =>
-  run('ability', () => emit().emitWithAck('game:ability', action));
+  sendMove('ability', { type: 'ability', ...action });
 
 /** Working Together: take back your offer before your partner answers. */
-export const cancelSwap = () =>
-  run('cancel-swap', () => emit().emitWithAck('game:cancel-swap', {}));
+export const cancelSwap = () => sendMove('cancel-swap', { type: 'cancel-swap' });
 
-export const spendReroll = () =>
-  run('spend-reroll', () => emit().emitWithAck('game:spend-reroll', {}));
+export const spendReroll = () => sendMove('spend-reroll', { type: 'spend-reroll' });
 
 export function reroll(dieIds: string[]): Promise<boolean> {
-  return run('reroll', () => emit().emitWithAck('game:reroll', { dieIds }));
+  return sendMove('reroll', { type: 'reroll', dieIds });
 }
 
 /** A new game in the same room: the same scenario, or the one in `setup`. */
 export const rematch = (setup: GameSetup = {}) =>
-  run('rematch', () => emit().emitWithAck('game:rematch', setup));
+  run('rematch', () =>
+    emit().emitWithAck('room:rematch', { matchId: match.id ?? '', config: setup }),
+  );
 
 function forgetSession(): void {
+  match.id = null;
+  match.version = -1;
   saveSession(null);
   useGame.getState().leave();
   setUrl('/');

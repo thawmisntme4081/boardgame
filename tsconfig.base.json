@@ -17,7 +17,8 @@
     "paths": {
       "@sky/shared": ["./packages/shared/src/index.ts"],
       "@platform/engine": ["./packages/engine/src/index.ts"],
-      "@platform/engine/testing": ["./packages/engine/src/testing.ts"]
+      "@platform/engine/testing": ["./packages/engine/src/testing.ts"],
+      "@platform/protocol": ["./packages/protocol/src/index.ts"]
     }
   }
 }

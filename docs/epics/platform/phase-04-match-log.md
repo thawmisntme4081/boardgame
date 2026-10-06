@@ -25,6 +25,8 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 5. Rules versions: each match stores `rules_version`; old matches load through `migrate` or are finished on old rules.
 6. Migrate rooms stored by Sky Team 12.
 
+From Platform 03: rooms already have a match id (`<code>-<n>`), a `version` counting accepted changes and each player's last `seq`; the log can key its rows on the match id and use `version` as the move number. Moves made by `runDue` already come back as `PlayedMove` (`{ move, by, at }`), the row shape the log needs.
+
 ## Checklist
 
 - [x] Storage decision: SQLite on the Fly volume (Oct 4, 2026)

@@ -346,6 +346,8 @@
     "already-in-room": "Bạn đã ở trong một ván khác.",
     "not-strategy": "Xúc xắc đã được đổ.",
     "game-not-over": "Ván chơi chưa kết thúc.",
+    "unknown-game": "Máy chủ này không có trò chơi đó.",
+    "stale-match": "Ván chơi đã thay đổi: màn hình vừa được cập nhật, hãy thử lại.",
     "too-many-rooms": "Bạn đang mở quá nhiều ván. Hãy chơi xong hoặc rời một ván trước.",
     "game-over": "Ván chơi đã kết thúc.",
     "not-placing": "Chưa đổ xúc xắc.",

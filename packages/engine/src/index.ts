@@ -119,6 +119,11 @@ export interface GameDefinition<S, M, V, C> {
    * makes every move that is due before the next player move (and when a saved game loads).
    */
   schedule?(state: S): ScheduledMove<M>[];
+  /**
+   * Whether play has begun (past the setup choices). Until then a rematch may still change the
+   * setup; afterwards it needs an `outcome`. Without it, a game counts as started at once.
+   */
+  started?(state: S): boolean;
   /** How the game ended, or `null` while it goes on. */
   outcome(state: S): Outcome | null;
   /** Upgrades a state saved by an older rules version. */

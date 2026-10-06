@@ -355,6 +355,8 @@
     "already-in-room": "Vous êtes déjà dans une partie.",
     "not-strategy": "Les dés sont déjà lancés.",
     "game-not-over": "La partie n’est pas encore terminée.",
+    "unknown-game": "Ce serveur ne propose pas ce jeu.",
+    "stale-match": "La partie a changé : votre écran est à jour, réessayez.",
     "too-many-rooms": "Vous avez trop de parties ouvertes. Terminez-en ou quittez-en une d’abord.",
     "game-over": "La partie est terminée.",
     "not-placing": "Les dés ne sont pas encore lancés.",

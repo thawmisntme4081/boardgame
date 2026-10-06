@@ -52,6 +52,7 @@ boardgame/
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
 ├── packages/
+│   ├── protocol/               # @platform/protocol: events, payload schemas, error codes
 │   ├── engine/                 # @platform/engine: game-agnostic, no Sky Team code
 │   │   └── src/
 │   │       ├── index.ts        # GameDefinition contract: Actor, Outcome, Result, ScheduledMove
@@ -71,9 +72,10 @@ boardgame/
 │   ├── server/
 │   │   └── src/
 │   │       ├── index.ts        # Express + Socket.IO bootstrap
-│   │       ├── rooms.ts        # create/join/leave, cleanup
-│   │       ├── handlers.ts     # socket event handlers
-│   │       └── schemas.ts      # Zod payload schemas
+│   │       ├── games.ts        # game registry: definition, lobby schema, server settings
+│   │       ├── rooms.ts        # rooms, matches, seq and versions, scheduler
+│   │       ├── handlers.ts     # room:* and match:move, for every game
+│   │       └── store.ts        # saved rooms (SQLite / memory)
 │   └── client/
 │       └── src/
 │           ├── main.tsx
@@ -98,7 +100,7 @@ boardgame/
 
 ## Engine contract (Platform 01)
 
-`packages/engine` defines what a game gives the platform: `GameDefinition<S, M, V, C>` with `configSchema` and `moveSchema` (Zod), `setup({ config, seats, seed })`, `actors(state)` (who may act: a `turn`, a `simultaneous` choice or a `prompt`), `validate(state, move, by)` and `apply(state, move, by)` (`by` is a seat or `'system'`), `view(state, viewer, now)`, `schedule(state)` (moves the platform must make later), `outcome(state)` and `migrate`. Every function is pure; moves carry their time (`at`), so nothing reads the clock but the caller.
+`packages/engine` defines what a game gives the platform: `GameDefinition<S, M, V, C>` with `configSchema` and `moveSchema` (Zod), `setup({ config, seats, host, seed, previous })`, `actors(state)` (who may act: a `turn`, a `simultaneous` choice or a `prompt`), `validate(state, move, { by, at })` and `apply(...)` (`by` is a seat or `'system'`), `view(state, viewer, now)`, `schedule(state)` (moves the platform must make later), `started(state)` (past the setup choices), `outcome(state)` and `migrate`. Every function is pure; nothing reads the clock but the caller.
 
 Moves are checked and applied with a context `{ by, at }`: the platform stamps the time, so timers stay pure and replays exact. The platform tells a game about its table with two engine-defined system moves, `table:join` and `table:choose-seat` (the game says whether a seat change is still allowed; the platform then moves the players). `setup` gets the seats taken, the `host` and the `previous` game at the table, so a rematch or a restart can carry choices over. `runDue` makes the scheduled moves that are due, each at its own time.
 
@@ -108,7 +110,9 @@ Sky Team implements it in `packages/shared/src/definition.ts` (`skyTeam`, export
 
 ## Server handler pattern
 
-`onSeated` in `handlers.ts`: parse the payload (game events: `{ type, ...payload }` through the game's `moveSchema`) → find the socket's seat → make the due scheduled moves → `rooms.move` (the game validates and applies; rules resolve axis, engines, the end of the round and landing) → `broadcastRoom` saves, re-arms the timer and sends presence and each seat's view. Any failure returns `{ ok: false, error }` and changes nothing. The handlers still speak the Sky Team protocol (events per action, the lobby's `timer` and `scenario` turned into the game's config) until Platform 03.
+**Protocol (Platform 03):** `packages/protocol` is the wire format for every game (see [protocol.md](protocol.md)): `room:*` events for the platform, `match:move` / `match:view` for games. A room plays one match at a time (`room.match`: id `<code>-<n>`, number, version); `version` counts accepted changes and rides on every view; each player keeps the last `seq` accepted from them, so a resend is a no-op. The registry (`games.ts`) gives each game id its definition, lobby schema and server settings.
+
+`onSeated` in `handlers.ts`: parse the payload with the protocol's schema → find the socket's seat → make the due scheduled moves → for `match:move`, check the match id and the game's `moveSchema`, then `rooms.play` (the `seq` check, then the game validates and applies; rules resolve axis, engines, the end of the round and landing) → `broadcastRoom` saves, re-arms the timer and sends presence and each seat's `match:view`. Any failure returns `{ ok: false, error }` and changes nothing. The handlers import no game code; the one Sky Team-specific route left is the test-only `POST /__e2e/rooms/:code/game` in `app.ts`.
 
 ## Scaling later
 

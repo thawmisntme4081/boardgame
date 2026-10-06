@@ -8,5 +8,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Bundle the workspace package; it ships as TypeScript source.
-  noExternal: ['@sky/shared', '@platform/engine'],
+  noExternal: ['@sky/shared', '@platform/engine', '@platform/protocol'],
 });

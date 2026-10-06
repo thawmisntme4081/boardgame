@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@platform/engine": "workspace:*",
+    "@platform/protocol": "workspace:*",
     "zod": "^4.6.5"
   }
 }

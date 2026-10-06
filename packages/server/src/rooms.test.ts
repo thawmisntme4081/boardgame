@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SCENARIO_LIST, type Scenario } from '@sky/shared';
-import { game } from './games';
+import { skyTeam as game } from '@sky/shared/definition';
 import { ROOM_CODE_ALPHABET, RoomManager, type Room } from './rooms';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -174,8 +174,8 @@ describe('setup choices', () => {
   const two = () => pick((s) => s.abilities === 2);
   const one = () => pick((s) => s.abilities === 1);
   const realTime = () => pick((s) => s.modules.includes('real-time'));
-  const config = (scenario: Scenario, timerMs: number | null = null) =>
-    game.configSchema.parse({ scenario: scenario.id, timerMs });
+  /** The lobby's request for a room on `scenario`. */
+  const config = (scenario: Scenario) => ({ config: { scenario: scenario.id } });
 
   /** A room on `scenario` with Ana (creator, pilot) and Ben (co-pilot) seated. */
   const seated = (scenario: Scenario) => {
@@ -186,8 +186,17 @@ describe('setup choices', () => {
   };
 
   it('uses YUL when the lobby names no scenario, and refuses an unknown one', () => {
-    expect(game.configSchema.parse({})).toMatchObject({ scenario: 'yul-green', timerMs: null });
+    expect(game.configSchema.parse({})).toMatchObject({ scenario: 'yul-green', timer: false });
     expect(game.configSchema.safeParse({ scenario: 'mars' }).success).toBe(false);
+    const rooms = new RoomManager();
+    expect(rooms.create('Ana', 's1', 'ip', { config: { scenario: 'mars' } })).toEqual({
+      ok: false,
+      error: 'bad-request',
+    });
+    expect(rooms.create('Ana', 's1', 'ip', { game: 'chess' })).toEqual({
+      ok: false,
+      error: 'unknown-game',
+    });
   });
 
   it('lets each player pick their own card when the scenario has two, never the same one', () => {
@@ -301,14 +310,17 @@ describe('scheduled moves', () => {
   /** A YUL room with both seated and round 1 started, on fake timers and a fake clock. */
   function startedRoom(timerMs: number | null) {
     vi.useFakeTimers({ now: 1_000_000 });
-    const rooms = new RoomManager({ seed: () => 1 });
+    const rooms = new RoomManager({
+      seed: () => 1,
+      ...(timerMs && { settings: { 'sky-team': { roundTimerMs: timerMs } } }),
+    });
     const changed: string[] = [];
     rooms.onScheduled = (room) => {
       changed.push(room.code);
       rooms.arm(room);
     };
     const { room, player } = unwrap(
-      rooms.create('Ana', 's1', 'ip', game.configSchema.parse({ timerMs })),
+      rooms.create('Ana', 's1', 'ip', { config: { timer: timerMs !== null } }),
     );
     unwrap(rooms.join(room.code, 'Ben', 's2'));
     unwrap(rooms.chooseSeat(room, player, 'pilot'));

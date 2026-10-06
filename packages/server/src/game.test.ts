@@ -16,7 +16,16 @@ import {
 import { applyAgentAction, createRandomAgent, playRandomGame } from '@sky/shared/random-play';
 import { afterEach, describe, expect, it } from 'vitest';
 import { RoomManager } from './rooms';
-import { next, startTestServer, takeOff, type Client } from './test-server';
+import {
+  move,
+  moveWithSeq,
+  next,
+  nextView,
+  rematch,
+  startTestServer,
+  takeOff,
+  type Client,
+} from './test-server';
 
 let server: Awaited<ReturnType<typeof startTestServer>> | undefined;
 
@@ -43,10 +52,12 @@ async function seatedRoom(seed = 1) {
   };
   const views: Record<Seat, PlayerView[]> = { pilot: [], copilot: [] };
   for (const seat of ['pilot', 'copilot'] as const) {
-    clients[seat].on('game:view', (view) => views[seat].push(view));
+    clients[seat].on('match:view', ({ view: view }) => views[seat].push(view));
   }
-  const { code } = joined(await clients.pilot.emitWithAck('room:create', { name: 'Ana' }));
-  const copilotView = next(clients.copilot, 'game:view');
+  const { code } = joined(
+    await clients.pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+  );
+  const copilotView = nextView(clients.copilot);
   joined(await clients.copilot.emitWithAck('room:join', { code, name: 'Ben' }));
   await copilotView;
   const room = () => server!.rooms.get(code)!;
@@ -56,12 +67,12 @@ async function seatedRoom(seed = 1) {
 /** Resolves on the first view that has been rolled (placing). */
 function rolledView(client: Client): Promise<PlayerView> {
   return new Promise((resolve) => {
-    const listener = (view: PlayerView) => {
+    const listener = ({ view }: { view: PlayerView }) => {
       if (view.phase !== 'placing') return;
-      client.off('game:view', listener);
+      client.off('match:view', listener);
       resolve(view);
     };
-    client.on('game:view', listener);
+    client.on('match:view', listener);
   });
 }
 
@@ -69,8 +80,8 @@ async function bothReady(clients: Record<Seat, Client>) {
   // Round 1 waits for the crew: keep the seats and confirm (a no-op later in the game).
   await takeOff(clients.pilot, clients.copilot);
   const rolled = [rolledView(clients.pilot), rolledView(clients.copilot)];
-  expectOk(await clients.pilot.emitWithAck('game:ready', {}));
-  expectOk(await clients.copilot.emitWithAck('game:ready', {}));
+  expectOk(await move(clients.pilot, { type: 'ready' }));
+  expectOk(await move(clients.copilot, { type: 'ready' }));
   await Promise.all(rolled);
 }
 
@@ -117,19 +128,17 @@ describe('a full game over sockets', () => {
       actions++;
       switch (action.type) {
         case 'roll':
-          expectOk(await clients.pilot.emitWithAck('game:ready', {}));
-          expectOk(await clients.copilot.emitWithAck('game:ready', {}));
+          expectOk(await move(clients.pilot, { type: 'ready' }));
+          expectOk(await move(clients.copilot, { type: 'ready' }));
           break;
         case 'spend-reroll':
-          expectOk(await clients[action.seat].emitWithAck('game:spend-reroll', {}));
+          expectOk(await move(clients[action.seat], { type: 'spend-reroll' }));
           break;
         case 'reroll':
-          expectOk(
-            await clients[action.seat].emitWithAck('game:reroll', { dieIds: action.dieIds }),
-          );
+          expectOk(await move(clients[action.seat], { type: 'reroll', dieIds: action.dieIds }));
           break;
         case 'place':
-          expectOk(await clients[action.seat].emitWithAck('game:place', action.intent));
+          expectOk(await move(clients[action.seat], { type: 'place', ...action.intent }));
           break;
       }
     }
@@ -171,7 +180,7 @@ describe('a full game over sockets', () => {
       dice: { pilot: dice('p', [3, 2, 3, 3]), copilot: dice('c', [3, 2, 3, 3]) },
     };
     const place = (seat: Seat, dieId: string, slot: string) =>
-      clients[seat].emitWithAck('game:place', { dieId, slot, coffeeDelta: 0 } as never);
+      move(clients[seat], { type: 'place', dieId, slot, coffeeDelta: 0 } as never);
 
     expectOk(await place('pilot', 'r7-p1', 'axisPilot'));
     expectOk(await place('copilot', 'r7-c1', 'axisCopilot'));
@@ -193,15 +202,16 @@ describe('a full game over sockets', () => {
   });
 });
 
-describe('game:place', () => {
+describe('match:move', () => {
   it('sends fresh views to both seats after each move', async () => {
     const { clients, views, room } = await seatedRoom();
     await bothReady(clients);
     const die = room().game.dice.pilot[0]!;
-    const pilotView = next(clients.pilot, 'game:view');
-    const copilotView = next(clients.copilot, 'game:view');
+    const pilotView = nextView(clients.pilot);
+    const copilotView = nextView(clients.copilot);
     expectOk(
-      await clients.pilot.emitWithAck('game:place', {
+      await move(clients.pilot, {
+        type: 'place',
         dieId: die.id,
         slot: 'axisPilot',
         coffeeDelta: 0,
@@ -236,7 +246,8 @@ describe('game:place', () => {
       [clients.pilot, 'axisPilot', 'bad-request'],
     ];
     for (const [client, payload, error] of tries) {
-      expect(await client.emitWithAck('game:place', payload as never)).toEqual({
+      const placing = typeof payload === 'object' ? { type: 'place', ...payload } : payload;
+      expect(await move(client, placing as never)).toEqual({
         ok: false,
         error,
       });
@@ -247,7 +258,8 @@ describe('game:place', () => {
   it('refuses moves before the roll and from sockets without a seat', async () => {
     const { clients, room } = await seatedRoom();
     expect(
-      await clients.pilot.emitWithAck('game:place', {
+      await move(clients.pilot, {
+        type: 'place',
         dieId: 'r1-p1',
         slot: 'axisPilot',
         coffeeDelta: 0,
@@ -255,11 +267,7 @@ describe('game:place', () => {
     ).toEqual({ ok: false, error: 'not-placing' });
     const stranger = await server!.connect();
     expect(
-      await stranger.emitWithAck('game:place', {
-        dieId: 'r1-p1',
-        slot: 'axisPilot',
-        coffeeDelta: 0,
-      }),
+      await move(stranger, { type: 'place', dieId: 'r1-p1', slot: 'axisPilot', coffeeDelta: 0 }),
     ).toEqual({ ok: false, error: 'not-in-room' });
     expect(room().game.phase).toBe('setup');
   });
@@ -269,49 +277,49 @@ describe('rerolls over sockets', () => {
   it('spends a token, then each player rerolls only their own dice once', async () => {
     const { clients, room } = await seatedRoom();
     await bothReady(clients);
-    expect(await clients.pilot.emitWithAck('game:reroll', { dieIds: [] })).toEqual({
+    expect(await move(clients.pilot, { type: 'reroll', dieIds: [] })).toEqual({
       ok: false,
       error: 'no-reroll-pending',
     });
 
-    const pending = next(clients.pilot, 'game:view');
-    expectOk(await clients.copilot.emitWithAck('game:spend-reroll', {}));
+    const pending = nextView(clients.pilot);
+    expectOk(await move(clients.copilot, { type: 'spend-reroll' }));
     expect((await pending).rerollPending).toEqual({ pilot: true, copilot: true });
-    expect(await clients.copilot.emitWithAck('game:spend-reroll', {})).toEqual({
+    expect(await move(clients.copilot, { type: 'spend-reroll' })).toEqual({
       ok: false,
       error: 'no-reroll',
     });
 
     const pilotIds = room().game.dice.pilot.map((d) => d.id);
-    expect(await clients.copilot.emitWithAck('game:reroll', { dieIds: [pilotIds[0]!] })).toEqual({
+    expect(await move(clients.copilot, { type: 'reroll', dieIds: [pilotIds[0]!] })).toEqual({
       ok: false,
       error: 'unknown-die',
     });
-    expectOk(await clients.pilot.emitWithAck('game:reroll', { dieIds: pilotIds.slice(0, 2) }));
+    expectOk(await move(clients.pilot, { type: 'reroll', dieIds: pilotIds.slice(0, 2) }));
     expect(room().game.rerollPending).toEqual({ pilot: false, copilot: true });
-    expect(await clients.pilot.emitWithAck('game:reroll', { dieIds: [] })).toEqual({
+    expect(await move(clients.pilot, { type: 'reroll', dieIds: [] })).toEqual({
       ok: false,
       error: 'no-reroll-pending',
     });
     expect(
-      await clients.copilot.emitWithAck('game:reroll', { dieIds: ['a', 'b', 'c', 'd', 'e'] }),
+      await move(clients.copilot, { type: 'reroll', dieIds: ['a', 'b', 'c', 'd', 'e'] }),
     ).toEqual({ ok: false, error: 'bad-request' });
   });
 });
 
-describe('game:rematch', () => {
+describe('room:rematch', () => {
   it('only works once the game is over, then starts a fresh game in the same room', async () => {
     const { clients, room, code } = await seatedRoom();
     await bothReady(clients);
-    expect(await clients.pilot.emitWithAck('game:rematch', {})).toEqual({
+    expect(await rematch(clients.pilot)).toEqual({
       ok: false,
       error: 'game-not-over',
     });
 
     room().game = { ...room().game, phase: 'lost', endReason: 'spin', round: 4, axis: 3 };
     room().game.crew.ready.pilot = true;
-    const view = next(clients.copilot, 'game:view');
-    expectOk(await clients.copilot.emitWithAck('game:rematch', {}));
+    const view = nextView(clients.copilot);
+    expectOk(await rematch(clients.copilot));
     expect(await view).toMatchObject({ phase: 'setup', round: 1, axis: 0, seat: 'copilot' });
     expect(room().code).toBe(code);
     expect(room().players.pilot).toMatchObject({ name: 'Ana' });
@@ -326,7 +334,8 @@ describe('robustness', () => {
     await bothReady(clients);
     const die = room().game.dice.pilot[1]!;
     expectOk(
-      await clients.pilot.emitWithAck('game:place', {
+      await move(clients.pilot, {
+        type: 'place',
         dieId: die.id,
         slot: 'axisPilot',
         coffeeDelta: 0,
@@ -337,7 +346,7 @@ describe('robustness', () => {
 
     clients.pilot.disconnect();
     const back = await server!.connect();
-    const view = next(back, 'game:view');
+    const view = nextView(back);
     expect(await back.emitWithAck('room:rejoin', { code, token })).toMatchObject({
       ok: true,
       seat: 'pilot',
@@ -346,7 +355,7 @@ describe('robustness', () => {
     expect((await view).myDice).toHaveLength(3);
   });
 
-  it('accepts a double-tapped move once', async () => {
+  it('accepts a resent move (same seq) once', async () => {
     const { clients, room } = await seatedRoom();
     await bothReady(clients);
     const intent = {
@@ -354,9 +363,11 @@ describe('robustness', () => {
       slot: 'axisPilot',
       coffeeDelta: 0,
     } as const;
+    // A resend (a retry after a reconnect) carries the same seq.
+    const placing = { type: 'place', ...intent } as const;
     const [first, second] = await Promise.all([
-      clients.pilot.emitWithAck('game:place', intent),
-      clients.pilot.emitWithAck('game:place', intent),
+      moveWithSeq(clients.pilot, 900_001, placing),
+      moveWithSeq(clients.pilot, 900_001, placing),
     ]);
     expect(first).toEqual({ ok: true });
     expect(second).toEqual({ ok: true });
@@ -370,10 +381,10 @@ describe('robustness', () => {
     await bothReady(clients);
     const dieId = room().game.dice.pilot[0]!.id;
     expectOk(
-      await clients.pilot.emitWithAck('game:place', { dieId, slot: 'axisPilot', coffeeDelta: 0 }),
+      await move(clients.pilot, { type: 'place', dieId, slot: 'axisPilot', coffeeDelta: 0 }),
     );
     expect(
-      await clients.pilot.emitWithAck('game:place', { dieId, slot: 'enginePilot', coffeeDelta: 0 }),
+      await move(clients.pilot, { type: 'place', dieId, slot: 'enginePilot', coffeeDelta: 0 }),
     ).toEqual({ ok: false, error: 'not-your-turn' });
   });
 
@@ -385,17 +396,18 @@ describe('robustness', () => {
     const { code } = joined(
       await pilot.emitWithAck('room:create', {
         name: 'Ana',
-        scenario: traffic.id,
+        game: 'sky-team',
+        config: { scenario: traffic.id },
       }),
     );
     joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
     const room = server.rooms.get(code)!;
     room.game = { ...room.game, phase: 'lost', endReason: 'spin' };
-    expectOk(await pilot.emitWithAck('game:rematch', {}));
+    expectOk(await rematch(pilot));
     const fresh = room.game;
     // Round 1 has not started: even the traffic die waits for both players to confirm.
     expect(fresh).toMatchObject({ phase: 'setup', log: [] });
-    expectOk(await copilot.emitWithAck('game:rematch', {}));
+    expectOk(await rematch(copilot));
     expect(room.game).toBe(fresh);
   });
 
@@ -404,15 +416,14 @@ describe('robustness', () => {
     server = await startTestServer(new RoomManager({ seed: () => ++seeds }));
     const pilot = await server.connect();
     const copilot = await server.connect();
-    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+    );
     joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
     const room = server.rooms.get(code)!;
     room.game = { ...room.game, phase: 'lost', endReason: 'spin' };
 
-    const [a, b] = await Promise.all([
-      pilot.emitWithAck('game:rematch', {}),
-      copilot.emitWithAck('game:rematch', {}),
-    ]);
+    const [a, b] = await Promise.all([rematch(pilot), rematch(copilot)]);
     expect(a).toEqual({ ok: true });
     expect(b).toEqual({ ok: true });
     expect(seeds).toBe(2); // the room's first game + exactly one rematch
@@ -424,11 +435,11 @@ describe('robustness', () => {
     await bothReady(clients);
 
     const presence = next(clients.copilot, 'room:presence');
-    const view = next(clients.copilot, 'game:view');
+    const view = nextView(clients.copilot);
     expectOk(await clients.pilot.emitWithAck('room:leave', {}));
     expect((await presence).pilot).toBeNull();
     expect(await view).toMatchObject({ phase: 'setup', round: 1, myDice: [] });
-    expect(await clients.pilot.emitWithAck('game:ready', {})).toEqual({
+    expect(await move(clients.pilot, { type: 'ready' })).toEqual({
       ok: false,
       error: 'not-in-room',
     });
@@ -456,8 +467,10 @@ describe('robustness', () => {
     server = await startTestServer(new RoomManager({ maxRoomsPerIp: 1 }));
     const first = await server.connect();
     const second = await server.connect();
-    expect((await first.emitWithAck('room:create', { name: 'Ana' })).ok).toBe(true);
-    expect(await second.emitWithAck('room:create', { name: 'Ana' })).toEqual({
+    expect((await first.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' })).ok).toBe(
+      true,
+    );
+    expect(await second.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' })).toEqual({
       ok: false,
       error: 'too-many-rooms',
     });
@@ -467,13 +480,17 @@ describe('robustness', () => {
 describe('round timer', () => {
   /** A room created with or without the timer, both players seated, views recorded. */
   async function timedRoom(timer: boolean, roundTimerMs: number) {
-    server = await startTestServer(new RoomManager({ seed: () => 1 }), { roundTimerMs });
+    server = await startTestServer(
+      new RoomManager({ seed: () => 1, settings: { 'sky-team': { roundTimerMs } } }),
+    );
     const pilot = await server.connect();
     const copilot = await server.connect();
     const views: Record<Seat, PlayerView[]> = { pilot: [], copilot: [] };
-    pilot.on('game:view', (v) => views.pilot.push(v));
-    copilot.on('game:view', (v) => views.copilot.push(v));
-    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana', timer }));
+    pilot.on('match:view', ({ view: v }) => views.pilot.push(v));
+    copilot.on('match:view', ({ view: v }) => views.copilot.push(v));
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team', config: { timer } }),
+    );
     joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
     const clients = { pilot, copilot };
     return { clients, views, room: () => server!.rooms.get(code)!, code };
@@ -500,13 +517,14 @@ describe('round timer', () => {
 
     // A move that arrives too late is refused; a rematch keeps the game timed.
     expect(
-      await clients.pilot.emitWithAck('game:place', {
+      await move(clients.pilot, {
+        type: 'place',
         dieId: 'r1-p1',
         slot: 'axisPilot',
         coffeeDelta: 0,
       }),
     ).toEqual({ ok: false, error: 'game-over' });
-    expectOk(await clients.pilot.emitWithAck('game:rematch', {}));
+    expectOk(await rematch(clients.pilot));
     expect(room().game).toMatchObject({ timerMs: 300, deadline: null, phase: 'setup' });
   });
 
@@ -523,7 +541,8 @@ describe('round timer', () => {
       },
     };
     const place = (seat: Seat, n: number, slot: string) =>
-      clients[seat].emitWithAck('game:place', {
+      move(clients[seat], {
+        type: 'place',
         dieId: `r1-${seat === 'pilot' ? 'p' : 'c'}${n}`,
         slot,
         coffeeDelta: 0,
@@ -546,12 +565,16 @@ describe('round timer', () => {
 
 describe('total trust', () => {
   it('rolls the next round by itself once the pause is over, with nobody pressing "Roll dice"', async () => {
-    server = await startTestServer(new RoomManager({ seed: () => 1 }), { autoRollDelayMs: 200 });
+    server = await startTestServer(
+      new RoomManager({ seed: () => 1, settings: { 'sky-team': { autoRollDelayMs: 200 } } }),
+    );
     const pilot = await server.connect();
     const copilot = await server.connect();
     const views: PlayerView[] = [];
-    copilot.on('game:view', (v) => views.push(v));
-    const { code } = joined(await pilot.emitWithAck('room:create', { name: 'Ana' }));
+    copilot.on('match:view', ({ view: v }) => views.push(v));
+    const { code } = joined(
+      await pilot.emitWithAck('room:create', { name: 'Ana', game: 'sky-team' }),
+    );
     joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
     const room = () => server!.rooms.get(code)!;
     // A Total Trust symbol on the starting space: a round that ends there skips the next talk.
@@ -574,7 +597,8 @@ describe('total trust', () => {
     };
     const clients = { pilot, copilot };
     const place = (seat: Seat, n: number, slot: string) =>
-      clients[seat].emitWithAck('game:place', {
+      move(clients[seat], {
+        type: 'place',
         dieId: `r1-${seat === 'pilot' ? 'p' : 'c'}${n}`,
         slot,
         coffeeDelta: 0,
@@ -613,7 +637,11 @@ describe('scenarios and special abilities', () => {
     const pilot = await server.connect();
     const copilot = await server.connect();
     const { code } = joined(
-      await pilot.emitWithAck('room:create', { name: 'Ana', scenario: kerosene().id }),
+      await pilot.emitWithAck('room:create', {
+        name: 'Ana',
+        game: 'sky-team',
+        config: { scenario: kerosene().id },
+      }),
     );
     joined(await copilot.emitWithAck('room:join', { code, name: 'Ben' }));
     const room = server.rooms.get(code)!;
@@ -622,24 +650,30 @@ describe('scenarios and special abilities', () => {
 
     // Round 1 waits for both cards; never the same card twice.
     expectOk(await pilot.emitWithAck('room:choose-seat', { seat: 'pilot' }));
-    expect(await pilot.emitWithAck('game:confirm', {})).toEqual({
+    expect(await move(pilot, { type: 'confirm' })).toEqual({
       ok: false,
       error: 'abilities-missing',
     });
-    expectOk(await pilot.emitWithAck('game:pick-ability', { ability: 'control' }));
-    expect(await copilot.emitWithAck('game:pick-ability', { ability: 'control' })).toEqual({
+    expectOk(await move(pilot, { type: 'pick-ability', ability: 'control' }));
+    expect(await move(copilot, { type: 'pick-ability', ability: 'control' })).toEqual({
       ok: false,
       error: 'ability-taken',
     });
-    expectOk(await copilot.emitWithAck('game:pick-ability', { ability: 'working-together' }));
+    expectOk(await move(copilot, { type: 'pick-ability', ability: 'working-together' }));
     expect(room.game.abilities).toEqual(['control', 'working-together']);
-    expect(await pilot.emitWithAck('game:pick-ability', { ability: 'flying' } as never)).toEqual({
+    expect(await move(pilot, { type: 'pick-ability', ability: 'flying' } as never)).toEqual({
       ok: false,
       error: 'bad-request',
     });
 
     const b = await server.connect();
-    expect(await b.emitWithAck('room:create', { name: 'Ben', scenario: 'nowhere' })).toEqual({
+    expect(
+      await b.emitWithAck('room:create', {
+        name: 'Ben',
+        game: 'sky-team',
+        config: { scenario: 'nowhere' },
+      }),
+    ).toEqual({
       ok: false,
       error: 'bad-request',
     });
@@ -648,14 +682,14 @@ describe('scenarios and special abilities', () => {
   it('lets the creator take the co-pilot seat over sockets', async () => {
     const { clients, room } = await seatedRoom();
     const moved = new Promise<PlayerView>((resolve) =>
-      clients.pilot.on('game:view', (v) => v.seat === 'copilot' && resolve(v)),
+      clients.pilot.on('match:view', ({ view: v }) => v.seat === 'copilot' && resolve(v)),
     );
     expectOk(await clients.pilot.emitWithAck('room:choose-seat', { seat: 'copilot' }));
     expect((await moved).phase).toBe('setup');
     expect(room().players.pilot?.name).toBe('Ben');
     // The tab that created the game now sits in the co-pilot seat.
-    expectOk(await clients.pilot.emitWithAck('game:confirm', {}));
-    expectOk(await clients.copilot.emitWithAck('game:confirm', {}));
+    expectOk(await move(clients.pilot, { type: 'confirm' }));
+    expectOk(await move(clients.copilot, { type: 'confirm' }));
     expect(room().game.phase).toBe('strategy');
     expect(await clients.pilot.emitWithAck('room:choose-seat', { seat: 'pilot' })).toEqual({
       ok: false,
@@ -670,51 +704,55 @@ describe('scenarios and special abilities', () => {
       copilot: await server.connect(),
     };
     const { code } = joined(
-      await clients.pilot.emitWithAck('room:create', { name: 'Ana', scenario: oneAbility().id }),
+      await clients.pilot.emitWithAck('room:create', {
+        name: 'Ana',
+        game: 'sky-team',
+        config: { scenario: oneAbility().id },
+      }),
     );
     joined(await clients.copilot.emitWithAck('room:join', { code, name: 'Ben' }));
     // One card: the creator picks it.
-    expectOk(await clients.pilot.emitWithAck('game:pick-ability', { ability: 'working-together' }));
+    expectOk(await move(clients.pilot, { type: 'pick-ability', ability: 'working-together' }));
     await bothReady(clients);
     const room = server.rooms.get(code)!;
     const [pilotDie] = room.game.dice.pilot;
     const [copilotDie] = room.game.dice.copilot;
 
-    const offered = next(clients.copilot, 'game:view');
+    const offered = nextView(clients.copilot);
     expectOk(
-      await clients.pilot.emitWithAck('game:ability', {
+      await move(clients.pilot, {
+        type: 'ability',
         ability: 'working-together',
         dieId: pilotDie!.id,
       }),
     );
     expect((await offered).swap).toEqual({ seat: 'pilot', value: pilotDie!.value });
     expect(
-      await clients.pilot.emitWithAck('game:ability', {
-        ability: 'adaptation',
-        dieId: pilotDie!.id,
-      }),
+      await move(clients.pilot, { type: 'ability', ability: 'adaptation', dieId: pilotDie!.id }),
     ).toEqual({ ok: false, error: 'ability-unavailable' });
     expect(
-      await clients.pilot.emitWithAck('game:ability', { ability: 'control', dieId: 'x' } as never),
+      await move(clients.pilot, { type: 'ability', ability: 'control', dieId: 'x' } as never),
     ).toEqual({ ok: false, error: 'bad-request' });
 
     // Only the player who offered can take the offer back.
-    expect(await clients.copilot.emitWithAck('game:cancel-swap', {})).toEqual({
+    expect(await move(clients.copilot, { type: 'cancel-swap' })).toEqual({
       ok: false,
       error: 'no-swap',
     });
-    const withdrawn = next(clients.copilot, 'game:view');
-    expectOk(await clients.pilot.emitWithAck('game:cancel-swap', {}));
+    const withdrawn = nextView(clients.copilot);
+    expectOk(await move(clients.pilot, { type: 'cancel-swap' }));
     expect((await withdrawn).swap).toBeNull();
     expectOk(
-      await clients.pilot.emitWithAck('game:ability', {
+      await move(clients.pilot, {
+        type: 'ability',
         ability: 'working-together',
         dieId: pilotDie!.id,
       }),
     );
 
     expectOk(
-      await clients.copilot.emitWithAck('game:ability', {
+      await move(clients.copilot, {
+        type: 'ability',
         ability: 'working-together',
         dieId: copilotDie!.id,
       }),
@@ -726,31 +764,31 @@ describe('scenarios and special abilities', () => {
 
   it('switches scenario on a rematch, or before the first roll', async () => {
     const { clients, room } = await seatedRoom();
-    const switched = next(clients.copilot, 'game:view');
-    expectOk(await clients.pilot.emitWithAck('game:rematch', { scenario: noAbility().id }));
+    const switched = nextView(clients.copilot);
+    expectOk(await rematch(clients.pilot, { scenario: noAbility().id }));
     expect((await switched).scenario.id).toBe(noAbility().id);
     const before = room().game;
     // The partner's identical request finds the new game and changes nothing.
-    expectOk(await clients.copilot.emitWithAck('game:rematch', { scenario: noAbility().id }));
+    expectOk(await rematch(clients.copilot, { scenario: noAbility().id }));
     expect(room().game).toBe(before);
-    expect(await clients.pilot.emitWithAck('game:rematch', { scenario: 'nowhere' })).toEqual({
+    expect(await rematch(clients.pilot, { scenario: 'nowhere' })).toEqual({
       ok: false,
       error: 'bad-request',
     });
 
     await bothReady(clients);
-    expect(await clients.pilot.emitWithAck('game:rematch', { scenario: 'yul-green' })).toEqual({
+    expect(await rematch(clients.pilot, { scenario: 'yul-green' })).toEqual({
       ok: false,
       error: 'game-not-over',
     });
     room().game = { ...room().game, phase: 'lost', endReason: 'kerosene' };
-    expectOk(await clients.copilot.emitWithAck('game:rematch', { scenario: oneAbility().id }));
+    expectOk(await rematch(clients.copilot, { scenario: oneAbility().id }));
     expect(room().game.scenario.id).toBe(oneAbility().id);
     // Abilities are picked again in the new game (nobody had picked a card yet).
     expect(room().game.abilities).toEqual([]);
     // No setup: the same scenario again.
     room().game = { ...room().game, phase: 'lost', endReason: 'spin' };
-    expectOk(await clients.copilot.emitWithAck('game:rematch', {}));
+    expectOk(await rematch(clients.copilot));
     expect(room().game.scenario.id).toBe(oneAbility().id);
     expect(room().game.phase).toBe('setup');
   });

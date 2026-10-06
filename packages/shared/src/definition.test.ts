@@ -125,13 +125,15 @@ describe('skyTeam definition', () => {
 
   it('runs timed games, where the scheduled time-up ends them or the round', () => {
     for (const seed of [3, 4, 5]) {
-      checkGame(options(seed, { scenario: YUL.id, timerMs: TIMER_MS }));
+      checkGame(options(seed, { scenario: YUL.id, timer: true, roundTimerMs: TIMER_MS }));
     }
   });
 
   it('rejects bad setups and malformed moves', () => {
     expect(skyTeam.configSchema.safeParse({ scenario: 'nowhere' }).success).toBe(false);
-    expect(skyTeam.configSchema.safeParse({ scenario: YUL.id, timerMs: -1 }).success).toBe(false);
+    expect(skyTeam.configSchema.safeParse({ scenario: YUL.id, roundTimerMs: -1 }).success).toBe(
+      false,
+    );
     expect(skyTeam.moveSchema.safeParse({ type: 'place', dieId: 'a' }).success).toBe(false);
     expect(skyTeam.moveSchema.safeParse({ type: 'teleport' }).success).toBe(false);
     // Players cannot send the platform's moves.
@@ -154,7 +156,7 @@ describe('skyTeam definition', () => {
   });
 
   it('starts round 1 once the seats are chosen and both confirm; rolls once both are ready', () => {
-    let state = newGame({ timerMs: TIMER_MS });
+    let state = newGame({ timer: true, roundTimerMs: TIMER_MS });
     expect(skyTeam.validate(state, { type: 'confirm' }, by('pilot'))).toEqual({
       ok: false,
       reason: 'roles-missing',

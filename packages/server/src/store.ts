@@ -8,19 +8,21 @@ import { eq } from 'drizzle-orm';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { GameConfig, GameState } from './games';
-import type { Player, Room } from './rooms';
+import type { Match, Player, Room } from './rooms';
 
 /**
  * The saved room format. Bump it when `StoredRoom` (or `GameState`) changes in a way old
  * rows cannot be read as: rooms saved in another format are dropped instead of loaded wrongly.
  */
-export const ROOM_FORMAT = 2;
+export const ROOM_FORMAT = 3;
 
 /** A room as saved: everything but the connection and the in-process timer. */
 export interface StoredRoom {
   code: string;
+  gameId: string;
   players: Partial<Record<Player['seat'], Omit<Player, 'socketId'>>>;
   config: GameConfig;
+  match: Match;
   game: GameState;
   creatorIp: string;
   createdAt: number;
@@ -45,8 +47,10 @@ export function toStored(room: Room): StoredRoom {
   }
   return {
     code: room.code,
+    gameId: room.gameId,
     players,
     config: room.config,
+    match: room.match,
     game: room.game,
     creatorIp: room.creatorIp,
     createdAt: room.createdAt,

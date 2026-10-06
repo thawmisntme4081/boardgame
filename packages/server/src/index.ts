@@ -37,6 +37,9 @@ const rooms = new RoomManager({
   idleTtlMs: ttlMinutes > 0 ? ttlMinutes * 60_000 : DEFAULT_IDLE_TTL_MS,
   maxRoomsPerIp: roomsPerIp > 0 ? roomsPerIp : DEFAULT_MAX_ROOMS_PER_IP,
   ...(Number.isInteger(gameSeed) && { seed: () => gameSeed }),
+  ...(roundTimerSeconds > 0 && {
+    settings: { 'sky-team': { roundTimerMs: roundTimerSeconds * 1000 } },
+  }),
   ...(dbFile && { store: new SqliteRoomStore(dbFile) }),
 });
 
@@ -47,7 +50,6 @@ const { httpServer } = createGameServer(rooms, {
   trustProxy,
   clientDir,
   e2eHooks,
-  ...(roundTimerSeconds > 0 && { roundTimerMs: roundTimerSeconds * 1000 }),
   ...(accessTeam &&
     accessAud && {
       accessCheck: cloudflareAccess({ teamDomain: accessTeam, audience: accessAud }),

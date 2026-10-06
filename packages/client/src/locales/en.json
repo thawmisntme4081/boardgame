@@ -355,6 +355,8 @@
     "already-in-room": "You are already in a game.",
     "not-strategy": "Dice are already rolled.",
     "game-not-over": "The game is not over yet.",
+    "unknown-game": "This server does not host that game.",
+    "stale-match": "That game has moved on: your screen is up to date again, try once more.",
     "too-many-rooms": "You have too many open games. Finish or leave one first.",
     "game-over": "The game is over.",
     "not-placing": "Dice are not rolled yet.",

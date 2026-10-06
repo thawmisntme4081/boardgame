@@ -9,10 +9,11 @@
     "paths": {
       "@/*": ["./src/*"],
       "@sky/shared": ["../shared/src/index.ts"],
-      "@platform/engine": ["../engine/src/index.ts"]
+      "@platform/engine": ["../engine/src/index.ts"],
+      "@platform/protocol": ["../protocol/src/index.ts"]
     }
   },
-  "include": ["src", "../shared/src", "../engine/src"],
+  "include": ["src", "../shared/src", "../engine/src", "../protocol/src"],
   "exclude": [
     "../shared/src/**/*.test.ts",
     "../engine/src/**/*.test.ts",

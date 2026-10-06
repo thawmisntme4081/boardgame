@@ -1,45 +1,51 @@
-import {
-  ROUND_TIMER_MS,
-  YUL,
-  type AckResult,
-  type ClientToServer,
-  type JoinResult,
-  type Presence,
-  type Seat,
-  type ServerToClient,
-} from '@sky/shared';
-import type { Server, Socket } from 'socket.io';
-import type { z } from 'zod';
-import { game, type GameConfig, type GameMove } from './games';
-import { log, reportError } from './log';
-import type { Room, RoomManager, Seated } from './rooms';
+// The socket gateway: the platform's `room:*` events and the games' `match:move`, for every
+// game alike. Payloads are checked with the protocol's schemas, moves with the game's
+// `moveSchema`; the game rules are only ever reached through `RoomManager`.
 import {
   chooseSeatSchema,
   createRoomSchema,
   emptySchema,
   joinRoomSchema,
+  moveSchema,
   rejoinRoomSchema,
   rematchSchema,
-} from './schemas';
+  type AckResult,
+  type ClientEvents,
+  type JoinResult,
+  type Presence,
+  type ServerEvents,
+} from '@platform/protocol';
+import type { Server, Socket } from 'socket.io';
+import type { z } from 'zod';
+import type { GameMove } from './games';
+import { log, reportError } from './log';
+import type { Room, RoomManager, Seated } from './rooms';
 
-export type GameServer = Server<ClientToServer, ServerToClient>;
-type GameSocket = Socket<ClientToServer, ServerToClient>;
+type Events = ClientEvents<string, unknown, unknown, string>;
+export type GameServer = Server<Events, ServerEvents<string, unknown>>;
+type GameSocket = Socket<Events, ServerEvents<string, unknown>>;
 
 /**
- * Sends each seat its presence (marked with its seat), then its own filtered view. Every
+ * Sends each seat its presence (marked with its seat), then its own view of the match. Every
  * accepted change ends here, so this is also where the room is saved (off the reply path)
  * and the timer for the game's next scheduled move is armed.
  */
 export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): void {
   rooms.save(room);
   rooms.arm(room);
+  const { definition } = rooms.entry(room);
   const presence = rooms.presence(room) as Presence;
+  const { id: matchId, version } = room.match;
   const now = Date.now();
-  for (const seat of game.meta.seats) {
+  for (const seat of definition.meta.seats) {
     const socketId = room.players[seat]?.socketId;
     if (!socketId) continue;
-    io.to(socketId).emit('room:presence', { ...presence, you: seat as Seat });
-    io.to(socketId).emit('game:view', game.view(room.game, seat, now));
+    io.to(socketId).emit('room:presence', { ...presence, you: seat } as Presence);
+    io.to(socketId).emit('match:view', {
+      matchId,
+      version,
+      view: definition.view(room.game, seat, now),
+    });
   }
 }
 
@@ -56,20 +62,17 @@ function parse<S extends z.ZodType>(schema: S, payload: unknown): z.output<S> | 
 const joined = ({ room, player }: Seated): JoinResult => ({
   ok: true,
   code: room.code,
-  seat: player.seat as Seat,
+  seat: player.seat,
   token: player.token,
+  matchId: room.match.id,
+  seq: player.seq,
 });
 
 const OK: AckResult = { ok: true };
-const refused = (error: string): AckResult => ({ ok: false, error }) as AckResult;
 
 export interface HandlerOptions {
   /** Behind a proxy (Render, Railway, Fly), read the client IP from X-Forwarded-For. */
   trustProxy?: boolean;
-  /** Length of a timed round (tests and dev shorten it). */
-  roundTimerMs?: number;
-  /** Total Trust: the pause before the server rolls (tests shorten it). */
-  autoRollDelayMs?: number;
 }
 
 /** The address used for the per-IP room limit. */
@@ -79,51 +82,18 @@ export function clientIp(socket: GameSocket, trustProxy = false): string {
   return (trustProxy && first) || socket.handshake.address || 'unknown';
 }
 
-/** A game that has not started: the rematch someone else already asked for. */
-const isFresh = (room: Room) => room.game.phase === 'setup';
-
-/** The Sky Team events that are game moves: `game:<type>` with the move's fields. */
-const MOVE_EVENTS = [
-  'game:ready',
-  'game:pick-ability',
-  'game:confirm',
-  'game:place',
-  'game:spend-reroll',
-  'game:reroll',
-  'game:ability',
-  'game:cancel-swap',
-] as const satisfies readonly (keyof ClientToServer)[];
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 export function registerHandlers(
   io: GameServer,
   rooms: RoomManager,
   options: HandlerOptions = {},
 ): void {
-  const roundTimerMs = options.roundTimerMs ?? ROUND_TIMER_MS;
-  /** The lobby's choices as the game's setup, checked by its `configSchema`. */
-  const configFor = (
-    request: { scenario?: string | undefined; timer?: boolean | undefined },
-    base?: GameConfig,
-  ): GameConfig | undefined => {
-    const parsed = game.configSchema.safeParse({
-      ...base,
-      scenario: request.scenario ?? base?.scenario ?? YUL.id,
-      ...(request.timer !== undefined && { timerMs: request.timer ? roundTimerMs : null }),
-      ...(options.autoRollDelayMs && { autoRollDelayMs: options.autoRollDelayMs }),
-    });
-    return parsed.success ? parsed.data : undefined;
-  };
-
-  // A scheduled move (time up, Total Trust's roll) changed a game: everyone sees it.
+  // A scheduled move (time up, an automatic roll) changed a game: everyone sees it.
   rooms.onScheduled = (room) => broadcastRoom(io, rooms, room);
 
   io.on('connection', (socket: GameSocket) => {
     /** Wraps a handler so a bug answers `bad-request` instead of crashing the process. */
     const on = <R extends JoinResult | AckResult>(
-      event: keyof ClientToServer,
+      event: keyof Events,
       handle: (payload: unknown, reply: (result: R) => void) => void,
     ) => {
       // Payloads are validated at runtime, so the typed signature is widened here.
@@ -140,34 +110,32 @@ export function registerHandlers(
     };
 
     /**
-     * An event from a seated player: parse it, run `handle`, and broadcast fresh views when
-     * it succeeds. A failure changes nothing.
+     * An event from a seated player: parse it, make the game's due scheduled moves, run
+     * `handle`, and broadcast fresh views when it succeeds. A failure changes nothing.
      */
-    const onSeated = <T>(
-      event: keyof ClientToServer,
-      parsePayload: (payload: unknown) => T | undefined,
-      handle: (data: T, seated: Seated) => AckResult,
+    const onSeated = <S extends z.ZodType>(
+      event: keyof Events,
+      schema: S,
+      handle: (data: z.output<S>, seated: Seated) => AckResult,
     ) =>
       on<AckResult>(event, (payload, reply) => {
-        const data = parsePayload(payload);
-        if (data === undefined) return reply({ ok: false, error: 'bad-request' });
+        const parsed = schema.safeParse(payload);
+        if (!parsed.success) return reply({ ok: false, error: 'bad-request' });
         const seated = rooms.bySocket(socket.id);
         if (!seated) return reply({ ok: false, error: 'not-in-room' });
         const { room } = seated;
+        const { definition } = rooms.entry(room);
         // A move that arrives after the round's time ran out finds the game already lost.
         if (rooms.runDue(room).length > 0) broadcastRoom(io, rooms, room);
-        const wasOver = game.outcome(room.game) !== null;
-        const result = handle(data, seated);
+        const wasOver = definition.outcome(room.game) !== null;
+        const result = handle(parsed.data, seated);
         const where = { event, room: room.code, seat: seated.player.seat };
-        if (!result.ok) log.info({ ...where, error: result.error }, 'move rejected');
+        if (!result.ok) log.info({ ...where, error: result.error }, 'request refused');
         if (result.ok) {
           rooms.touch(room);
-          const outcome = game.outcome(room.game);
+          const outcome = definition.outcome(room.game);
           if (!wasOver && outcome) {
-            log.info(
-              { ...where, scenario: room.config.scenario, outcome, round: room.game.round },
-              'game ended',
-            );
+            log.info({ ...where, game: room.gameId, match: room.match.id, outcome }, 'game ended');
           }
         }
         reply(result);
@@ -176,22 +144,17 @@ export function registerHandlers(
 
     on('room:create', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(createRoomSchema, payload);
-      const config = data && configFor({ ...data, timer: data.timer ?? false });
-      if (!data || !config) return reply({ ok: false, error: 'bad-request' });
-      const result = rooms.create(
-        data.name,
-        socket.id,
-        clientIp(socket, options.trustProxy),
-        config,
-      );
+      if (!data) return reply({ ok: false, error: 'bad-request' });
+      const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy), {
+        game: data.game,
+        config: data.config,
+      });
       if (!result.ok) return reply(result);
-      void socket.join(result.value.room.code);
+      const { room } = result.value;
+      void socket.join(room.code);
       reply(joined(result.value));
-      log.info(
-        { room: result.value.room.code, scenario: config.scenario, timer: config.timerMs !== null },
-        'room created',
-      );
-      broadcastRoom(io, rooms, result.value.room);
+      log.info({ room: room.code, game: room.gameId, config: room.config }, 'room created');
+      broadcastRoom(io, rooms, room);
     });
 
     on('room:join', (payload, reply: (r: JoinResult) => void) => {
@@ -231,70 +194,33 @@ export function registerHandlers(
       void socket.leave(left.room.code);
       reply(OK);
       log.info({ room: left.room.code, seat: left.player.seat, closed: left.closed }, 'seat left');
-      // The partner sees the empty seat and a fresh game, ready for someone new.
+      // The partner sees the empty seat and a fresh match, ready for someone new.
       if (!left.closed) broadcastRoom(io, rooms, left.room);
     });
 
-    onSeated(
-      'room:choose-seat',
-      (payload) => parse(chooseSeatSchema, payload),
-      ({ seat }, { room, player }) => {
-        const result = rooms.chooseSeat(room, player, seat);
-        return result.ok ? OK : refused(result.error);
-      },
-    );
+    onSeated('room:choose-seat', chooseSeatSchema, ({ seat }, { room, player }) => {
+      const result = rooms.chooseSeat(room, player, seat);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
 
-    // Every game event is a move: its payload plus the event's name as the type.
-    for (const event of MOVE_EVENTS) {
-      const type = event.slice('game:'.length);
-      onSeated(
-        event,
-        (payload) => {
-          if (payload !== undefined && !isRecord(payload)) return undefined;
-          const parsed = game.moveSchema.safeParse({ ...payload, type });
-          return parsed.success ? (parsed.data as GameMove) : undefined;
-        },
-        (move, { room, player }) => {
-          if (move.type === 'place' && isRepeat(room, player.seat, move)) return OK;
-          const result = rooms.move(room, player.seat, move);
-          return result.ok ? OK : refused(result.error);
-        },
-      );
-    }
+    onSeated('room:rematch', rematchSchema, ({ matchId, config }, { room }) => {
+      const result = rooms.requestRematch(room, matchId, config);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
 
-    onSeated(
-      'game:rematch',
-      (payload) => {
-        const parsed = rematchSchema.safeParse(payload);
-        return parsed.success ? (parsed.data ?? {}) : undefined;
-      },
-      (data, { room }) => {
-        const asked = data.scenario !== undefined;
-        const config = asked ? configFor(data, room.config) : undefined;
-        if (asked && !config) return { ok: false, error: 'bad-request' };
-        if (isFresh(room)) {
-          // Before the first roll the scenario may still change; the second "Fly again" of a
-          // pair finds the new game and changes nothing.
-          if (config && config.scenario !== room.config.scenario) rooms.rematch(room, config);
-          return OK;
-        }
-        if (game.outcome(room.game) === null) return { ok: false, error: 'game-not-over' };
-        rooms.rematch(room, config);
-        return OK;
-      },
-    );
+    onSeated('match:move', moveSchema, ({ matchId, seq, move }, { room, player }) => {
+      if (matchId !== room.match.id) return { ok: false, error: 'stale-match' };
+      const parsed = rooms.entry(room).definition.moveSchema.safeParse(move);
+      if (!parsed.success) return { ok: false, error: 'bad-request' };
+      const result = rooms.play(room, player, seq, parsed.data as GameMove);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
 
     socket.on('disconnect', () => {
       const seated = rooms.disconnect(socket.id);
-      if (seated)
+      if (seated) {
         io.to(seated.room.code).emit('room:presence', rooms.presence(seated.room) as Presence);
+      }
     });
   });
-}
-
-/** A double tap sends the same die twice; the repeat is accepted and changes nothing. */
-function isRepeat(room: Room, seat: string, move: Extract<GameMove, { type: 'place' }>): boolean {
-  return room.game.log.some(
-    (e) => e.type === 'place' && e.seat === seat && e.dieId === move.dieId && e.slot === move.slot,
-  );
 }

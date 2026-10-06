@@ -84,12 +84,14 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   for (const room of rooms.all()) rooms.arm(room);
 
   if (options.e2eHooks) {
-    // Merges a partial game state into a room, then sends everyone fresh views.
+    // Merges a partial game state into a room, then sends everyone fresh views. Test-only, and
+    // Sky Team's state shape: the E2E tests only play Sky Team.
     app.post('/__e2e/rooms/:code/game', express.json(), (req, res) => {
       const room = rooms.get(req.params.code);
       if (!room) return void res.status(404).json({ ok: false });
       // A prepared Total Trust strategy phase still rolls by itself.
-      room.game = armAutoRoll({ ...room.game, ...(req.body as Partial<GameState>) }, Date.now());
+      const patched = { ...room.game, ...(req.body as Partial<GameState>) };
+      rooms.replaceGame(room, armAutoRoll(patched, Date.now()));
       broadcastRoom(io, rooms, room);
       res.json({ ok: true });
     });
