@@ -1,6 +1,6 @@
 # Platform 06: Accounts (the Flight Log goes with you)
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A, B done)** · Effort: **high** (8 stages, each small to medium)
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A–C done)** · Effort: **high** (8 stages, each small to medium)
 
 Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-11-history.md) covers local history). Needs [Platform 04](phase-04-match-log.md)'s match store and the deployed site from [Sky Team 13](../sky-team/phase-13-deploy.md) (cookies, HTTPS).
 
@@ -47,13 +47,13 @@ The user store and the sign-in endpoints, with no page yet.
 
 ### C. Sign-in in the shell · small
 
-- [ ] `account` state in the platform store, loaded from `/auth/me` at start (after the site password)
-- [ ] "Sign in" on the game picker and the game page; signed in: the name and a menu (sign out)
-- [ ] Signed in: the lobby's name field shows the account's name, not editable; an email sign-in asks for the name once
-- [ ] Texts in the `platform` namespace (en, vi, fr)
-- [ ] Shell tests (signed out, signed in, sign out)
+- [x] `account` state in the platform store, loaded from `/auth/me` at start (after the site password): `'loading'`, `'off'` (no accounts on the server: no sign-in shown), or the sign-in methods (`GET /auth/methods`) and the user; `src/account.ts`
+- [x] "Sign in" on the game picker and the game page; signed in: the name and a menu (sign out). The sign-in dialog offers Google (when the server has it) and an email code (email, then the 6-digit code); `screens/Account.tsx`, shown by `CardTop`'s `account` option
+- [x] Signed in: the lobby's name field shows the account's name, not editable (also on an invite link); an email sign-in asks for the name once (a dialog that cannot be skipped, only signed out of; `POST /auth/name` refuses a second name, Better Auth's own `/update-user` is off; Google names are cut to 20 characters to fit a room)
+- [x] Texts in the `platform` namespace (en, vi, fr): `account.*`
+- [x] Shell tests (signed out, signed in, sign out): `screens/Account.test.tsx` against a fake accounts server; 4 more server tests for the name and the methods
 
-**Done when:** a player can sign in and out from the site; guests see no difference except the button.
+**Done when:** a player can sign in and out from the site; guests see no difference except the button. ✅ Verified Oct 7, 2026 (in `pnpm dev` on an iPhone 13 profile: sign in with an email code, the name asked once, still signed in after a reload, sign out from the game page; with no accounts on the server the button is gone; 6 shell tests and 13 accounts tests pass, plus all web and server tests, typecheck, lint, format and build).
 
 ### D. Seats follow the account · medium
 
@@ -120,7 +120,7 @@ None open.
 
 - [x] A. File-based routes
 - [x] B. Accounts on the server
-- [ ] C. Sign-in in the shell
+- [x] C. Sign-in in the shell
 - [ ] D. Seats follow the account
 - [ ] E. The Flight Log per account
 - [ ] F. Import the device's history

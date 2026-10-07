@@ -72,7 +72,7 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   if (accounts) {
     // Signing in comes after the site password: without it, no accounts and no code emails.
     if (siteGate) {
-      app.use([AUTH_BASE_PATH, '/auth/me'], (req, res, next) => {
+      app.use([AUTH_BASE_PATH, '/auth/me', '/auth/methods', '/auth/name'], (req, res, next) => {
         if (siteGate.check(req)) next();
         else res.status(401).json({ error: 'site-password' });
       });

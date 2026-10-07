@@ -20,6 +20,28 @@
     "tooMany": "Thử sai quá nhiều lần. Hãy chờ vài phút rồi thử lại.",
     "error": "Máy chủ không phản hồi. Hãy thử lại."
   },
+  "account": {
+    "signIn": "Đăng nhập",
+    "signInTitle": "Đăng nhập",
+    "signInIntro": "Không bắt buộc: nhật ký bay và chỗ ngồi của bạn sẽ theo bạn sang các thiết bị khác. Khách vẫn chơi như trước.",
+    "google": "Tiếp tục với Google",
+    "email": "Email",
+    "sendCode": "Gửi mã qua email",
+    "codeSent": "Mã 6 chữ số đã được gửi tới {{email}}. Mã có hiệu lực trong 5 phút.",
+    "code": "Mã",
+    "verify": "Đăng nhập",
+    "otherEmail": "Dùng email khác",
+    "wrongCode": "Mã sai hoặc đã hết hạn.",
+    "tooMany": "Thử quá nhiều lần. Hãy chờ một phút rồi thử lại.",
+    "error": "Đã có lỗi. Hãy thử lại.",
+    "nameTitle": "Chọn tên của bạn",
+    "nameIntro": "Người chơi khác sẽ thấy tên này trong mọi ván. Bạn không thể đổi tên sau này.",
+    "save": "Lưu",
+    "menu": "Tài khoản: {{name}}",
+    "signedInAs": "Đã đăng nhập bằng",
+    "signOut": "Đăng xuất",
+    "nameFromAccount": "Tên trong tài khoản của bạn."
+  },
   "lobby": {
     "yourName": "Tên",
     "gameCode": "Mã phòng",

@@ -11,6 +11,9 @@ export interface Session {
 /** Sessions saved before the platform knew several games were all Sky Team rooms. */
 const DEFAULT_GAME = 'sky-team';
 
+/** A player's name in a room: at most 20 characters (`@platform/protocol`). */
+export const NAME_MAX = 20;
+
 const SESSION_KEY = 'sky-team:session';
 const NAME_KEY = 'sky-team:name';
 

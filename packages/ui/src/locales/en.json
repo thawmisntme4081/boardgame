@@ -20,6 +20,28 @@
     "tooMany": "Too many tries. Wait a few minutes, then try again.",
     "error": "The server did not answer. Try again."
   },
+  "account": {
+    "signIn": "Sign in",
+    "signInTitle": "Sign in",
+    "signInIntro": "Optional: your Flight Log and your seat follow you to your other devices. Guests play as before.",
+    "google": "Continue with Google",
+    "email": "Email",
+    "sendCode": "Email me a code",
+    "codeSent": "We sent a 6-digit code to {{email}}. It works for 5 minutes.",
+    "code": "Code",
+    "verify": "Sign in",
+    "otherEmail": "Use another email",
+    "wrongCode": "Wrong or expired code.",
+    "tooMany": "Too many tries. Wait a minute, then try again.",
+    "error": "Something went wrong. Try again.",
+    "nameTitle": "Choose your name",
+    "nameIntro": "Other players see it in every game. You cannot change it later.",
+    "save": "Save",
+    "menu": "Account: {{name}}",
+    "signedInAs": "Signed in as",
+    "signOut": "Sign out",
+    "nameFromAccount": "Your account's name."
+  },
   "lobby": {
     "yourName": "Your name",
     "gameCode": "Game code",

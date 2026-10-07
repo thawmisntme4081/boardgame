@@ -6,6 +6,8 @@ import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
 import { useState, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { joinRoom } from '../api';
+import { NAME_MAX } from '../session';
+import { AccountButton } from './Account';
 
 export function Shell({ children }: { children: ReactNode }) {
   return (
@@ -15,20 +17,41 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-/** A card heading with the language switch on the right. */
-export function CardTop({ title, description }: { title: ReactNode; description?: ReactNode }) {
+/** A card heading with the language switch (and, if asked, sign-in) on the right. */
+export function CardTop({
+  title,
+  description,
+  account = false,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  /** Show "Sign in" or the signed-in name (the game picker and the game pages). */
+  account?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-start justify-between gap-2">
-        <h1 className="flex items-center gap-2 text-xl font-semibold">{title}</h1>
-        <LanguageSwitch className="-mt-2 -mr-2" />
+        <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">{title}</h1>
+        <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
+          {account && <AccountButton />}
+          <LanguageSwitch />
+        </div>
       </div>
       {description && <p className="text-sm text-muted-foreground">{description}</p>}
     </div>
   );
 }
 
-export function NameField({ name, onChange }: { name: string; onChange(name: string): void }) {
+export function NameField({
+  name,
+  onChange,
+  fromAccount = false,
+}: {
+  name: string;
+  onChange(name: string): void;
+  /** Signed in: the account's name, shown but not editable. */
+  fromAccount?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
@@ -36,11 +59,18 @@ export function NameField({ name, onChange }: { name: string; onChange(name: str
       <Input
         id="name"
         value={name}
-        maxLength={20}
+        maxLength={NAME_MAX}
         autoComplete="nickname"
+        readOnly={fromAccount}
+        aria-describedby={fromAccount ? 'name-from-account' : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 text-base"
+        className="h-11 text-base read-only:bg-muted read-only:text-muted-foreground"
       />
+      {fromAccount && (
+        <p id="name-from-account" className="text-xs text-muted-foreground">
+          {t('account.nameFromAccount')}
+        </p>
+      )}
     </div>
   );
 }

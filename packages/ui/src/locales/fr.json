@@ -20,6 +20,28 @@
     "tooMany": "Trop d’essais. Attendez quelques minutes, puis réessayez.",
     "error": "Le serveur n’a pas répondu. Réessayez."
   },
+  "account": {
+    "signIn": "Se connecter",
+    "signInTitle": "Se connecter",
+    "signInIntro": "Facultatif : votre carnet de vol et votre place vous suivent sur vos autres appareils. Les invités jouent comme avant.",
+    "google": "Continuer avec Google",
+    "email": "E-mail",
+    "sendCode": "Recevoir un code par e-mail",
+    "codeSent": "Un code à 6 chiffres a été envoyé à {{email}}. Il est valable 5 minutes.",
+    "code": "Code",
+    "verify": "Se connecter",
+    "otherEmail": "Utiliser une autre adresse",
+    "wrongCode": "Code incorrect ou expiré.",
+    "tooMany": "Trop d’essais. Attendez une minute, puis réessayez.",
+    "error": "Une erreur s’est produite. Réessayez.",
+    "nameTitle": "Choisissez votre nom",
+    "nameIntro": "Les autres joueurs le voient dans chaque partie. Vous ne pourrez plus le changer.",
+    "save": "Enregistrer",
+    "menu": "Compte : {{name}}",
+    "signedInAs": "Connecté en tant que",
+    "signOut": "Se déconnecter",
+    "nameFromAccount": "Le nom de votre compte."
+  },
   "lobby": {
     "yourName": "Votre nom",
     "gameCode": "Code de la partie",

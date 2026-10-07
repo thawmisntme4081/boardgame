@@ -5,6 +5,22 @@ import { loadSession, type Session } from './session';
 export type { Connection };
 export type SiteAccess = 'checking' | 'locked' | 'open';
 
+/** The signed-in user (Platform 06), as `GET /auth/me` returns it. */
+export interface AccountUser {
+  id: string;
+  /** Empty after a first email sign-in, until the player chooses it (once). */
+  name: string;
+  email: string;
+  image: string | null;
+}
+
+/**
+ * Accounts: being loaded, off on this server, or on (with how one signs in, and the user when
+ * signed in).
+ */
+export type AccountState =
+  'loading' | 'off' | { methods: { google: boolean; email: boolean }; user: AccountUser | null };
+
 /** The latest view of the match, as the server sent it: any game's, for one seat. */
 export interface MatchViewState {
   matchId: string;
@@ -26,12 +42,14 @@ export interface PlatformStore {
   pendingPresence: SeatPresence | null;
   /** The site password gate: being checked, waiting for the password, or open. */
   siteAccess: SiteAccess;
+  account: AccountState;
 
   setConnection: (connection: Connection) => void;
   setSession: (session: Session | null) => void;
   setMatch: (match: MatchViewState) => void;
   setPresence: (presence: SeatPresence) => void;
   setSiteAccess: (siteAccess: SiteAccess) => void;
+  setAccount: (account: AccountState) => void;
   leave: () => void;
 }
 
@@ -42,6 +60,7 @@ export const usePlatform = create<PlatformStore>()((set) => ({
   presence: null,
   pendingPresence: null,
   siteAccess: 'checking',
+  account: 'loading',
 
   setConnection: (connection) => set({ connection }),
   setSession: (session) => set({ session }),
@@ -59,5 +78,6 @@ export const usePlatform = create<PlatformStore>()((set) => ({
         : { presence, pendingPresence: null },
     ),
   setSiteAccess: (siteAccess) => set({ siteAccess }),
+  setAccount: (account) => set({ account }),
   leave: () => set({ session: null, match: null, presence: null, pendingPresence: null }),
 }));

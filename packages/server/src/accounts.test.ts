@@ -175,36 +175,55 @@ describe('sign in with an email code', () => {
   });
 });
 
-describe('sign in with Google', () => {
-  /** A Google ID token as Better Auth reads it (it trusts the token endpoint's answer). */
-  const idToken = (claims: Record<string, unknown>) =>
-    [{ alg: 'none', typ: 'JWT' }, claims, 'sig']
-      .map((part) =>
-        Buffer.from(typeof part === 'string' ? part : JSON.stringify(part)).toString('base64url'),
-      )
-      .join('.');
+/** A Google ID token as Better Auth reads it (it trusts the token endpoint's answer). */
+const idToken = (claims: Record<string, unknown>) =>
+  [{ alg: 'none', typ: 'JWT' }, claims, 'sig']
+    .map((part) =>
+      Buffer.from(typeof part === 'string' ? part : JSON.stringify(part)).toString('base64url'),
+    )
+    .join('.');
 
+/** Google's token endpoint, mocked: it answers with an ID token for `claims`. */
+function mockGoogle(claims: Record<string, unknown>) {
+  const realFetch = globalThis.fetch;
+  vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+    const target = input instanceof Request ? input.url : String(input);
+    if (target.startsWith('https://oauth2.googleapis.com/token')) {
+      return Promise.resolve(
+        Response.json({
+          access_token: 'google-access',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          id_token: idToken({ email_verified: true, ...claims }),
+        }),
+      );
+    }
+    return realFetch(input, init);
+  });
+}
+
+/** Starts a Google sign-in and comes back through the callback; returns the session cookie. */
+async function signInWithGoogle(url: string) {
+  const begin = await post(url, '/api/auth/sign-in/social', {
+    provider: 'google',
+    callbackURL: '/',
+  });
+  const { url: googleUrl } = (await begin.json()) as { url: string };
+  const state = new URL(googleUrl).searchParams.get('state')!;
+  const back = await fetch(`${url}/api/auth/callback/google?code=abc&state=${state}`, {
+    headers: { cookie: cookiesOf(begin) },
+    redirect: 'manual',
+  });
+  return cookiesOf(back);
+}
+
+describe('sign in with Google', () => {
   it('signs in through the callback with the provider mocked', async () => {
-    const realFetch = globalThis.fetch;
-    vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
-      const target = input instanceof Request ? input.url : String(input);
-      if (target.startsWith('https://oauth2.googleapis.com/token')) {
-        return Promise.resolve(
-          Response.json({
-            access_token: 'google-access',
-            token_type: 'Bearer',
-            expires_in: 3600,
-            id_token: idToken({
-              sub: 'google-123',
-              email: 'chi@example.com',
-              email_verified: true,
-              name: 'Chi',
-              picture: 'https://example.com/chi.png',
-            }),
-          }),
-        );
-      }
-      return realFetch(input, init);
+    mockGoogle({
+      sub: 'google-123',
+      email: 'chi@example.com',
+      name: 'Chi',
+      picture: 'https://example.com/chi.png',
     });
 
     const { url, database } = await start({
@@ -265,5 +284,58 @@ describe('behind the site password', () => {
     const login = await post(url, '/auth/login', { password: 'bay-cung-nhau' });
     const site = cookiesOf(login);
     expect(await me(url, site)).toBeNull();
+  });
+});
+
+describe('the display name', () => {
+  it('cuts a long Google name to fit a room (20 characters)', async () => {
+    mockGoogle({
+      sub: 'g-long',
+      email: 'long@example.com',
+      name: '  Nguyễn Thanh Tuấn Hugo Nguyen  ',
+    });
+    const { url } = await start({ google: { clientId: 'id', clientSecret: 'secret' } });
+    const cookie = await signInWithGoogle(url);
+    expect((await me(url, cookie))?.name).toBe('Nguyễn Thanh Tuấn Hu');
+  });
+
+  it('is asked once after an email sign-in, then fixed', async () => {
+    const { url, codes } = await start();
+    const cookie = cookiesOf(await signInWithCode(url, codes, 'dao@example.com'));
+    expect((await me(url, cookie))?.name).toBe('');
+
+    expect((await post(url, '/auth/name', { name: '   ' }, { cookie })).status).toBe(400);
+    const set = await post(url, '/auth/name', { name: '  Đào  ' }, { cookie });
+    expect(set.status).toBe(200);
+    expect(await set.json()).toMatchObject({ name: 'Đào', email: 'dao@example.com' });
+    expect((await me(url, cookie))?.name).toBe('Đào');
+
+    expect((await post(url, '/auth/name', { name: 'Other' }, { cookie })).status).toBe(409);
+    expect((await me(url, cookie))?.name).toBe('Đào');
+  });
+
+  it("cannot be set signed out, nor through Better Auth's own profile endpoint", async () => {
+    const { url, codes } = await start();
+    expect((await post(url, '/auth/name', { name: 'Ana' })).status).toBe(401);
+    const cookie = cookiesOf(await signInWithCode(url, codes, 'ana@example.com'));
+    const update = await post(url, '/api/auth/update-user', { name: 'Ana' }, { cookie });
+    expect(update.status).toBe(404);
+    expect((await me(url, cookie))?.name).toBe('');
+  });
+});
+
+describe('sign-in methods', () => {
+  it('says which methods are on', async () => {
+    const both = await start({ google: { clientId: 'id', clientSecret: 'secret' } });
+    expect(await (await fetch(`${both.url}/auth/methods`)).json()).toEqual({
+      google: true,
+      email: true,
+    });
+    await close?.();
+    const emailOnly = await start();
+    expect(await (await fetch(`${emailOnly.url}/auth/methods`)).json()).toEqual({
+      google: false,
+      email: true,
+    });
   });
 });

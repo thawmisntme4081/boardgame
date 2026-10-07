@@ -80,10 +80,14 @@ Optional: guests never need them. Better Auth answers under `/api/auth/*`; with 
 | Request | Answer |
 | --- | --- |
 | `GET /auth/me` | The signed-in user `{ id, name, email, image }`, or `null` |
+| `GET /auth/methods` | `{ google, email }`: the sign-in methods this server has (no accounts at all: `404`) |
+| `POST /auth/name { name }` | Sets the display name once, after a first email sign-in (trimmed, 1–20 characters): the user; `400 bad-name`, `401 signed-out`, `409 name-set` |
 | `POST /api/auth/email-otp/send-verification-otp { email, type: 'sign-in' }` | Emails a 6-digit code (5 minutes, 3 tries) |
 | `POST /api/auth/sign-in/email-otp { email, otp }` | Signs in (an account is created on first use, with an empty name) + `Set-Cookie: platform.session_token=...` |
 | `POST /api/auth/sign-in/social { provider: 'google', callbackURL }` | `{ url }`: the Google page to open |
 | `GET /api/auth/callback/google` | Google's redirect back: sets the session cookie and redirects to `callbackURL` |
 | `POST /api/auth/sign-out` | Ends the session, clears the cookie |
+
+A display name never changes: Google's name (cut to 20 characters) or the one set once with `/auth/name`; Better Auth's `/update-user`, `/change-email` and password endpoints are off.
 
 The session cookie (`platform.session_token`, `__Secure-` in production) is httpOnly, SameSite=Lax, Secure in production, and lasts 30 days; it is separate from `site_auth`.

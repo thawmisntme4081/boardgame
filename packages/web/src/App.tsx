@@ -1,6 +1,7 @@
 import { Toaster } from '@platform/ui/components/sonner';
 import { RouterProvider } from '@tanstack/react-router';
 import { useEffect } from 'react';
+import { loadAccount } from './account';
 import { checkSiteAccess, startConnection } from './api';
 import { router } from './router';
 import { Connecting } from './screens/Shell';
@@ -16,7 +17,10 @@ export function App() {
     );
   }, []);
   useEffect(() => {
-    if (siteAccess === 'open') startConnection();
+    if (siteAccess !== 'open') return;
+    startConnection();
+    // Accounts come after the site password (their endpoints sit behind it).
+    void loadAccount();
   }, [siteAccess]);
   return (
     <>

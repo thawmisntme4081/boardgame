@@ -37,6 +37,7 @@ Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 
 ## Before take-off
 
+- Accounts (optional): "Sign in" sits next to the language switch on the game picker and the game page (`CardTop`'s `account`); signed in, it shows the name and a menu with the email and "Sign out". The sign-in dialog has "Continue with Google" (when the server has it) and an email code (email, then the 6-digit code). After a first email sign-in a dialog asks the name once (it cannot be dismissed; "Sign out" is the way out). Signed in, every name field shows the account's name read-only. With no accounts on the server nothing of this shows.
 - The lobby picks the scenario and the timer only. In the game's `setup` phase a "Before take-off" panel sits above the tracks (`Preflight`): Pilot and Co-pilot buttons (outline in the seat colour; the creator clicks one, the partner sees them disabled; each player's own seat turns solid once chosen), the six Special Ability cards with their rules when the scenario has any (one each with two cards, the creator's with one), and a Confirm button at the bottom for both. Round 1 (and its traffic die) starts once both have confirmed; until then the dice tray only points to the panel. "Fly again" keeps the scenario picker and returns to the panel, with the last seats and picks kept.
 
 ## Turbulence
