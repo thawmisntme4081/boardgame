@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import type { PlatformApi } from '@platform/ui/game';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { connectPlatform } from './platform';
 import { useSkyTeam } from './store';
 import { makeView, resetStore, showView } from './test/fixtures';
 
@@ -48,5 +50,33 @@ describe("Sky Team's store", () => {
       rerollPick: [],
       coffeeDelta: 0,
     });
+  });
+});
+
+describe("the Flight Log's source", () => {
+  const record = { v: 1, scenario: 'yul', seat: 'pilot', result: 'won', at: 5 };
+  const connect = (signedIn: boolean, records: unknown[] | null) =>
+    connectPlatform({
+      signedIn: () => signedIn,
+      flightLog: vi.fn().mockResolvedValue(records),
+    } as unknown as PlatformApi<never, never>);
+
+  beforeEach(() => localStorage.clear());
+
+  it("shows the account's log from the server when signed in, the device's when not", async () => {
+    connect(true, [record, { junk: true }]);
+    await useSkyTeam.getState().syncHistory();
+    expect(useSkyTeam.getState().history).toEqual([record]);
+    connect(false, null);
+    await useSkyTeam.getState().syncHistory();
+    expect(useSkyTeam.getState().history).toEqual([]);
+  });
+
+  it('does not keep a finished game on the device when signed in (the server has it)', async () => {
+    connect(true, [record]);
+    showView(makeView('pilot'));
+    showView(makeView('pilot', { patch: { phase: 'won', round: 7 } }));
+    expect(localStorage.getItem('sky-team:history')).toBeNull();
+    await vi.waitFor(() => expect(useSkyTeam.getState().history).toEqual([record]));
   });
 });

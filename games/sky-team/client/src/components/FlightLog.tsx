@@ -163,8 +163,9 @@ function HistoryList({ history }: { history: readonly GameRecord[] }) {
 export function FlightLog({ className }: { className?: string }) {
   const { t } = useTranslation('sky-team');
   const history = useSkyTeam((s) => s.history);
+  const syncHistory = useSkyTeam((s) => s.syncHistory);
   return (
-    <Dialog>
+    <Dialog onOpenChange={(open) => open && void syncHistory()}>
       <DialogTrigger asChild>
         <Button variant="ghost" className={cn('h-11', className)}>
           <BookOpen /> {t('flightLog.open')}

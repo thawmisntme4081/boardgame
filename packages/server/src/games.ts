@@ -8,7 +8,7 @@ import {
   type SkyTeamConfig,
   type SkyTeamMove,
 } from '@sky/rules/definition';
-import type { PlayerView } from '@sky/rules';
+import { recordOf, type PlayerView } from '@sky/rules';
 import type { ZodType } from 'zod';
 import type { EndedStatus } from './store';
 
@@ -30,6 +30,11 @@ export interface GameEntry {
    * all. A status left out is kept for good (long games played over days must not lose one).
    */
   keepEnded?: Partial<Record<EndedStatus, number>>;
+  /**
+   * A seat's entry in its account's Flight Log, from its final view: `others` are the other
+   * players' names. A game without one keeps no Flight Log.
+   */
+  flightRecord?(view: GameView, others: string[], at: number): unknown;
 }
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -54,6 +59,7 @@ export function createRegistry(settings: GameSettings = {}): GameRegistry {
         lobby: skyTeamLobbySchema,
         settings: settings[skyTeam.id] ?? {},
         keepEnded: SKY_TEAM_KEEP_ENDED,
+        flightRecord: (view, others, at) => recordOf(view, others[0] ?? '', at),
       },
     ],
   ]);

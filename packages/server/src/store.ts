@@ -72,6 +72,15 @@ export interface MatchSeat {
   userId: string | null;
 }
 
+/** One finished match in an account's Flight Log; `record` is the game's own JSON. */
+export interface FlightEntry {
+  userId: string;
+  matchId: string;
+  gameId: string;
+  endedAt: number;
+  record: unknown;
+}
+
 export interface Snapshot {
   n: number;
   state: unknown;
@@ -103,6 +112,10 @@ export interface MatchStore {
   ): void;
   loadMatch(matchId: string): LoadedMatch | undefined;
   listOpen(): MatchRecord[];
+  /** Adds entries to the accounts' Flight Logs; one that is already there (same match and account) is kept as it was. */
+  addFlightEntries(entries: FlightEntry[]): void;
+  /** An account's entries for a game, newest first. */
+  flightLog(userId: string, gameId: string): FlightEntry[];
   /**
    * Deletes `gameId`'s matches that ended as `status` before `before`, with their seats, moves
    * and snapshots. Returns how many.
@@ -192,6 +205,7 @@ export class MemoryMatchStore implements MatchStore {
   private readonly seats = new Map<string, string>();
   private readonly moves = new Map<string, LoggedMove[]>();
   private readonly snapshots = new Map<string, Snapshot[]>();
+  private readonly flight = new Map<string, FlightEntry>();
 
   loadRooms(): StoredRoom[] {
     const loaded: StoredRoom[] = [];
@@ -276,6 +290,20 @@ export class MemoryMatchStore implements MatchStore {
       .filter((m) => m.status === 'open');
   }
 
+  addFlightEntries(entries: FlightEntry[]): void {
+    for (const e of entries) {
+      const key = `${e.userId}\n${e.matchId}`;
+      if (!this.flight.has(key)) this.flight.set(key, structuredClone(e));
+    }
+  }
+
+  flightLog(userId: string, gameId: string): FlightEntry[] {
+    return [...this.flight.values()]
+      .filter((e) => e.userId === userId && e.gameId === gameId)
+      .sort((a, b) => b.endedAt - a.endedAt)
+      .map((e) => structuredClone(e));
+  }
+
   pruneEnded(gameId: string, status: EndedStatus, before: number): number {
     let removed = 0;
     for (const [id, json] of this.matches) {
@@ -353,6 +381,18 @@ export const matchSnapshotsTable = sqliteTable(
     state: text('state').notNull(),
   },
   (t) => [primaryKey({ columns: [t.matchId, t.n] })],
+);
+
+export const flightLogTable = sqliteTable(
+  'flight_log',
+  {
+    userId: text('user_id').notNull(),
+    matchId: text('match_id').notNull(),
+    gameId: text('game_id').notNull(),
+    endedAt: integer('ended_at').notNull(),
+    record: text('record').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.matchId] })],
 );
 
 /**
@@ -452,6 +492,17 @@ export const MIGRATIONS: readonly string[] = [
   // 4. Platform 06 D: a seat names the account that held it (guests: NULL).
   `ALTER TABLE match_seats ADD COLUMN user_id TEXT;
   CREATE INDEX match_seats_user_id ON match_seats (user_id);`,
+  // 5. Platform 06 E: each account's Flight Log, one row per account and finished match. It
+  // outlives the match log, which is pruned (no foreign key: account deletion removes rows).
+  `CREATE TABLE flight_log (
+    user_id TEXT NOT NULL,
+    match_id TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    ended_at INTEGER NOT NULL,
+    record TEXT NOT NULL,
+    PRIMARY KEY (user_id, match_id)
+  );
+  CREATE INDEX flight_log_user_game ON flight_log (user_id, game_id, ended_at);`,
 ];
 
 /** Runs the migrations a database has not had yet, each in its own transaction. */
@@ -633,6 +684,25 @@ export class SqliteMatchStore implements MatchStore {
       .where(eq(matchesTable.status, 'open'))
       .all()
       .map(toRecord);
+  }
+
+  addFlightEntries(entries: FlightEntry[]): void {
+    if (entries.length === 0) return;
+    this.db
+      .insert(flightLogTable)
+      .values(entries.map((e) => ({ ...e, record: JSON.stringify(e.record) })))
+      .onConflictDoNothing()
+      .run();
+  }
+
+  flightLog(userId: string, gameId: string): FlightEntry[] {
+    return this.db
+      .select()
+      .from(flightLogTable)
+      .where(and(eq(flightLogTable.userId, userId), eq(flightLogTable.gameId, gameId)))
+      .orderBy(desc(flightLogTable.endedAt))
+      .all()
+      .map((r) => ({ ...r, record: JSON.parse(r.record) as unknown }));
   }
 
   pruneEnded(gameId: string, status: EndedStatus, before: number): number {

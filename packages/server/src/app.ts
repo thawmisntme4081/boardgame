@@ -78,12 +78,29 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   if (accounts) {
     // Signing in comes after the site password: without it, no accounts and no code emails.
     if (siteGate) {
-      app.use([AUTH_BASE_PATH, '/auth/me', '/auth/methods', '/auth/name'], (req, res, next) => {
-        if (siteGate.check(req)) next();
-        else res.status(401).json({ error: 'site-password' });
-      });
+      app.use(
+        [AUTH_BASE_PATH, '/auth/me', '/auth/methods', '/auth/name', '/api/flight-log'],
+        (req, res, next) => {
+          if (siteGate.check(req)) next();
+          else res.status(401).json({ error: 'site-password' });
+        },
+      );
     }
     app.use(accounts.router);
+    // The signed-in account's own records for a game, `?game=<id>`: nobody else's.
+    app.get('/api/flight-log', (req, res) => {
+      const game = typeof req.query.game === 'string' ? req.query.game : '';
+      accounts.userOf(req).then(
+        (user) =>
+          user
+            ? res.json(rooms.flightLog(user.id, game))
+            : void res.status(401).json({ error: 'signed-out' }),
+        (error: unknown) => {
+          reportError(error);
+          res.status(500).json({ error: 'unknown' });
+        },
+      );
+    });
   }
 
   // The socket handshake is an HTTP request too: it needs every gate that is on.

@@ -37,6 +37,13 @@ export interface PlatformApi<Move, Setup> {
   rematch(setup?: Setup): Promise<boolean>;
   /** Gives up the seat for good and goes back to the game's page. */
   leave(): Promise<void>;
+  /** Whether the player is signed in to an account (Platform 06). */
+  signedIn(): boolean;
+  /**
+   * The signed-in account's Flight Log for this game, newest first, as the game's own records
+   * (the server wrote them when each match ended); `null` when signed out or unreachable.
+   */
+  flightLog(): Promise<unknown[] | null>;
 }
 
 export interface BoardProps<View> {

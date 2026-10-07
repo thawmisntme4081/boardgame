@@ -316,6 +316,22 @@ export const platformServices: PlatformApi<unknown, unknown> = {
       }),
     ),
   leave: leaveGame,
+  signedIn: () => {
+    const { account } = usePlatform.getState();
+    return typeof account === 'object' && account.user !== null;
+  },
+  flightLog: async () => {
+    const game = usePlatform.getState().session?.game;
+    if (!game || !platformServices.signedIn()) return null;
+    try {
+      const res = await fetch(`/api/flight-log?game=${encodeURIComponent(game)}`, {
+        credentials: 'same-origin',
+      });
+      return res.ok ? ((await res.json()) as unknown[]) : null;
+    } catch {
+      return null;
+    }
+  },
 };
 
 provideServices(platformServices);

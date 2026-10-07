@@ -68,14 +68,14 @@ The user store and the sign-in endpoints, with no page yet.
 
 ### E. The Flight Log per account · medium
 
-- [ ] Table `flight_log` (user, game, scenario, seat, partner's name, abilities, result, end reason, round, date), a `MIGRATIONS` step
-- [ ] Written by the server when a match ends (`over`), one row per seated account, once (not again after a restart)
-- [ ] `GET /api/flight-log` (the signed-in user's rows, newest first)
-- [ ] Sky Team's Flight Log dialog reads it when signed in, the device's `localStorage` when not; the ✓ on landed scenarios from the same source
-- [ ] A game's `Summary` card in the contract (`GameClientModule`) if the history page needs one per game
-- [ ] Tests: written once per account, readable only by its owner
+- [x] Table `flight_log` (user, game, scenario, seat, partner's name, abilities, result, end reason, round, date), a `MIGRATIONS` step
+- [x] Written by the server when a match ends (`over`), one row per seated account, once (not again after a restart)
+- [x] `GET /api/flight-log` (the signed-in user's rows, newest first)
+- [x] Sky Team's Flight Log dialog reads it when signed in, the device's `localStorage` when not; the ✓ on landed scenarios from the same source
+- [ ] A game's `Summary` card in the contract (`GameClientModule`) if the history page needs one per game (not needed yet: decided with the history page, stage G)
+- [x] Tests: written once per account, readable only by its owner
 
-**Done when:** a game finished on one device shows in the Flight Log on another, signed in to the same account.
+**Done when:** a game finished on one device shows in the Flight Log on another, signed in to the same account. ✅ Verified Oct 7, 2026 (server: 3 tests in `flightlog.test.ts` — one row per signed-in player and match, once also after a restart, readable only by its owner over HTTP; client: the store reads the server when signed in and keeps nothing on the device then).
 
 ### F. Import the device's history · small
 
@@ -122,7 +122,7 @@ None open.
 - [x] B. Accounts on the server
 - [x] C. Sign-in in the shell
 - [x] D. Seats follow the account
-- [ ] E. The Flight Log per account
+- [x] E. The Flight Log per account
 - [ ] F. Import the device's history
 - [ ] G. Profile and history pages
 - [ ] H. Account deletion and going live

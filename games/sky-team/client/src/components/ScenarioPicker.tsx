@@ -1,5 +1,6 @@
 import { DIFFICULTIES, SCENARIO_LIST, SCENARIOS, type Scenario } from '@sky/rules';
 import { Check } from 'lucide-react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Label } from '@platform/ui/components/label';
 import {
@@ -50,6 +51,8 @@ export function ScenarioPicker({
   // Scenarios landed on this device get a ✓ (the Flight Log's victory boxes).
   const history = useSkyTeam((s) => s.history);
   const landed = landedScenarios(history);
+  const syncHistory = useSkyTeam((s) => s.syncHistory);
+  useEffect(() => void syncHistory(), [syncHistory]);
 
   const pickScenario = (next: string) => {
     if (SCENARIOS[next]) onChange({ scenario: next });

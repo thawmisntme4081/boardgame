@@ -204,6 +204,11 @@ export class RoomManager {
     return room;
   }
 
+  /** An account's Flight Log for a game: its records, newest first. */
+  flightLog(userId: string, gameId: string): unknown[] {
+    return this.store?.flightLog(userId, gameId).map((e) => e.record) ?? [];
+  }
+
   /** The registry entry of the room's game. */
   entry(room: Room): GameEntry {
     const entry = this.games.get(room.gameId);
@@ -682,7 +687,37 @@ export class RoomManager {
   private endInLog(room: Room): void {
     const outcome = this.entry(room).definition.outcome(room.game);
     this.snapshot(room);
-    this.store?.endMatch(room.match.id, 'over', outcome, this.now());
+    const at = this.now();
+    this.store?.endMatch(room.match.id, 'over', outcome, at);
+    this.flightLogFor(room, at);
+  }
+
+  /**
+   * Each signed-in player's Flight Log entry for the match that just ended. The log keeps the
+   * first entry per account and match, so a room restored after a restart writes nothing twice.
+   */
+  private flightLogFor(room: Room, at: number): void {
+    const { definition, flightRecord } = this.entry(room);
+    if (!this.store || !flightRecord) return;
+    const players = this.players(room);
+    const entries = players.flatMap((player) => {
+      if (!player.userId) return [];
+      const view = definition.view(room.game, player.seat, at);
+      const others = players.filter((p) => p !== player).map((p) => p.name);
+      const record = flightRecord(view, others, at);
+      return record == null
+        ? []
+        : [
+            {
+              userId: player.userId,
+              matchId: room.match.id,
+              gameId: room.gameId,
+              endedAt: at,
+              record,
+            },
+          ];
+    });
+    this.store.addFlightEntries(entries);
   }
 
   /** The room moves on (or goes) before its match ended: the match is abandoned. */

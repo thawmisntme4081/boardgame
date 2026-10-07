@@ -10,3 +10,4 @@ export * from './crew';
 export * from './modules';
 export * from './views';
 export * from './events';
+export * from './record';
