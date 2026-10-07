@@ -68,6 +68,8 @@ export interface MatchSeat {
   seat: string;
   name: string;
   tokenHash: string;
+  /** The signed-in player's account (Platform 06), `null` for a guest. */
+  userId: string | null;
 }
 
 export interface Snapshot {
@@ -326,6 +328,7 @@ export const matchSeatsTable = sqliteTable(
     seat: text('seat').notNull(),
     name: text('name').notNull(),
     tokenHash: text('token_hash').notNull(),
+    userId: text('user_id'),
   },
   (t) => [primaryKey({ columns: [t.matchId, t.seat] })],
 );
@@ -446,6 +449,9 @@ export const MIGRATIONS: readonly string[] = [
     updated_at DATE NOT NULL
   );
   CREATE INDEX auth_verifications_identifier_idx ON auth_verifications (identifier);`,
+  // 4. Platform 06 D: a seat names the account that held it (guests: NULL).
+  `ALTER TABLE match_seats ADD COLUMN user_id TEXT;
+  CREATE INDEX match_seats_user_id ON match_seats (user_id);`,
 ];
 
 /** Runs the migrations a database has not had yet, each in its own transaction. */

@@ -1,6 +1,6 @@
 # Platform 06: Accounts (the Flight Log goes with you)
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A–C done)** · Effort: **high** (8 stages, each small to medium)
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A–D done)** · Effort: **high** (8 stages, each small to medium)
 
 Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-11-history.md) covers local history). Needs [Platform 04](phase-04-match-log.md)'s match store and the deployed site from [Sky Team 13](../sky-team/phase-13-deploy.md) (cookies, HTTPS).
 
@@ -57,14 +57,14 @@ The user store and the sign-in endpoints, with no page yet.
 
 ### D. Seats follow the account · medium
 
-- [ ] The Socket.IO handshake reads the session cookie: the socket knows its user (or none)
-- [ ] `match_seats` and the room's players carry the `userId` of a signed-in player
-- [ ] Rejoin by account: opening the site on another device, signed in, takes the player back to their seat (no token needed)
-- [ ] One account cannot hold both seats of a room; guests keep rejoin tokens exactly as now
-- [ ] Integration tests: two devices, one account; a guest next to a signed-in player
-- [ ] `ROOM_FORMAT` bumped if the saved room changes
+- [x] The Socket.IO handshake reads the session cookie: the socket knows its user (or none) (`io.use` in `app.ts`, `socket.data.userId`; the client reconnects after signing in or out, so the server sees the change)
+- [x] `match_seats` and the room's players carry the `userId` of a signed-in player (`MIGRATIONS` step 4: `match_seats.user_id`; `Player.userId`, set on create and join, and on a guest's rejoin once that player signed in)
+- [x] Rejoin by account: opening the site on another device, signed in, takes the player back to their seat (no token needed): `room:resume` (the account's seat in its most recently active room, with a new rejoin token; the client sends it when signed in without a saved seat)
+- [x] One account cannot hold both seats of a room (joining your own room's code gives your seat back); guests keep rejoin tokens exactly as now
+- [x] Integration tests: two devices, one account; a guest next to a signed-in player (`seats.test.ts`, 7 tests, incl. a guest who signs in later and a restart)
+- [x] `ROOM_FORMAT` bumped if the saved room changes: not needed, `userId` is an optional field that older rows simply lack (they load as guests)
 
-**Done when:** a game started on a laptop continues on a phone after signing in there.
+**Done when:** a game started on a laptop continues on a phone after signing in there. ✅ Verified Oct 7, 2026 (in `pnpm dev` with three browsers: Ana signs in on a laptop and creates a game, Ben joins as a guest, Ana signs in on a Pixel 7 profile and lands in the game as the pilot, still there after a reload; 7 seat tests, all web, server and protocol tests, typecheck, lint, format and build pass). Known: the device the seat moved away from keeps showing the last board until it is used again or comes back to the front; then it takes the seat back the same way (the seat follows the device last used).
 
 ### E. The Flight Log per account · medium
 
@@ -121,7 +121,7 @@ None open.
 - [x] A. File-based routes
 - [x] B. Accounts on the server
 - [x] C. Sign-in in the shell
-- [ ] D. Seats follow the account
+- [x] D. Seats follow the account
 - [ ] E. The Flight Log per account
 - [ ] F. Import the device's history
 - [ ] G. Profile and history pages

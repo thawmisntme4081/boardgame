@@ -10,6 +10,7 @@ vi.mock('@/api', () => ({
   checkSiteAccess: vi.fn(async () => true),
   enterSitePassword: vi.fn(async () => 'ok'),
   startConnection: vi.fn(),
+  accountChanged: vi.fn(),
   setNavigate: vi.fn(),
   createRoom: vi.fn(async () => true),
   joinRoom: vi.fn(async () => true),

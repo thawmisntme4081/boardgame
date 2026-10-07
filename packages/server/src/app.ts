@@ -6,8 +6,14 @@ import express from 'express';
 import { Server } from 'socket.io';
 import type { AccessCheck } from './access';
 import { AUTH_BASE_PATH, type Accounts } from './accounts';
-import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
-import { log } from './log';
+import {
+  broadcastRoom,
+  registerHandlers,
+  type GameServer,
+  type HandlerOptions,
+  type SocketData,
+} from './handlers';
+import { log, reportError } from './log';
 import { RoomManager } from './rooms';
 import type { SiteGate } from './siteGate';
 
@@ -96,6 +102,22 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
       },
     }),
   });
+  // Signed in? The handshake carries the session cookie: the socket knows its account (or
+  // none; a failed lookup counts as a guest). Signing in or out makes the client reconnect.
+  if (accounts) {
+    io.use((socket, next) => {
+      accounts.userOf(socket.request).then(
+        (user) => {
+          (socket.data as SocketData).userId = user?.id;
+          next();
+        },
+        (error: unknown) => {
+          reportError(error);
+          next();
+        },
+      );
+    });
+  }
   registerHandlers(io, rooms, options);
   // Rooms loaded from the store: re-arm their scheduled moves (round timers, Total Trust
   // rolls). A deadline that passed while the server was down expires at once.

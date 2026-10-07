@@ -84,6 +84,11 @@ export function clientIp(socket: GameSocket, trustProxy = false): string {
   return (trustProxy && first) || socket.handshake.address || 'unknown';
 }
 
+/** What the handshake learned about a connection (`app.ts`): the signed-in account, if any. */
+export interface SocketData {
+  userId?: string;
+}
+
 export function registerHandlers(
   io: GameServer,
   rooms: RoomManager,
@@ -93,6 +98,9 @@ export function registerHandlers(
   rooms.onScheduled = (room) => broadcastRoom(io, rooms, room);
 
   io.on('connection', (socket: GameSocket) => {
+    // Read once at the handshake: signing in or out makes the client reconnect.
+    const { userId } = socket.data as SocketData;
+
     /** Wraps a handler so a bug answers `bad-request` instead of crashing the process. */
     const on = <R extends JoinResult | AckResult>(
       event: keyof Events,
@@ -150,6 +158,7 @@ export function registerHandlers(
       const result = rooms.create(data.name, socket.id, clientIp(socket, options.trustProxy), {
         game: data.game,
         config: data.config,
+        userId,
       });
       if (!result.ok) return reply(result);
       const { room } = result.value;
@@ -162,19 +171,37 @@ export function registerHandlers(
     on('room:join', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(joinRoomSchema, payload);
       if (!data) return reply({ ok: false, error: 'bad-request' });
-      const result = rooms.join(data.code, data.name, socket.id);
+      const result = rooms.join(data.code, data.name, socket.id, userId);
       if (!result.ok) return reply(result);
-      void socket.join(result.value.room.code);
+      const { room, player, replaced } = result.value;
+      // Signed in and already seated here: the seat moved to this connection.
+      if (replaced) io.in(replaced).socketsLeave(room.code);
+      void socket.join(room.code);
       reply(joined(result.value));
-      log.info({ room: result.value.room.code, seat: result.value.player.seat }, 'room joined');
-      broadcastRoom(io, rooms, result.value.room);
+      log.info({ room: room.code, seat: player.seat, account: Boolean(userId) }, 'room joined');
+      broadcastRoom(io, rooms, room);
+    });
+
+    on('room:resume', (payload, reply: (r: JoinResult) => void) => {
+      if (!emptySchema.safeParse(payload).success) {
+        return reply({ ok: false, error: 'bad-request' });
+      }
+      if (!userId) return reply({ ok: false, error: 'not-in-room' });
+      const result = rooms.resume(userId, socket.id);
+      if (!result.ok) return reply(result);
+      const { room, player, replaced } = result.value;
+      if (replaced) io.in(replaced).socketsLeave(room.code);
+      void socket.join(room.code);
+      reply(joined(result.value));
+      log.info({ room: room.code, seat: player.seat }, 'seat resumed by account');
+      broadcastRoom(io, rooms, room);
     });
 
     on('room:rejoin', (payload, reply: (r: JoinResult) => void) => {
       const data = parse(rejoinRoomSchema, payload);
       if (!data) return reply({ ok: false, error: 'bad-request' });
       const oldSocketId = rooms.seatOf(data.code, data.token)?.socketId;
-      const result = rooms.rejoin(data.code, data.token, socket.id);
+      const result = rooms.rejoin(data.code, data.token, socket.id, userId);
       if (!result.ok) return reply(result);
       // A stale connection for the same seat stops receiving room traffic.
       if (oldSocketId && oldSocketId !== socket.id) io.in(oldSocketId).socketsLeave(data.code);

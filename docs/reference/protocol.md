@@ -11,6 +11,7 @@ One wire protocol for every game (Platform 03). `packages/protocol` (`@platform/
 | Client → Server | `room:create` | `{ name, game, config? }` (`game`: the registry id, `'sky-team'`; `config`: the lobby's choices, checked by the game's lobby schema, then its `configSchema` with the server's settings on top) | ack `{ ok, code, game, seat, token, matchId, seq }` (`game`: which client module to load); `unknown-game`, `bad-request` (bad config), `too-many-rooms` |
 | Client → Server | `room:join` | `{ code, name }` | ack as above, or `{ ok:false, error }` (`room-not-found`, `room-full`) |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack as above (`seq`: the last move counter accepted from this seat in this match) + fresh presence and view |
+| Client → Server | `room:resume` | `{}` | Signed in (Platform 06): the seat the account holds (its most recently active room) moves to this connection with a new token; ack as for `room:join`, or `not-in-room` (no seat, or a guest) |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, a new match starts for whoever stays; empty room deleted |
 | Client → Server | `room:choose-seat` | `{ seat }` | ack; creator only (`not-creator`), before the game starts (the game decides: Sky Team answers `setup-closed` after round 1 begins): the creator takes that seat, the player in it the other; the game hears it as `table:choose-seat` |
 | Client → Server | `room:rematch` | `{ matchId, config? }` (`matchId`: the match the player was looking at; `config`: changes to the lobby's choices) | ack; see "Rematch" below |
@@ -87,6 +88,8 @@ Optional: guests never need them. Better Auth answers under `/api/auth/*`; with 
 | `POST /api/auth/sign-in/social { provider: 'google', callbackURL }` | `{ url }`: the Google page to open |
 | `GET /api/auth/callback/google` | Google's redirect back: sets the session cookie and redirects to `callbackURL` |
 | `POST /api/auth/sign-out` | Ends the session, clears the cookie |
+
+Seats and accounts: the socket learns its account from the session cookie at the handshake (the client reconnects after signing in or out). A signed-in player's seat carries their account: `room:join` with the code of a room where the account already sits gives that seat back (one account never holds two seats), a guest seat becomes the account's on the first `room:rejoin` after signing in, and `room:resume` finds it from any device. Guests keep using tokens only.
 
 A display name never changes: Google's name (cut to 20 characters) or the one set once with `/auth/name`; Better Auth's `/update-user`, `/change-email` and password endpoints are off.
 

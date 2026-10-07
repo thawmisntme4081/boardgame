@@ -105,7 +105,8 @@ export function startConnection(): void {
 
   socket.on('connect', () => {
     store().setConnection('online');
-    void rejoin();
+    // The saved seat first; signed in without one, the seat the account holds.
+    void rejoin().then(resumeByAccount);
   });
   socket.on('disconnect', () => store().setConnection('offline'));
   // Refused by the site password (a new password, an expired cookie): ask for it again
@@ -167,6 +168,47 @@ async function rejoin(): Promise<void> {
     toast.error(errorText(result.error));
     forgetSession();
   }
+}
+
+/** The signed-in user's id, `null` signed out, `undefined` while accounts are unknown. */
+function signedInUser(): string | null | undefined {
+  const { account } = usePlatform.getState();
+  return typeof account === 'object' ? (account.user?.id ?? null) : undefined;
+}
+
+/**
+ * Signed in on a device with no saved seat (another device, a cleared browser): back to the
+ * seat the account holds, if any. Nothing to resume is not an error.
+ */
+async function resumeByAccount(): Promise<void> {
+  const { session, account } = usePlatform.getState();
+  if (session || !signedInUser() || !socket.connected || pending.has('resume')) return;
+  pending.add('resume');
+  try {
+    const result = await withTimeout(() => emit().emitWithAck('room:resume', {}));
+    if (!result?.ok) return;
+    const name = typeof account === 'object' ? (account.user?.name ?? '') : '';
+    await onJoined(result, name);
+  } finally {
+    pending.delete('resume');
+  }
+}
+
+/** The account last seen (`undefined`: not loaded yet). */
+let lastUser: string | null | undefined;
+
+/**
+ * The account was loaded, or changed (signed in or out on this page). The socket learns its
+ * account at the handshake, so a change reconnects it: the rejoin then links a guest's seat to
+ * the account, or the account's seat is resumed.
+ */
+export function accountChanged(): void {
+  const user = signedInUser();
+  if (user === undefined || user === lastUser) return;
+  const first = lastUser === undefined;
+  lastUser = user;
+  if (first) void resumeByAccount();
+  else if (started) socket.disconnect().connect();
 }
 
 /** A join or rejoin names the current match and the last move counter the seat used. */

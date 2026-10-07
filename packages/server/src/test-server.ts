@@ -59,8 +59,13 @@ export async function startTestServer(rooms?: RoomManager, options: ServerOption
   return {
     ...server,
     url,
-    async connect(): Promise<Client> {
-      const socket: Client = connectClient(url, { transports: ['websocket'], forceNew: true });
+    /** A new connection; `cookie` is sent with the handshake (a signed-in device). */
+    async connect(cookie?: string): Promise<Client> {
+      const socket: Client = connectClient(url, {
+        transports: ['websocket'],
+        forceNew: true,
+        ...(cookie && { extraHeaders: { cookie } }),
+      });
       clients.push(socket);
       track(socket);
       await new Promise<void>((resolve, reject) => {

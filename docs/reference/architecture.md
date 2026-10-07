@@ -48,7 +48,7 @@ Each move flows through the server, then each player receives their own filtered
 | --- | --- |
 | `rooms` | one JSON row per live room (`ROOM_FORMAT` 4): game id, players (name, seat, creator, last `seq`, a SHA-256 hash of the rejoin token), config, current match id / number / version |
 | `matches` | one row per match: room code, game id, `rules_version`, config, seed, status (`open`, `over`, `abandoned`), created / ended times, outcome |
-| `match_seats` | who sat in each seat (name, token hash) |
+| `match_seats` | who sat in each seat (name, token hash, the account's `user_id` or NULL for a guest) |
 | `match_moves` | every accepted change: `n` (the match's version after it), `by` (a seat or `system`), the move, `at` |
 | `match_snapshots` | the state at `n`: after setup (`n` 0), every 50 changes, at the end, and for every open match on shutdown |
 
