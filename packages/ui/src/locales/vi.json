@@ -25,14 +25,6 @@
     "signInTitle": "Đăng nhập",
     "signInIntro": "Không bắt buộc: nhật ký bay và chỗ ngồi của bạn sẽ theo bạn sang các thiết bị khác. Khách vẫn chơi như trước.",
     "google": "Tiếp tục với Google",
-    "email": "Email",
-    "sendCode": "Gửi mã qua email",
-    "codeSent": "Mã 6 chữ số đã được gửi tới {{email}}. Mã có hiệu lực trong 5 phút.",
-    "code": "Mã",
-    "verify": "Đăng nhập",
-    "otherEmail": "Dùng email khác",
-    "wrongCode": "Mã sai hoặc đã hết hạn.",
-    "tooMany": "Thử quá nhiều lần. Hãy chờ một phút rồi thử lại.",
     "error": "Đã có lỗi. Hãy thử lại.",
     "nameTitle": "Chọn tên của bạn",
     "nameIntro": "Người chơi khác sẽ thấy tên này trong mọi ván. Bạn không thể đổi tên sau này.",
@@ -41,7 +33,11 @@
     "signedInAs": "Đã đăng nhập bằng",
     "signOut": "Đăng xuất",
     "nameFromAccount": "Tên trong tài khoản của bạn.",
-    "history": "Lịch sử của tôi"
+    "history": "Lịch sử của tôi",
+    "delete": "Xóa tài khoản",
+    "deleteTitle": "Xóa tài khoản của bạn?",
+    "deleteIntro": "Việc này xóa tài khoản, các lần đăng nhập và toàn bộ Sổ bay của bạn khỏi máy chủ, và không thể hoàn tác. Các ván đang chơi vẫn tiếp tục, ghế của bạn trở thành ghế khách.",
+    "deleteConfirm": "Xóa vĩnh viễn"
   },
   "lobby": {
     "yourName": "Tên",

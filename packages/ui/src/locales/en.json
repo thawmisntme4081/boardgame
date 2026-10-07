@@ -25,14 +25,6 @@
     "signInTitle": "Sign in",
     "signInIntro": "Optional: your Flight Log and your seat follow you to your other devices. Guests play as before.",
     "google": "Continue with Google",
-    "email": "Email",
-    "sendCode": "Email me a code",
-    "codeSent": "We sent a 6-digit code to {{email}}. It works for 5 minutes.",
-    "code": "Code",
-    "verify": "Sign in",
-    "otherEmail": "Use another email",
-    "wrongCode": "Wrong or expired code.",
-    "tooMany": "Too many tries. Wait a minute, then try again.",
     "error": "Something went wrong. Try again.",
     "nameTitle": "Choose your name",
     "nameIntro": "Other players see it in every game. You cannot change it later.",
@@ -41,7 +33,11 @@
     "signedInAs": "Signed in as",
     "signOut": "Sign out",
     "nameFromAccount": "Your account's name.",
-    "history": "My history"
+    "history": "My history",
+    "delete": "Delete account",
+    "deleteTitle": "Delete your account?",
+    "deleteIntro": "This removes your account, your sign-ins and your whole Flight Log from the server. It cannot be undone. Games in progress keep going, with your seat as a guest.",
+    "deleteConfirm": "Delete for good"
   },
   "lobby": {
     "yourName": "Your name",

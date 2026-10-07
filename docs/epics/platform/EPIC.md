@@ -17,7 +17,7 @@ Turn the Sky Team app into a game-agnostic platform, like Board Game Arena: play
 | 03 | [Generic protocol](phase-03-generic-protocol.md) | ✅ Done (Oct 6, 2026) | Medium |
 | 04 | [Match log (persistence for every game)](phase-04-match-log.md) | ✅ Done (Oct 6, 2026) | Medium |
 | 05 | [Client shell and router](phase-05-client-shell.md) | ✅ Done (Oct 7, 2026) | Medium-high |
-| 06 | [Accounts (the Flight Log goes with you)](phase-06-accounts.md) | 🚧 In progress (A–G done) | Medium-high |
+| 06 | [Accounts (the Flight Log goes with you)](phase-06-accounts.md) | 🚧 In progress (A–H done except the live-site set-up) | Medium-high |
 | 07 | [Scale-out](phase-07-scale-out.md) | ⏳ Only when metrics ask | Medium |
 
 ## Order and dependencies

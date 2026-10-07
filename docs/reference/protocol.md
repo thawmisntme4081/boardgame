@@ -76,17 +76,16 @@ When the server has `SITE_PASSWORD`, the socket handshake is refused without the
 
 ## Accounts (HTTP, Platform 06)
 
-Optional: guests never need them. Better Auth answers under `/api/auth/*`; with a site password, these need the `site_auth` cookie first (`401 { error: 'site-password' }` otherwise). Sign-in requests (`/api/auth/sign-in/*`, `/api/auth/email-otp/*`) are limited to 10 a minute per address (`429`).
+Optional: guests never need them. Better Auth answers under `/api/auth/*`; with a site password, these need the `site_auth` cookie first (`401 { error: 'site-password' }` otherwise). Sign-in requests under `/api/auth/sign-in/*` are limited to 10 a minute per address (`429`).
 
 | Request | Answer |
 | --- | --- |
 | `GET /auth/me` | The signed-in user `{ id, name, email, image }`, or `null` |
-| `GET /auth/methods` | `{ google, email }`: the sign-in methods this server has (no accounts at all: `404`) |
+| `GET /auth/methods` | `{ google }`: whether Google sign-in is configured (no accounts at all: `404`) |
+| `POST /auth/name { name }` | Sets the display name once if Google provided none (trimmed, 1–20 characters): `400 bad-name`, `401 signed-out`, `409 name-set` |
 | `GET /api/flight-log?game=<id>` | The signed-in account's own Flight Log for that game, newest first: the game's records (Sky Team: `GameRecord`); `401 signed-out`. Behind the site password |
 | `POST /api/flight-log/import { game, records }` | Adds the device's own games to the account's log (max 500; invalid ones skipped, a game already there — same game, scenario, seat, end time — not added twice): `{ imported }`; `400 bad-request`, `401 signed-out` |
-| `POST /auth/name { name }` | Sets the display name once, after a first email sign-in (trimmed, 1–20 characters): the user; `400 bad-name`, `401 signed-out`, `409 name-set` |
-| `POST /api/auth/email-otp/send-verification-otp { email, type: 'sign-in' }` | Emails a 6-digit code (5 minutes, 3 tries) |
-| `POST /api/auth/sign-in/email-otp { email, otp }` | Signs in (an account is created on first use, with an empty name) + `Set-Cookie: platform.session_token=...` |
+| `DELETE /api/account` | Deletes the signed-in account (user, sessions, provider links, Flight Log rows); its seats in the match log and in live rooms become guests': `{ ok }`; `401 signed-out` |
 | `POST /api/auth/sign-in/social { provider: 'google', callbackURL }` | `{ url }`: the Google page to open |
 | `GET /api/auth/callback/google` | Google's redirect back: sets the session cookie and redirects to `callbackURL` |
 | `POST /api/auth/sign-out` | Ends the session, clears the cookie |

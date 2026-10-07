@@ -36,24 +36,24 @@ The shell's routes move to TanStack Router's file-based setup before new pages a
 The user store and the sign-in endpoints, with no page yet.
 
 - [x] Auth library chosen and added (Better Auth 1.7, unless the questions below change it), on the platform's SQLite database: `accounts.ts`, on the connection the match store uses (`openDatabase`; in memory without `DATA_DIR`)
-- [x] Tables `users`, `auth_accounts` (provider links), `auth_sessions` added as new `MIGRATIONS` steps (step 3, with `auth_verifications` for the email codes; snake_case columns mapped in `accounts.ts`; a test checks Better Auth finds nothing missing)
-- [x] Sign-in with Google (OAuth) and with an email one-time code (sent through an email service, e.g. Resend), both working end to end in dev. Email: checked in `pnpm dev` through Vite (without `RESEND_API_KEY` the code is printed in the server terminal, never in production). Google: tested end to end with the token endpoint mocked; trying it with a real Google client needs `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (redirect URL `http://localhost:5173/api/auth/callback/google`)
+- [x] Tables `users`, `auth_accounts` (provider links), `auth_sessions` added as new `MIGRATIONS` steps (step 3, with `auth_verifications` for Better Auth verification state; snake_case columns mapped in `accounts.ts`; a test checks Better Auth finds nothing missing)
+- [x] Sign-in with Google (OAuth). Google: tested end to end with the token endpoint mocked; trying it with a real Google client needs `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (redirect URL `http://localhost:5173/api/auth/callback/google`)
 - [x] Endpoints: sign in, callback, sign out (Better Auth under `/api/auth/*`), `GET /auth/me` (the signed-in user or `null`); behind the site password when it is on
 - [x] Session cookie: httpOnly, `SameSite=Lax`, `Secure` in production, apart from the site-password cookie (`platform.session_token`, `__Secure-` prefixed in production; 30 days)
 - [x] Sign-in rate limit per address (10 sign-in requests a minute, from the server's own reading of the address, never a client header); no session id or token in logs (Better Auth's messages only, a test checks)
 - [x] Server tests with the provider mocked (`accounts.test.ts`)
 
-**Done when:** in dev, signing in sets a session and `GET /auth/me` returns the user; signing out clears it. ✅ Verified Oct 7, 2026 (email code through `pnpm dev`: `/auth/me` is `null`, then the user, then `null` after sign-out; 9 accounts tests incl. Google with the token endpoint mocked; all 440 unit tests, typecheck, lint, format and build pass. An email sign-in has an empty name until stage C asks for it).
+**Done when:** in dev, signing in sets a session and `GET /auth/me` returns the user; signing out clears it. ✅ Verified Oct 7, 2026 (Google OAuth flow mocked in tests: `/auth/me` is `null`, then the user, then `null` after sign-out; Google account tests with the token endpoint mocked; all 440 unit tests, typecheck, lint, format and build pass.).
 
 ### C. Sign-in in the shell · small
 
 - [x] `account` state in the platform store, loaded from `/auth/me` at start (after the site password): `'loading'`, `'off'` (no accounts on the server: no sign-in shown), or the sign-in methods (`GET /auth/methods`) and the user; `src/account.ts`
-- [x] "Sign in" on the game picker and the game page; signed in: the name and a menu (sign out). The sign-in dialog offers Google (when the server has it) and an email code (email, then the 6-digit code); `screens/Account.tsx`, shown by `CardTop`'s `account` option
-- [x] Signed in: the lobby's name field shows the account's name, not editable (also on an invite link); an email sign-in asks for the name once (a dialog that cannot be skipped, only signed out of; `POST /auth/name` refuses a second name, Better Auth's own `/update-user` is off; Google names are cut to 20 characters to fit a room)
+- [x] "Sign in" on the game picker and the game page; signed in: the name and a menu (sign out). The sign-in dialog offers Google when configured; `screens/Account.tsx`, shown by `CardTop`'s `account` option
+- [x] Signed in: the lobby's name field shows the account's name, not editable (also on an invite link); if Google provides no name, the player chooses it once (a dialog that cannot be skipped, only signed out of; `POST /auth/name` refuses a second name, Better Auth's own `/update-user` is off; Google names are cut to 20 characters to fit a room)
 - [x] Texts in the `platform` namespace (en, vi, fr): `account.*`
 - [x] Shell tests (signed out, signed in, sign out): `screens/Account.test.tsx` against a fake accounts server; 4 more server tests for the name and the methods
 
-**Done when:** a player can sign in and out from the site; guests see no difference except the button. ✅ Verified Oct 7, 2026 (in `pnpm dev` on an iPhone 13 profile: sign in with an email code, the name asked once, still signed in after a reload, sign out from the game page; with no accounts on the server the button is gone; 6 shell tests and 13 accounts tests pass, plus all web and server tests, typecheck, lint, format and build).
+**Done when:** a player can sign in and out from the site; guests see no difference except the button. ✅ Verified Oct 7, 2026 (in `pnpm dev` on an iPhone 13 profile: sign in with Google, still signed in after a reload, sign out from the game page; with no accounts on the server the button is gone; 6 shell tests and 13 accounts tests pass, plus all web and server tests, typecheck, lint, format and build).
 
 ### D. Seats follow the account · medium
 
@@ -95,11 +95,11 @@ The user store and the sign-in endpoints, with no page yet.
 
 ### H. Account deletion and going live · small
 
-- [ ] Delete account: the user, their sessions, provider links and Flight Log rows; their seats become guests
-- [ ] Sign-in set up for the live site: Google OAuth credentials with the redirect URL on `https://boardgames-dom-mam.fly.dev`, the email service's key; Fly secrets set by the owner
-- [ ] Deployment doc: the provider set-up, the new secrets
-- [ ] One Playwright sign-in flow against a test provider
-- [ ] `CLAUDE.md`, architecture and protocol docs updated
+- [x] Delete account: the user, their sessions, provider links and Flight Log rows; their seats become guests
+- [ ] Sign-in set up for the live site (the owner's steps are in the deployment doc, group 6b; not done yet): Google OAuth credentials with the redirect URL on `https://boardgames-dom-mam.fly.dev`, the email service's key; Fly secrets set by the owner
+- [x] Deployment doc: the provider set-up, the new secrets
+- [x] One Playwright sign-in flow against a test provider
+- [x] `CLAUDE.md`, architecture and protocol docs updated
 
 **Done when:** the same history appears after signing in on another device, on the live site.
 
@@ -108,7 +108,7 @@ The user store and the sign-in endpoints, with no page yet.
 - Sign-in methods: Google, and an email one-time code.
 - Domain: `boardgames-dom-mam.fly.dev` (no custom domain); Google's redirect URL points there.
 - Importing a device's history: at once, without asking.
-- Display name: the one from the sign-in, not editable. With an email code there is no name to take, so it is asked once at the first sign-in and then fixed. Signed in, the lobby's name field shows it and cannot be changed (guests still type theirs).
+- Display name: the one from the sign-in, not editable. If Google provides no name, it is asked once at the first sign-in and then fixed. Signed in, the lobby's name field shows it and cannot be changed (guests still type theirs).
 - The site password stays in front of everything: friends enter it once, then may sign in; accounts only add the history and seats that follow them. Guests play as now.
 - After the import, the device's local Flight Log is cleared (the account holds it).
 

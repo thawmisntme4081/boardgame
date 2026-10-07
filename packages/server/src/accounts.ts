@@ -1,4 +1,4 @@
-// Optional accounts (Platform 06): sign in with Google or an email code, through Better Auth on
+// Optional accounts (Platform 06): sign in with Google through Better Auth on
 // the platform's SQLite database (tables `users`, `auth_sessions`, `auth_accounts`,
 // `auth_verifications`, created by `MIGRATIONS` step 3). Better Auth answers under
 // `/api/auth/*` (sign-in, the Google callback, sign-out); `GET /auth/me` says who is signed in.
@@ -6,10 +6,8 @@
 import type { IncomingMessage } from 'node:http';
 import { betterAuth } from 'better-auth';
 import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
-import { emailOTP } from 'better-auth/plugins/email-otp';
 import type Database from 'better-sqlite3';
 import express, { type Router } from 'express';
-import type { SendCode } from './email';
 import { log, reportError } from './log';
 import { requestIp } from './siteGate';
 
@@ -39,9 +37,7 @@ export interface AccountsOptions {
   trustProxy?: boolean;
   /** Sign in with Google, when its OAuth client is set up. */
   google?: { clientId: string; clientSecret: string };
-  /** Sign in with an email code, when codes can be sent. */
-  sendCode?: SendCode;
-  /** Sign-in requests per address per minute (codes asked for, codes tried, Google started). */
+  /** Sign-in requests per address per minute. */
   signInPerMinute?: number;
 }
 
@@ -56,10 +52,12 @@ export interface AccountUser {
 export interface Accounts {
   /** The signed-in user of a request (HTTP or socket handshake), or `null`. */
   userOf(req: IncomingMessage): Promise<AccountUser | null>;
+  /** Removes the account, its sessions and its provider links. */
+  deleteUser(id: string): Promise<void>;
   /** `/api/auth/*` and `GET /auth/me`. */
   router: Router;
   /** Which sign-in methods are on. */
-  methods: { google: boolean; email: boolean };
+  methods: { google: boolean };
 }
 
 /** Better Auth's names for our snake_case columns. */
@@ -124,7 +122,6 @@ export function authOptions({
   trustedOrigins = [],
   secure = false,
   google,
-  sendCode,
   signInPerMinute = 10,
 }: AccountsOptions) {
   const signInRule = { window: 60, max: signInPerMinute };
@@ -139,7 +136,7 @@ export function authOptions({
     account: { modelName: 'auth_accounts', fields: COLUMNS.account },
     verification: { modelName: 'auth_verifications', fields: COLUMNS.verification },
     // The display name comes from the sign-in (Google's name, cut to fit a room) or is asked
-    // once after an email sign-in (`POST /auth/name`); it never changes afterwards.
+    // if Google provides no name (`POST /auth/name`); it never changes afterwards.
     databaseHooks: {
       user: {
         create: {
@@ -159,17 +156,6 @@ export function authOptions({
         },
       },
     }),
-    plugins: sendCode
-      ? [
-          emailOTP({
-            otpLength: 6,
-            expiresIn: 5 * 60,
-            allowedAttempts: 3,
-            storeOTP: 'hashed',
-            sendVerificationOTP: ({ email, otp }) => sendCode(email, otp),
-          }),
-        ]
-      : [],
     // On in every environment (Better Auth's default is production only), per address.
     rateLimit: {
       enabled: true,
@@ -177,7 +163,6 @@ export function authOptions({
       max: 100,
       customRules: {
         '/sign-in/*': signInRule,
-        '/email-otp/*': signInRule,
       },
       customStorage: memoryRateLimit(),
     },
@@ -221,9 +206,9 @@ export function accounts(options: AccountsOptions): Accounts {
     void handler(req, res);
   });
   router.get('/auth/methods', (_req, res) => {
-    res.json({ google: Boolean(options.google), email: Boolean(options.sendCode) });
+    res.json({ google: Boolean(options.google) });
   });
-  // The name asked once after an email sign-in: refused when the account already has one.
+  // The name is only needed if Google's profile did not include one.
   router.post('/auth/name', express.json({ limit: '1kb' }), (req, res) => {
     const given: unknown = (req.body as { name?: unknown } | undefined)?.name;
     const name = typeof given === 'string' ? fitName(given) : '';
@@ -251,9 +236,15 @@ export function accounts(options: AccountsOptions): Accounts {
     );
   });
 
+  const deleteUser = async (id: string) => {
+    const context = await auth.$context;
+    await context.internalAdapter.deleteUser(id);
+  };
+
   return {
     userOf,
+    deleteUser,
     router,
-    methods: { google: Boolean(options.google), email: Boolean(options.sendCode) },
+    methods: { google: Boolean(options.google) },
   };
 }

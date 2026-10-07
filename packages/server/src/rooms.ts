@@ -235,6 +235,23 @@ export class RoomManager {
     return entries.length;
   }
 
+  /**
+   * An account was deleted: its seats stay in their rooms as guests' (nothing links them to
+   * the account any more), and its Flight Log and match seats are cleared in the store.
+   */
+  forgetAccount(userId: string): void {
+    for (const room of this.rooms.values()) {
+      let changed = false;
+      for (const player of this.players(room)) {
+        if (player.userId !== userId) continue;
+        delete player.userId;
+        changed = true;
+      }
+      if (changed) this.save(room);
+    }
+    this.store?.deleteUserData(userId);
+  }
+
   /** The registry entry of the room's game. */
   entry(room: Room): GameEntry {
     const entry = this.games.get(room.gameId);

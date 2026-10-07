@@ -7,7 +7,6 @@ export type { AccountUser };
 
 export interface SignInMethods {
   google: boolean;
-  email: boolean;
 }
 
 const json = { 'content-type': 'application/json' };
@@ -37,7 +36,7 @@ export async function loadAccount(): Promise<void> {
       getJson<SignInMethods>('/auth/methods'),
       getJson<AccountUser | null>('/auth/me'),
     ]);
-    setAccount(methods.google || methods.email ? { methods, user } : 'off');
+    setAccount(methods.google ? { methods, user } : 'off');
   } catch {
     setAccount('off');
   }
@@ -61,34 +60,7 @@ export async function signInWithGoogle(): Promise<boolean> {
   }
 }
 
-export type CodeResult = 'ok' | 'too-many-tries' | 'wrong-code' | 'unknown';
-
-const failure = (status: number): Exclude<CodeResult, 'ok'> =>
-  status === 429 ? 'too-many-tries' : status === 400 ? 'wrong-code' : 'unknown';
-
-/** Emails a 6-digit sign-in code. */
-export async function sendSignInCode(email: string): Promise<CodeResult> {
-  try {
-    const res = await post('/api/auth/email-otp/send-verification-otp', { email, type: 'sign-in' });
-    return res.ok ? 'ok' : res.status === 429 ? 'too-many-tries' : 'unknown';
-  } catch {
-    return 'unknown';
-  }
-}
-
-/** Signs in with the emailed code; the account is created on first use (without a name). */
-export async function signInWithCode(email: string, otp: string): Promise<CodeResult> {
-  try {
-    const res = await post('/api/auth/sign-in/email-otp', { email, otp });
-    if (!res.ok) return failure(res.status);
-    await loadAccount();
-    return 'ok';
-  } catch {
-    return 'unknown';
-  }
-}
-
-/** The display name, asked once after an email sign-in; it cannot change afterwards. */
+/** The display name, asked once if Google did not provide one; it cannot change afterwards. */
 export async function setAccountName(name: string): Promise<boolean> {
   try {
     const res = await post('/auth/name', { name });
@@ -105,6 +77,19 @@ export async function setAccountName(name: string): Promise<boolean> {
 export async function signOut(): Promise<boolean> {
   try {
     const res = await post('/api/auth/sign-out', {});
+    if (!res.ok) return false;
+    const { account, setAccount } = usePlatform.getState();
+    if (account !== 'off' && account !== 'loading') setAccount({ ...account, user: null });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Deletes the account for good (its history, sessions and links); the seats stay as guests'. */
+export async function deleteAccount(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/account', { method: 'DELETE', credentials: 'same-origin' });
     if (!res.ok) return false;
     const { account, setAccount } = usePlatform.getState();
     if (account !== 'off' && account !== 'loading') setAccount({ ...account, user: null });

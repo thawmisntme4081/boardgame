@@ -114,7 +114,7 @@ describe('the history page', () => {
   it("shows a signed-in player's Flight Log, one section per game", async () => {
     usePlatform.setState({
       account: {
-        methods: { google: false, email: true },
+        methods: { google: true },
         user: { id: 'u1', name: 'Ana', email: 'ana@example.com', image: null },
       },
     });
@@ -126,7 +126,7 @@ describe('the history page', () => {
 
   it('asks a signed-out visitor to sign in instead', async () => {
     usePlatform.setState({
-      account: { methods: { google: false, email: true }, user: null },
+      account: { methods: { google: true }, user: null },
     });
     await renderAt('/history');
     expect(screen.getByText(/Sign in to see your history/)).toBeInTheDocument();

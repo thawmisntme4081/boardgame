@@ -4,8 +4,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { accounts } from './accounts';
+import { mockGoogleSignIn } from './google-test';
 import { RoomManager } from './rooms';
 import { openDatabase, SqliteMatchStore } from './store';
 import { next, startTestServer, type Client } from './test-server';
@@ -17,42 +18,24 @@ let servers: TestServer[] = [];
 afterEach(async () => {
   for (const server of servers) await server.close();
   servers = [];
+  vi.restoreAllMocks();
 });
 
-/** A server with accounts (email codes kept in `codes`), on `database`. */
+/** A server with Google accounts, on `database`. */
 async function start(database: Database.Database = openDatabase(':memory:'), rooms?: RoomManager) {
-  const codes: string[] = [];
+  const signInWithGoogle = mockGoogleSignIn();
   const server = await startTestServer(rooms ?? new RoomManager(), {
     sweepIntervalMs: 0,
     accounts: accounts({
       database,
       secret: SECRET,
       baseURL: 'http://localhost',
-      sendCode: (_email, code) => {
-        codes.push(code);
-        return Promise.resolve();
-      },
+      google: { clientId: 'id', clientSecret: 'secret' },
     }),
   });
   servers.push(server);
 
-  /** Signs `email` in with a code (an account is made on first use); the session cookie. */
-  const signIn = async (email: string) => {
-    const post = (route: string, body: unknown) =>
-      fetch(`${server.url}${route}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', origin: 'http://localhost' },
-        body: JSON.stringify(body),
-      });
-    await post('/api/auth/email-otp/send-verification-otp', { email, type: 'sign-in' });
-    const res = await post('/api/auth/sign-in/email-otp', { email, otp: codes.at(-1) });
-    expect(res.status).toBe(200);
-    return res.headers
-      .getSetCookie()
-      .map((c) => c.split(';')[0])
-      .join('; ');
-  };
-  return { server, signIn };
+  return { server, signIn: (email: string) => signInWithGoogle(server.url, email) };
 }
 
 const create = (client: Client, name: string) =>

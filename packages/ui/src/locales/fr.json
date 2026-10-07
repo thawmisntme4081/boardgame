@@ -25,14 +25,6 @@
     "signInTitle": "Se connecter",
     "signInIntro": "Facultatif : votre carnet de vol et votre place vous suivent sur vos autres appareils. Les invités jouent comme avant.",
     "google": "Continuer avec Google",
-    "email": "E-mail",
-    "sendCode": "Recevoir un code par e-mail",
-    "codeSent": "Un code à 6 chiffres a été envoyé à {{email}}. Il est valable 5 minutes.",
-    "code": "Code",
-    "verify": "Se connecter",
-    "otherEmail": "Utiliser une autre adresse",
-    "wrongCode": "Code incorrect ou expiré.",
-    "tooMany": "Trop d’essais. Attendez une minute, puis réessayez.",
     "error": "Une erreur s’est produite. Réessayez.",
     "nameTitle": "Choisissez votre nom",
     "nameIntro": "Les autres joueurs le voient dans chaque partie. Vous ne pourrez plus le changer.",
@@ -41,7 +33,11 @@
     "signedInAs": "Connecté en tant que",
     "signOut": "Se déconnecter",
     "nameFromAccount": "Le nom de votre compte.",
-    "history": "Mon historique"
+    "history": "Mon historique",
+    "delete": "Supprimer le compte",
+    "deleteTitle": "Supprimer votre compte ?",
+    "deleteIntro": "Cela supprime votre compte, vos connexions et tout votre carnet de vol du serveur. C’est irréversible. Les parties en cours continuent, votre place devenant celle d’un invité.",
+    "deleteConfirm": "Supprimer définitivement"
   },
   "lobby": {
     "yourName": "Votre nom",

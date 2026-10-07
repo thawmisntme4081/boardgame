@@ -114,6 +114,8 @@ export interface MatchStore {
   listOpen(): MatchRecord[];
   /** Adds entries to the accounts' Flight Logs; one that is already there (same match and account) is kept as it was. */
   addFlightEntries(entries: FlightEntry[]): void;
+  /** Account deletion: its Flight Log rows go, and its seats in the match log become guests'. */
+  deleteUserData(userId: string): void;
   /** An account's entries for a game, newest first. */
   flightLog(userId: string, gameId: string): FlightEntry[];
   /**
@@ -297,6 +299,16 @@ export class MemoryMatchStore implements MatchStore {
     }
   }
 
+  deleteUserData(userId: string): void {
+    for (const [key, e] of this.flight) if (e.userId === userId) this.flight.delete(key);
+    for (const [id, json] of this.seats) {
+      const seats = (JSON.parse(json) as MatchSeat[]).map((s) =>
+        s.userId === userId ? { ...s, userId: null } : s,
+      );
+      this.seats.set(id, JSON.stringify(seats));
+    }
+  }
+
   flightLog(userId: string, gameId: string): FlightEntry[] {
     return [...this.flight.values()]
       .filter((e) => e.userId === userId && e.gameId === gameId)
@@ -443,7 +455,7 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (match_id, n)
   );`,
   // 3. Platform 06 B: accounts (Better Auth's tables, under our names; see accounts.ts).
-  // Dates are Better Auth's own `date` columns; `auth_verifications` holds email sign-in codes.
+  // Dates are Better Auth's own `date` columns; `auth_verifications` holds OAuth verification state.
   `CREATE TABLE users (
     id TEXT PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
@@ -693,6 +705,17 @@ export class SqliteMatchStore implements MatchStore {
       .values(entries.map((e) => ({ ...e, record: JSON.stringify(e.record) })))
       .onConflictDoNothing()
       .run();
+  }
+
+  deleteUserData(userId: string): void {
+    this.sqlite.transaction(() => {
+      this.db.delete(flightLogTable).where(eq(flightLogTable.userId, userId)).run();
+      this.db
+        .update(matchSeatsTable)
+        .set({ userId: null })
+        .where(eq(matchSeatsTable.userId, userId))
+        .run();
+    })();
   }
 
   flightLog(userId: string, gameId: string): FlightEntry[] {

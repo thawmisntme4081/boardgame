@@ -38,7 +38,7 @@ export interface ServerOptions extends HandlerOptions {
    */
   siteGate?: SiteGate;
   /**
-   * Optional accounts (sign in with Google or an email code): `/api/auth/*` and
+   * Optional accounts (sign in with Google): `/api/auth/*` and
    * `GET /auth/me`. Behind the site password when there is one.
    */
   accounts?: Accounts;
@@ -76,7 +76,7 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
 
   const { accounts } = options;
   if (accounts) {
-    // Signing in comes after the site password: without it, no accounts and no code emails.
+    // Signing in comes after the site password: without it, account endpoints are unavailable.
     if (siteGate) {
       app.use(
         [
@@ -86,6 +86,7 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
           '/auth/name',
           '/api/flight-log',
           '/api/flight-log/import',
+          '/api/account',
         ],
         (req, res, next) => {
           if (siteGate.check(req)) next();
@@ -94,6 +95,21 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
       );
     }
     app.use(accounts.router);
+    // Deleting the account: its data goes, its seats stay as guests', the session ends.
+    app.delete('/api/account', (req, res) => {
+      accounts.userOf(req).then(
+        async (user) => {
+          if (!user) return void res.status(401).json({ error: 'signed-out' });
+          rooms.forgetAccount(user.id);
+          await accounts.deleteUser(user.id);
+          res.json({ ok: true });
+        },
+        (error: unknown) => {
+          reportError(error);
+          res.status(500).json({ error: 'unknown' });
+        },
+      );
+    });
     // A device's own games from before it signed in, joined to the account's log.
     app.post('/api/flight-log/import', express.json({ limit: '512kb' }), (req, res) => {
       const body = req.body as { game?: unknown; records?: unknown } | undefined;

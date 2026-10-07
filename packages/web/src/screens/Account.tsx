@@ -1,6 +1,5 @@
 // Optional accounts in the shell (Platform 06): "Sign in" for guests; signed in, the name and a
-// menu (sign out). Signing in: Google, or a code sent by email; after a first email sign-in the
-// name is asked once (it cannot change afterwards). Nothing here shows when accounts are off.
+// menu (sign out). Signing in uses Google. Nothing here shows when accounts are off.
 import { Button } from '@platform/ui/components/button';
 import {
   Dialog,
@@ -13,26 +12,18 @@ import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@platform/ui/components/popover';
 import { Link } from '@tanstack/react-router';
-import { History, LogIn, LogOut, Mail, UserRound } from 'lucide-react';
+import { History, LogIn, LogOut, Trash2, UserRound } from 'lucide-react';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  sendSignInCode,
   setAccountName,
-  signInWithCode,
   signInWithGoogle,
+  deleteAccount,
   signOut,
-  type CodeResult,
   type SignInMethods,
 } from '../account';
 import { NAME_MAX } from '../session';
 import { usePlatform } from '../store';
-
-const ERROR_KEY = {
-  'too-many-tries': 'account.tooMany',
-  'wrong-code': 'account.wrongCode',
-  unknown: 'account.error',
-} as const satisfies Record<Exclude<CodeResult, 'ok'>, string>;
 
 /** The Google "G", in its colours (the sign-in button's usual mark). */
 function GoogleMark() {
@@ -55,62 +46,22 @@ function GoogleMark() {
   );
 }
 
-/** Sign in: Google, or an email code (email first, then the code). */
+/** Sign in with Google. */
 function SignInDialog({
-  methods,
   open,
   onOpenChange,
 }: {
-  methods: SignInMethods;
   open: boolean;
   onOpenChange(open: boolean): void;
 }) {
   const { t } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [step, setStep] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<Exclude<CodeResult, 'ok'> | null>(null);
-
-  const reset = () => {
-    setStep('email');
-    setCode('');
-    setError(null);
-  };
 
   const google = async () => {
     setBusy(true);
     // On success the page goes to Google and comes back here signed in.
     if (!(await signInWithGoogle())) {
-      setError('unknown');
       setBusy(false);
-    }
-  };
-
-  const send = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (busy || !email.trim()) return;
-    setBusy(true);
-    const result = await sendSignInCode(email.trim());
-    setBusy(false);
-    if (result === 'ok') {
-      setStep('code');
-      setError(null);
-    } else setError(result);
-  };
-
-  const verify = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (busy || code.length !== 6) return;
-    setBusy(true);
-    const result = await signInWithCode(email.trim(), code);
-    setBusy(false);
-    if (result === 'ok') {
-      onOpenChange(false);
-      reset();
-    } else {
-      setError(result);
-      setCode('');
     }
   };
 
@@ -119,7 +70,6 @@ function SignInDialog({
       open={open}
       onOpenChange={(next) => {
         onOpenChange(next);
-        if (!next) reset();
       }}
     >
       <DialogContent className="sm:max-w-sm">
@@ -127,72 +77,20 @@ function SignInDialog({
           <DialogTitle>{t('account.signInTitle')}</DialogTitle>
           <DialogDescription>{t('account.signInIntro')}</DialogDescription>
         </DialogHeader>
-        {step === 'email' ? (
-          <div className="flex flex-col gap-4">
-            {methods.google && (
-              <Button
-                variant="outline"
-                className="h-11"
-                disabled={busy}
-                onClick={() => void google()}
-              >
-                <GoogleMark /> {t('account.google')}
-              </Button>
-            )}
-            {methods.email && (
-              <form onSubmit={(e) => void send(e)} className="flex flex-col gap-2">
-                <Label htmlFor="sign-in-email">{t('account.email')}</Label>
-                <Input
-                  id="sign-in-email"
-                  type="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 text-base"
-                />
-                <Button type="submit" className="h-11" disabled={busy || !email.trim()}>
-                  <Mail /> {t('account.sendCode')}
-                </Button>
-              </form>
-            )}
-          </div>
-        ) : (
-          <form onSubmit={(e) => void verify(e)} className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
-              {t('account.codeSent', { email: email.trim() })}
-            </p>
-            <Label htmlFor="sign-in-code">{t('account.code')}</Label>
-            <Input
-              id="sign-in-code"
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              maxLength={6}
-              autoFocus
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              aria-invalid={error !== null}
-              className="h-11 font-mono text-base tracking-widest"
-            />
-            <Button type="submit" className="h-11" disabled={busy || code.length !== 6}>
-              {t('account.verify')}
-            </Button>
-            <Button type="button" variant="ghost" className="h-11" onClick={reset}>
-              {t('account.otherEmail')}
-            </Button>
-          </form>
-        )}
-        {error && (
-          <p role="alert" className="text-sm text-danger">
-            {t(ERROR_KEY[error])}
-          </p>
-        )}
+        <Button
+          variant="outline"
+          className="h-11"
+          disabled={busy}
+          onClick={() => void google()}
+        >
+          <GoogleMark /> {t('account.google')}
+        </Button>
       </DialogContent>
     </Dialog>
   );
 }
 
-/** After a first email sign-in: the name, chosen once. It cannot be dismissed (only signed out). */
+/** If Google provided no name: choose one once. It cannot be dismissed (only signed out). */
 function NameDialog() {
   const { t } = useTranslation();
   const [name, setName] = useState('');
@@ -248,6 +146,52 @@ function NameDialog() {
   );
 }
 
+/** Asks before deleting the account: it cannot be undone. */
+function DeleteAccountDialog() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const confirm = async () => {
+    setBusy(true);
+    const ok = await deleteAccount();
+    setBusy(false);
+    setFailed(!ok);
+    if (ok) setOpen(false);
+  };
+  return (
+    <>
+      <Button variant="ghost" className="h-11 text-destructive" onClick={() => setOpen(true)}>
+        <Trash2 /> {t('account.delete')}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('account.deleteTitle')}</DialogTitle>
+            <DialogDescription>{t('account.deleteIntro')}</DialogDescription>
+          </DialogHeader>
+          {failed && (
+            <p role="alert" className="text-sm text-destructive">
+              {t('account.error')}
+            </p>
+          )}
+          <Button
+            variant="destructive"
+            className="h-11"
+            disabled={busy}
+            onClick={() => void confirm()}
+          >
+            {t('account.deleteConfirm')}
+          </Button>
+          <Button variant="ghost" className="h-11" onClick={() => setOpen(false)}>
+            {t('lobby.cancel')}
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 /** Top of the game picker and the game page: "Sign in", or the signed-in name and its menu. */
 export function AccountButton() {
   const { t } = useTranslation();
@@ -255,14 +199,14 @@ export function AccountButton() {
   const [open, setOpen] = useState(false);
   if (account === 'loading' || account === 'off') return null;
 
-  const { user, methods } = account;
+  const { user } = account;
   if (!user) {
     return (
       <>
         <Button variant="outline" className="h-11" onClick={() => setOpen(true)}>
           <LogIn /> {t('account.signIn')}
         </Button>
-        <SignInDialog methods={methods} open={open} onOpenChange={setOpen} />
+        <SignInDialog open={open} onOpenChange={setOpen} />
       </>
     );
   }
@@ -290,6 +234,7 @@ export function AccountButton() {
         <Button variant="outline" className="h-11" onClick={() => void signOut()}>
           <LogOut /> {t('account.signOut')}
         </Button>
+        <DeleteAccountDialog />
       </PopoverContent>
     </Popover>
   );

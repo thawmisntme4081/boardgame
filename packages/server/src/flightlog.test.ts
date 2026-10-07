@@ -3,8 +3,9 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createRandomAgent } from '@sky/rules/random-play';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { accounts } from './accounts';
+import { mockGoogleSignIn } from './google-test';
 import { RoomManager, type Room } from './rooms';
 import { openDatabase, SqliteMatchStore } from './store';
 import { startTestServer } from './test-server';
@@ -13,6 +14,7 @@ const SECRET = 'test-secret-that-is-long-enough-for-better-auth-0123456789';
 const dirs: string[] = [];
 afterEach(() => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  vi.restoreAllMocks();
 });
 const tempFile = () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'sky-flight-'));
@@ -91,40 +93,23 @@ describe('the Flight Log per account', () => {
     const database = openDatabase(':memory:');
     const store = new SqliteMatchStore(database);
     const rooms = new RoomManager({ store, seed: () => 5 });
-    const codes: string[] = [];
+    const signInWithGoogle = mockGoogleSignIn();
     const server = await startTestServer(rooms, {
       sweepIntervalMs: 0,
       accounts: accounts({
         database,
         secret: SECRET,
         baseURL: 'http://localhost',
-        sendCode: (_email, code) => {
-          codes.push(code);
-          return Promise.resolve();
-        },
+        google: { clientId: 'id', clientSecret: 'secret' },
       }),
     });
     try {
-      const signIn = async (email: string) => {
-        const post = (route: string, body: unknown) =>
-          fetch(`${server.url}${route}`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json', origin: 'http://localhost' },
-            body: JSON.stringify(body),
-          });
-        await post('/api/auth/email-otp/send-verification-otp', { email, type: 'sign-in' });
-        const res = await post('/api/auth/sign-in/email-otp', { email, otp: codes.at(-1) });
-        return res.headers
-          .getSetCookie()
-          .map((c) => c.split(';')[0])
-          .join('; ');
-      };
       const get = (cookie?: string) =>
         fetch(`${server.url}/api/flight-log?game=sky-team`, {
           ...(cookie && { headers: { cookie } }),
         });
-      const ana = await signIn('ana@example.com');
-      const ben = await signIn('ben@example.com');
+      const ana = await signInWithGoogle(server.url, 'ana@example.com');
+      const ben = await signInWithGoogle(server.url, 'ben@example.com');
       const anaId = (
         (await (await fetch(`${server.url}/auth/me`, { headers: { cookie: ana } })).json()) as {
           id: string;
@@ -166,5 +151,50 @@ describe('the Flight Log per account', () => {
     ]);
     expect(rooms.flightLog('u-ben', 'sky-team')).toEqual([]);
     expect(rooms.importFlightLog('u-ana', 'nope', local)).toBeUndefined();
+  });
+
+  it('DELETE /api/account removes the account and its log; its seat stays as a guest', async () => {
+    const database = openDatabase(':memory:');
+    const store = new SqliteMatchStore(database);
+    const rooms = new RoomManager({ store, seed: () => 5 });
+    const signInWithGoogle = mockGoogleSignIn();
+    const server = await startTestServer(rooms, {
+      sweepIntervalMs: 0,
+      accounts: accounts({
+        database,
+        secret: SECRET,
+        baseURL: 'http://localhost',
+        google: { clientId: 'id', clientSecret: 'secret' },
+      }),
+    });
+    try {
+      const cookie = await signInWithGoogle(server.url, 'ana@example.com');
+      const me = (await (await fetch(`${server.url}/auth/me`, { headers: { cookie } })).json()) as {
+        id: string;
+      };
+      const room = playOut(rooms, me.id);
+      expect(rooms.flightLog(me.id, 'sky-team')).toHaveLength(1);
+
+      const gone = await fetch(`${server.url}/api/account`, {
+        method: 'DELETE',
+        headers: { cookie },
+      });
+      expect(gone.status).toBe(200);
+      expect(rooms.flightLog(me.id, 'sky-team')).toEqual([]);
+      expect(room.players.pilot?.userId).toBeUndefined();
+      expect(store.loadMatch(room.match.id)).toBeDefined();
+      // Signed out everywhere: the old cookie is no account any more, and no user row is left.
+      expect(
+        await (await fetch(`${server.url}/auth/me`, { headers: { cookie } })).json(),
+      ).toBeNull();
+      const raw = database.prepare('SELECT count(*) AS n FROM users').get() as { n: number };
+      expect(raw.n).toBe(0);
+      expect(
+        (await fetch(`${server.url}/api/account`, { method: 'DELETE', headers: { cookie } }))
+          .status,
+      ).toBe(401);
+    } finally {
+      await server.close();
+    }
   });
 });

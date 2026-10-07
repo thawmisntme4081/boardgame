@@ -8,7 +8,7 @@ export type SiteAccess = 'checking' | 'locked' | 'open';
 /** The signed-in user (Platform 06), as `GET /auth/me` returns it. */
 export interface AccountUser {
   id: string;
-  /** Empty after a first email sign-in, until the player chooses it (once). */
+  /** Empty if Google did not provide a name, until the player chooses it (once). */
   name: string;
   email: string;
   image: string | null;
@@ -19,7 +19,7 @@ export interface AccountUser {
  * signed in).
  */
 export type AccountState =
-  'loading' | 'off' | { methods: { google: boolean; email: boolean }; user: AccountUser | null };
+  'loading' | 'off' | { methods: { google: boolean }; user: AccountUser | null };
 
 /** The latest view of the match, as the server sent it: any game's, for one seat. */
 export interface MatchViewState {
