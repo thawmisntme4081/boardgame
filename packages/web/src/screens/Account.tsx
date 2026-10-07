@@ -12,7 +12,8 @@ import {
 import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@platform/ui/components/popover';
-import { LogIn, LogOut, Mail, UserRound } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { History, LogIn, LogOut, Mail, UserRound } from 'lucide-react';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -281,6 +282,11 @@ export function AccountButton() {
         <p className="text-sm">
           {t('account.signedInAs')} <span className="font-medium break-all">{user.email}</span>
         </p>
+        <Button asChild variant="outline" className="h-11">
+          <Link to="/history">
+            <History /> {t('account.history')}
+          </Link>
+        </Button>
         <Button variant="outline" className="h-11" onClick={() => void signOut()}>
           <LogOut /> {t('account.signOut')}
         </Button>

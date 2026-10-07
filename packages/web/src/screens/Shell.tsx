@@ -9,10 +9,10 @@ import { joinRoom } from '../api';
 import { NAME_MAX } from '../session';
 import { AccountButton } from './Account';
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-muted/40 p-4">
-      <div className="w-full max-w-sm">{children}</div>
+      <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>{children}</div>
     </main>
   );
 }

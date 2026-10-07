@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadGame } from '../games';
 import { loadAccount, type AccountUser } from '../account';
 import { usePlatform } from '../store';
 import { renderAt, resetStore } from '../test/fixtures';
@@ -12,6 +13,9 @@ vi.mock('../api', () => ({
   shareInvite: vi.fn(async () => {}),
   setNavigate: vi.fn(),
 }));
+
+// The game's module is a separate chunk: transformed once, up front (slow on a cold run).
+beforeAll(() => loadGame('sky-team'), 60_000);
 
 /** The server's account endpoints, in memory: one user, signed in or not. */
 function fakeServer({ google = true, user = null as AccountUser | null } = {}) {

@@ -1,6 +1,7 @@
 // Sky Team's client module: what the platform shell loads (lazily) to show a Sky Team room.
 import type { GameClientModule } from '@platform/ui/game';
 import type { GameSetup, PlayerMove, PlayerView, Presence } from '@sky/rules';
+import { FlightLogHistory } from './components/FlightLog';
 import { locales, NS } from './i18n';
 import { DEFAULT_SETUP } from './lib/setup';
 import { errorText } from './messages';
@@ -23,6 +24,7 @@ export const skyTeamClient: GameClientModule<PlayerView, PlayerMove, GameSetup> 
     useSkyTeam.getState().onView(view, before, presence as Presence | null),
   reset: () => useSkyTeam.getState().reset(),
   errorText,
+  History: FlightLogHistory,
 };
 
 export default skyTeamClient;

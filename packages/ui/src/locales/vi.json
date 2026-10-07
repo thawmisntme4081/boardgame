@@ -40,7 +40,8 @@
     "menu": "Tài khoản: {{name}}",
     "signedInAs": "Đã đăng nhập bằng",
     "signOut": "Đăng xuất",
-    "nameFromAccount": "Tên trong tài khoản của bạn."
+    "nameFromAccount": "Tên trong tài khoản của bạn.",
+    "history": "Lịch sử của tôi"
   },
   "lobby": {
     "yourName": "Tên",
@@ -76,5 +77,10 @@
     "stale-match": "Ván chơi đã thay đổi: màn hình vừa được cập nhật, hãy thử lại.",
     "too-many-rooms": "Bạn đang mở quá nhiều ván. Hãy chơi xong hoặc rời một ván trước.",
     "not-creator": "Chỉ người tạo ván mới được chọn chỗ ngồi."
+  },
+  "history": {
+    "title": "Lịch sử của tôi",
+    "intro": "Mọi ván bạn đã chơi khi đăng nhập, trên mọi thiết bị.",
+    "signedOut": "Đăng nhập để xem lịch sử trên mọi thiết bị của bạn."
   }
 }

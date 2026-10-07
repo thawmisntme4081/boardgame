@@ -109,3 +109,27 @@ describe('a room', () => {
     expect(api.shareInvite).toHaveBeenCalledWith('QRST');
   });
 });
+
+describe('the history page', () => {
+  it("shows a signed-in player's Flight Log, one section per game", async () => {
+    usePlatform.setState({
+      account: {
+        methods: { google: false, email: true },
+        user: { id: 'u1', name: 'Ana', email: 'ana@example.com', image: null },
+      },
+    });
+    await renderAt('/history');
+    expect(screen.getByRole('heading', { name: 'My history' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sky Team' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'History' })).toBeInTheDocument();
+  });
+
+  it('asks a signed-out visitor to sign in instead', async () => {
+    usePlatform.setState({
+      account: { methods: { google: false, email: true }, user: null },
+    });
+    await renderAt('/history');
+    expect(screen.getByText(/Sign in to see your history/)).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'History' })).toBeNull();
+  });
+});

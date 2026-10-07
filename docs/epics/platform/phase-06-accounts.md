@@ -72,7 +72,7 @@ The user store and the sign-in endpoints, with no page yet.
 - [x] Written by the server when a match ends (`over`), one row per seated account, once (not again after a restart)
 - [x] `GET /api/flight-log` (the signed-in user's rows, newest first)
 - [x] Sky Team's Flight Log dialog reads it when signed in, the device's `localStorage` when not; the ✓ on landed scenarios from the same source
-- [ ] A game's `Summary` card in the contract (`GameClientModule`) if the history page needs one per game (not needed yet: decided with the history page, stage G)
+- [x] A game's history view in the contract (`GameClientModule.History`, instead of a `Summary` card)
 - [x] Tests: written once per account, readable only by its owner
 
 **Done when:** a game finished on one device shows in the Flight Log on another, signed in to the same account. ✅ Verified Oct 7, 2026 (server: 3 tests in `flightlog.test.ts` — one row per signed-in player and match, once also after a restart, readable only by its owner over HTTP; client: the store reads the server when signed in and keeps nothing on the device then).
@@ -88,10 +88,10 @@ The user store and the sign-in endpoints, with no page yet.
 
 ### G. Profile and history pages · small
 
-- [ ] `/u/me` (or `/history`): the account's Flight Log, all games, newest first
-- [ ] Texts in en, vi, fr
+- [x] `/u/me` (or `/history`): the account's Flight Log, all games, newest first
+- [x] Texts in en, vi, fr
 
-**Done when:** a signed-in player sees their whole history on one page.
+**Done when:** a signed-in player sees their whole history on one page. ✅ Verified Oct 7, 2026 (`/history` page tests signed in and signed out; the game's `History` component in the module contract replaces the planned `Summary` card).
 
 ### H. Account deletion and going live · small
 
@@ -124,7 +124,7 @@ None open.
 - [x] D. Seats follow the account
 - [x] E. The Flight Log per account
 - [x] F. Import the device's history
-- [ ] G. Profile and history pages
+- [x] G. Profile and history pages
 - [ ] H. Account deletion and going live
 
 **Done when:** the same history appears after signing in on another device.

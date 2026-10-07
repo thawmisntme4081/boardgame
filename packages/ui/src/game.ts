@@ -75,6 +75,11 @@ export interface GameClientModule<View = unknown, Move = unknown, Setup = unknow
   connect(platform: PlatformApi<Move, Setup>): void;
   /** Every new view of the match, before it is shown (`before`: the last one, if any). */
   onView?(view: View, before: View | null, presence: SeatPresence | null): void;
+  /**
+   * The game's Flight Log for the account's history page (its own data and texts; it loads
+   * the account's records itself through `PlatformApi.flightLog`).
+   */
+  History?: ComponentType;
   /** The player left the room: forget the game's own UI state. */
   reset?(): void;
   /** The text for a code the server sent (a rule's reason), or `undefined` if not the game's. */

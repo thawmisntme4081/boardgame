@@ -40,7 +40,8 @@
     "menu": "Account: {{name}}",
     "signedInAs": "Signed in as",
     "signOut": "Sign out",
-    "nameFromAccount": "Your account's name."
+    "nameFromAccount": "Your account's name.",
+    "history": "My history"
   },
   "lobby": {
     "yourName": "Your name",
@@ -76,5 +77,10 @@
     "stale-match": "That game has moved on: your screen is up to date again, try once more.",
     "too-many-rooms": "You have too many open games. Finish or leave one first.",
     "not-creator": "Only the game’s creator chooses the seats."
+  },
+  "history": {
+    "title": "My history",
+    "intro": "Every game you played while signed in, from any device.",
+    "signedOut": "Sign in to see your history on all your devices."
   }
 }

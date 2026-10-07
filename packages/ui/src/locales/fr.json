@@ -40,7 +40,8 @@
     "menu": "Compte : {{name}}",
     "signedInAs": "Connecté en tant que",
     "signOut": "Se déconnecter",
-    "nameFromAccount": "Le nom de votre compte."
+    "nameFromAccount": "Le nom de votre compte.",
+    "history": "Mon historique"
   },
   "lobby": {
     "yourName": "Votre nom",
@@ -76,5 +77,10 @@
     "stale-match": "La partie a changé : votre écran est à jour, réessayez.",
     "too-many-rooms": "Vous avez trop de parties ouvertes. Terminez-en ou quittez-en une d’abord.",
     "not-creator": "Seul le créateur de la partie choisit les postes."
+  },
+  "history": {
+    "title": "Mon historique",
+    "intro": "Toutes les parties jouées une fois connecté, depuis n’importe quel appareil.",
+    "signedOut": "Connectez-vous pour voir votre historique sur tous vos appareils."
   }
 }
