@@ -42,7 +42,8 @@ const sha256 = (text: string) => createHash('sha256').update(text).digest();
 /** Constant-time comparison of two strings of any length. */
 const sameText = (a: string, b: string) => timingSafeEqual(sha256(a), sha256(b));
 
-function requestIp(req: IncomingMessage, trustProxy: boolean): string {
+/** The client address: the first X-Forwarded-For entry behind a trusted proxy, else the socket. */
+export function requestIp(req: IncomingMessage, trustProxy: boolean): string {
   const forwarded = req.headers['x-forwarded-for'];
   const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0]?.trim();
   return (trustProxy && first) || req.socket.remoteAddress || 'unknown';

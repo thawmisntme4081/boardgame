@@ -1,6 +1,6 @@
 # Platform 06: Accounts (the Flight Log goes with you)
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A done)** · Effort: **high** (8 stages, each small to medium)
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A, B done)** · Effort: **high** (8 stages, each small to medium)
 
 Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-11-history.md) covers local history). Needs [Platform 04](phase-04-match-log.md)'s match store and the deployed site from [Sky Team 13](../sky-team/phase-13-deploy.md) (cookies, HTTPS).
 
@@ -35,15 +35,15 @@ The shell's routes move to TanStack Router's file-based setup before new pages a
 
 The user store and the sign-in endpoints, with no page yet.
 
-- [ ] Auth library chosen and added (Better Auth, unless the questions below change it), on the platform's SQLite database
-- [ ] Tables `users`, `auth_accounts` (provider links), `auth_sessions` added as new `MIGRATIONS` steps
-- [ ] Sign-in with Google (OAuth) and with an email one-time code (sent through an email service, e.g. Resend), both working end to end in dev
-- [ ] Endpoints: sign in, callback, sign out, `GET /auth/me` (the signed-in user or `null`)
-- [ ] Session cookie: httpOnly, `SameSite=Lax`, `Secure` in production, apart from the site-password cookie
-- [ ] Sign-in rate limit per address; no session id or token in logs
-- [ ] Server tests with the provider mocked
+- [x] Auth library chosen and added (Better Auth 1.7, unless the questions below change it), on the platform's SQLite database: `accounts.ts`, on the connection the match store uses (`openDatabase`; in memory without `DATA_DIR`)
+- [x] Tables `users`, `auth_accounts` (provider links), `auth_sessions` added as new `MIGRATIONS` steps (step 3, with `auth_verifications` for the email codes; snake_case columns mapped in `accounts.ts`; a test checks Better Auth finds nothing missing)
+- [x] Sign-in with Google (OAuth) and with an email one-time code (sent through an email service, e.g. Resend), both working end to end in dev. Email: checked in `pnpm dev` through Vite (without `RESEND_API_KEY` the code is printed in the server terminal, never in production). Google: tested end to end with the token endpoint mocked; trying it with a real Google client needs `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (redirect URL `http://localhost:5173/api/auth/callback/google`)
+- [x] Endpoints: sign in, callback, sign out (Better Auth under `/api/auth/*`), `GET /auth/me` (the signed-in user or `null`); behind the site password when it is on
+- [x] Session cookie: httpOnly, `SameSite=Lax`, `Secure` in production, apart from the site-password cookie (`platform.session_token`, `__Secure-` prefixed in production; 30 days)
+- [x] Sign-in rate limit per address (10 sign-in requests a minute, from the server's own reading of the address, never a client header); no session id or token in logs (Better Auth's messages only, a test checks)
+- [x] Server tests with the provider mocked (`accounts.test.ts`)
 
-**Done when:** in dev, signing in sets a session and `GET /auth/me` returns the user; signing out clears it.
+**Done when:** in dev, signing in sets a session and `GET /auth/me` returns the user; signing out clears it. ✅ Verified Oct 7, 2026 (email code through `pnpm dev`: `/auth/me` is `null`, then the user, then `null` after sign-out; 9 accounts tests incl. Google with the token endpoint mocked; all 440 unit tests, typecheck, lint, format and build pass. An email sign-in has an empty name until stage C asks for it).
 
 ### C. Sign-in in the shell · small
 
@@ -119,7 +119,7 @@ None open.
 ## Checklist
 
 - [x] A. File-based routes
-- [ ] B. Accounts on the server
+- [x] B. Accounts on the server
 - [ ] C. Sign-in in the shell
 - [ ] D. Seats follow the account
 - [ ] E. The Flight Log per account

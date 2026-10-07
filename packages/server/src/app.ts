@@ -4,8 +4,9 @@ import path from 'node:path';
 import { armAutoRoll, type GameState } from '@sky/rules';
 import express from 'express';
 import { Server } from 'socket.io';
-import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
 import type { AccessCheck } from './access';
+import { AUTH_BASE_PATH, type Accounts } from './accounts';
+import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
 import { log } from './log';
 import { RoomManager } from './rooms';
 import type { SiteGate } from './siteGate';
@@ -30,6 +31,11 @@ export interface ServerOptions extends HandlerOptions {
    * cookie a correct password gives. Pages load for anyone; they hold no game data.
    */
   siteGate?: SiteGate;
+  /**
+   * Optional accounts (sign in with Google or an email code): `/api/auth/*` and
+   * `GET /auth/me`. Behind the site password when there is one.
+   */
+  accounts?: Accounts;
 }
 
 /** Express + Socket.IO on one HTTP server. Not listening yet, so tests can pick a port. */
@@ -61,6 +67,18 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   const { siteGate } = options;
   if (siteGate) app.use(siteGate.router);
   else app.get('/auth/status', (_req, res) => void res.json({ gate: false, ok: true }));
+
+  const { accounts } = options;
+  if (accounts) {
+    // Signing in comes after the site password: without it, no accounts and no code emails.
+    if (siteGate) {
+      app.use([AUTH_BASE_PATH, '/auth/me'], (req, res, next) => {
+        if (siteGate.check(req)) next();
+        else res.status(401).json({ error: 'site-password' });
+      });
+    }
+    app.use(accounts.router);
+  }
 
   // The socket handshake is an HTTP request too: it needs every gate that is on.
   const gates: ((req: IncomingMessage) => boolean | Promise<boolean>)[] = [];

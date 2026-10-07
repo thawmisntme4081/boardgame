@@ -72,3 +72,18 @@ When the server has `SITE_PASSWORD`, the socket handshake is refused without the
 | --- | --- |
 | `GET /auth/status` | `{ gate: false, ok: true }` without a site password; otherwise `{ gate: true, ok }`, and a valid cookie is renewed (30 days) |
 | `POST /auth/login { password }` | `200 { ok: true }` + `Set-Cookie: site_auth=...` (httpOnly, SameSite=Lax, Secure in production); `401 { ok: false, error: 'wrong-password' }`; `429 { ok: false, error: 'too-many-tries' }` after 5 wrong tries in a row from one address (5 minutes) |
+
+## Accounts (HTTP, Platform 06)
+
+Optional: guests never need them. Better Auth answers under `/api/auth/*`; with a site password, these need the `site_auth` cookie first (`401 { error: 'site-password' }` otherwise). Sign-in requests (`/api/auth/sign-in/*`, `/api/auth/email-otp/*`) are limited to 10 a minute per address (`429`).
+
+| Request | Answer |
+| --- | --- |
+| `GET /auth/me` | The signed-in user `{ id, name, email, image }`, or `null` |
+| `POST /api/auth/email-otp/send-verification-otp { email, type: 'sign-in' }` | Emails a 6-digit code (5 minutes, 3 tries) |
+| `POST /api/auth/sign-in/email-otp { email, otp }` | Signs in (an account is created on first use, with an empty name) + `Set-Cookie: platform.session_token=...` |
+| `POST /api/auth/sign-in/social { provider: 'google', callbackURL }` | `{ url }`: the Google page to open |
+| `GET /api/auth/callback/google` | Google's redirect back: sets the session cookie and redirects to `callbackURL` |
+| `POST /api/auth/sign-out` | Ends the session, clears the cookie |
+
+The session cookie (`platform.session_token`, `__Secure-` in production) is httpOnly, SameSite=Lax, Secure in production, and lasts 30 days; it is separate from `site_auth`.

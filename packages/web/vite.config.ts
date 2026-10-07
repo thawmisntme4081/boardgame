@@ -34,6 +34,9 @@ export default defineConfig({
     // Forward API and socket traffic to the Node server during development.
     proxy: {
       '/health': 'http://localhost:3000',
+      // The site password and accounts (sign-in, Google's callback, /auth/me).
+      '/auth': 'http://localhost:3000',
+      '/api': 'http://localhost:3000',
       '/socket.io': { target: 'http://localhost:3000', ws: true },
     },
   },

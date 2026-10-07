@@ -399,6 +399,53 @@ export const MIGRATIONS: readonly string[] = [
     state TEXT NOT NULL,
     PRIMARY KEY (match_id, n)
   );`,
+  // 3. Platform 06 B: accounts (Better Auth's tables, under our names; see accounts.ts).
+  // Dates are Better Auth's own `date` columns; `auth_verifications` holds email sign-in codes.
+  `CREATE TABLE users (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    email_verified INTEGER NOT NULL,
+    image TEXT,
+    created_at DATE NOT NULL,
+    updated_at DATE NOT NULL
+  );
+  CREATE TABLE auth_sessions (
+    id TEXT PRIMARY KEY NOT NULL,
+    expires_at DATE NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    created_at DATE NOT NULL,
+    updated_at DATE NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE
+  );
+  CREATE INDEX auth_sessions_user_id_idx ON auth_sessions (user_id);
+  CREATE TABLE auth_accounts (
+    id TEXT PRIMARY KEY NOT NULL,
+    account_id TEXT NOT NULL,
+    provider_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    access_token TEXT,
+    refresh_token TEXT,
+    id_token TEXT,
+    access_token_expires_at DATE,
+    refresh_token_expires_at DATE,
+    scope TEXT,
+    password TEXT,
+    created_at DATE NOT NULL,
+    updated_at DATE NOT NULL
+  );
+  CREATE INDEX auth_accounts_user_id_idx ON auth_accounts (user_id);
+  CREATE TABLE auth_verifications (
+    id TEXT PRIMARY KEY NOT NULL,
+    identifier TEXT NOT NULL,
+    value TEXT NOT NULL,
+    expires_at DATE NOT NULL,
+    created_at DATE NOT NULL,
+    updated_at DATE NOT NULL
+  );
+  CREATE INDEX auth_verifications_identifier_idx ON auth_verifications (identifier);`,
 ];
 
 /** Runs the migrations a database has not had yet, each in its own transaction. */
@@ -425,16 +472,27 @@ const toRecord = (row: typeof matchesTable.$inferSelect): MatchRecord => ({
   outcome: row.outcome === null ? null : (JSON.parse(row.outcome) as Outcome),
 });
 
+/**
+ * The platform's database (WAL mode, every migration run): the match store and the accounts
+ * share one connection. `:memory:` when nothing is saved (dev without `DATA_DIR`, tests).
+ */
+export function openDatabase(file: string): Database.Database {
+  if (file !== ':memory:') mkdirSync(path.dirname(file), { recursive: true });
+  const sqlite = new Database(file);
+  sqlite.pragma('journal_mode = WAL');
+  sqlite.pragma('foreign_keys = ON');
+  migrate(sqlite);
+  return sqlite;
+}
+
 /** SQLite through Drizzle (WAL mode); a later move to Postgres swaps the driver. */
 export class SqliteMatchStore implements MatchStore {
   private readonly sqlite: Database.Database;
   private readonly db: BetterSQLite3Database;
 
-  constructor(file: string) {
-    if (file !== ':memory:') mkdirSync(path.dirname(file), { recursive: true });
-    this.sqlite = new Database(file);
-    this.sqlite.pragma('journal_mode = WAL');
-    migrate(this.sqlite);
+  /** A database file, or a connection from `openDatabase` shared with the accounts. */
+  constructor(database: string | Database.Database) {
+    this.sqlite = typeof database === 'string' ? openDatabase(database) : database;
     this.db = drizzle(this.sqlite);
   }
 
