@@ -83,6 +83,7 @@ Optional: guests never need them. Better Auth answers under `/api/auth/*`; with 
 | `GET /auth/me` | The signed-in user `{ id, name, email, image }`, or `null` |
 | `GET /auth/methods` | `{ google, email }`: the sign-in methods this server has (no accounts at all: `404`) |
 | `GET /api/flight-log?game=<id>` | The signed-in account's own Flight Log for that game, newest first: the game's records (Sky Team: `GameRecord`); `401 signed-out`. Behind the site password |
+| `POST /api/flight-log/import { game, records }` | Adds the device's own games to the account's log (max 500; invalid ones skipped, a game already there — same game, scenario, seat, end time — not added twice): `{ imported }`; `400 bad-request`, `401 signed-out` |
 | `POST /auth/name { name }` | Sets the display name once, after a first email sign-in (trimmed, 1–20 characters): the user; `400 bad-name`, `401 signed-out`, `409 name-set` |
 | `POST /api/auth/email-otp/send-verification-otp { email, type: 'sign-in' }` | Emails a 6-digit code (5 minutes, 3 tries) |
 | `POST /api/auth/sign-in/email-otp { email, otp }` | Signs in (an account is created on first use, with an empty name) + `Set-Cookie: platform.session_token=...` |

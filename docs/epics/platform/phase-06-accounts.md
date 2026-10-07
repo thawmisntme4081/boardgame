@@ -79,12 +79,12 @@ The user store and the sign-in endpoints, with no page yet.
 
 ### F. Import the device's history · small
 
-- [ ] On first sign-in on a device, its local Flight Log is imported at once (no question asked)
-- [ ] Duplicates skipped (same game, time and seat)
-- [ ] The local copy cleared afterwards
-- [ ] Tests: import once, no duplicates on a second device
+- [x] On first sign-in on a device, its local Flight Log is imported at once (no question asked)
+- [x] Duplicates skipped (same game, time and seat)
+- [x] The local copy cleared afterwards
+- [x] Tests: import once, no duplicates on a second device
 
-**Done when:** a player's old games on a device appear in their account after signing in.
+**Done when:** a player's old games on a device appear in their account after signing in. ✅ Verified Oct 7, 2026 (server import test: valid games added, junk skipped, a second device adds nothing twice; client tests: sent once and the device copy cleared only on success).
 
 ### G. Profile and history pages · small
 
@@ -123,7 +123,7 @@ None open.
 - [x] C. Sign-in in the shell
 - [x] D. Seats follow the account
 - [x] E. The Flight Log per account
-- [ ] F. Import the device's history
+- [x] F. Import the device's history
 - [ ] G. Profile and history pages
 - [ ] H. Account deletion and going live
 

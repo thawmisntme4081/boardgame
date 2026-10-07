@@ -41,6 +41,15 @@ export function loadHistory(): GameRecord[] {
   }
 }
 
+/** Forgets the games on this device (the account holds them now). */
+export function clearHistory(): void {
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+  } catch {
+    // Nothing to clear.
+  }
+}
+
 /** Adds a game at the front; storage errors are ignored (the game is simply not kept). */
 export function saveRecord(record: GameRecord): GameRecord[] {
   const history = [record, ...loadHistory()].slice(0, MAX_RECORDS);

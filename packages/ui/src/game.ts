@@ -43,7 +43,9 @@ export interface PlatformApi<Move, Setup> {
    * The signed-in account's Flight Log for this game, newest first, as the game's own records
    * (the server wrote them when each match ended); `null` when signed out or unreachable.
    */
-  flightLog(): Promise<unknown[] | null>;
+  flightLog(game: string): Promise<unknown[] | null>;
+  /** Adds records kept on this device to the account's log; `true` once the server has them all. */
+  importFlightLog(game: string, records: unknown[]): Promise<boolean>;
 }
 
 export interface BoardProps<View> {

@@ -1,6 +1,14 @@
 import { isGameOver, NEXT_TURN_MS, type PlayerView, type Presence, type SlotId } from '@sky/rules';
 import { create } from 'zustand';
-import { isRecord, loadHistory, recordFor, saveRecord, type GameRecord } from './lib/history';
+import {
+  clearHistory,
+  isRecord,
+  loadHistory,
+  recordFor,
+  saveRecord,
+  type GameRecord,
+} from './lib/history';
+import { NS } from './i18n';
 import { platform, signedIn } from './platform';
 
 /**
@@ -99,7 +107,10 @@ export const useSkyTeam = create<SkyTeamStore>()((set, get) => ({
   addRecord: (record) => set({ history: saveRecord(record) }),
   syncHistory: async () => {
     if (!signedIn()) return void set({ history: loadHistory() });
-    const records = await platform().flightLog();
+    // First time signed in on this device: its games go to the account, then the copy goes.
+    const local = loadHistory();
+    if (local.length > 0 && (await platform().importFlightLog(NS, local))) clearHistory();
+    const records = await platform().flightLog(NS);
     if (records && signedIn()) set({ history: records.filter(isRecord) });
   },
   reset: () => set(fresh),

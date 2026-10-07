@@ -79,7 +79,14 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
     // Signing in comes after the site password: without it, no accounts and no code emails.
     if (siteGate) {
       app.use(
-        [AUTH_BASE_PATH, '/auth/me', '/auth/methods', '/auth/name', '/api/flight-log'],
+        [
+          AUTH_BASE_PATH,
+          '/auth/me',
+          '/auth/methods',
+          '/auth/name',
+          '/api/flight-log',
+          '/api/flight-log/import',
+        ],
         (req, res, next) => {
           if (siteGate.check(req)) next();
           else res.status(401).json({ error: 'site-password' });
@@ -87,6 +94,27 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
       );
     }
     app.use(accounts.router);
+    // A device's own games from before it signed in, joined to the account's log.
+    app.post('/api/flight-log/import', express.json({ limit: '512kb' }), (req, res) => {
+      const body = req.body as { game?: unknown; records?: unknown } | undefined;
+      const records = body?.records;
+      if (typeof body?.game !== 'string' || !Array.isArray(records) || records.length > 500) {
+        return void res.status(400).json({ error: 'bad-request' });
+      }
+      const game = body.game;
+      accounts.userOf(req).then(
+        (user) => {
+          if (!user) return void res.status(401).json({ error: 'signed-out' });
+          const count = rooms.importFlightLog(user.id, game, records as unknown[]);
+          if (count === undefined) return void res.status(400).json({ error: 'bad-request' });
+          res.json({ imported: count });
+        },
+        (error: unknown) => {
+          reportError(error);
+          res.status(500).json({ error: 'unknown' });
+        },
+      );
+    });
     // The signed-in account's own records for a game, `?game=<id>`: nobody else's.
     app.get('/api/flight-log', (req, res) => {
       const game = typeof req.query.game === 'string' ? req.query.game : '';

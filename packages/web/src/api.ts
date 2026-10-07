@@ -320,9 +320,22 @@ export const platformServices: PlatformApi<unknown, unknown> = {
     const { account } = usePlatform.getState();
     return typeof account === 'object' && account.user !== null;
   },
-  flightLog: async () => {
-    const game = usePlatform.getState().session?.game;
-    if (!game || !platformServices.signedIn()) return null;
+  importFlightLog: async (game, records) => {
+    if (!platformServices.signedIn()) return false;
+    try {
+      const res = await fetch('/api/flight-log/import', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ game, records }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+  flightLog: async (game) => {
+    if (!platformServices.signedIn()) return null;
     try {
       const res = await fetch(`/api/flight-log?game=${encodeURIComponent(game)}`, {
         credentials: 'same-origin',

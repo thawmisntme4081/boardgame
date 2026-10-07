@@ -79,4 +79,30 @@ describe("the Flight Log's source", () => {
     expect(localStorage.getItem('sky-team:history')).toBeNull();
     await vi.waitFor(() => expect(useSkyTeam.getState().history).toEqual([record]));
   });
+
+  it("sends the device's games to the account once, then forgets them", async () => {
+    localStorage.setItem('sky-team:history', JSON.stringify([record]));
+    const importFlightLog = vi.fn().mockResolvedValue(true);
+    connectPlatform({
+      signedIn: () => true,
+      importFlightLog,
+      flightLog: vi.fn().mockResolvedValue([record]),
+    } as unknown as PlatformApi<never, never>);
+    await useSkyTeam.getState().syncHistory();
+    expect(importFlightLog).toHaveBeenCalledWith('sky-team', [record]);
+    expect(localStorage.getItem('sky-team:history')).toBeNull();
+    await useSkyTeam.getState().syncHistory();
+    expect(importFlightLog).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the device copy when the import fails', async () => {
+    localStorage.setItem('sky-team:history', JSON.stringify([record]));
+    connectPlatform({
+      signedIn: () => true,
+      importFlightLog: vi.fn().mockResolvedValue(false),
+      flightLog: vi.fn().mockResolvedValue([]),
+    } as unknown as PlatformApi<never, never>);
+    await useSkyTeam.getState().syncHistory();
+    expect(localStorage.getItem('sky-team:history')).not.toBeNull();
+  });
 });

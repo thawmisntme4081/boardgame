@@ -141,4 +141,30 @@ describe('the Flight Log per account', () => {
       await server.close();
     }
   });
+
+  it("imports a device's games once, skips invalid ones and does not add a game twice", () => {
+    const store = new SqliteMatchStore(openDatabase(':memory:'));
+    const rooms = new RoomManager({ store });
+    const game = (at: number, over = {}) => ({
+      v: 1,
+      scenario: 'yul-green',
+      seat: 'pilot',
+      partner: 'Ben',
+      abilities: [],
+      result: 'won',
+      reasons: [],
+      rounds: 7,
+      at,
+      ...over,
+    });
+    const local = [game(100), game(200, { result: 'lost' }), { junk: true }];
+    expect(rooms.importFlightLog('u-ana', 'sky-team', local)).toBe(2);
+    // A second device with one of the same games, and a new one.
+    rooms.importFlightLog('u-ana', 'sky-team', [game(100), game(300)]);
+    expect(rooms.flightLog('u-ana', 'sky-team').map((r) => (r as { at: number }).at)).toEqual([
+      300, 200, 100,
+    ]);
+    expect(rooms.flightLog('u-ben', 'sky-team')).toEqual([]);
+    expect(rooms.importFlightLog('u-ana', 'nope', local)).toBeUndefined();
+  });
 });

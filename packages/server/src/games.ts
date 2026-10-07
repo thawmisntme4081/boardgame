@@ -9,7 +9,7 @@ import {
   type SkyTeamMove,
 } from '@sky/rules/definition';
 import { recordOf, type PlayerView } from '@sky/rules';
-import type { ZodType } from 'zod';
+import { z, type ZodType } from 'zod';
 import type { EndedStatus } from './store';
 
 // One game for now, so the platform's types are its types. The Second game epic widens them
@@ -35,7 +35,24 @@ export interface GameEntry {
    * players' names. A game without one keeps no Flight Log.
    */
   flightRecord?(view: GameView, others: string[], at: number): unknown;
+  /**
+   * A record a device kept before its owner signed in: the checked record and its end time, or
+   * `undefined` when it is not a valid one. Without it, a game's records cannot be imported.
+   */
+  importRecord?(raw: unknown): { record: unknown; at: number } | undefined;
 }
+
+const skyTeamRecord = z.object({
+  v: z.literal(1),
+  scenario: z.string().max(40),
+  seat: z.enum(['pilot', 'copilot']),
+  partner: z.string().max(40),
+  abilities: z.array(z.string().max(40)).max(4),
+  result: z.enum(['won', 'lost']),
+  reasons: z.array(z.string().max(40)).max(10),
+  rounds: z.number().int().min(0).max(100),
+  at: z.number().int().positive(),
+});
 
 const DAY_MS = 24 * 60 * 60_000;
 
@@ -60,6 +77,10 @@ export function createRegistry(settings: GameSettings = {}): GameRegistry {
         settings: settings[skyTeam.id] ?? {},
         keepEnded: SKY_TEAM_KEEP_ENDED,
         flightRecord: (view, others, at) => recordOf(view, others[0] ?? '', at),
+        importRecord: (raw) => {
+          const parsed = skyTeamRecord.safeParse(raw);
+          return parsed.success ? { record: parsed.data, at: parsed.data.at } : undefined;
+        },
       },
     ],
   ]);

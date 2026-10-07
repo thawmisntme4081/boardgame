@@ -209,6 +209,32 @@ export class RoomManager {
     return this.store?.flightLog(userId, gameId).map((e) => e.record) ?? [];
   }
 
+  /**
+   * Adds games a device kept before sign-in to the account's Flight Log. Invalid records are
+   * skipped; one already there (same game, scenario, seat and end time) is not added twice.
+   * Returns how many records were valid, or `undefined` if the game cannot import.
+   */
+  importFlightLog(userId: string, gameId: string, raw: unknown[]): number | undefined {
+    const entry = this.games.get(gameId);
+    if (!this.store || !entry?.importRecord) return undefined;
+    const entries = raw.flatMap((item) => {
+      const parsed = entry.importRecord!(item);
+      if (!parsed) return [];
+      const { seat, scenario } = parsed.record as { seat: string; scenario: string };
+      return [
+        {
+          userId,
+          matchId: `import:${gameId}:${scenario}:${seat}:${parsed.at}`,
+          gameId,
+          endedAt: parsed.at,
+          record: parsed.record,
+        },
+      ];
+    });
+    this.store.addFlightEntries(entries);
+    return entries.length;
+  }
+
   /** The registry entry of the room's game. */
   entry(room: Room): GameEntry {
     const entry = this.games.get(room.gameId);
