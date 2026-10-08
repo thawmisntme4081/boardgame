@@ -20,8 +20,10 @@ function RoleChoice({ view, presence }: { view: PlayerView; presence: Presence |
     <div className="flex flex-col gap-2">
       <p className="text-sm font-medium">
         {creator
-          ? t('preflight.rolesYou')
-          : t('preflight.rolesPartner', { name: partnerOf(view, presence).name })}
+          ? t(chosen ? 'preflight.rolesKept' : 'preflight.rolesYou')
+          : t(chosen ? 'preflight.rolesKeptPartner' : 'preflight.rolesPartner', {
+              name: partnerOf(view, presence).name,
+            })}
       </p>
       <div className="flex gap-2" role="group" aria-label={t('preflight.roles')}>
         {SEATS.map((seat) => {

@@ -44,7 +44,7 @@ describe('Preflight', () => {
 
   it('shows the partner their own seat once chosen, without letting them change it', () => {
     render(<Preflight view={before('copilot')} presence={setup()} />);
-    expect(screen.getByText('Ana chooses the seats.')).toBeInTheDocument();
+    expect(screen.getByText('Ana chose the seats and can still swap them.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Co-pilot' })).toHaveAttribute(
       'aria-pressed',
       'true',

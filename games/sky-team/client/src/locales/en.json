@@ -296,7 +296,8 @@
     "cancelOffer": "Take back",
     "offered": "{{name}} wants to fly again:",
     "viewBoard": "View board",
-    "showResult": "Show result"
+    "showResult": "Show result",
+    "scenarioNote": "The scenario you pick here is offered to {{name}}, who has to agree before the new flight starts."
   },
   "flightLog": {
     "open": "Flight Log",
@@ -429,6 +430,8 @@
     "chooseAbilities": "Choose the Special Abilities.",
     "waitingConfirm": "Waiting for {{name}} to confirm.",
     "partnerConfirmed": "{{name}} has confirmed.",
-    "trayNote": "Choose the seats and Special Abilities above, then confirm."
+    "trayNote": "Choose the seats and Special Abilities above, then confirm.",
+    "rolesKept": "Seats chosen. Tap a seat to swap them.",
+    "rolesKeptPartner": "{{name}} chose the seats and can still swap them."
   }
 }

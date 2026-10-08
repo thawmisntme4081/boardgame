@@ -103,6 +103,9 @@ function RematchForm({
   return (
     <>
       <ScenarioPicker id="rematch" value={setup} onChange={setSetup} />
+      <p className="text-xs text-muted-foreground">
+        {t('gameOver.scenarioNote', { name: partner.name })}
+      </p>
       <DialogFooter className="gap-2">
         {leave}
         <Button className={flyClass} onClick={() => void rematch_(setup)}>

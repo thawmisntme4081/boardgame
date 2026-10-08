@@ -288,7 +288,8 @@
     "cancelOffer": "Rút lại",
     "offered": "{{name}} muốn bay lại:",
     "viewBoard": "Xem bảng điều khiển",
-    "showResult": "Xem kết quả"
+    "showResult": "Xem kết quả",
+    "scenarioNote": "Kịch bản bạn chọn ở đây sẽ được đề nghị cho {{name}}, và {{name}} phải đồng ý thì chuyến bay mới bắt đầu."
   },
   "flightLog": {
     "open": "Nhật ký bay",
@@ -420,6 +421,8 @@
     "chooseAbilities": "Hãy chọn Kỹ năng đặc biệt.",
     "waitingConfirm": "Đang chờ {{name}} xác nhận.",
     "partnerConfirmed": "{{name}} đã xác nhận.",
-    "trayNote": "Chọn chỗ ngồi và Kỹ năng đặc biệt ở trên, rồi xác nhận."
+    "trayNote": "Chọn chỗ ngồi và Kỹ năng đặc biệt ở trên, rồi xác nhận.",
+    "rolesKept": "Đã chọn ghế. Chạm vào ghế để đổi.",
+    "rolesKeptPartner": "{{name}} đã chọn ghế và vẫn có thể đổi."
   }
 }

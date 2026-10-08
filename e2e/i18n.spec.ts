@@ -19,7 +19,7 @@ test('each player picks a language: a Vietnamese pilot and an English co-pilot p
   await pilot.reload();
   await pilot.getByLabel('Tên', { exact: true }).fill('Ana');
   await pilot.getByRole('button', { name: 'Tạo ván mới' }).click();
-  await expect(pilot.getByText('Đang chờ cơ phó của bạn')).toBeVisible();
+  await expect(pilot.getByText('Đang chờ đồng đội của bạn')).toBeVisible();
   const code = (await pilot.getByLabel(/^Mã phòng/).textContent())!.trim();
 
   // The co-pilot's browser has its own choice: still English.

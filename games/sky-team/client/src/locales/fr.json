@@ -296,7 +296,8 @@
     "cancelOffer": "Annuler",
     "offered": "{{name}} veut rejouer :",
     "viewBoard": "Voir le tableau de bord",
-    "showResult": "Afficher le résultat"
+    "showResult": "Afficher le résultat",
+    "scenarioNote": "Le scénario choisi ici est proposé à {{name}}, qui doit accepter avant le début du nouveau vol."
   },
   "flightLog": {
     "open": "Carnet de vol",
@@ -429,6 +430,8 @@
     "chooseAbilities": "Choisissez les capacités spéciales.",
     "waitingConfirm": "En attente de la confirmation de {{name}}.",
     "partnerConfirmed": "{{name}} a confirmé.",
-    "trayNote": "Choisissez les postes et les capacités spéciales ci-dessus, puis confirmez."
+    "trayNote": "Choisissez les postes et les capacités spéciales ci-dessus, puis confirmez.",
+    "rolesKept": "Places choisies. Touchez une place pour les échanger.",
+    "rolesKeptPartner": "{{name}} a choisi les places et peut encore les échanger."
   }
 }
