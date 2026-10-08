@@ -10,3 +10,4 @@ playwright-report/
 .vite/
 .DS_Store
 .lighthouseci/
+docs/rulebooks/

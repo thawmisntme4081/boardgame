@@ -23,7 +23,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 1. **M** Registry: one entry per game behind an erased `GameEntry` (state, move, view and config `unknown` at the platform's edge, each game's schemas check them); `rooms.ts`, the store and `handlers.ts` use it; Sky Team tests unchanged.
 - [ ] 2. **L** Register `pandemic` on the server (lobby schema `players` 2–4, `keepEnded`); a server test playing moves in a 3-seat room through `rooms.move`.
 - [ ] 3. **M** Rooms with N seats: joining fills the next free seat, the game starts when `players` seats are filled, `room:choose-seat` for N seats; protocol and server tests.
-- [ ] 4. **M** Rematch with N players: the offer needs every seated player (`requestRematch` / `declineRematch`); tests for 2 and 3 players, Sky Team's behaviour unchanged.
+- [ ] 4. **M** Rematch with N players: the offer needs every seated player (`requestRematch` / `declineRematch`); tests for 2 and 3 players, Sky Team's behavior unchanged.
 - [ ] 5. **M** Client shell: presence toasts by name, the waiting room for N seats (`screens/Room.tsx`), new strings in `packages/ui/src/locales` (en, vi, fr).
 - [ ] 6. **L** Write each contract change in the proposal.
 

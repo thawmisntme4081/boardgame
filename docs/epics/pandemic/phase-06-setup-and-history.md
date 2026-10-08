@@ -10,7 +10,7 @@ Needs [Pandemic 05](phase-05-events.md).
 
 ## Feature scope
 
-- **In:** difficulty (introductory 4, standard 5, heroic 6 epidemics) in the lobby and rematch; roles dealt at random or chosen in a "before the game" step (each player picks a free role, then everyone confirms, like Sky Team's `crew`); the first player is the one whose hand holds the city with the highest population; a rematch keeps the players and difficulty; the Flight Log section for Pandemic (`flightRecord` / `importRecord` in the registry, `History` in the client module, a device copy for guests).
+- **In:** difficulty (introductory 4, standard 5, heroic 6 epidemics) in the lobby and rematch; roles dealt at random or chosen in a "before the game" step (each player picks a free role, then everyone confirms, like Sky Team's `crew`); a random turn order before each game (Pandemic 01), shown before the first turn; a rematch keeps the players and difficulty; the Flight Log section for Pandemic (`flightRecord` / `importRecord` in the registry, `History` in the client module, a device copy for guests).
 
 ## Tasks
 
@@ -20,7 +20,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - [ ] 1. **L** Lobby schema and `configSchema` with `epidemics` and a role mode (random / choose); the server refuses a bad config.
 - [ ] 2. **M** A `setup` step in `GameState` with `pick-role` and `confirm` moves; random deal when chosen.
-- [ ] 3. **L** First player by highest population; `setup.previous` for a rematch.
+- [ ] 3. **L** `setup.previous` for a rematch (same players and difficulty, a new random turn order).
 
 **Client**
 
@@ -35,7 +35,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 ## Checklist
 
 - [ ] Difficulty and role choice validated and tested
-- [ ] First player rule tested
+- [ ] Rematch keeps players and difficulty, tested
 - [ ] Flight Log records Pandemic games, signed in and as a guest
 - [ ] Full run passes
 

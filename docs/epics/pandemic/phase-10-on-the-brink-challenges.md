@@ -25,7 +25,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 **Mutation**
 
 - [ ] 3. **M** The fifth disease: mutation cards, purple cubes, the mutation events; cure and eradication through the disease list from 08.
-- [ ] 4. **M** Client: the fifth colour on the map, hands and tracks.
+- [ ] 4. **M** Client: the fifth color on the map, hands and tracks.
 
 **Bio-Terrorist**
 
