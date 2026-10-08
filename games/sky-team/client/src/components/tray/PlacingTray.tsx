@@ -57,8 +57,12 @@ function useRollKeys(view: PlayerView): (id: string) => string {
   return (id) => `${id}:${next.dice[id]?.rolls ?? 0}`;
 }
 
+/** Your dice can be used now: on your turn, or to answer the partner's swap offer. */
+const canHandleDice = (view: PlayerView) => view.currentSeat === view.seat || view.swap !== null;
+
 /** What you hold: the Intern token or traffic die in play, your dice, and dice set aside. */
 function PlacingDice({ view }: { view: PlayerView }) {
+  const active = canHandleDice(view);
   const selectedDieId = useSkyTeam((s) => s.selectedDieId);
   const coffeeDelta = useSkyTeam((s) => s.coffeeDelta);
   const selectDie = useSkyTeam((s) => s.selectDie);
@@ -96,7 +100,7 @@ function PlacingDice({ view }: { view: PlayerView }) {
         />
       )}
       {view.myDice.map((die) => {
-        const isSelected = die.id === selectedDieId;
+        const isSelected = active && die.id === selectedDieId;
         const shown = (isSelected ? die.value + coffeeDelta : die.value) as DieValue;
         return (
           <DieButton
@@ -107,10 +111,11 @@ function PlacingDice({ view }: { view: PlayerView }) {
             pressed={isSelected}
             animate={view.rerollBy === null || view.rerolledDice.includes(die.id)}
             label={t('tray.yourDie', { value: shown })}
-            disabled={spare}
+            disabled={spare || !active}
             onClick={() => selectDie(die.id)}
             className={cn(
-              spare && 'opacity-40',
+              // Not your turn: the dice are muted, with no selection ring.
+              (spare || !active) && 'opacity-40',
               // Once on the Intern space, the die steps back for the token it collected.
               isSelected && (internSlot ? 'opacity-40' : SELECTED_DIE),
             )}
@@ -131,7 +136,10 @@ function PlacingActions({ view }: { view: PlayerView }) {
   const internSlot = useSkyTeam((s) => s.internSlot);
   const setInternSlot = useSkyTeam((s) => s.setInternSlot);
   const { t } = useTranslation('sky-team');
-  const selected = internSlot ? undefined : view.myDice.find((d) => d.id === selectedDieId);
+  const selected =
+    internSlot || !canHandleDice(view)
+      ? undefined
+      : view.myDice.find((d) => d.id === selectedDieId);
   return (
     <div className="flex min-w-0 flex-col items-end gap-2 text-end">
       {selected && <CoffeeControl view={view} value={selected.value} />}
