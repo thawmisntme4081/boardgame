@@ -1,6 +1,6 @@
 // The private site's door: one shared password, asked once per browser (kept 30 days).
 import { Dices, LockKeyhole } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { enterSitePassword, type PasswordResult } from '@/api';
 import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
@@ -32,7 +32,7 @@ export function SitePassword() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Exclude<PasswordResult, 'ok'> | null>(null);
 
-  const onSubmit = async (event: FormEvent) => {
+  const onSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!password || busy) return;
     setBusy(true);

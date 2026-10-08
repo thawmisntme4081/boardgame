@@ -11,6 +11,7 @@ One wire protocol for every game (Platform 03). `packages/protocol` (`@platform/
 | Client → Server | `room:create` | `{ name, game, config? }` (`game`: the registry id, `'sky-team'`; `config`: the lobby's choices, checked by the game's lobby schema, then its `configSchema` with the server's settings on top) | ack `{ ok, code, game, seat, token, matchId, seq }` (`game`: which client module to load); `unknown-game`, `bad-request` (bad config), `too-many-rooms` |
 | Client → Server | `room:join` | `{ code, name }` | ack as above, or `{ ok:false, error }` (`room-not-found`, `room-full`) |
 | Client → Server | `room:rejoin` | `{ code, token }` | ack as above (`seq`: the last move counter accepted from this seat in this match) + fresh presence and view |
+| Client → Server | `room:resume` | `{}` | Signed in (Platform 06): the seat the account holds (its most recently active room) moves to this connection with a new token; ack as for `room:join`, or `not-in-room` (no seat, or a guest) |
 | Client → Server | `room:leave` | `{}` | ack; seat freed, a new match starts for whoever stays; empty room deleted |
 | Client → Server | `room:choose-seat` | `{ seat }` | ack; creator only (`not-creator`), before the game starts (the game decides: Sky Team answers `setup-closed` after round 1 begins): the creator takes that seat, the player in it the other; the game hears it as `table:choose-seat` |
 | Client → Server | `room:rematch` | `{ matchId, config? }` (`matchId`: the match the player was looking at; `config`: changes to the lobby's choices) | ack; see "Rematch" below |
@@ -72,3 +73,25 @@ When the server has `SITE_PASSWORD`, the socket handshake is refused without the
 | --- | --- |
 | `GET /auth/status` | `{ gate: false, ok: true }` without a site password; otherwise `{ gate: true, ok }`, and a valid cookie is renewed (30 days) |
 | `POST /auth/login { password }` | `200 { ok: true }` + `Set-Cookie: site_auth=...` (httpOnly, SameSite=Lax, Secure in production); `401 { ok: false, error: 'wrong-password' }`; `429 { ok: false, error: 'too-many-tries' }` after 5 wrong tries in a row from one address (5 minutes) |
+
+## Accounts (HTTP, Platform 06)
+
+Optional: guests never need them. Better Auth answers under `/api/auth/*`; with a site password, these need the `site_auth` cookie first (`401 { error: 'site-password' }` otherwise). Sign-in requests under `/api/auth/sign-in/*` are limited to 10 a minute per address (`429`).
+
+| Request | Answer |
+| --- | --- |
+| `GET /auth/me` | The signed-in user `{ id, name, email, image }`, or `null` |
+| `GET /auth/methods` | `{ google }`: whether Google sign-in is configured (no accounts at all: `404`) |
+| `POST /auth/name { name }` | Sets or changes the display name (trimmed, cut to 20 characters): the user; `400 bad-name`, `401 signed-out` |
+| `GET /api/flight-log?game=<id>` | The signed-in account's own Flight Log for that game, newest first: the game's records (Sky Team: `GameRecord`); `401 signed-out`. Behind the site password |
+| `POST /api/flight-log/import { game, records }` | Adds the device's own games to the account's log (max 500; invalid ones skipped, a game already there — same game, scenario, seat, end time — not added twice): `{ imported }`; `400 bad-request`, `401 signed-out` |
+| `DELETE /api/account` | Deletes the signed-in account (user, sessions, provider links, Flight Log rows); its seats in the match log and in live rooms become guests': `{ ok }`; `401 signed-out` |
+| `POST /api/auth/sign-in/social { provider: 'google', callbackURL }` | `{ url }`: the Google page to open |
+| `GET /api/auth/callback/google` | Google's redirect back: sets the session cookie and redirects to `callbackURL` |
+| `POST /api/auth/sign-out` | Ends the session, clears the cookie |
+
+Seats and accounts: the socket learns its account from the session cookie at the handshake (the client reconnects after signing in or out). A signed-in player's seat carries their account: `room:join` with the code of a room where the account already sits gives that seat back (one account never holds two seats), a guest seat becomes the account's on the first `room:rejoin` after signing in, and `room:resume` finds it from any device. Guests keep using tokens only.
+
+The display name starts as Google's (cut to 20 characters) or is asked once if Google gave none, and the player can change it from the account menu with `/auth/name`; Better Auth's `/update-user`, `/change-email` and password endpoints are off.
+
+The session cookie (`platform.session_token`, `__Secure-` in production) is httpOnly, SameSite=Lax, Secure in production, and lasts 30 days; it is separate from `site_auth`.

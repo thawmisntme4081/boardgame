@@ -63,7 +63,7 @@ function SeatedRoom({ gameId, code }: { gameId: string; code: string }) {
 /** An invite link: the room's code, waiting for a name. */
 function Invite({ code }: { code: string }) {
   const { t } = useTranslation();
-  const { name, setName } = useName();
+  const { name, setName, fromAccount } = useName();
   return (
     <Shell>
       <Card>
@@ -71,7 +71,7 @@ function Invite({ code }: { code: string }) {
           <CardTop title={t('app.title')} description={t('app.tagline')} />
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          <NameField name={name} onChange={setName} />
+          <NameField name={name} onChange={setName} fromAccount={fromAccount} />
           <JoinForm name={name} initialCode={code} />
         </CardContent>
       </Card>

@@ -1,27 +1,15 @@
-// Finished games, saved on this device (no accounts): the Flight Log and the history list.
+// Finished games, saved on this device (guests; an account's log is on the server): the Flight Log and the history list.
 import {
+  isGameOver,
   otherSeat,
-  type AbilityId,
-  type EndReason,
+  recordOf,
+  type GameRecord,
   type PlayerView,
   type Presence,
   type Seat,
 } from '@sky/rules';
 
-/** One finished game, from this player's point of view. */
-export interface GameRecord {
-  /** Format version, so an account import (Platform 06) can read old records. */
-  v: 1;
-  scenario: string;
-  seat: Seat;
-  partner: string;
-  abilities: AbilityId[];
-  result: 'won' | 'lost';
-  reasons: EndReason[];
-  rounds: number;
-  /** When it ended (ms since epoch). */
-  at: number;
-}
+export type { GameRecord };
 
 export type WinLoss = { won: number; lost: number };
 /** Per scenario: your wins and losses as pilot and as co-pilot. */
@@ -31,7 +19,7 @@ const HISTORY_KEY = 'sky-team:history';
 /** Oldest games are dropped beyond this, so storage stays small. */
 export const MAX_RECORDS = 500;
 
-const isRecord = (r: unknown): r is GameRecord => {
+export const isRecord = (r: unknown): r is GameRecord => {
   const x = r as Partial<GameRecord> | null;
   return (
     !!x &&
@@ -53,6 +41,15 @@ export function loadHistory(): GameRecord[] {
   }
 }
 
+/** Forgets the games on this device (the account holds them now). */
+export function clearHistory(): void {
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+  } catch {
+    // Nothing to clear.
+  }
+}
+
 /** Adds a game at the front; storage errors are ignored (the game is simply not kept). */
 export function saveRecord(record: GameRecord): GameRecord[] {
   const history = [record, ...loadHistory()].slice(0, MAX_RECORDS);
@@ -64,8 +61,6 @@ export function saveRecord(record: GameRecord): GameRecord[] {
   return history;
 }
 
-const isOver = (view: PlayerView) => view.phase === 'won' || view.phase === 'lost';
-
 /**
  * The record for a game that just ended: only on the change from playing to over, so a
  * view sent again (presence, reconnect, reload on the result screen) is not counted twice.
@@ -76,18 +71,8 @@ export function recordFor(
   presence: Presence | null,
   now: number,
 ): GameRecord | null {
-  if (!before || isOver(before) || !isOver(view)) return null;
-  return {
-    v: 1,
-    scenario: view.scenario.id,
-    seat: view.seat,
-    partner: presence?.[otherSeat(view.seat)]?.name ?? '',
-    abilities: [...view.abilities],
-    result: view.phase === 'won' ? 'won' : 'lost',
-    reasons: view.landingFailures ?? (view.endReason ? [view.endReason] : []),
-    rounds: view.round,
-    at: now,
-  };
+  if (!before || isGameOver(before)) return null;
+  return recordOf(view, presence?.[otherSeat(view.seat)]?.name ?? '', now);
 }
 
 /** Wins and losses per scenario and seat. */

@@ -12,6 +12,7 @@ export function resetStore(): void {
     presence: null,
     pendingPresence: null,
     siteAccess: 'open',
+    account: 'off',
   });
 }
 

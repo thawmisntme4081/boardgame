@@ -4,9 +4,16 @@ import path from 'node:path';
 import { armAutoRoll, type GameState } from '@sky/rules';
 import express from 'express';
 import { Server } from 'socket.io';
-import { broadcastRoom, registerHandlers, type GameServer, type HandlerOptions } from './handlers';
 import type { AccessCheck } from './access';
-import { log } from './log';
+import { AUTH_BASE_PATH, type Accounts } from './accounts';
+import {
+  broadcastRoom,
+  registerHandlers,
+  type GameServer,
+  type HandlerOptions,
+  type SocketData,
+} from './handlers';
+import { log, reportError } from './log';
 import { RoomManager } from './rooms';
 import type { SiteGate } from './siteGate';
 
@@ -30,6 +37,11 @@ export interface ServerOptions extends HandlerOptions {
    * cookie a correct password gives. Pages load for anyone; they hold no game data.
    */
   siteGate?: SiteGate;
+  /**
+   * Optional accounts (sign in with Google): `/api/auth/*` and
+   * `GET /auth/me`. Behind the site password when there is one.
+   */
+  accounts?: Accounts;
 }
 
 /** Express + Socket.IO on one HTTP server. Not listening yet, so tests can pick a port. */
@@ -62,6 +74,79 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   if (siteGate) app.use(siteGate.router);
   else app.get('/auth/status', (_req, res) => void res.json({ gate: false, ok: true }));
 
+  const { accounts } = options;
+  if (accounts) {
+    // Signing in comes after the site password: without it, account endpoints are unavailable.
+    if (siteGate) {
+      app.use(
+        [
+          AUTH_BASE_PATH,
+          '/auth/me',
+          '/auth/methods',
+          '/auth/name',
+          '/api/flight-log',
+          '/api/flight-log/import',
+          '/api/account',
+        ],
+        (req, res, next) => {
+          if (siteGate.check(req)) next();
+          else res.status(401).json({ error: 'site-password' });
+        },
+      );
+    }
+    app.use(accounts.router);
+    // Deleting the account: its data goes, its seats stay as guests', the session ends.
+    app.delete('/api/account', (req, res) => {
+      accounts.userOf(req).then(
+        async (user) => {
+          if (!user) return void res.status(401).json({ error: 'signed-out' });
+          rooms.forgetAccount(user.id);
+          await accounts.deleteUser(user.id);
+          res.json({ ok: true });
+        },
+        (error: unknown) => {
+          reportError(error);
+          res.status(500).json({ error: 'unknown' });
+        },
+      );
+    });
+    // A device's own games from before it signed in, joined to the account's log.
+    app.post('/api/flight-log/import', express.json({ limit: '512kb' }), (req, res) => {
+      const body = req.body as { game?: unknown; records?: unknown } | undefined;
+      const records = body?.records;
+      if (typeof body?.game !== 'string' || !Array.isArray(records) || records.length > 500) {
+        return void res.status(400).json({ error: 'bad-request' });
+      }
+      const game = body.game;
+      accounts.userOf(req).then(
+        (user) => {
+          if (!user) return void res.status(401).json({ error: 'signed-out' });
+          const count = rooms.importFlightLog(user.id, game, records as unknown[]);
+          if (count === undefined) return void res.status(400).json({ error: 'bad-request' });
+          res.json({ imported: count });
+        },
+        (error: unknown) => {
+          reportError(error);
+          res.status(500).json({ error: 'unknown' });
+        },
+      );
+    });
+    // The signed-in account's own records for a game, `?game=<id>`: nobody else's.
+    app.get('/api/flight-log', (req, res) => {
+      const game = typeof req.query.game === 'string' ? req.query.game : '';
+      accounts.userOf(req).then(
+        (user) =>
+          user
+            ? res.json(rooms.flightLog(user.id, game))
+            : void res.status(401).json({ error: 'signed-out' }),
+        (error: unknown) => {
+          reportError(error);
+          res.status(500).json({ error: 'unknown' });
+        },
+      );
+    });
+  }
+
   // The socket handshake is an HTTP request too: it needs every gate that is on.
   const gates: ((req: IncomingMessage) => boolean | Promise<boolean>)[] = [];
   if (accessCheck) gates.push(accessCheck);
@@ -78,6 +163,22 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
       },
     }),
   });
+  // Signed in? The handshake carries the session cookie: the socket knows its account (or
+  // none; a failed lookup counts as a guest). Signing in or out makes the client reconnect.
+  if (accounts) {
+    io.use((socket, next) => {
+      accounts.userOf(socket.request).then(
+        (user) => {
+          (socket.data as SocketData).userId = user?.id;
+          next();
+        },
+        (error: unknown) => {
+          reportError(error);
+          next();
+        },
+      );
+    });
+  }
   registerHandlers(io, rooms, options);
   // Rooms loaded from the store: re-arm their scheduled moves (round timers, Total Trust
   // rolls). A deadline that passed while the server was down expires at once.

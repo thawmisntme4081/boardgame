@@ -2,6 +2,7 @@
 // device's history (no accounts).
 import { AIRPORT_NAMES, SCENARIO_LIST, SCENARIOS, SEATS, type Seat } from '@sky/rules';
 import { BookOpen } from 'lucide-react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@platform/ui/components/button';
 import {
@@ -159,12 +160,43 @@ function HistoryList({ history }: { history: readonly GameRecord[] }) {
   );
 }
 
-/** A button that opens the Flight Log (from the lobby and the game-over dialog). */
-export function FlightLog({ className }: { className?: string }) {
+/** The two tabs: wins and losses per scenario, and the list of past games. */
+function FlightLogTabs() {
   const { t } = useTranslation('sky-team');
   const history = useSkyTeam((s) => s.history);
   return (
-    <Dialog>
+    <Tabs defaultValue="log">
+      <TabsList className="w-full">
+        <TabsTrigger value="log" className="h-9">
+          {t('flightLog.tabLog')}
+        </TabsTrigger>
+        <TabsTrigger value="history" className="h-9">
+          {t('flightLog.tabHistory')}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="log">
+        <LogTable history={history} />
+      </TabsContent>
+      <TabsContent value="history">
+        <HistoryList history={history} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+/** The Flight Log on the account's history page (from the account, or this device's). */
+export function FlightLogHistory() {
+  const syncHistory = useSkyTeam((s) => s.syncHistory);
+  useEffect(() => void syncHistory(), [syncHistory]);
+  return <FlightLogTabs />;
+}
+
+/** A button that opens the Flight Log (from the lobby and the game-over dialog). */
+export function FlightLog({ className }: { className?: string }) {
+  const { t } = useTranslation('sky-team');
+  const syncHistory = useSkyTeam((s) => s.syncHistory);
+  return (
+    <Dialog onOpenChange={(open) => open && void syncHistory()}>
       <DialogTrigger asChild>
         <Button variant="ghost" className={cn('h-11', className)}>
           <BookOpen /> {t('flightLog.open')}
@@ -175,22 +207,7 @@ export function FlightLog({ className }: { className?: string }) {
           <DialogTitle>{t('flightLog.title')}</DialogTitle>
           <DialogDescription>{t('flightLog.intro')}</DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="log">
-          <TabsList className="w-full">
-            <TabsTrigger value="log" className="h-9">
-              {t('flightLog.tabLog')}
-            </TabsTrigger>
-            <TabsTrigger value="history" className="h-9">
-              {t('flightLog.tabHistory')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="log">
-            <LogTable history={history} />
-          </TabsContent>
-          <TabsContent value="history">
-            <HistoryList history={history} />
-          </TabsContent>
-        </Tabs>
+        <FlightLogTabs />
       </DialogContent>
     </Dialog>
   );

@@ -20,6 +20,27 @@
     "tooMany": "Trop d’essais. Attendez quelques minutes, puis réessayez.",
     "error": "Le serveur n’a pas répondu. Réessayez."
   },
+  "account": {
+    "signIn": "Se connecter",
+    "signInTitle": "Se connecter",
+    "signInIntro": "Facultatif : votre carnet de vol et votre place vous suivent sur vos autres appareils. Les invités jouent comme avant.",
+    "google": "Continuer avec Google",
+    "error": "Une erreur s’est produite. Réessayez.",
+    "nameTitle": "Choisissez votre nom",
+    "nameIntro": "Les autres joueurs le voient dans chaque partie. Vous pourrez le changer plus tard depuis le menu du compte.",
+    "save": "Enregistrer",
+    "menu": "Compte : {{name}}",
+    "signedInAs": "Connecté en tant que",
+    "signOut": "Se déconnecter",
+    "nameFromAccount": "Le nom de votre compte. Changez-le depuis le menu du compte.",
+    "history": "Mon historique",
+    "delete": "Supprimer le compte",
+    "deleteTitle": "Supprimer votre compte ?",
+    "deleteIntro": "Cela supprime votre compte, vos connexions et tout votre carnet de vol du serveur. C’est irréversible. Les parties en cours continuent, votre place devenant celle d’un invité.",
+    "deleteConfirm": "Supprimer définitivement",
+    "changeNameTitle": "Changer votre nom",
+    "changeName": "Changer le nom"
+  },
   "lobby": {
     "yourName": "Votre nom",
     "gameCode": "Code de la partie",
@@ -54,5 +75,10 @@
     "stale-match": "La partie a changé : votre écran est à jour, réessayez.",
     "too-many-rooms": "Vous avez trop de parties ouvertes. Terminez-en ou quittez-en une d’abord.",
     "not-creator": "Seul le créateur de la partie choisit les postes."
+  },
+  "history": {
+    "title": "Mon historique",
+    "intro": "Toutes les parties jouées une fois connecté, depuis n’importe quel appareil.",
+    "signedOut": "Connectez-vous pour voir votre historique sur tous vos appareils."
   }
 }

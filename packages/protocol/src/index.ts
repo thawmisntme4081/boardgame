@@ -118,6 +118,11 @@ export interface ClientEvents<Seat extends string, Move, Config, Reason extends 
   ) => void;
   'room:join': (payload: { code: string; name: string }, ack: Ack<JoinResult<Seat>>) => void;
   'room:rejoin': (payload: { code: string; token: string }, ack: Ack<JoinResult<Seat>>) => void;
+  /**
+   * Signed in (Platform 06): back to the seat this account holds, on this device (the most
+   * recently active room). The seat gets a new rejoin token; `not-in-room` when there is none.
+   */
+  'room:resume': (payload: Empty, ack: Ack<JoinResult<Seat>>) => void;
   /** Give up your seat for good (closing the tab only marks you offline). */
   'room:leave': (payload: Empty, ack: Ack<AckResult<Reason>>) => void;
   /** Before the game starts: the creator takes `seat`; whoever sat there takes theirs. */

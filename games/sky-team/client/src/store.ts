@@ -1,6 +1,15 @@
-import { NEXT_TURN_MS, type PlayerView, type Presence, type SlotId } from '@sky/rules';
+import { isGameOver, NEXT_TURN_MS, type PlayerView, type Presence, type SlotId } from '@sky/rules';
 import { create } from 'zustand';
-import { loadHistory, recordFor, saveRecord, type GameRecord } from './lib/history';
+import {
+  clearHistory,
+  isRecord,
+  loadHistory,
+  recordFor,
+  saveRecord,
+  type GameRecord,
+} from './lib/history';
+import { NS } from './i18n';
+import { platform, signedIn } from './platform';
 
 /**
  * Sky Team's own UI state, next to the platform's store (connection, session, the latest view
@@ -33,6 +42,8 @@ export interface SkyTeamStore {
   setInternSlot: (slot: SlotId | null) => void;
   toggleRerollPick: (dieId: string) => void;
   addRecord: (record: GameRecord) => void;
+  /** Shows the right Flight Log: the account's (from the server) when signed in, else the device's. */
+  syncHistory: () => Promise<void>;
   /** Left the room: nothing of the old game stays selected. */
   reset: () => void;
 }
@@ -46,11 +57,11 @@ const fresh = {
   nextTurnAt: null,
 };
 
-export const useSkyTeam = create<SkyTeamStore>()((set) => ({
+export const useSkyTeam = create<SkyTeamStore>()((set, get) => ({
   ...fresh,
   history: loadHistory(),
 
-  onView: (view, before, presence) =>
+  onView: (view, before, presence) => {
     set((s) => {
       const ids = new Set(view.myDice.map((d) => d.id));
       // Synchronization: the co-pilot may be holding the traffic die.
@@ -72,9 +83,13 @@ export const useSkyTeam = create<SkyTeamStore>()((set) => ({
             : before && view.round > before.round
               ? Date.now() + NEXT_TURN_MS
               : s.nextTurnAt,
-        ...(record && { history: saveRecord(record) }),
+        // Signed in, the server keeps the game in the account's log; guests keep it here.
+        ...(record && !signedIn() && { history: saveRecord(record) }),
       };
-    }),
+    });
+    // The server wrote the account's entry before this view was sent.
+    if (before && signedIn() && isGameOver(view) && !isGameOver(before)) void get().syncHistory();
+  },
   selectDie: (dieId) =>
     set((s) => ({
       selectedDieId: s.selectedDieId === dieId ? null : dieId,
@@ -90,5 +105,13 @@ export const useSkyTeam = create<SkyTeamStore>()((set) => ({
         : [...s.rerollPick, dieId],
     })),
   addRecord: (record) => set({ history: saveRecord(record) }),
+  syncHistory: async () => {
+    if (!signedIn()) return void set({ history: loadHistory() });
+    // First time signed in on this device: its games go to the account, then the copy goes.
+    const local = loadHistory();
+    if (local.length > 0 && (await platform().importFlightLog(NS, local))) clearHistory();
+    const records = await platform().flightLog(NS);
+    if (records && signedIn()) set({ history: records.filter(isRecord) });
+  },
   reset: () => set(fresh),
 }));

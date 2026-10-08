@@ -3,32 +3,55 @@ import { Button } from '@platform/ui/components/button';
 import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { joinRoom } from '../api';
+import { NAME_MAX } from '../session';
+import { AccountButton } from './Account';
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-muted/40 p-4">
-      <div className="w-full max-w-sm">{children}</div>
+      <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>{children}</div>
     </main>
   );
 }
 
-/** A card heading with the language switch on the right. */
-export function CardTop({ title, description }: { title: ReactNode; description?: ReactNode }) {
+/** A card heading with the language switch (and, if asked, sign-in) on the right. */
+export function CardTop({
+  title,
+  description,
+  account = false,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  /** Show "Sign in" or the signed-in name (the game picker and the game pages). */
+  account?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-start justify-between gap-2">
-        <h1 className="flex items-center gap-2 text-xl font-semibold">{title}</h1>
-        <LanguageSwitch className="-mt-2 -mr-2" />
+        <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">{title}</h1>
+        <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
+          {account && <AccountButton />}
+          <LanguageSwitch />
+        </div>
       </div>
       {description && <p className="text-sm text-muted-foreground">{description}</p>}
     </div>
   );
 }
 
-export function NameField({ name, onChange }: { name: string; onChange(name: string): void }) {
+export function NameField({
+  name,
+  onChange,
+  fromAccount = false,
+}: {
+  name: string;
+  onChange(name: string): void;
+  /** Signed in: the account's name, shown but not editable. */
+  fromAccount?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
@@ -36,11 +59,18 @@ export function NameField({ name, onChange }: { name: string; onChange(name: str
       <Input
         id="name"
         value={name}
-        maxLength={20}
+        maxLength={NAME_MAX}
         autoComplete="nickname"
+        readOnly={fromAccount}
+        aria-describedby={fromAccount ? 'name-from-account' : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 text-base"
+        className="h-11 text-base read-only:bg-muted read-only:text-muted-foreground"
       />
+      {fromAccount && (
+        <p id="name-from-account" className="text-xs text-muted-foreground">
+          {t('account.nameFromAccount')}
+        </p>
+      )}
     </div>
   );
 }
@@ -52,7 +82,7 @@ export function JoinForm({ name, initialCode = '' }: { name: string; initialCode
   const [busy, setBusy] = useState(false);
   const ready = name.trim().length > 0 && code.length === 4;
 
-  const onJoin = async (event: FormEvent) => {
+  const onJoin = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!ready) return;
     setBusy(true);

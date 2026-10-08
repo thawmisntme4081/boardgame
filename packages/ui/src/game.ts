@@ -37,6 +37,15 @@ export interface PlatformApi<Move, Setup> {
   rematch(setup?: Setup): Promise<boolean>;
   /** Gives up the seat for good and goes back to the game's page. */
   leave(): Promise<void>;
+  /** Whether the player is signed in to an account (Platform 06). */
+  signedIn(): boolean;
+  /**
+   * The signed-in account's Flight Log for this game, newest first, as the game's own records
+   * (the server wrote them when each match ended); `null` when signed out or unreachable.
+   */
+  flightLog(game: string): Promise<unknown[] | null>;
+  /** Adds records kept on this device to the account's log; `true` once the server has them all. */
+  importFlightLog(game: string, records: unknown[]): Promise<boolean>;
 }
 
 export interface BoardProps<View> {
@@ -66,6 +75,11 @@ export interface GameClientModule<View = unknown, Move = unknown, Setup = unknow
   connect(platform: PlatformApi<Move, Setup>): void;
   /** Every new view of the match, before it is shown (`before`: the last one, if any). */
   onView?(view: View, before: View | null, presence: SeatPresence | null): void;
+  /**
+   * The game's Flight Log for the account's history page (its own data and texts; it loads
+   * the account's records itself through `PlatformApi.flightLog`).
+   */
+  History?: ComponentType;
   /** The player left the room: forget the game's own UI state. */
   reset?(): void;
   /** The text for a code the server sent (a rule's reason), or `undefined` if not the game's. */

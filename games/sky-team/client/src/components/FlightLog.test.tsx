@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SCENARIO_LIST } from '@sky/rules';
 import type { GameRecord } from '../lib/history';
-import { useSkyTeam } from '../store';
 import { resetStore } from '../test/fixtures';
 import { FlightLog } from './FlightLog';
 import { ScenarioPicker } from './ScenarioPicker';
@@ -21,17 +20,22 @@ const game = (over: Partial<GameRecord>): GameRecord => ({
   ...over,
 });
 
-beforeEach(resetStore);
+beforeEach(() => {
+  resetStore();
+  localStorage.clear();
+});
+
+/** Games already on this device: the Flight Log reads them when nobody is signed in. */
+const seed = (history: GameRecord[]) =>
+  localStorage.setItem('sky-team:history', JSON.stringify(history));
 
 describe('FlightLog', () => {
   it('shows wins and losses per scenario and seat, coloured by result', async () => {
-    useSkyTeam.setState({
-      history: [
-        game({ seat: 'pilot', result: 'won' }),
-        game({ seat: 'pilot', result: 'lost', reasons: ['spin'] }),
-        game({ seat: 'copilot', result: 'lost' }),
-      ],
-    });
+    seed([
+      game({ seat: 'pilot', result: 'won' }),
+      game({ seat: 'pilot', result: 'lost', reasons: ['spin'] }),
+      game({ seat: 'copilot', result: 'lost' }),
+    ]);
     render(<FlightLog />);
     await userEvent.click(screen.getByRole('button', { name: 'Flight Log' }));
 
@@ -47,9 +51,7 @@ describe('FlightLog', () => {
   });
 
   it('lists past games, newest first, with why a game was lost', async () => {
-    useSkyTeam.setState({
-      history: [game({ result: 'lost', reasons: ['spin'], rounds: 3 }), game({ partner: '' })],
-    });
+    seed([game({ result: 'lost', reasons: ['spin'], rounds: 3 }), game({ partner: '' })]);
     render(<FlightLog />);
     await userEvent.click(screen.getByRole('button', { name: 'Flight Log' }));
     await userEvent.click(screen.getByRole('tab', { name: 'History' }));
@@ -80,7 +82,7 @@ describe('FlightLog', () => {
 
 describe('ScenarioPicker', () => {
   it('marks scenarios landed on this device', async () => {
-    useSkyTeam.setState({ history: [game({ scenario: 'lhr-green' })] });
+    seed([game({ scenario: 'lhr-green' })]);
     render(<ScenarioPicker id="t" value={{ scenario: 'yul-green' }} onChange={() => {}} />);
     await userEvent.click(screen.getByRole('combobox'));
     expect(

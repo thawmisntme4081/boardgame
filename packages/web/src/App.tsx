@@ -1,7 +1,8 @@
 import { Toaster } from '@platform/ui/components/sonner';
 import { RouterProvider } from '@tanstack/react-router';
 import { useEffect } from 'react';
-import { checkSiteAccess, startConnection } from './api';
+import { loadAccount } from './account';
+import { accountChanged, checkSiteAccess, startConnection } from './api';
 import { router } from './router';
 import { Connecting } from './screens/Shell';
 import { SitePassword } from './screens/SitePassword';
@@ -16,8 +17,18 @@ export function App() {
     );
   }, []);
   useEffect(() => {
-    if (siteAccess === 'open') startConnection();
+    if (siteAccess !== 'open') return;
+    startConnection();
+    // Accounts come after the site password (their endpoints sit behind it).
+    void loadAccount();
   }, [siteAccess]);
+  // Signed in or out (or the account just loaded): the seat may follow the account.
+  const userId = usePlatform((s) =>
+    typeof s.account === 'object' ? (s.account.user?.id ?? null) : undefined,
+  );
+  useEffect(() => {
+    if (userId !== undefined) accountChanged();
+  }, [userId]);
   return (
     <>
       {siteAccess === 'checking' ? (

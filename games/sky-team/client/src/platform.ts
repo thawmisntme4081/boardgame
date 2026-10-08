@@ -13,3 +13,6 @@ export function platform(): PlatformApi<PlayerMove, GameSetup> {
   if (!api) throw new Error('Sky Team used before the platform connected it');
   return api;
 }
+
+/** Whether the player is signed in (false before the platform connected, as in unit tests). */
+export const signedIn = (): boolean => api?.signedIn() ?? false;

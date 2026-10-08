@@ -13,7 +13,7 @@ import { useName } from './useName';
 
 function CreateForm({ module }: { module: GameClientModule }) {
   const { t } = useTranslation();
-  const { name, setName, nameOk } = useName();
+  const { name, setName, nameOk, fromAccount } = useName();
   const [setup, setSetup] = useState(module.defaultSetup);
   const [busy, setBusy] = useState(false);
   const { SetupForm } = module;
@@ -37,10 +37,11 @@ function CreateForm({ module }: { module: GameClientModule }) {
           <CardTop
             title={t(`games.${module.id}.name` as 'games.sky-team.name')}
             description={t(`games.${module.id}.blurb` as 'games.sky-team.blurb')}
+            account
           />
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          <NameField name={name} onChange={setName} />
+          <NameField name={name} onChange={setName} fromAccount={fromAccount} />
           <JoinForm name={name} />
           <Or />
           <SetupForm value={setup} onChange={setSetup} />

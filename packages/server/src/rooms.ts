@@ -49,6 +49,11 @@ export interface Player {
   creator: boolean;
   /** The last `match:move` counter accepted from this player in the current match. */
   seq: number;
+  /**
+   * The signed-in player's account (Platform 06): the seat follows it to another device
+   * (`resume`). Guests have none and rejoin with their token only.
+   */
+  userId?: string;
 }
 
 /** The game being played in a room. A rematch starts a new match in the same room. */
@@ -103,6 +108,8 @@ export interface Seated {
   player: Player;
   /** The player's rejoin token: only on the create or join that made it (and on a rejoin). */
   token?: string;
+  /** The connection this seat had before it moved to this one (`claim`), if any. */
+  replaced?: string;
 }
 
 /** A refusal: a platform code, or the game's own reason for refusing a move. */
@@ -197,6 +204,54 @@ export class RoomManager {
     return room;
   }
 
+  /** An account's Flight Log for a game: its records, newest first. */
+  flightLog(userId: string, gameId: string): unknown[] {
+    return this.store?.flightLog(userId, gameId).map((e) => e.record) ?? [];
+  }
+
+  /**
+   * Adds games a device kept before sign-in to the account's Flight Log. Invalid records are
+   * skipped; one already there (same game, scenario, seat and end time) is not added twice.
+   * Returns how many records were valid, or `undefined` if the game cannot import.
+   */
+  importFlightLog(userId: string, gameId: string, raw: unknown[]): number | undefined {
+    const entry = this.games.get(gameId);
+    if (!this.store || !entry?.importRecord) return undefined;
+    const entries = raw.flatMap((item) => {
+      const parsed = entry.importRecord!(item);
+      if (!parsed) return [];
+      const { seat, scenario } = parsed.record as { seat: string; scenario: string };
+      return [
+        {
+          userId,
+          matchId: `import:${gameId}:${scenario}:${seat}:${parsed.at}`,
+          gameId,
+          endedAt: parsed.at,
+          record: parsed.record,
+        },
+      ];
+    });
+    this.store.addFlightEntries(entries);
+    return entries.length;
+  }
+
+  /**
+   * An account was deleted: its seats stay in their rooms as guests' (nothing links them to
+   * the account any more), and its Flight Log and match seats are cleared in the store.
+   */
+  forgetAccount(userId: string): void {
+    for (const room of this.rooms.values()) {
+      let changed = false;
+      for (const player of this.players(room)) {
+        if (player.userId !== userId) continue;
+        delete player.userId;
+        changed = true;
+      }
+      if (changed) this.save(room);
+    }
+    this.store?.deleteUserData(userId);
+  }
+
   /** The registry entry of the room's game. */
   entry(room: Room): GameEntry {
     const entry = this.games.get(room.gameId);
@@ -286,7 +341,7 @@ export class RoomManager {
     name: string,
     socketId: string,
     ip = 'unknown',
-    request: { game?: string; config?: unknown } = {},
+    request: { game?: string; config?: unknown; userId?: string } = {},
   ): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const gameId = request.game ?? DEFAULT_GAME;
@@ -311,26 +366,35 @@ export class RoomManager {
       lastActivity: this.now(),
     };
     this.rooms.set(code, room);
-    const { player, token } = this.seat(room, seat, name, socketId);
+    const { player, token } = this.seat(room, seat, name, socketId, request.userId);
     player.creator = true;
     this.startInLog(room, seed);
     return ok({ room, player, token });
   }
 
-  join(code: string, name: string, socketId: string): Result<Seated> {
+  /**
+   * Takes a free seat. A signed-in player who already holds a seat here gets it back instead
+   * (one account never holds two seats of a room).
+   */
+  join(code: string, name: string, socketId: string, userId?: string): Result<Seated> {
     if (this.sockets.has(socketId)) return err('already-in-room');
     const room = this.rooms.get(code);
     if (!room) return err('room-not-found');
+    const own = userId && this.players(room).find((p) => p.userId === userId);
+    if (own) return ok(this.claim(room, own, socketId));
     const free = this.seats(room).find((seat) => !room.players[seat]);
     if (!free) return err('room-full');
-    const { player, token } = this.seat(room, free, name, socketId);
+    const { player, token } = this.seat(room, free, name, socketId, userId);
     this.tell(room, { type: 'table:join', seat: free });
     this.seatsInLog(room);
     return ok({ room, player, token });
   }
 
-  /** Puts a returning player back in their seat on a new socket. */
-  rejoin(code: string, token: string, socketId: string): Result<Seated> {
+  /**
+   * Puts a returning player back in their seat on a new socket. Signed in now, a guest's seat
+   * becomes the account's (unless the account already holds the other seat).
+   */
+  rejoin(code: string, token: string, socketId: string, userId?: string): Result<Seated> {
     const room = this.rooms.get(code);
     if (!room) return err('room-not-found');
     const tokenHash = hashToken(token);
@@ -345,8 +409,50 @@ export class RoomManager {
     if (player.socketId) this.sockets.delete(player.socketId);
     player.socketId = socketId;
     this.sockets.set(socketId, { code, seat: player.seat });
+    if (userId && !player.userId && !this.players(room).some((p) => p.userId === userId)) {
+      player.userId = userId;
+      this.seatsInLog(room);
+    }
     this.touch(room);
     return ok({ room, player, token });
+  }
+
+  /**
+   * A signed-in player on any device: back to the seat their account holds, in the most
+   * recently active room. The seat gets a new token (the old one stops working; a device
+   * still holding it is signed in too, so it resumes the same way).
+   */
+  resume(userId: string, socketId: string): Result<Seated> {
+    const held = [...this.rooms.values()]
+      .flatMap((room) => this.players(room).map((player) => ({ room, player })))
+      .filter(({ player }) => player.userId === userId)
+      .sort((a, b) => b.room.lastActivity - a.room.lastActivity)[0];
+    if (!held) return err('not-in-room');
+    const current = this.sockets.get(socketId);
+    if (current && (current.code !== held.room.code || current.seat !== held.player.seat)) {
+      return err('already-in-room');
+    }
+    return ok(this.claim(held.room, held.player, socketId));
+  }
+
+  /** Who sits in a room, seat by seat. */
+  private players(room: Room): Player[] {
+    return this.seats(room)
+      .map((seat) => room.players[seat])
+      .filter((p) => p !== undefined);
+  }
+
+  /** Moves a seat to a new socket with a new rejoin token (`join` by account, `resume`). */
+  private claim(room: Room, player: Player, socketId: string): Seated {
+    const token = randomUUID();
+    const replaced = player.socketId ?? undefined;
+    player.tokenHash = hashToken(token);
+    if (replaced) this.sockets.delete(replaced);
+    player.socketId = socketId;
+    this.sockets.set(socketId, { code: room.code, seat: player.seat });
+    this.seatsInLog(room);
+    this.touch(room);
+    return { room, player, token, ...(replaced && replaced !== socketId && { replaced }) };
   }
 
   /** The seat that holds `token` in room `code`, if any (to find its old connection). */
@@ -611,7 +717,12 @@ export class RoomManager {
   private seatsInLog(room: Room): void {
     const seats = Object.values(room.players)
       .filter((p) => p !== undefined)
-      .map(({ seat, name, tokenHash }) => ({ seat, name, tokenHash }));
+      .map(({ seat, name, tokenHash, userId }) => ({
+        seat,
+        name,
+        tokenHash,
+        userId: userId ?? null,
+      }));
     this.store?.saveSeats(room.match.id, seats);
   }
 
@@ -619,7 +730,37 @@ export class RoomManager {
   private endInLog(room: Room): void {
     const outcome = this.entry(room).definition.outcome(room.game);
     this.snapshot(room);
-    this.store?.endMatch(room.match.id, 'over', outcome, this.now());
+    const at = this.now();
+    this.store?.endMatch(room.match.id, 'over', outcome, at);
+    this.flightLogFor(room, at);
+  }
+
+  /**
+   * Each signed-in player's Flight Log entry for the match that just ended. The log keeps the
+   * first entry per account and match, so a room restored after a restart writes nothing twice.
+   */
+  private flightLogFor(room: Room, at: number): void {
+    const { definition, flightRecord } = this.entry(room);
+    if (!this.store || !flightRecord) return;
+    const players = this.players(room);
+    const entries = players.flatMap((player) => {
+      if (!player.userId) return [];
+      const view = definition.view(room.game, player.seat, at);
+      const others = players.filter((p) => p !== player).map((p) => p.name);
+      const record = flightRecord(view, others, at);
+      return record == null
+        ? []
+        : [
+            {
+              userId: player.userId,
+              matchId: room.match.id,
+              gameId: room.gameId,
+              endedAt: at,
+              record,
+            },
+          ];
+    });
+    this.store.addFlightEntries(entries);
   }
 
   /** The room moves on (or goes) before its match ended: the match is abandoned. */
@@ -640,6 +781,7 @@ export class RoomManager {
     seat: SeatId,
     name: string,
     socketId: string,
+    userId?: string,
   ): { player: Player; token: string } {
     const token = randomUUID();
     const player: Player = {
@@ -649,6 +791,7 @@ export class RoomManager {
       socketId,
       creator: false,
       seq: 0,
+      ...(userId && { userId }),
     };
     room.players[seat] = player;
     this.sockets.set(socketId, { code: room.code, seat });

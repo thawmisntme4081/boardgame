@@ -9,7 +9,7 @@ import { useName } from './useName';
 
 export function Picker() {
   const { t } = useTranslation();
-  const { name, setName } = useName();
+  const { name, setName, fromAccount } = useName();
   return (
     <Shell>
       <Card>
@@ -17,10 +17,11 @@ export function Picker() {
           <CardTop
             title={
               <>
-                <Dices className="size-5" aria-hidden="true" /> {t('app.title')}
+                <Dices className="size-5 shrink-0" aria-hidden="true" /> {t('app.title')}
               </>
             }
             description={t('app.tagline')}
+            account
           />
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
@@ -51,7 +52,7 @@ export function Picker() {
             </ul>
           </section>
           <Or />
-          <NameField name={name} onChange={setName} />
+          <NameField name={name} onChange={setName} fromAccount={fromAccount} />
           <JoinForm name={name} />
         </CardContent>
       </Card>
