@@ -37,6 +37,8 @@ export interface PlatformApi<Move, Setup> {
   rematch(setup?: Setup): Promise<boolean>;
   /** Gives up the seat for good and goes back to the game's page. */
   leave(): Promise<void>;
+  /** After a game: "not now" to the partner's rematch offer, or taking back your own. */
+  declineRematch(): Promise<boolean>;
   /** Whether the player is signed in to an account (Platform 06). */
   signedIn(): boolean;
   /**
@@ -48,10 +50,21 @@ export interface PlatformApi<Move, Setup> {
   importFlightLog(game: string, records: unknown[]): Promise<boolean>;
 }
 
+/**
+ * A rematch after a game needs both players: one makes an offer (`by` is their seat), the
+ * other accepts by asking for a rematch too, or declines. `config` is the offered setup.
+ */
+export interface RematchState {
+  by: string | null;
+  config: unknown;
+}
+
 export interface BoardProps<View> {
   view: View;
   presence: SeatPresence | null;
   connection: Connection;
+  /** The rematch offer waiting for an answer, if any. */
+  rematch: RematchState;
 }
 
 export interface SetupFormProps<Setup> {

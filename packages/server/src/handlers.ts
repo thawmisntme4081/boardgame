@@ -8,6 +8,7 @@ import {
   joinRoomSchema,
   moveSchema,
   rejoinRoomSchema,
+  rematchDeclineSchema,
   rematchSchema,
   type AckResult,
   type ClientEvents,
@@ -41,6 +42,7 @@ export function broadcastRoom(io: GameServer, rooms: RoomManager, room: Room): v
     const socketId = room.players[seat]?.socketId;
     if (!socketId) continue;
     io.to(socketId).emit('room:presence', { ...presence, you: seat } as Presence);
+    io.to(socketId).emit('room:rematch-offer', rooms.rematchOfferOf(room));
     io.to(socketId).emit('match:view', {
       matchId,
       version,
@@ -229,8 +231,13 @@ export function registerHandlers(
       return result.ok ? OK : { ok: false, error: result.error };
     });
 
-    onSeated('room:rematch', rematchSchema, ({ matchId, config }, { room }) => {
-      const result = rooms.requestRematch(room, matchId, config);
+    onSeated('room:rematch', rematchSchema, ({ matchId, config }, { room, player }) => {
+      const result = rooms.requestRematch(room, matchId, player.seat, config);
+      return result.ok ? OK : { ok: false, error: result.error };
+    });
+
+    onSeated('room:rematch-decline', rematchDeclineSchema, ({ matchId }, { room, player }) => {
+      const result = rooms.declineRematch(room, matchId, player.seat);
       return result.ok ? OK : { ok: false, error: result.error };
     });
 

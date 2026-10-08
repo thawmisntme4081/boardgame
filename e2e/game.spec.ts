@@ -25,7 +25,13 @@ test.describe('a two-player game', () => {
       await expect(dialog.getByRole('listitem').first()).toBeVisible();
     }
 
+    // The first "Fly again" is an offer: the partner is asked, and nothing restarts yet.
     await players.copilot.getByRole('button', { name: 'Fly again' }).click();
+    await expect(players.copilot.getByText(/Waiting for .* to agree/)).toBeVisible();
+    await expect(players.pilot.getByText(/wants to fly again/)).toBeVisible();
+    await expect(players.pilot.getByRole('dialog', { name: 'Crashed' })).toBeVisible();
+    // The partner agrees, and both start a new game.
+    await players.pilot.getByRole('button', { name: 'Fly again' }).click();
     for (const page of [players.pilot, players.copilot]) {
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(page.getByText(/Round 1\/7/)).toBeVisible();

@@ -1,5 +1,5 @@
 import { SLOT_IDS, SLOTS, type PlayerView, type Presence } from '@sky/rules';
-import type { Connection } from '@platform/ui/game';
+import type { Connection, RematchState } from '@platform/ui/game';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cockpit } from '../components/cockpit/Cockpit';
@@ -78,10 +78,12 @@ export default function Game({
   view,
   presence,
   connection,
+  rematch,
 }: {
   view: PlayerView;
   presence: Presence | null;
   connection: Connection;
+  rematch: RematchState;
 }) {
   const { t } = useTranslation('sky-team');
   const [statusRef, statusHeight] = useHeight<HTMLDivElement>();
@@ -128,7 +130,7 @@ export default function Game({
           <DiceTray view={view} presence={presence} />
         </section>
 
-        <GameOverDialog view={view} />
+        <GameOverDialog view={view} presence={presence} rematch={rematch} />
       </div>
     </div>
   );

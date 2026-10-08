@@ -32,6 +32,7 @@ export const rematchSchema = z.object({
   /** Changes to the setup for the next match; the rest stays as it was. */
   config: z.unknown().optional(),
 });
+export const rematchDeclineSchema = z.object({ matchId });
 export const moveSchema = z.object({
   matchId,
   /** The player's own counter: a move with a `seq` already accepted is a harmless repeat. */
@@ -132,11 +133,26 @@ export interface ClientEvents<Seat extends string, Move, Config, Reason extends 
     payload: { matchId: string; config?: Partial<Config> },
     ack: Ack<AckResult<Reason>>,
   ) => void;
+  /**
+   * After a game: the player who made a rematch offer takes it back. A rematch after a game
+   * needs both players: the first request is an offer, the partner's own request accepts it.
+   */
+  'room:rematch-decline': (payload: { matchId: string }, ack: Ack<AckResult<Reason>>) => void;
   'match:move': (payload: MovePayload<Move>, ack: Ack<AckResult<Reason>>) => void;
+}
+
+/** A rematch offer waiting for the partner's answer (`by` is `null` when there is none). */
+export interface RematchOffer<Seat extends string = string> {
+  matchId: string;
+  by: Seat | null;
+  /** The setup the offer proposes (the game reads what it needs from it). */
+  config: unknown;
 }
 
 /** Server → client. */
 export interface ServerEvents<Seat extends string, View> {
   'room:presence': (presence: Presence<Seat>) => void;
   'match:view': (view: MatchView<View, Seat>) => void;
+  /** Sent with every update of the room, so a player who comes back sees an open offer. */
+  'room:rematch-offer': (offer: RematchOffer<Seat>) => void;
 }

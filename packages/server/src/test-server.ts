@@ -52,6 +52,12 @@ export function rematch(client: Client, config?: GameSetup): Promise<AckResult> 
   return client.emitWithAck('room:rematch', { matchId, ...(config && { config }) });
 }
 
+/** "Not now" to a rematch offer (or taking one's own back), for the match this client sees. */
+export function declineRematch(client: Client): Promise<AckResult> {
+  const matchId = seenMatch.get(client) ?? 'none';
+  return client.emitWithAck('room:rematch-decline', { matchId });
+}
+
 /** Resolves with the next view this client receives. Call before triggering it. */
 export function nextView(client: Client): Promise<PlayerView> {
   return new Promise((resolve) => client.once('match:view', ({ view }) => resolve(view)));

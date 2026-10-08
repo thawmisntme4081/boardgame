@@ -284,7 +284,10 @@
     "crashedAt": "Vòng {{round}} · {{altitude}} ft",
     "done": "hoàn thành",
     "leave": "Rời đi",
-    "flyAgain": "Bay lại"
+    "flyAgain": "Bay lại",
+    "offerWaiting": "Đang chờ {{name}} đồng ý…",
+    "cancelOffer": "Rút lại",
+    "offered": "{{name}} muốn bay lại:"
   },
   "flightLog": {
     "open": "Nhật ký bay",

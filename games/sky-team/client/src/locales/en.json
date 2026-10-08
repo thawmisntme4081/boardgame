@@ -292,7 +292,10 @@
     "crashedAt": "Round {{round}} · {{altitude}} ft",
     "done": "done",
     "leave": "Leave",
-    "flyAgain": "Fly again"
+    "flyAgain": "Fly again",
+    "offerWaiting": "Waiting for {{name}} to agree…",
+    "cancelOffer": "Take back",
+    "offered": "{{name}} wants to fly again:"
   },
   "flightLog": {
     "open": "Flight Log",

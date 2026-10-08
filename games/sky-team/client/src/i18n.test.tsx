@@ -7,7 +7,7 @@ import en from './locales/en.json';
 import fr from './locales/fr.json';
 import vi from './locales/vi.json';
 import { endReasonText, errorText } from './messages';
-import { makeView, presence, resetStore } from './test/fixtures';
+import { makeView, NO_OFFER, presence, resetStore } from './test/fixtures';
 
 vitest.mock('./api', () => ({
   leaveGame: vitest.fn(),
@@ -93,6 +93,8 @@ describe('switching language', () => {
     render(
       <GameOverDialog
         view={makeView('pilot', { patch: { phase: 'lost', round: 3, endReason: 'spin' } })}
+        presence={presence()}
+        rematch={NO_OFFER}
       />,
     );
     const dialog = screen.getByRole('dialog', { name: 'Rơi máy bay' });

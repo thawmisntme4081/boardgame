@@ -137,6 +137,8 @@ export function startConnection(): void {
     game?.onView?.(envelope.view, sameMatch ? before.view : null, presence);
     store().setMatch(envelope);
   });
+  // A rematch offer waits in the store; the board shows it to the partner.
+  socket.on('room:rematch-offer', (offer) => store().setRematch(offer));
   const onPartner = createPartnerNotifier((text) => toast.message(text));
   socket.on('room:presence', (presence) => {
     const { presence: before, session } = store();
@@ -314,6 +316,10 @@ export const platformServices: PlatformApi<unknown, unknown> = {
         matchId: match.id ?? '',
         ...(setup !== undefined && { config: setup as object }),
       }),
+    ),
+  declineRematch: () =>
+    run('rematch-decline', () =>
+      emit().emitWithAck('room:rematch-decline', { matchId: match.id ?? '' }),
     ),
   leave: leaveGame,
   signedIn: () => {

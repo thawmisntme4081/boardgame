@@ -292,7 +292,10 @@
     "crashedAt": "Manche {{round}} · {{altitude}} ft",
     "done": "réussi",
     "leave": "Quitter",
-    "flyAgain": "Revoler"
+    "flyAgain": "Revoler",
+    "offerWaiting": "En attente de l’accord de {{name}}…",
+    "cancelOffer": "Annuler",
+    "offered": "{{name}} veut rejouer :"
   },
   "flightLog": {
     "open": "Carnet de vol",

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSkyTeam } from '../store';
-import { makeView, presence, resetStore } from '../test/fixtures';
+import { makeView, NO_OFFER, presence, resetStore } from '../test/fixtures';
 import Game from './Game';
 
 vi.mock('../api', () => ({
@@ -30,18 +30,24 @@ const nextRound = () =>
 describe('the pause after a round’s last die', () => {
   it('keeps the finished round’s dice on the board while "Next turn in 5s" runs', () => {
     useSkyTeam.setState({ nextTurnAt: Date.now() + 5_000 });
-    render(<Game view={nextRound()} presence={presence()} connection="online" />);
+    render(
+      <Game view={nextRound()} presence={presence()} connection="online" rematch={NO_OFFER} />,
+    );
     expect(screen.getByRole('button', { name: 'Axis 1 (pilot): 4' })).toBeInTheDocument();
   });
 
   it('clears the board once the pause is over', async () => {
     useSkyTeam.setState({ nextTurnAt: Date.now() - 1 });
-    render(<Game view={nextRound()} presence={presence()} connection="online" />);
+    render(
+      <Game view={nextRound()} presence={presence()} connection="online" rematch={NO_OFFER} />,
+    );
     expect(await screen.findByRole('button', { name: 'Axis 1 (pilot)' })).toBeInTheDocument();
   });
 
   it('shows the live board when there is no pause', () => {
-    render(<Game view={nextRound()} presence={presence()} connection="online" />);
+    render(
+      <Game view={nextRound()} presence={presence()} connection="online" rematch={NO_OFFER} />,
+    );
     expect(screen.getByRole('button', { name: 'Axis 1 (pilot)' })).toBeInTheDocument();
   });
 });

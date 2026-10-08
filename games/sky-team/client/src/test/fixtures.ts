@@ -55,6 +55,9 @@ export function catalogScenario(match: (s: Scenario) => boolean): Scenario {
   return found;
 }
 
+/** No rematch offer is waiting. */
+export const NO_OFFER = { by: null, config: null };
+
 export const presence = (): Presence => ({
   pilot: { name: 'Ana', online: true, creator: false },
   copilot: { name: 'Ben', online: true, creator: false },

@@ -40,6 +40,8 @@ export interface PlatformStore {
   presence: SeatPresence | null;
   /** Presence sent for a seat this client does not show yet: applied with the matching view. */
   pendingPresence: SeatPresence | null;
+  /** The rematch offer waiting for an answer in this room (`by` is `null` when none). */
+  rematch: { matchId: string; by: string | null; config: unknown } | null;
   /** The site password gate: being checked, waiting for the password, or open. */
   siteAccess: SiteAccess;
   account: AccountState;
@@ -48,6 +50,7 @@ export interface PlatformStore {
   setSession: (session: Session | null) => void;
   setMatch: (match: MatchViewState) => void;
   setPresence: (presence: SeatPresence) => void;
+  setRematch: (rematch: NonNullable<PlatformStore['rematch']>) => void;
   setSiteAccess: (siteAccess: SiteAccess) => void;
   setAccount: (account: AccountState) => void;
   leave: () => void;
@@ -59,6 +62,7 @@ export const usePlatform = create<PlatformStore>()((set) => ({
   match: null,
   presence: null,
   pendingPresence: null,
+  rematch: null,
   siteAccess: 'checking',
   account: 'loading',
 
@@ -77,7 +81,9 @@ export const usePlatform = create<PlatformStore>()((set) => ({
         ? { pendingPresence: presence }
         : { presence, pendingPresence: null },
     ),
+  setRematch: (rematch) => set({ rematch }),
   setSiteAccess: (siteAccess) => set({ siteAccess }),
   setAccount: (account) => set({ account }),
-  leave: () => set({ session: null, match: null, presence: null, pendingPresence: null }),
+  leave: () =>
+    set({ session: null, match: null, presence: null, pendingPresence: null, rematch: null }),
 }));

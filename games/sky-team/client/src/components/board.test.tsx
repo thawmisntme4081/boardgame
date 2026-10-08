@@ -9,7 +9,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSkyTeam } from '../store';
-import { catalogScenario, makeView, presence, resetStore, crew } from '../test/fixtures';
+import { catalogScenario, crew, makeView, NO_OFFER, presence, resetStore } from '../test/fixtures';
 import { Cockpit } from './cockpit/Cockpit';
 import { DiceTray } from './tray/DiceTray';
 import { GameOverDialog } from './GameOverDialog';
@@ -23,6 +23,7 @@ vi.mock('../api', () => ({
   reroll: vi.fn(async () => true),
   spendReroll: vi.fn(async () => true),
   rematch: vi.fn(async () => true),
+  declineRematch: vi.fn(async () => true),
   playAbility: vi.fn(async () => true),
   cancelSwap: vi.fn(async () => true),
   leaveGame: vi.fn(),
@@ -163,7 +164,7 @@ describe('GameOverDialog', () => {
         landingFailures: ['landing-gear', 'landing-brakes'],
       },
     });
-    render(<GameOverDialog view={view} />);
+    render(<GameOverDialog view={view} presence={presence()} rematch={NO_OFFER} />);
     const dialog = screen.getByRole('dialog', { name: 'Crashed' });
     expect(within(dialog).getByText('Not all the landing gear was down.')).toBeInTheDocument();
     expect(within(dialog).getByText('Your speed was too high for the brakes.')).toBeInTheDocument();
@@ -178,17 +179,55 @@ describe('GameOverDialog', () => {
       abilities: ['mastery'],
       patch: { phase: 'lost', endReason: 'landing-ice-brakes' },
     });
-    render(<GameOverDialog view={view} />);
+    render(<GameOverDialog view={view} presence={presence()} rematch={NO_OFFER} />);
     expect(screen.getByText('The ice brakes were not fully deployed.')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Scenario' })).toHaveTextContent(ice.name);
     await userEvent.click(screen.getByRole('button', { name: 'Fly again' }));
     expect(api.rematch).toHaveBeenCalledWith({ scenario: ice.id });
   });
 
+  it('waits for the partner after you offer to fly again, and lets you take it back', async () => {
+    const view = makeView('pilot', { patch: { phase: 'lost', endReason: 'spin' } });
+    render(
+      <GameOverDialog
+        view={view}
+        presence={presence()}
+        rematch={{ by: 'pilot', config: { scenario: 'yul-green' } }}
+      />,
+    );
+    expect(screen.getByText('Waiting for Ben to agree…')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fly again' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Take back' }));
+    expect(api.declineRematch).toHaveBeenCalled();
+  });
+
+  it('asks you when the partner offers: fly again to agree', async () => {
+    const view = makeView('pilot', { patch: { phase: 'lost', endReason: 'spin' } });
+    render(
+      <GameOverDialog
+        view={view}
+        presence={presence()}
+        rematch={{ by: 'copilot', config: { scenario: 'yul-green' } }}
+      />,
+    );
+    expect(screen.getByText(/Ben wants to fly again:/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Not now' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Fly again' }));
+    expect(api.rematch).toHaveBeenCalledWith();
+  });
+
   it('celebrates a landing and stays closed during play', () => {
-    const { rerender } = render(<GameOverDialog view={makeView('pilot')} />);
+    const { rerender } = render(
+      <GameOverDialog view={makeView('pilot')} presence={presence()} rematch={NO_OFFER} />,
+    );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    rerender(<GameOverDialog view={makeView('pilot', { patch: { phase: 'won' } })} />);
+    rerender(
+      <GameOverDialog
+        view={makeView('pilot', { patch: { phase: 'won' } })}
+        presence={presence()}
+        rematch={NO_OFFER}
+      />,
+    );
     expect(screen.getByRole('dialog', { name: 'Smooth landing!' })).toBeInTheDocument();
   });
 });
@@ -667,7 +706,13 @@ describe('Leave game', () => {
 
 describe('game over: a win and a loss look different', () => {
   it('shows a landing with where and when, and a green "Fly again"', () => {
-    render(<GameOverDialog view={makeView('pilot', { patch: { phase: 'won', round: 7 } })} />);
+    render(
+      <GameOverDialog
+        view={makeView('pilot', { patch: { phase: 'won', round: 7 } })}
+        presence={presence()}
+        rematch={NO_OFFER}
+      />,
+    );
     const dialog = screen.getByRole('dialog', { name: 'Smooth landing!' });
     expect(within(dialog).getByText('You landed at YUL in round 7.')).toBeInTheDocument();
     expect(
@@ -678,7 +723,7 @@ describe('game over: a win and a loss look different', () => {
 
   it('shows a crash with the round and altitude, and each reason', () => {
     const view = makeView('pilot', { patch: { phase: 'lost', round: 3, endReason: 'spin' } });
-    render(<GameOverDialog view={view} />);
+    render(<GameOverDialog view={view} presence={presence()} rematch={NO_OFFER} />);
     const dialog = screen.getByRole('dialog', { name: 'Crashed' });
     expect(within(dialog).getByText('Round 3 · 4,000 ft')).toBeInTheDocument();
     expect(within(dialog).getByRole('listitem')).toHaveTextContent('went into a spin');

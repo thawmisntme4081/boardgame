@@ -51,6 +51,9 @@ export const spendReroll = () => platform().send({ type: 'spend-reroll' });
 
 export const reroll = (dieIds: string[]) => platform().send({ type: 'reroll', dieIds });
 
+/** After a game: "not now" to the partner's offer to fly again, or taking back your own. */
+export const declineRematch = () => platform().declineRematch();
+
 /** A new game in the same room: the same scenario, or the one in `setup`. */
 export const rematch = (setup: GameSetup = {}) => platform().rematch(setup);
 

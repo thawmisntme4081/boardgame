@@ -54,10 +54,13 @@ function SeatedRoom({ gameId, code }: { gameId: string; code: string }) {
   const match = usePlatform((s) => s.match);
   const presence = usePlatform((s) => s.presence);
   const connection = usePlatform((s) => s.connection);
+  const offer = usePlatform((s) => s.rematch);
   if (!module || !match) return <Connecting />;
   if (seatsEmpty(presence)) return <WaitingRoom module={module} code={code} />;
   const { Board } = module;
-  return <Board view={match.view} presence={presence} connection={connection} />;
+  // An offer counts for the match on screen only.
+  const rematch = offer?.matchId === match.matchId ? offer : { by: null, config: null };
+  return <Board view={match.view} presence={presence} connection={connection} rematch={rematch} />;
 }
 
 /** An invite link: the room's code, waiting for a name. */

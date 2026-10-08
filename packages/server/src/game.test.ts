@@ -21,6 +21,7 @@ import {
   moveWithSeq,
   next,
   nextView,
+  declineRematch,
   rematch,
   startTestServer,
   takeOff,
@@ -84,6 +85,18 @@ async function bothReady(clients: Record<Seat, Client>) {
   expectOk(await move(clients.pilot, { type: 'ready' }));
   expectOk(await move(clients.copilot, { type: 'ready' }));
   await Promise.all(rolled);
+}
+
+/** Resolves with the first view of a new game (before take-off) this client receives. */
+function viewInSetup(client: Client): Promise<PlayerView> {
+  return new Promise((resolve) => {
+    const onView = ({ view }: { view: PlayerView }) => {
+      if (view.phase !== 'setup') return;
+      client.off('match:view', onView);
+      resolve(view);
+    };
+    client.on('match:view', onView);
+  });
 }
 
 async function waitFor(condition: () => boolean, what: string) {
@@ -319,13 +332,60 @@ describe('room:rematch', () => {
 
     room().game = { ...room().game, phase: 'lost', endReason: 'spin', round: 4, axis: 3 };
     room().game.crew.ready.pilot = true;
-    const view = nextView(clients.copilot);
+    // The first request is an offer: the game stays as it ended until the partner agrees.
     expectOk(await rematch(clients.copilot));
+    expect(room().game.phase).toBe('lost');
+    expect(room().rematchOffer?.by).toBe('copilot');
+    const view = nextView(clients.copilot);
+    expectOk(await rematch(clients.pilot));
     expect(await view).toMatchObject({ phase: 'setup', round: 1, axis: 0, seat: 'copilot' });
+    expect(room().rematchOffer).toBeUndefined();
     expect(room().code).toBe(code);
     expect(room().players.pilot).toMatchObject({ name: 'Ana' });
     expect(room().game.crew.ready).toEqual({ pilot: false, copilot: false });
     expect(room().game.log).toEqual([]);
+  });
+});
+
+describe('a rematch after a game needs both players', () => {
+  const lost = (game: GameState): GameState => ({ ...game, phase: 'lost', endReason: 'spin' });
+
+  it('tells the partner about the offer, and only the one who offered can take it back', async () => {
+    const { clients, room } = await seatedRoom();
+    await bothReady(clients);
+    room().game = lost(room().game);
+    const offers: unknown[] = [];
+    clients.pilot.on('room:rematch-offer', (offer) => offers.push(offer));
+
+    expectOk(await rematch(clients.copilot, { scenario: 'lhr-green' }));
+    await waitFor(() => offers.length > 0, 'the offer reaches the partner');
+    expect(offers.at(-1)).toMatchObject({ by: 'copilot', config: { scenario: 'lhr-green' } });
+    expect(room().game.phase).toBe('lost');
+
+    // The partner cannot clear it; the one who offered can.
+    expectOk(await declineRematch(clients.pilot));
+    expect(room().rematchOffer?.by).toBe('copilot');
+    expectOk(await declineRematch(clients.copilot));
+    expect(room().rematchOffer).toBeUndefined();
+    await waitFor(() => (offers.at(-1) as { by: unknown }).by === null, 'the offer is cleared');
+    expect(room().game.phase).toBe('lost');
+  });
+
+  it('starts at once when nobody else is in the room, and drops an offer when a player leaves', async () => {
+    const { clients, room } = await seatedRoom();
+    await bothReady(clients);
+    room().game = lost(room().game);
+    expectOk(await rematch(clients.pilot));
+    expect(room().rematchOffer?.by).toBe('pilot');
+    // The partner leaves: the room restarts for a new partner, the offer is gone.
+    expectOk(await clients.copilot.emitWithAck('room:leave', {}));
+    expect(room().rematchOffer).toBeUndefined();
+    expect(room().game.phase).toBe('setup');
+    // Alone in the room, after another game: "Fly again" needs nobody's agreement.
+    room().game = lost(room().game);
+    const view = nextView(clients.pilot);
+    expectOk(await rematch(clients.pilot));
+    expect(await view).toMatchObject({ phase: 'setup' });
   });
 });
 
@@ -405,6 +465,7 @@ describe('robustness', () => {
     const room = server.rooms.get(code)!;
     room.game = { ...room.game, phase: 'lost', endReason: 'spin' };
     expectOk(await rematch(pilot));
+    expectOk(await rematch(copilot));
     const fresh = room.game;
     // Round 1 has not started: even the traffic die waits for both players to confirm.
     expect(fresh).toMatchObject({ phase: 'setup', log: [] });
@@ -526,6 +587,7 @@ describe('round timer', () => {
       }),
     ).toEqual({ ok: false, error: 'game-over' });
     expectOk(await rematch(clients.pilot));
+    expectOk(await rematch(clients.copilot));
     expect(room().game).toMatchObject({ timerMs: 300, deadline: null, phase: 'setup' });
   });
 
@@ -783,13 +845,20 @@ describe('scenarios and special abilities', () => {
       error: 'game-not-over',
     });
     room().game = { ...room().game, phase: 'lost', endReason: 'kerosene' };
+    // The partner agrees, and the offered scenario is the one that is played.
     expectOk(await rematch(clients.copilot, { scenario: oneAbility().id }));
+    const accepted = Promise.all([viewInSetup(clients.pilot), viewInSetup(clients.copilot)]);
+    expectOk(await rematch(clients.pilot));
+    await accepted;
     expect(room().game.scenario.id).toBe(oneAbility().id);
     // Abilities are picked again in the new game (nobody had picked a card yet).
     expect(room().game.abilities).toEqual([]);
     // No setup: the same scenario again.
     room().game = { ...room().game, phase: 'lost', endReason: 'spin' };
     expectOk(await rematch(clients.copilot));
+    const again = Promise.all([viewInSetup(clients.pilot), viewInSetup(clients.copilot)]);
+    expectOk(await rematch(clients.pilot));
+    await again;
     expect(room().game.scenario.id).toBe(oneAbility().id);
     expect(room().game.phase).toBe('setup');
   });

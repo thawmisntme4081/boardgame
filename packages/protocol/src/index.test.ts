@@ -6,6 +6,7 @@ import {
   joinRoomSchema,
   moveSchema,
   rejoinRoomSchema,
+  rematchDeclineSchema,
   rematchSchema,
 } from './index';
 
@@ -63,6 +64,8 @@ describe('payload schemas', () => {
   it('names the match a rematch answers, and a seat to choose', () => {
     expect(rematchSchema.safeParse({ matchId: 'ABCD-1' }).success).toBe(true);
     expect(rematchSchema.safeParse({}).success).toBe(false);
+    expect(rematchDeclineSchema.safeParse({ matchId: 'ABCD-1' }).success).toBe(true);
+    expect(rematchDeclineSchema.safeParse({}).success).toBe(false);
     expect(chooseSeatSchema.safeParse({ seat: 'copilot' }).success).toBe(true);
     expect(chooseSeatSchema.safeParse({ seat: '' }).success).toBe(false);
   });

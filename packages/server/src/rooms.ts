@@ -75,6 +75,8 @@ export interface Room {
   /** The setup of the current match; a rematch starts from it. */
   config: GameConfig;
   match: Match;
+  /** After a game: a rematch one player offered and the other has not answered (not saved). */
+  rematchOffer?: { by: SeatId; config: GameConfig };
   game: GameState;
   /** Counted against the per-IP room limit while the room exists. */
   creatorIp: string;
@@ -533,6 +535,7 @@ export class RoomManager {
     const seats = this.seats(room).filter((seat) => room.players[seat]);
     const host = seats.find((seat) => room.players[seat]!.creator) ?? seats[0]!;
     const seed = this.newSeed();
+    delete room.rematchOffer;
     room.config = config;
     room.game = definition.setup({ config, seats, host, seed, previous: room.game });
     const number = room.match.number + 1;
@@ -549,11 +552,14 @@ export class RoomManager {
 
   /**
    * A player's "play again" while looking at match `seenMatch`, with optional changes to the
-   * setup. Before play begins it only changes the setup (or nothing, if it is the same); after
-   * that, the match must be over. A second request for a match the partner already replaced
-   * changes nothing, unless it asks for another setup and the new match has not started.
+   * setup. Before play begins it only changes the setup (or nothing, if it is the same). After
+   * a game it needs both players: the first request is an offer (the room's `rematchOffer`),
+   * the partner's own request accepts it and the new match starts from the offer's setup; a
+   * player alone in the room starts at once. A second request for a match the partner
+   * already replaced changes nothing, unless it asks for another setup and the new match has
+   * not started.
    */
-  requestRematch(room: Room, seenMatch: string, request?: unknown): Result<void> {
+  requestRematch(room: Room, seenMatch: string, seat: SeatId, request?: unknown): Result<void> {
     const entry = this.entry(room);
     const config = request === undefined ? room.config : configFor(entry, request, room.config);
     if (!config) return err('bad-request');
@@ -562,8 +568,18 @@ export class RoomManager {
     const same = JSON.stringify(config) === JSON.stringify(room.config);
     if (seenMatch === room.match.id) {
       if (started && definition.outcome(room.game) === null) return err('game-not-over');
-      if (!started && same) return ok(undefined);
-      this.rematch(room, config);
+      if (!started) {
+        if (!same) this.rematch(room, config);
+        return ok(undefined);
+      }
+      const offer = room.rematchOffer;
+      if (offer && offer.by !== seat) {
+        this.rematch(room, offer.config);
+      } else if (this.players(room).every((p) => p.seat === seat)) {
+        this.rematch(room, config);
+      } else {
+        room.rematchOffer = { by: seat, config };
+      }
       return ok(undefined);
     }
     if (seenMatch === room.match.previousId) {
@@ -571,6 +587,21 @@ export class RoomManager {
       return ok(undefined);
     }
     return err('stale-match');
+  }
+
+  /** The player who offered a rematch takes the offer back. */
+  declineRematch(room: Room, seenMatch: string, seat: SeatId): Result<void> {
+    if (seenMatch === room.match.id && room.rematchOffer?.by === seat) delete room.rematchOffer;
+    return ok(undefined);
+  }
+
+  /** What the room shows about a rematch offer, for the clients. */
+  rematchOfferOf(room: Room): { matchId: string; by: SeatId | null; config: unknown } {
+    return {
+      matchId: room.match.id,
+      by: room.rematchOffer?.by ?? null,
+      config: room.rematchOffer?.config ?? null,
+    };
   }
 
   /**

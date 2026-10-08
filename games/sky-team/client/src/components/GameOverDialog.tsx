@@ -1,8 +1,18 @@
-import type { PlayerView } from '@sky/rules';
-import { CircleCheck, CircleX, OctagonAlert, PlaneLanding } from 'lucide-react';
-import { useState } from 'react';
+import type { RematchState } from '@platform/ui/game';
+import { SCENARIOS, type PlayerView, type Presence } from '@sky/rules';
+import {
+  CircleCheck,
+  CircleX,
+  Hourglass,
+  OctagonAlert,
+  PlaneLanding,
+  PlaneTakeoff,
+  type LucideIcon,
+} from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { leaveGame, rematch } from '../api';
+import { declineRematch, leaveGame, rematch as rematch_ } from '../api';
+import { partnerOf } from '../partner';
 import { FlightLog } from './FlightLog';
 import { DifficultyDot, ScenarioPicker } from './ScenarioPicker';
 import { Button } from '@platform/ui/components/button';
@@ -19,21 +29,81 @@ import { formatNumber } from '../i18n';
 import { endReasonText } from '../messages';
 import { difficultyName } from '../scenarioText';
 
-/** "Fly again" on the same scenario, or pick the next one. */
-function RematchForm({ view, won }: { view: PlayerView; won: boolean }) {
+/** A yellow note, shaped like the list of crash reasons: where a rematch offer stands. */
+function OfferNote({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <p
+      role="status"
+      className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm"
+    >
+      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-600" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+/**
+ * "Fly again" needs both players: the first to press it makes an offer (their scenario), the
+ * other accepts with their own "Fly again" or says "Not now". Offers and answers come from
+ * the server (`rematch`); nothing restarts until both agree.
+ */
+function RematchForm({
+  view,
+  won,
+  presence,
+  rematch,
+}: {
+  view: PlayerView;
+  won: boolean;
+  presence: Presence | null;
+  rematch: RematchState;
+}) {
   const { t } = useTranslation('sky-team');
   const [setup, setSetup] = useState({ scenario: view.scenario.id });
+  const partner = partnerOf(view, presence);
+  const flyClass = cn('h-11', won && 'bg-emerald-600 text-white hover:bg-emerald-700');
+  const leave = (
+    <Button variant="outline" className="h-11" onClick={() => void leaveGame()}>
+      {t('gameOver.leave')}
+    </Button>
+  );
+
+  if (rematch.by === view.seat) {
+    return (
+      <>
+        <OfferNote icon={Hourglass}>{t('gameOver.offerWaiting', { name: partner.name })}</OfferNote>
+        <DialogFooter className="gap-2">
+          {leave}
+          <Button variant="outline" className="h-11" onClick={() => void declineRematch()}>
+            {t('gameOver.cancelOffer')}
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
+  if (rematch.by !== null) {
+    const offered = SCENARIOS[(rematch.config as { scenario?: string } | null)?.scenario ?? ''];
+    return (
+      <>
+        <OfferNote icon={PlaneTakeoff}>
+          {t('gameOver.offered', { name: partner.name })}
+          {offered && ` ${offered.name}`}
+        </OfferNote>
+        <DialogFooter className="gap-2">
+          {leave}
+          <Button className={flyClass} onClick={() => void rematch_()}>
+            {t('gameOver.flyAgain')}
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
   return (
     <>
       <ScenarioPicker id="rematch" value={setup} onChange={setSetup} />
       <DialogFooter className="gap-2">
-        <Button variant="outline" className="h-11" onClick={() => void leaveGame()}>
-          {t('gameOver.leave')}
-        </Button>
-        <Button
-          className={cn('h-11', won && 'bg-emerald-600 text-white hover:bg-emerald-700')}
-          onClick={() => void rematch(setup)}
-        >
+        {leave}
+        <Button className={flyClass} onClick={() => void rematch_(setup)}>
           {t('gameOver.flyAgain')}
         </Button>
       </DialogFooter>
@@ -45,7 +115,15 @@ function RematchForm({ view, won }: { view: PlayerView; won: boolean }) {
  * The end of the game. A win and a loss look different at a glance: a green band with a
  * landing plane, or a red band with an alert, and a matching border.
  */
-export function GameOverDialog({ view }: { view: PlayerView }) {
+export function GameOverDialog({
+  view,
+  presence,
+  rematch,
+}: {
+  view: PlayerView;
+  presence: Presence | null;
+  rematch: RematchState;
+}) {
   const { t } = useTranslation('sky-team');
   const over = view.phase === 'won' || view.phase === 'lost';
   const won = view.phase === 'won';
@@ -104,7 +182,7 @@ export function GameOverDialog({ view }: { view: PlayerView }) {
               ))}
             </ul>
           )}
-          <RematchForm view={view} won={won} />
+          <RematchForm view={view} won={won} presence={presence} rematch={rematch} />
           <FlightLog className="self-center" />
         </div>
       </DialogContent>
