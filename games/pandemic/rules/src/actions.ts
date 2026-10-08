@@ -46,7 +46,9 @@ export type ActionReason =
   | 'bad-partner'
   | 'not-together'
   | 'no-offer'
-  | 'not-your-answer';
+  | 'not-your-answer'
+  // Turn steps (see turn.ts)
+  | 'nothing-to-discard';
 
 export type ActionCheck = { ok: true } | { ok: false; reason: ActionReason };
 

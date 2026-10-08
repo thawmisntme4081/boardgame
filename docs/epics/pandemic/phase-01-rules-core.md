@@ -34,10 +34,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Draw and infect**
 
-- [ ] 10. **M** Turn steps `actions` → `draw` → `infect`, one move per card as at the table: `draw` (both cards), then each epidemic step and each infection card flipped by its own move of the active player; drawing 2 cards; the hand limit as a pending `discard` that blocks play until done, even for a player outside their turn.
-- [ ] 11. **M** `infectCity` with outbreaks and chains (a city outbreaks once per chain; chain reactions first in, first out, neighbors in the city list's order; eradicated colors place nothing); tests on hand-made chains, a loop of three cities included.
-- [ ] 12. **M** Epidemic: increase the rate, infect the bottom card with 3 cubes, pause, intensify; two epidemics in one draw, with a pause between them; the infect step with the infection rate (2, 2, 2, 3, 3, 4, 4).
-- [ ] 13. **L** `outcome(state)`: won, or lost with a reason code (`outbreaks`, `cubes`, `player-deck`); one scripted game per ending.
+- [x] 10. **M** Turn steps `actions` → `draw` → `infect`, one move per card as at the table: `draw` (both cards), then each epidemic step and each infection card flipped by its own move of the active player; drawing 2 cards; the hand limit as a pending `discard` that blocks play until done, even for a player outside their turn.
+- [x] 11. **M** `infectCity` with outbreaks and chains (a city outbreaks once per chain; chain reactions first in, first out, neighbors in the city list's order; eradicated colors place nothing); tests on hand-made chains, a loop of three cities included.
+- [x] 12. **M** Epidemic: increase the rate, infect the bottom card with 3 cubes, pause, intensify; two epidemics in one draw, with a pause between them; the infect step with the infection rate (2, 2, 2, 3, 3, 4, 4).
+- [x] 13. **L** `outcome(state)`: won, or lost with a reason code (`outbreaks`, `cubes`, `player-deck`); one scripted game per ending.
 
 **Engine adapter**
 
