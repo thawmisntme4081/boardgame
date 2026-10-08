@@ -400,7 +400,7 @@
   "weather": {
     "turbulence": "Turbulences",
     "badVisibility": "Manque de visibilité",
-    "turbulenceRule": "Turbulences : chaque dé que vous posez relance vos autres dés.",
+    "turbulenceRule": "Turbulences: posez 1 dé, puis relancez vos autres.",
     "badVisibilityRule": "Manque de visibilité : vous avez 2 dés en main ; chacune de vos poses suivantes fait revenir un dé mis de côté.",
     "stormRule": "Tempête : vous avez 2 dés en main ; chaque pose fait revenir un dé mis de côté et relance votre main.",
     "setAside_one": "{{count}} dé mis de côté",

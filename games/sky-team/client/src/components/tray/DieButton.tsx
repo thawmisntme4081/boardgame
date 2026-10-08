@@ -40,7 +40,7 @@ export function DieButton({
       className={cn('rounded-xl p-0.5 transition', className)}
     >
       {/* Rolls (random faces) when it appears: a roll, or a reroll (the tray keys dice by value). */}
-      <DieFace value={face} seat={seat} kind={kind} className="size-11" />
+      <DieFace value={face} seat={seat} kind={kind} className="size-10" />
     </button>
   );
 }

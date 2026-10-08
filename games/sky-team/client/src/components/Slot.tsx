@@ -95,10 +95,10 @@ function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
       onClick={() => void placeSelected(slot)}
       className={cn(
         SLOT_SIZE,
-        'relative grid shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold transition',
+        'relative grid shrink-0 place-items-center rounded-xl border-2 text-xs font-semibold',
         both ? 'slot-shared' : SEAT_STYLE[seat].slot,
         selectedDieId && !valid && !placed && !chosen && 'opacity-40',
-        valid && 'animate-pulse ring-4 ring-light-on ring-offset-1',
+        valid && 'ring-4 ring-light-on ring-offset-1',
         chosen && 'ring-4 ring-foreground ring-offset-1',
       )}
     >

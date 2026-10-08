@@ -133,7 +133,7 @@ function PlacingActions({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   const selected = internSlot ? undefined : view.myDice.find((d) => d.id === selectedDieId);
   return (
-    <div className="flex min-w-0 flex-col items-end gap-2 tablet:items-start desktop:items-end">
+    <div className="flex min-w-0 flex-col items-end gap-2 text-end">
       {selected && <CoffeeControl view={view} value={selected.value} />}
       {selected && <AbilityActions view={view} dieId={selected.id} value={selected.value} />}
       {canCancelSwapInView(view).ok && (
@@ -167,17 +167,17 @@ export function PlacingTray({ view, presence }: { view: PlayerView; presence: Pr
   const internSlot = useSkyTeam((s) => s.internSlot);
   const myTurn = view.currentSeat === view.seat;
   return (
-    // Two columns (one in the narrow tablet side column): status and dice on the left;
-    // coffee, reroll, ability buttons and the abilities list on the right.
-    <div className="grid grid-cols-[minmax(13.5rem,1fr)_minmax(0,auto)] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="flex min-w-0 flex-col gap-2">
-        <p
-          className={cn('text-sm font-medium', myTurn && SEAT_STYLE[view.seat].text)}
-          role="status"
-        >
-          {placingText(view, partnerOf(view, presence).name, internSlot !== null)}
-        </p>
-        <WeatherNote view={view} />
+    <div className="grid grid-cols-[minmax(13.5rem,1fr)_minmax(0,auto)] items-start gap-x-3 gap-y-2 tablet:grid-cols-1 desktop:flex desktop:justify-between">
+      <div className="contents desktop:flex desktop:min-w-0 desktop:flex-col desktop:gap-2">
+        <div className="col-span-2 flex min-w-0 flex-col gap-2 tablet:col-span-1">
+          <p
+            className={cn('text-sm font-medium', myTurn && SEAT_STYLE[view.seat].text)}
+            role="status"
+          >
+            {placingText(view, partnerOf(view, presence).name, internSlot !== null)}
+          </p>
+          <WeatherNote view={view} />
+        </div>
         <PlacingDice view={view} />
       </div>
       <PlacingActions view={view} />

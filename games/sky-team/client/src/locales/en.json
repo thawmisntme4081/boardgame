@@ -400,7 +400,7 @@
   "weather": {
     "turbulence": "Turbulence",
     "badVisibility": "Bad visibility",
-    "turbulenceRule": "Turbulence: each die you place rerolls your other dice.",
+    "turbulenceRule": "Turbulence: you place 1 die, reroll your other dice.",
     "badVisibilityRule": "Bad visibility: you hold 2 dice; each of your next placements brings in a set-aside die.",
     "stormRule": "Storm: you hold 2 dice; each placement brings in a set-aside die and rerolls your hand.",
     "setAside_one": "{{count}} die set aside",

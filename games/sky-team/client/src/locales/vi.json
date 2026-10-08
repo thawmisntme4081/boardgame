@@ -392,7 +392,7 @@
   "weather": {
     "turbulence": "Nhiễu động",
     "badVisibility": "Tầm nhìn kém",
-    "turbulenceRule": "Nhiễu động: mỗi xúc xắc bạn đặt sẽ đổ lại các xúc xắc còn lại của bạn.",
+    "turbulenceRule": "Nhiễu động: đặt 1 xúc xắc, rồi đổ lại các xúc xắc còn lại.",
     "badVisibilityRule": "Tầm nhìn kém: bạn cầm 2 xúc xắc; mỗi lần đặt tiếp theo sẽ lấy thêm một xúc xắc để riêng.",
     "stormRule": "Bão: bạn cầm 2 xúc xắc; mỗi lần đặt lấy thêm một xúc xắc để riêng và đổ lại cả tay.",
     "setAside_other": "{{count}} xúc xắc để riêng",
