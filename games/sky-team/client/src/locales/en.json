@@ -28,6 +28,7 @@
   },
   "status": {
     "round": "Round {{round}}/{{rounds}} · {{altitude}} ft",
+    "difficulty": "Level {{level}}",
     "final": "Final",
     "youAre": "You are the <seat>{{seat}}</seat>",
     "partnerOnline": "{{name}} online",
@@ -253,7 +254,7 @@
   "tracks": {
     "altitude": "Altitude ({{altitude}} ft)",
     "altitudeLabel": "Altitude {{altitude}} feet, round {{round}} of {{rounds}}",
-    "approach": "Approach · {{name}}",
+    "approach": "Approach",
     "approachLabel": "Approach: {{spaces}} spaces to the airport. Planes per space from here: {{planes}}",
     "currentSpace": ". Current space: {{text}}",
     "hereTraffic": "traffic die {{count}}× each round here",

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { t } from '../i18n';
 import { trackWidth } from '../lib/trackRow';
 import { cn } from '@platform/ui/utils';
-import { DIFFICULTY_DOT } from '../scenarioText';
+import { DIFFICULTY_BADGE } from '../scenarioText';
 import { Plane } from './Plane';
 
 const CELL = 40;
@@ -111,14 +111,16 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
   return (
     <figure className="min-w-0">
       <figcaption className="mb-1 flex items-center gap-1.5 truncate text-xs font-medium text-muted-foreground">
+        {t('tracks.approach')}
+        <span aria-hidden="true">·</span>
         <span
-          aria-hidden="true"
           className={cn(
-            'inline-block size-2 shrink-0 rounded-full',
-            DIFFICULTY_DOT[scenario.difficulty],
+            'truncate rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset',
+            DIFFICULTY_BADGE[scenario.difficulty],
           )}
-        />
-        {t('tracks.approach', { name: scenario.name })}
+        >
+          {scenario.name}
+        </span>
       </figcaption>
       <svg
         viewBox={`0 0 ${planes.length * CELL} ${height}`}

@@ -194,6 +194,11 @@ describe('GameOverDialog', () => {
 });
 
 describe('ApproachTrack', () => {
+  it('shows the scenario in a colour-coded badge instead of a difficulty dot', () => {
+    render(<ApproachTrack view={makeView('pilot')} />);
+    expect(screen.getByText('YUL Montréal-Trudeau')).toHaveClass('bg-emerald-100');
+  });
+
   it('describes the planes ahead for screen readers', () => {
     render(<ApproachTrack view={makeView('pilot', { patch: { approachIndex: 2 } })} />);
     expect(
@@ -606,6 +611,22 @@ describe('approach effects', () => {
 });
 
 describe('StatusBar', () => {
+  it('keeps the colour-coded difficulty and level visible while flying', () => {
+    render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
+    expect(screen.getByText('Level 1')).toHaveClass('bg-emerald-100');
+  });
+
+  it('uses white text for the black difficulty level', () => {
+    render(
+      <StatusBar
+        view={makeView('pilot', { scenario: { difficulty: 'black' } })}
+        presence={presence()}
+        connection="online"
+      />,
+    );
+    expect(screen.getByText('Level 4')).toHaveClass('text-white');
+  });
+
   it('says "Strategy time" before the roll, without a roll button of its own', () => {
     render(
       <StatusBar

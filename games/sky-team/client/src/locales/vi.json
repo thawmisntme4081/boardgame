@@ -26,6 +26,7 @@
   },
   "status": {
     "round": "Vòng {{round}}/{{rounds}} · {{altitude}} ft",
+    "difficulty": "Cấp {{level}}",
     "final": "Cuối",
     "youAre": "Bạn là <seat>{{seat}}</seat>",
     "partnerOnline": "{{name}} đang online",
@@ -248,7 +249,7 @@
   "tracks": {
     "altitude": "Độ cao ({{altitude}} ft)",
     "altitudeLabel": "Độ cao {{altitude}} ft, vòng {{round}} trên {{rounds}}",
-    "approach": "Đường tiếp cận · {{name}}",
+    "approach": "Đường tiếp cận",
     "approachLabel": "Đường tiếp cận: còn {{spaces}} ô đến sân bay. Số máy bay mỗi ô từ đây: {{planes}}",
     "currentSpace": ". Ô hiện tại: {{text}}",
     "hereTraffic": "xúc xắc giao thông {{count}}× mỗi vòng ở đây",

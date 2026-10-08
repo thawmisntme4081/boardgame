@@ -28,6 +28,7 @@
   },
   "status": {
     "round": "Manche {{round}}/{{rounds}} · {{altitude}} ft",
+    "difficulty": "Niveau {{level}}",
     "final": "Finale",
     "youAre": "Votre poste : <seat>{{seat}}</seat>",
     "partnerOnline": "{{name}} en ligne",
@@ -253,7 +254,7 @@
   "tracks": {
     "altitude": "Altitude ({{altitude}} ft)",
     "altitudeLabel": "Altitude {{altitude}} pieds, manche {{round}} sur {{rounds}}",
-    "approach": "Approche · {{name}}",
+    "approach": "Approche",
     "approachLabel": "Approche : {{spaces}} cases jusqu’à l’aéroport. Avions par case à partir d’ici : {{planes}}",
     "currentSpace": ". Case actuelle : {{text}}",
     "hereTraffic": "dé Trafic {{count}}× par manche ici",

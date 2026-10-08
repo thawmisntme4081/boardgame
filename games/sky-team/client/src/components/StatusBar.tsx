@@ -16,6 +16,7 @@ import {
 import { formatNumber } from '../i18n';
 import { SEAT_STYLE } from '../lib/seatStyle';
 import { useNextTurnLeft } from '../lib/useNextTurn';
+import { DIFFICULTY_BADGE, difficultyLevel } from '../scenarioText';
 import { cn } from '@platform/ui/utils';
 import { seatName } from '../messages';
 import { partnerOf } from '../partner';
@@ -113,18 +114,30 @@ export function StatusBar({
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 items-start gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-semibold tabular-nums">
-              {t('status.round', {
-                round: view.round,
-                rounds: view.scenario.altitudes.length,
-                altitude: formatNumber(view.altitude),
-              })}
-              {view.finalRound && (
-                <span className="ml-2 rounded bg-danger px-1.5 py-0.5 text-xs text-white">
-                  {t('status.final')}
-                </span>
-              )}
-            </p>
+            <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold tabular-nums">
+              <span
+                className={cn(
+                  'rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset',
+                  DIFFICULTY_BADGE[view.scenario.difficulty],
+                )}
+              >
+                {t('status.difficulty', {
+                  level: difficultyLevel(view.scenario.difficulty),
+                })}
+              </span>
+              <p>
+                {t('status.round', {
+                  round: view.round,
+                  rounds: view.scenario.altitudes.length,
+                  altitude: formatNumber(view.altitude),
+                })}
+                {view.finalRound && (
+                  <span className="ml-2 rounded bg-danger px-1.5 py-0.5 text-xs text-white">
+                    {t('status.final')}
+                  </span>
+                )}
+              </p>
+            </div>
             <p className="flex flex-col text-xs text-muted-foreground tablet:flex-row tablet:gap-1">
               <span className="truncate">
                 <Trans

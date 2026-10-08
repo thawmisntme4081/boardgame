@@ -1,6 +1,12 @@
 // Names and one-line rules for the Flight Log modules and Special Ability cards (texts in
 // locales/*.json).
-import type { AbilityId, Difficulty, ModuleId, Scenario } from '@sky/rules';
+import {
+  DIFFICULTIES,
+  type AbilityId,
+  type Difficulty,
+  type ModuleId,
+  type Scenario,
+} from '@sky/rules';
 import { formatNumber, t } from './i18n';
 
 export const moduleText = (id: ModuleId): { name: string; rule: string } => ({
@@ -34,10 +40,22 @@ export function weatherText(scenario: Scenario): { id: string; name: string; rul
 
 export const difficultyName = (difficulty: Difficulty): string => t(`difficulty.${difficulty}`);
 
+/** Difficulty's one-based position in the Flight Log, for the in-game status badge. */
+export const difficultyLevel = (difficulty: Difficulty): number =>
+  DIFFICULTIES.indexOf(difficulty) + 1;
+
 /** The scenario color dot. */
 export const DIFFICULTY_DOT: Record<Difficulty, string> = {
   green: 'bg-emerald-500',
   yellow: 'bg-amber-400',
   red: 'bg-red-600',
   black: 'bg-neutral-900 ring-1 ring-neutral-400',
+};
+
+/** Compact coloured difficulty badge shown while flying. */
+export const DIFFICULTY_BADGE: Record<Difficulty, string> = {
+  green: 'bg-emerald-100 text-emerald-800 ring-emerald-600/30',
+  yellow: 'bg-amber-100 text-amber-900 ring-amber-500/30',
+  red: 'bg-red-100 text-red-800 ring-red-600/30',
+  black: 'bg-neutral-900 text-white ring-neutral-900',
 };
