@@ -16,6 +16,7 @@
     "noEmit": true,
     "paths": {
       "@sky/rules": ["./games/sky-team/rules/src/index.ts"],
+      "@pandemic/rules": ["./games/pandemic/rules/src/index.ts"],
       "@sky/client": ["./games/sky-team/client/src/index.ts"],
       "@sky/client/*": ["./games/sky-team/client/src/*"],
       "@platform/engine": ["./packages/engine/src/index.ts"],

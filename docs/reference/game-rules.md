@@ -1,6 +1,6 @@
 # Game state and rules
 
-[← Master plan](../PLAN.md)
+[← Master plan](../PLAN.md) · Pandemic's rules: [pandemic-rules.md](pandemic-rules.md)
 
 The whole game is one serialisable `GameState` object plus pure functions that return a new state; no rule lives in React or in socket handlers.
 

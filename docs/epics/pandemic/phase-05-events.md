@@ -19,7 +19,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 **Rules**
 
 - [ ] 1. **M** `play-event` from any seat holding the card; `canPlayEvent(state, seat)` for the allowed moments; how optional out-of-turn moves fit `actors` (allowed by `validate`, no one has to make them) written in the proposal, and the contract changed if needed.
-- [ ] 2. **M** Airlift, Government Grant and One Quiet Night.
+- [ ] 2. **M** Airlift, Government Grant and One Quiet Night; Airlift on someone else's pawn is an offer its owner accepts or declines (the player can cancel), like Share Knowledge.
 - [ ] 3. **M** Resilient Population, including the epidemic's pause.
 - [ ] 4. **M** Forecast as two steps: the 6 cards appear only in that player's view, then the new order; nothing else may happen in between.
 - [ ] 5. **L** Events and the hand limit; the Contingency Planner playing the stored event (then out of the game).

@@ -103,6 +103,10 @@ boardgame/
 │ └── screens/ # Picker, Play (a game's lobby), Room (+ waiting room),
 │ # SitePassword, Shell (card, name, join form, connecting)
 ├── games/
+│ ├── pandemic/
+│ │ └── rules/ # @pandemic/rules: the rules (cities, createGame, actions,
+│ │ # share, turn steps, outbreaks), definition.ts
+│ │ # (@pandemic/rules/definition), random-play; no client yet
 │ └── sky-team/
 │ ├── rules/ # @sky/rules: the rules (createGame, placeDie, modules,
 │ │ └── src/ # scenarios…), definition.ts (@sky/rules/definition),
@@ -131,6 +135,8 @@ boardgame/
 Moves are checked and applied with a context `{ by, at }`: the platform stamps the time, so timers stay pure and replays exact. The platform tells a game about its table with two engine-defined system moves, `table:join` and `table:choose-seat` (the game says whether a seat change is still allowed; the platform then moves the players). `setup` gets the seats taken, the `host` and the `previous` game at the table, so a rematch or a restart can carry choices over. `runDue` makes the scheduled moves that are due, each at its own time.
 
 Sky Team implements it in `games/sky-team/rules/src/definition.ts` (`skyTeam`, exported as `@sky/rules/definition` only, so the client bundle does not include it). Seat moves: `pick-ability`, `confirm`, `ready`, `place`, `spend-reroll`, `reroll`, `ability`, `cancel-swap`; the crew rules are in `crew.ts`, their state in `GameState.crew`. System moves: `roll` (Total Trust, at `autoRollAt`) and `time-up` (at the round's deadline), both from `schedule`; the second `ready` rolls the dice itself.
+
+Pandemic implements it in `games/pandemic/rules/src/definition.ts` (`pandemic`, exported as `@pandemic/rules/definition` only): 2–4 seats `p1`–`p4`, no system moves, no schedule; details in [pandemic-rules.md](pandemic-rules.md). It is not registered on the server yet (Pandemic 02).
 
 **Rooms (Platform 02):** `rooms.ts` knows only the engine and the registry (`games.ts`). A room holds the players (seat, name, token, socket, creator), the `config` it was set up with, the game state and one timer. `move(room, by, move)` validates and applies at the current time; `arm(room)` sets the timer for the earliest scheduled move, and when it fires `runDue` makes the due moves and `onScheduled` broadcasts. `broadcastRoom` saves and re-arms after every accepted change; on start every loaded room is armed (a deadline that passed while the server was down fires at once).
 

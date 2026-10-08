@@ -22,11 +22,11 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 1. **M** `WorldMap` SVG: cities, links, labels; a test that every city of `cities.ts` is drawn.
 - [ ] 2. **M** Cubes, research stations and pawns on the map, from fixed views (React Testing Library).
 - [ ] 3. **L** Tracks panel, deck counts, both discard piles.
-- [ ] 4. **M** Layouts: phone (tracks strip, map with pan and zoom, hand tray fixed at the bottom), tablet (two columns), desktop (one centred container, max 72rem).
+- [ ] 4. **M** Layouts: phone (tracks strip, map with pan and zoom, hand tray fixed at the bottom), tablet (two columns), desktop (one centered container, max 72rem).
 
 **Playing**
 
-- [ ] 5. **L** Hands tray: your hand and the others' (collapsed on phones), cards by colour.
+- [ ] 5. **L** Hands tray: your hand and the others' (collapsed on phones), cards by color.
 - [ ] 6. **M** Moving: tap a city, see the legal ways to get there (drive, direct, charter, shuttle), confirm.
 - [ ] 7. **M** Treat, Build, Cure (choosing the 5 cards) and Pass, with the actions-left counter.
 - [ ] 8. **M** Prompts: the share offer and its answer, the hand-limit discard, also for a player outside their turn.
