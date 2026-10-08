@@ -12,16 +12,10 @@ import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@platform/ui/components/popover';
 import { Link } from '@tanstack/react-router';
-import { History, LogIn, LogOut, Trash2, UserRound } from 'lucide-react';
+import { History, LogIn, LogOut, Pencil, Trash2, UserRound } from 'lucide-react';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  setAccountName,
-  signInWithGoogle,
-  deleteAccount,
-  signOut,
-  type SignInMethods,
-} from '../account';
+import { setAccountName, signInWithGoogle, deleteAccount, signOut } from '../account';
 import { NAME_MAX } from '../session';
 import { usePlatform } from '../store';
 
@@ -77,12 +71,7 @@ function SignInDialog({
           <DialogTitle>{t('account.signInTitle')}</DialogTitle>
           <DialogDescription>{t('account.signInIntro')}</DialogDescription>
         </DialogHeader>
-        <Button
-          variant="outline"
-          className="h-11"
-          disabled={busy}
-          onClick={() => void google()}
-        >
+        <Button variant="outline" className="h-11" disabled={busy} onClick={() => void google()}>
           <GoogleMark /> {t('account.google')}
         </Button>
       </DialogContent>
@@ -91,9 +80,9 @@ function SignInDialog({
 }
 
 /** If Google provided no name: choose one once. It cannot be dismissed (only signed out). */
-function NameDialog() {
+function NameDialog({ current = '', onClose }: { current?: string; onClose?: () => void }) {
   const { t } = useTranslation();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(current);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -104,18 +93,21 @@ function NameDialog() {
     const ok = await setAccountName(name.trim());
     setBusy(false);
     setFailed(!ok);
+    if (ok) onClose?.();
   };
 
+  // Asked once after a sign-in without a name: it cannot be dismissed. Changing it can.
+  const required = !onClose;
   return (
-    <Dialog open>
+    <Dialog open onOpenChange={(open) => !open && onClose?.()}>
       <DialogContent
-        showCloseButton={false}
+        showCloseButton={!required}
         className="sm:max-w-sm"
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => required && e.preventDefault()}
+        onInteractOutside={(e) => required && e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t('account.nameTitle')}</DialogTitle>
+          <DialogTitle>{t(required ? 'account.nameTitle' : 'account.changeNameTitle')}</DialogTitle>
           <DialogDescription>{t('account.nameIntro')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => void save(e)} className="flex flex-col gap-2">
@@ -197,6 +189,7 @@ export function AccountButton() {
   const { t } = useTranslation();
   const account = usePlatform((s) => s.account);
   const [open, setOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   if (account === 'loading' || account === 'off') return null;
 
   const { user } = account;
@@ -212,30 +205,36 @@ export function AccountButton() {
   }
   if (!user.name) return <NameDialog />;
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-11 max-w-36"
-          aria-label={t('account.menu', { name: user.name })}
-        >
-          <UserRound /> <span className="truncate">{user.name}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-64">
-        <p className="text-sm">
-          {t('account.signedInAs')} <span className="font-medium break-all">{user.email}</span>
-        </p>
-        <Button asChild variant="outline" className="h-11">
-          <Link to="/history">
-            <History /> {t('account.history')}
-          </Link>
-        </Button>
-        <Button variant="outline" className="h-11" onClick={() => void signOut()}>
-          <LogOut /> {t('account.signOut')}
-        </Button>
-        <DeleteAccountDialog />
-      </PopoverContent>
-    </Popover>
+    <>
+      {renaming && <NameDialog current={user.name} onClose={() => setRenaming(false)} />}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-11 max-w-36"
+            aria-label={t('account.menu', { name: user.name })}
+          >
+            <UserRound /> <span className="truncate">{user.name}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-64">
+          <p className="text-sm">
+            {t('account.signedInAs')} <span className="font-medium break-all">{user.email}</span>
+          </p>
+          <Button asChild variant="outline" className="h-11">
+            <Link to="/history">
+              <History /> {t('account.history')}
+            </Link>
+          </Button>
+          <Button variant="outline" className="h-11" onClick={() => setRenaming(true)}>
+            <Pencil /> {t('account.changeName')}
+          </Button>
+          <Button variant="outline" className="h-11" onClick={() => void signOut()}>
+            <LogOut /> {t('account.signOut')}
+          </Button>
+          <DeleteAccountDialog />
+        </PopoverContent>
+      </Popover>
+    </>
   );
 }

@@ -36,13 +36,19 @@ export function mockGoogleSignIn() {
       redirect: 'manual',
     });
     const { url: googleUrl } = (await begin.json()) as { url: string };
-    const cookies = begin.headers.getSetCookie().map((cookie) => cookie.split(';')[0]).join('; ');
+    const cookies = begin.headers
+      .getSetCookie()
+      .map((cookie) => cookie.split(';')[0])
+      .join('; ');
     const state = new URL(googleUrl).searchParams.get('state')!;
     pending.push({ sub: `google-${email}`, email, name });
-    const callback = await fetch(
-      `${url}/api/auth/callback/google?code=abc&state=${state}`,
-      { headers: { cookie: cookies }, redirect: 'manual' },
-    );
-    return callback.headers.getSetCookie().map((cookie) => cookie.split(';')[0]).join('; ');
+    const callback = await fetch(`${url}/api/auth/callback/google?code=abc&state=${state}`, {
+      headers: { cookie: cookies },
+      redirect: 'manual',
+    });
+    return callback.headers
+      .getSetCookie()
+      .map((cookie) => cookie.split(';')[0])
+      .join('; ');
   };
 }

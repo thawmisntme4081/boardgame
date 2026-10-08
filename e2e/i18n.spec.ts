@@ -39,7 +39,13 @@ test('each player picks a language: a Vietnamese pilot and an English co-pilot p
   // The pilot places one die from the Vietnamese tray.
   const dice = pilot.getByRole('button', { name: /^Xúc xắc của bạn/ });
   await expect(dice).toHaveCount(4);
-  await dice.first().click();
+  const die = dice.first();
+  // WebKit can occasionally lose the local selection while the just-arrived game view settles.
+  // Do not continue until the visible state confirms that this die is selected.
+  await expect(async () => {
+    if ((await die.getAttribute('aria-pressed')) !== 'true') await die.click();
+    await expect(die).toHaveAttribute('aria-pressed', 'true');
+  }).toPass({ timeout: 10_000 });
   await pilot.locator('button[data-valid]').first().click();
   await expect(dice).toHaveCount(3);
   await expect(copilot.getByText('Your turn').first()).toBeVisible();

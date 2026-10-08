@@ -27,17 +27,19 @@
     "google": "Continue with Google",
     "error": "Something went wrong. Try again.",
     "nameTitle": "Choose your name",
-    "nameIntro": "Other players see it in every game. You cannot change it later.",
+    "nameIntro": "Other players see it in every game. You can change it later from your account menu.",
     "save": "Save",
     "menu": "Account: {{name}}",
     "signedInAs": "Signed in as",
     "signOut": "Sign out",
-    "nameFromAccount": "Your account's name.",
+    "nameFromAccount": "Your account's name. Change it from the account menu.",
     "history": "My history",
     "delete": "Delete account",
     "deleteTitle": "Delete your account?",
     "deleteIntro": "This removes your account, your sign-ins and your whole Flight Log from the server. It cannot be undone. Games in progress keep going, with your seat as a guest.",
-    "deleteConfirm": "Delete for good"
+    "deleteConfirm": "Delete for good",
+    "changeNameTitle": "Change your name",
+    "changeName": "Change name"
   },
   "lobby": {
     "yourName": "Your name",

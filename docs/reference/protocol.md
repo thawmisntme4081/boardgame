@@ -82,7 +82,7 @@ Optional: guests never need them. Better Auth answers under `/api/auth/*`; with 
 | --- | --- |
 | `GET /auth/me` | The signed-in user `{ id, name, email, image }`, or `null` |
 | `GET /auth/methods` | `{ google }`: whether Google sign-in is configured (no accounts at all: `404`) |
-| `POST /auth/name { name }` | Sets the display name once if Google provided none (trimmed, 1–20 characters): `400 bad-name`, `401 signed-out`, `409 name-set` |
+| `POST /auth/name { name }` | Sets or changes the display name (trimmed, cut to 20 characters): the user; `400 bad-name`, `401 signed-out` |
 | `GET /api/flight-log?game=<id>` | The signed-in account's own Flight Log for that game, newest first: the game's records (Sky Team: `GameRecord`); `401 signed-out`. Behind the site password |
 | `POST /api/flight-log/import { game, records }` | Adds the device's own games to the account's log (max 500; invalid ones skipped, a game already there — same game, scenario, seat, end time — not added twice): `{ imported }`; `400 bad-request`, `401 signed-out` |
 | `DELETE /api/account` | Deletes the signed-in account (user, sessions, provider links, Flight Log rows); its seats in the match log and in live rooms become guests': `{ ok }`; `401 signed-out` |
@@ -92,6 +92,6 @@ Optional: guests never need them. Better Auth answers under `/api/auth/*`; with 
 
 Seats and accounts: the socket learns its account from the session cookie at the handshake (the client reconnects after signing in or out). A signed-in player's seat carries their account: `room:join` with the code of a room where the account already sits gives that seat back (one account never holds two seats), a guest seat becomes the account's on the first `room:rejoin` after signing in, and `room:resume` finds it from any device. Guests keep using tokens only.
 
-A display name never changes: Google's name (cut to 20 characters) or the one set once with `/auth/name`; Better Auth's `/update-user`, `/change-email` and password endpoints are off.
+The display name starts as Google's (cut to 20 characters) or is asked once if Google gave none, and the player can change it from the account menu with `/auth/name`; Better Auth's `/update-user`, `/change-email` and password endpoints are off.
 
 The session cookie (`platform.session_token`, `__Secure-` in production) is httpOnly, SameSite=Lax, Secure in production, and lasts 30 days; it is separate from `site_auth`.

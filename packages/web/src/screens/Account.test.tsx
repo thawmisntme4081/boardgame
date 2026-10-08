@@ -66,7 +66,9 @@ describe('signed out', () => {
     await renderAt('/');
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     const dialog = await screen.findByRole('dialog', { name: 'Sign in' });
-    expect(within(dialog).getByRole('button', { name: 'Continue with Google' })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('button', { name: 'Continue with Google' }),
+    ).toBeInTheDocument();
     expect(within(dialog).queryByLabelText('Email')).toBeNull();
   });
 
@@ -90,5 +92,20 @@ describe('signed in', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Your name')).not.toHaveAttribute('readonly'));
+  });
+
+  it('changes the name from the menu; the lobby field follows', async () => {
+    fakeServer({ user: ana });
+    await loadAccount();
+    await renderAt('/');
+    await userEvent.click(screen.getByRole('button', { name: 'Account: Ana' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Change name' }));
+    const field = within(screen.getByRole('dialog')).getByLabelText('Your name');
+    expect(field).toHaveValue('Ana');
+    await userEvent.clear(field);
+    await userEvent.type(field, 'Anh');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByLabelText('Your name')).toHaveValue('Anh');
   });
 });

@@ -27,17 +27,19 @@
     "google": "Continuer avec Google",
     "error": "Une erreur s’est produite. Réessayez.",
     "nameTitle": "Choisissez votre nom",
-    "nameIntro": "Les autres joueurs le voient dans chaque partie. Vous ne pourrez plus le changer.",
+    "nameIntro": "Les autres joueurs le voient dans chaque partie. Vous pourrez le changer plus tard depuis le menu du compte.",
     "save": "Enregistrer",
     "menu": "Compte : {{name}}",
     "signedInAs": "Connecté en tant que",
     "signOut": "Se déconnecter",
-    "nameFromAccount": "Le nom de votre compte.",
+    "nameFromAccount": "Le nom de votre compte. Changez-le depuis le menu du compte.",
     "history": "Mon historique",
     "delete": "Supprimer le compte",
     "deleteTitle": "Supprimer votre compte ?",
     "deleteIntro": "Cela supprime votre compte, vos connexions et tout votre carnet de vol du serveur. C’est irréversible. Les parties en cours continuent, votre place devenant celle d’un invité.",
-    "deleteConfirm": "Supprimer définitivement"
+    "deleteConfirm": "Supprimer définitivement",
+    "changeNameTitle": "Changer votre nom",
+    "changeName": "Changer le nom"
   },
   "lobby": {
     "yourName": "Votre nom",

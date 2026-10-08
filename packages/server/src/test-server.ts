@@ -25,6 +25,14 @@ let lastSeq = 0;
 
 function track(socket: Client): void {
   socket.on('match:view', ({ matchId }) => seenMatch.set(socket, matchId));
+  const orig = socket.emitWithAck.bind(socket);
+  socket.emitWithAck = (async (event: never, ...args: never[]) => {
+    const res = await (orig as (...a: unknown[]) => Promise<unknown>)(event, ...args);
+    if (res && typeof res === 'object' && 'matchId' in res && typeof res.matchId === 'string') {
+      seenMatch.set(socket, res.matchId);
+    }
+    return res;
+  }) as typeof socket.emitWithAck;
 }
 
 /** A move on the match this client is looking at, with a new `seq`. */
@@ -91,12 +99,39 @@ export function next<E extends keyof ServerToClient>(
   });
 }
 
-/**
- * Before round 1: the creator (the pilot here) keeps the pilot seat and both confirm, so
- * round 1 starts. Harmless once the game has started (the server answers `setup-closed`).
- */
+function onceView(client: Client) {
+  let cb: (({ view }: { view: PlayerView }) => void) | undefined;
+  const promise = new Promise<PlayerView>((resolve) => {
+    cb = ({ view }) => resolve(view);
+    client.once('match:view', cb);
+  });
+  return {
+    promise,
+    cancel: () => {
+      if (cb) client.off('match:view', cb);
+    },
+  };
+}
+
 export async function takeOff(pilot: Client, copilot: Client): Promise<void> {
   await pilot.emitWithAck('room:choose-seat', { seat: 'pilot' });
-  await move(pilot, { type: 'confirm' });
-  await move(copilot, { type: 'confirm' });
+  const p1 = onceView(pilot);
+  const c1 = onceView(copilot);
+  const r1 = await move(pilot, { type: 'confirm' });
+  if (r1.ok) {
+    await Promise.all([p1.promise, c1.promise]);
+  } else {
+    p1.cancel();
+    c1.cancel();
+  }
+
+  const p2 = onceView(pilot);
+  const c2 = onceView(copilot);
+  const r2 = await move(copilot, { type: 'confirm' });
+  if (r2.ok) {
+    await Promise.all([p2.promise, c2.promise]);
+  } else {
+    p2.cancel();
+    c2.cancel();
+  }
 }

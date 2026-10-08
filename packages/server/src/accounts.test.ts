@@ -128,9 +128,7 @@ describe('behind the site password', () => {
   it('refuses Google sign-in and /auth/me without the site cookie', async () => {
     const { url } = await start({ sitePassword: 'bay-cung-nhau', google });
     expect((await fetch(`${url}/auth/me`)).status).toBe(401);
-    expect(
-      (await post(url, '/api/auth/sign-in/social', { provider: 'google' })).status,
-    ).toBe(401);
+    expect((await post(url, '/api/auth/sign-in/social', { provider: 'google' })).status).toBe(401);
     const login = await post(url, '/auth/login', { password: 'bay-cung-nhau' });
     expect(await me(url, cookiesOf(login))).toBeNull();
   });
@@ -141,10 +139,10 @@ describe('the display name', () => {
     const signIn = mockGoogleSignIn();
     const { url } = await start({ google });
     const cookie = await signIn(url, 'long@example.com', 'A very long Google profile name');
-    expect((await me(url, cookie))?.name).toBe('A very long Google');
+    expect((await me(url, cookie))?.name).toBe('A very long Google p');
   });
 
-  it('allows a name to be set once when Google provides none', async () => {
+  it('lets the player set a name when Google provides none, and change it later', async () => {
     const signIn = mockGoogleSignIn();
     const { url } = await start({ google });
     const cookie = await signIn(url, 'dao@example.com', '');
@@ -153,6 +151,14 @@ describe('the display name', () => {
     const set = await post(url, '/auth/name', { name: 'Dao' }, { cookie });
     expect(set.status).toBe(200);
     expect(await set.json()).toMatchObject({ name: 'Dao', email: 'dao@example.com' });
-    expect((await post(url, '/auth/name', { name: 'Other' }, { cookie })).status).toBe(409);
+    const changed = await post(
+      url,
+      '/auth/name',
+      { name: 'A much too long new display name' },
+      { cookie },
+    );
+    expect(await changed.json()).toMatchObject({ name: 'A much too long new' });
+    expect((await me(url, cookie))?.name).toBe('A much too long new');
+    expect((await post(url, '/auth/name', { name: 'x' })).status).toBe(401);
   });
 });

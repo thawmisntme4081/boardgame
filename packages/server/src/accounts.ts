@@ -136,7 +136,7 @@ export function authOptions({
     account: { modelName: 'auth_accounts', fields: COLUMNS.account },
     verification: { modelName: 'auth_verifications', fields: COLUMNS.verification },
     // The display name comes from the sign-in (Google's name, cut to fit a room) or is asked
-    // if Google provides no name (`POST /auth/name`); it never changes afterwards.
+    // if Google provides none, and the player may change it any time (`POST /auth/name`).
     databaseHooks: {
       user: {
         create: {
@@ -208,7 +208,7 @@ export function accounts(options: AccountsOptions): Accounts {
   router.get('/auth/methods', (_req, res) => {
     res.json({ google: Boolean(options.google) });
   });
-  // The name is only needed if Google's profile did not include one.
+  // The display name: asked if Google's profile had none, changed from the account menu.
   router.post('/auth/name', express.json({ limit: '1kb' }), (req, res) => {
     const given: unknown = (req.body as { name?: unknown } | undefined)?.name;
     const name = typeof given === 'string' ? fitName(given) : '';
@@ -216,7 +216,6 @@ export function accounts(options: AccountsOptions): Accounts {
     userOf(req)
       .then(async (user) => {
         if (!user) return void res.status(401).json({ error: 'signed-out' });
-        if (user.name) return void res.status(409).json({ error: 'name-set' });
         const context = await auth.$context;
         await context.internalAdapter.updateUser(user.id, { name });
         res.json({ ...user, name });
