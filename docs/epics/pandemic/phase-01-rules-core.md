@@ -1,6 +1,6 @@
 # Pandemic 01: Rules core
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **high**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🔍 Tasks done, in review** · Effort: **high**
 
 Needs the [Platform epic](../platform/EPIC.md). Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), section 2. Copy the layout of `games/sky-team/rules`. No UI in this phase.
 
@@ -41,10 +41,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Engine adapter**
 
-- [ ] 14. **M** `definition.ts`: `meta` (seats `p1`–`p4`, 2–4 players, `coop`), `configSchema` (`players`, `epidemics`), `moveSchema`, `setup`, `actors` (the active seat as `turn`; a seat owing a discard or answering a share as `prompt`), `validate`, `apply`, `outcome`, `started`.
-- [ ] 15. **M** `view`: hands are open to everyone at every difficulty, decks only as counts, both discard piles shown; tests that no view holds a deck order, a pile split or the seed.
-- [ ] 16. **M** `definition.test.ts` running the engine kit (`checkGame`, `checkReplay`) for 2, 3 and 4 seats; `random-play.ts` and the `pnpm --filter @pandemic/rules random-play` script.
-- [ ] 17. **L** `canActInView(view, seat, action)`: the same checks on a view, for the client's highlights; a test that it agrees with `validate` on random states.
+- [x] 14. **M** `definition.ts`: `meta` (seats `p1`–`p4`, 2–4 players, `coop`), `configSchema` (`players`, `epidemics`), `moveSchema`, `setup`, `actors` (the active seat as `turn`; a seat owing a discard or answering a share as `prompt`), `validate`, `apply`, `outcome`, `started`.
+- [x] 15. **M** `view`: hands are open to everyone at every difficulty, decks only as counts, both discard piles shown; tests that no view holds a deck order, a pile split or the seed.
+- [x] 16. **M** `definition.test.ts` running the engine kit (`checkGame`, `checkReplay`) for 2, 3 and 4 seats; `random-play.ts` and the `pnpm --filter @pandemic/rules random-play` script.
+- [x] 17. **L** `canActInView(view, seat, action)`: the same checks on a view, for the client's highlights; a test that it agrees with `validate` on random states.
 
 ## Checklist
 
@@ -59,6 +59,6 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 The spec is `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edition, © 2015 printing: 48 cities, 5 events, 7 roles incl. Contingency Planner and Quarantine Specialist).
 
-- None yet.
+- Random games never win (0 in 3,000 with the random player in `random-play.ts`; they end by outbreaks, cubes and, rarely, the player deck). The win is covered by a scripted game in `outcome.test.ts`. Assumption (to confirm): that is enough for "random games reach every ending".
 
 **Done when:** `definition.test.ts` passes the engine kit for 2–4 seats, random games reach every ending, and nothing outside `games/pandemic` changed except the workspace config.

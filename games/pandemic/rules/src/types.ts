@@ -120,3 +120,12 @@ export interface GameState {
   rngSeed: number;
   rngState: number;
 }
+
+/**
+ * What the checks of a move read: the full state, or a player's view (which has these fields),
+ * so the client can highlight moves with the same rules the server uses.
+ */
+export type ActionState = Pick<
+  GameState,
+  'seats' | 'status' | 'turn' | 'pending' | 'pawns' | 'hands' | 'cubes' | 'stations' | 'cures'
+>;

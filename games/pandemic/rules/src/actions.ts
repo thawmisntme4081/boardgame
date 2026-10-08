@@ -3,6 +3,7 @@ import { COLORS, cityOf, type CityId, type Color } from './cities';
 import {
   CARDS_TO_CURE,
   MAX_STATIONS,
+  type ActionState,
   type GameState,
   type HandCard,
   type SeatId,
@@ -68,7 +69,7 @@ export function cubesOnBoard(state: Pick<GameState, 'cubes'>, color: Color): num
 /** City cards needed to discover a cure (the Scientist needs fewer, in Pandemic 04). */
 export const cardsToCure = (): number => CARDS_TO_CURE;
 
-export function checkAction(state: GameState, seat: SeatId, action: Action): ActionCheck {
+export function checkAction(state: ActionState, seat: SeatId, action: Action): ActionCheck {
   if (state.status !== 'playing') return fail('game-over');
   if (state.turn.seat !== seat) return fail('not-your-turn');
   if (state.pending) return fail('answer-first');

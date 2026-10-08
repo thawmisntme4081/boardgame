@@ -23,7 +23,7 @@ This is a personal/learning project on a private, invite-only site: if it is eve
 | [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | ✅ Done; live at `boardgames-dom-mam.fly.dev` | — |
 | [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–06 | ✅ Done | Sky Team |
 | [Scale-out](epics/scale-out/EPIC.md) | Several server instances, only when metrics or a public site ask for it | 01 | ⏳ Only when needed | Platform 01–06 |
-| [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op; the second game, proving the platform | 01–07 base game, 08–13 expansions | 🚧 Next | Platform |
+| [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op; the second game, proving the platform | 01–07 base game, 08–13 expansions | 🚧 In progress | Platform |
 | [Isle of Skye](epics/isle-of-skye/EPIC.md) | Isle of Skye, 2–5 players | planned | ⏳ Not started | Platform, Pandemic |
 | [Twilight Struggle](epics/twilight-struggle/EPIC.md) | Twilight Struggle, 2 players, long games | planned | ⏳ Not started | Platform, Pandemic |
 

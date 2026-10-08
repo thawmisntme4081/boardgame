@@ -4,7 +4,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 ## Stack (decided)
 
-- TypeScript strict everywhere, pnpm workspaces monorepo (Platform 05 layout): `packages/engine` (`@platform/engine`, game-agnostic), `packages/protocol` (`@platform/protocol`, the wire protocol), `packages/server`, `packages/web` (`@platform/web`, the client shell: pages, router, connection), `packages/ui` (`@platform/ui`, the client kit: shadcn components, theme, i18n, the `GameClientModule` contract); each game in `games/<id>/`: Sky Team's rules `games/sky-team/rules` (`@sky/rules`) and UI `games/sky-team/client` (`@sky/client`)
+- TypeScript strict everywhere, pnpm workspaces monorepo (Platform 05 layout): `packages/engine` (`@platform/engine`, game-agnostic), `packages/protocol` (`@platform/protocol`, the wire protocol), `packages/server`, `packages/web` (`@platform/web`, the client shell: pages, router, connection), `packages/ui` (`@platform/ui`, the client kit: shadcn components, theme, i18n, the `GameClientModule` contract); each game in `games/<id>/`: Sky Team's rules `games/sky-team/rules` (`@sky/rules`) and UI `games/sky-team/client` (`@sky/client`); Pandemic's rules `games/pandemic/rules` (`@pandemic/rules`, rules reference in `docs/reference/pandemic-rules.md`)
 - Server: Node 20+, Express, Socket.IO, Zod for every incoming payload
 - Client: React + Vite, Tailwind CSS v4 (`@tailwindcss/vite`), Zustand for the latest server view
 - shadcn/ui ONLY for lobby, dialogs, toasts, tooltip/popover, select/tabs. Add components one at a time with `pnpm dlx shadcn@latest add <name>` in `packages/ui` (then make its imports relative: `../utils`, `./button`). The cockpit board, dice, tracks and alarm board are custom components (Tailwind + SVG).
@@ -52,7 +52,7 @@ Online 2-player, cooperative web version of the board game Sky Team (pilot + co-
 
 ## Workflow
 
-How much to test: the full run (`pnpm test` + `pnpm e2e`) is the last checklist item of a phase: run it only when the phase's last task is done AND the user has reviewed the work (say the tasks are done, then wait for the review; leave that item unticked until then). Small UI tweaks (labels, styling, animations): typecheck, format and lint only; tests when the user asks. Other changes outside a phase: only the affected package's tests (`npx vitest run --project @sky/client`, `@sky/rules`, `@platform/web`, `@sky/server`, `@platform/engine` or `@platform/protocol`; one file or `-t "<name>"` for a single test), and one Playwright test (`-g "<name>"`) only if the change is visible in a full game. CI still runs everything on every push to `main`.
+How much to test: the full run (`pnpm test` + `pnpm e2e`) is the last checklist item of a phase: run it only when the phase's last task is done AND the user has reviewed the work (say the tasks are done, then wait for the review; leave that item unticked until then). Small UI tweaks (labels, styling, animations): typecheck, format and lint only; tests when the user asks. Other changes outside a phase: only the affected package's tests (`npx vitest run --project @sky/client`, `@sky/rules`, `@pandemic/rules`, `@platform/web`, `@sky/server`, `@platform/engine` or `@platform/protocol`; one file or `-t "<name>"` for a single test), and one Playwright test (`-g "<name>"`) only if the change is visible in a full game. CI still runs everything on every push to `main`.
 
 When a phase is done (all tasks finished and reviewed by the user; its "Done when" check verified, plus `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm build` passing):
 
@@ -70,6 +70,7 @@ When a phase is done (all tasks finished and reviewed by the user; its "Done whe
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check` — same checks as CI; `pnpm format` fixes formatting
 - `pnpm lighthouse` — mobile Lighthouse audit of the build (Lighthouse CI; runs in CI on Linux, fails on Windows cleanup)
 - `pnpm --filter @sky/rules random-play [games] [firstSeed] [scenario id | all]` — play random games (YUL by default) and print how they ended
+- `pnpm --filter @pandemic/rules random-play [games] [firstSeed] [players] [epidemics]` — the same for Pandemic (2–4 players by default, 4 epidemics)
 - `pnpm --filter @platform/web preview` — serve the built client alone with Vite (no game server)
 - `pnpm exec playwright install chromium` — one-time browser download for Playwright
 - Cloudflare tunnel by hand (two PowerShell terminals; details in `docs/reference/sharing-and-deployment.md`):

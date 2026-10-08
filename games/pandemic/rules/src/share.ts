@@ -4,7 +4,7 @@
 import type { ActionCheck, ActionReason } from './actions';
 import { hasCityCard, spendAction } from './actions';
 import type { CityId } from './cities';
-import { HAND_LIMIT, type GameState, type HandCard, type SeatId } from './types';
+import { HAND_LIMIT, type ActionState, type GameState, type HandCard, type SeatId } from './types';
 
 export type ShareMove =
   /** The active player offers to give the card to, or take it from, `with`. */
@@ -17,13 +17,13 @@ const OK: ActionCheck = { ok: true };
 const fail = (reason: ActionReason): ActionCheck => ({ ok: false, reason });
 
 /** The seat that has to answer an open offer: the one who is not the active player. */
-export function shareAnswerer(state: GameState): SeatId | null {
+export function shareAnswerer(state: ActionState): SeatId | null {
   const { pending } = state;
   if (pending?.kind !== 'share') return null;
   return pending.from === state.turn.seat ? pending.to : pending.from;
 }
 
-export function checkShare(state: GameState, seat: SeatId, move: ShareMove): ActionCheck {
+export function checkShare(state: ActionState, seat: SeatId, move: ShareMove): ActionCheck {
   if (state.status !== 'playing') return fail('game-over');
 
   if (move.type !== 'share-offer') {

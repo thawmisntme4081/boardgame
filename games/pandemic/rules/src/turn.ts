@@ -8,6 +8,7 @@ import {
   ACTIONS_PER_TURN,
   HAND_LIMIT,
   INFECTION_RATES,
+  type ActionState,
   type GameState,
   type HandCard,
   type SeatId,
@@ -32,7 +33,7 @@ const sameCard = (a: HandCard, b: HandCard): boolean =>
     ? b.kind === 'city' && b.city === a.city
     : b.kind === 'event' && b.event === a.event;
 
-export function checkTurnMove(state: GameState, seat: SeatId, move: TurnMove): ActionCheck {
+export function checkTurnMove(state: ActionState, seat: SeatId, move: TurnMove): ActionCheck {
   if (state.status !== 'playing') return fail('game-over');
 
   if (move.type === 'discard') {

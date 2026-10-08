@@ -9,3 +9,5 @@ export * from './legal';
 export * from './outbreak';
 export * from './turn';
 export * from './outcome';
+export * from './moves';
+export * from './views';

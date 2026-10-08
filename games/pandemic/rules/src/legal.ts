@@ -1,9 +1,12 @@
-// Every action a seat could take now (for random play, tests and the client's highlights).
+// The actions a seat could take now (for random play, tests and the client's highlights).
 import { checkAction, cardsToCure, type Action } from './actions';
 import { CITIES, COLORS, cityOf, type CityId } from './cities';
+import type { ShareMove } from './share';
+import { checkShare } from './share';
 import type { GameState, SeatId } from './types';
 
-export function legalActions(state: GameState, seat: SeatId): Action[] {
+/** Actions worth trying, legal or not (a superset of `legalActions`). */
+export function candidateActions(state: GameState, seat: SeatId): Action[] {
   const here = state.pawns[seat] as CityId;
   const hand = state.hands[seat] ?? [];
   const candidates: Action[] = [{ type: 'pass' }];
@@ -23,6 +26,22 @@ export function legalActions(state: GameState, seat: SeatId): Action[] {
     // One way of paying: the first cards of the color (enough to explore the rule).
     candidates.push({ type: 'cure', color, cards: cards.slice(0, cardsToCure()) });
   }
+  return candidates;
+}
 
-  return candidates.filter((action) => checkAction(state, seat, action).ok);
+export function legalActions(state: GameState, seat: SeatId): Action[] {
+  return candidateActions(state, seat).filter((action) => checkAction(state, seat, action).ok);
+}
+
+/** The Share Knowledge offers `seat` could make now. */
+export function legalShareOffers(state: GameState, seat: SeatId): ShareMove[] {
+  const offers: ShareMove[] = state.seats.flatMap((other) =>
+    other === seat
+      ? []
+      : [
+          { type: 'share-offer', direction: 'give', with: other } as const,
+          { type: 'share-offer', direction: 'take', with: other } as const,
+        ],
+  );
+  return offers.filter((offer) => checkShare(state, seat, offer).ok);
 }
