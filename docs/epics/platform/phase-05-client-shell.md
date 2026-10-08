@@ -1,6 +1,6 @@
 # Platform 05: Client shell and router
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 7, 2026)** · Effort: **medium-high**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium-high**
 
 Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 4.5 and 4.6 (step E).
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 ## Feature scope
 
 - **In:** TanStack Router with the routes in the proposal (`/`, `/play/:gameId`, `/r/:code`, `/m/:matchId`, `/history`, `/u/:userId` later); the `GameClientModule` contract (`Board`, `SetupForm`, `Summary`, `locales`); `games/sky-team/client` (cockpit, tray, tracks, preflight, svgs); a shared design-system package; i18n split into a platform namespace and one per game; game-specific UI state (`selectedDieId`, `coffeeDelta`, `internSlot`, `rerollPick`) in a Sky Team store slice.
-- **Out:** new games (Second game 01); accounts pages (Platform 06).
+- **Out:** new games (Pandemic); accounts pages (Platform 06).
 
 ## Technical tasks
 
@@ -39,7 +39,7 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 - Assumption (to confirm): one Tailwind entry: the shell's `index.css` imports each installed game's `styles.css`, so a game's CSS (a few KB) is in the first load; only its code is lazy.
 - Assumption (to confirm): the platform's texts live in `@platform/ui` (not in the web package), so a game can type-check its use of them without depending on the shell.
 - Assumption (to confirm): the new platform texts (site title "Board games", its tagline, "Choose a game", "All games", Sky Team's one-line description, and the share text, now "Join my game" instead of "Fly with me in Sky Team") were translated by Claude into Vietnamese and French: to review.
-- Note: pages load a game's module with a small hook (`useGameModule`) instead of React's `use()` with Suspense, which did not resolve on a page's first render under TanStack Router in the tests.
+- Note: pages load a game's module with a small hook (`useGameModule`) instead of React's `use` with Suspense, which did not resolve on a page's first render under TanStack Router in the tests.
 
 ## Checklist
 
@@ -52,4 +52,4 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 - [x] Playwright on all three devices green; Lighthouse not worse — Playwright green; Lighthouse not run here (it fails on Windows; CI runs it on the next push). The first load is smaller than before (571 KB of JS instead of 598 KB), so it should not be worse.
 - [x] UI and architecture docs, `CLAUDE.md` updated
 
-**Done when:** a player picks Sky Team on the game picker, plays a full game, and the first page load does not include the Sky Team board code. ✅ Verified Oct 7, 2026 (Playwright on three devices: the first lobby test opens the picker, checks that no `assets/sky-team-*.js` was requested, picks Sky Team and creates a game; full games play as before; 41 passed, 4 intentional skips. Built: `index-*.js` (571 KB, the shell) holds no board, cockpit, Sky Team texts, rules or scenarios; `sky-team-*.js` (185 KB) loads with a Sky Team page or room. 431 unit and integration tests; typecheck, lint, format and build pass).
+**Done when:** a player picks Sky Team on the game picker, plays a full game, and the first page load does not include the Sky Team board code. ✅ Verified (Playwright on three devices: the first lobby test opens the picker, checks that no `assets/sky-team-*.js` was requested, picks Sky Team and creates a game; full games play as before; 41 passed, 4 intentional skips. Built: `index-*.js` (571 KB, the shell) holds no board, cockpit, Sky Team texts, rules or scenarios; `sky-team-*.js` (185 KB) loads with a Sky Team page or room. 431 unit and integration tests; typecheck, lint, format and build pass).

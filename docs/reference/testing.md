@@ -26,7 +26,7 @@ Most bugs in a board game are rule bugs, so the bulk of tests sit on the pure `s
 
 ## Local and device checks
 
-- Local multiplayer: one normal window and one incognito window, or Playwright's `browser.newContext()` twice.
+- Local multiplayer: one normal window and one incognito window, or Playwright's `browser.newContext` twice.
 - Real devices on your LAN: `pnpm dev:lan`, open the Network URL on the phone; debug iOS with Safari Web Inspector and Android with `chrome://inspect`.
 - Backgrounding: switch apps mid-round on a phone and confirm the game resumes.
 

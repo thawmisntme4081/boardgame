@@ -1,25 +1,25 @@
 # Platform 06: Accounts (the Flight Log goes with you)
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress (A–D done)** · Effort: **high** (8 stages, each small to medium)
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **high** (8 stages, each small to medium)
 
 Was stage B of the old game-history phase (now [Sky Team 11](../sky-team/phase-11-history.md) covers local history). Needs [Platform 04](phase-04-match-log.md)'s match store and the deployed site from [Sky Team 13](../sky-team/phase-13-deploy.md) (cookies, HTTPS).
 
 ## Goals
 
 - Optional accounts, so a player's Flight Log and their seat follow them across devices; guests keep playing without one.
-- **Decided Oct 6, 2026:** the history a player keeps is the Flight Log (one small record per game: scenario, seat, result, round, date), stored in the account, not the server's match log. Sky Team's matches are deleted 30 days after they end (`keepEnded` in the registry), so history cannot be read from `matches`.
+- **Decided:** the history a player keeps is the Flight Log (one small record per game: scenario, seat, result, round, date), stored in the account, not the server's match log. Sky Team's matches are deleted 30 days after they end (`keepEnded` in the registry), so history cannot be read from `matches`.
 
 ## Feature scope
 
 - **In:** sign-in, sessions for HTTP and sockets, seats linked to accounts, the Flight Log stored per account (written by the server when a match ends, for every seated account), a history page reading it, a profile (display name), import of the device's Sky Team 11 history on first sign-in, account deletion.
-- **Out (decided Oct 6, 2026):** history read from the match store, and the replay viewer (old matches are deleted).
+- **Out:** history read from the match store, and the replay viewer (old matches are deleted).
 - **Out:** public leaderboards; social features (friends lists, chat).
 
 ## Stages
 
 Each stage ships on its own: the site keeps working for guests after every one, and the checks (typecheck, lint, format, the affected tests, build) pass before the next starts. The full run (`pnpm test` + `pnpm e2e`) is only at the end of the phase, after stage H.
 
-### A. File-based routes (decided Oct 7, 2026) · small
+### A. File-based routes · small
 
 The shell's routes move to TanStack Router's file-based setup before new pages are added.
 
@@ -29,7 +29,7 @@ The shell's routes move to TanStack Router's file-based setup before new pages a
 - [x] The router and the tests' `renderAt` built from the generated `routeTree.gen.ts` (committed; left out of Prettier and ESLint)
 - [x] Shell tests green, no behavior change
 
-**Done when:** every page and redirect works as before, from the generated route tree. ✅ Verified Oct 7, 2026 (the 25 shell tests, which open every page and redirect through the real routes, pass unchanged; typecheck, lint, format and build pass. E2E waits for the full run after stage H).
+**Done when:** every page and redirect works as before, from the generated route tree. ✅ Verified (the 25 shell tests, which open every page and redirect through the real routes, pass unchanged; typecheck, lint, format and build pass. E2E waits for the full run after stage H).
 
 ### B. Accounts on the server · medium
 
@@ -43,7 +43,7 @@ The user store and the sign-in endpoints, with no page yet.
 - [x] Sign-in rate limit per address (10 sign-in requests a minute, from the server's own reading of the address, never a client header); no session id or token in logs (Better Auth's messages only, a test checks)
 - [x] Server tests with the provider mocked (`accounts.test.ts`)
 
-**Done when:** in dev, signing in sets a session and `GET /auth/me` returns the user; signing out clears it. ✅ Verified Oct 7, 2026 (Google OAuth flow mocked in tests: `/auth/me` is `null`, then the user, then `null` after sign-out; Google account tests with the token endpoint mocked; all 440 unit tests, typecheck, lint, format and build pass.).
+**Done when:** in dev, signing in sets a session and `GET /auth/me` returns the user; signing out clears it. ✅ Verified (Google OAuth flow mocked in tests: `/auth/me` is `null`, then the user, then `null` after sign-out; Google account tests with the token endpoint mocked; all 440 unit tests, typecheck, lint, format and build pass.).
 
 ### C. Sign-in in the shell · small
 
@@ -53,7 +53,7 @@ The user store and the sign-in endpoints, with no page yet.
 - [x] Texts in the `platform` namespace (en, vi, fr): `account.*`
 - [x] Shell tests (signed out, signed in, sign out): `screens/Account.test.tsx` against a fake accounts server; 4 more server tests for the name and the methods
 
-**Done when:** a player can sign in and out from the site; guests see no difference except the button. ✅ Verified Oct 7, 2026 (in `pnpm dev` on an iPhone 13 profile: sign in with Google, still signed in after a reload, sign out from the game page; with no accounts on the server the button is gone; 6 shell tests and 13 accounts tests pass, plus all web and server tests, typecheck, lint, format and build).
+**Done when:** a player can sign in and out from the site; guests see no difference except the button. ✅ Verified (in `pnpm dev` on an iPhone 13 profile: sign in with Google, still signed in after a reload, sign out from the game page; with no accounts on the server the button is gone; 6 shell tests and 13 accounts tests pass, plus all web and server tests, typecheck, lint, format and build).
 
 ### D. Seats follow the account · medium
 
@@ -64,7 +64,7 @@ The user store and the sign-in endpoints, with no page yet.
 - [x] Integration tests: two devices, one account; a guest next to a signed-in player (`seats.test.ts`, 7 tests, incl. a guest who signs in later and a restart)
 - [x] `ROOM_FORMAT` bumped if the saved room changes: not needed, `userId` is an optional field that older rows simply lack (they load as guests)
 
-**Done when:** a game started on a laptop continues on a phone after signing in there. ✅ Verified Oct 7, 2026 (in `pnpm dev` with three browsers: Ana signs in on a laptop and creates a game, Ben joins as a guest, Ana signs in on a Pixel 7 profile and lands in the game as the pilot, still there after a reload; 7 seat tests, all web, server and protocol tests, typecheck, lint, format and build pass). Known: the device the seat moved away from keeps showing the last board until it is used again or comes back to the front; then it takes the seat back the same way (the seat follows the device last used).
+**Done when:** a game started on a laptop continues on a phone after signing in there. ✅ Verified (in `pnpm dev` with three browsers: Ana signs in on a laptop and creates a game, Ben joins as a guest, Ana signs in on a Pixel 7 profile and lands in the game as the pilot, still there after a reload; 7 seat tests, all web, server and protocol tests, typecheck, lint, format and build pass). Known: the device the seat moved away from keeps showing the last board until it is used again or comes back to the front; then it takes the seat back the same way (the seat follows the device last used).
 
 ### E. The Flight Log per account · medium
 
@@ -75,7 +75,7 @@ The user store and the sign-in endpoints, with no page yet.
 - [x] A game's history view in the contract (`GameClientModule.History`, instead of a `Summary` card)
 - [x] Tests: written once per account, readable only by its owner
 
-**Done when:** a game finished on one device shows in the Flight Log on another, signed in to the same account. ✅ Verified Oct 7, 2026 (server: 3 tests in `flightlog.test.ts` — one row per signed-in player and match, once also after a restart, readable only by its owner over HTTP; client: the store reads the server when signed in and keeps nothing on the device then).
+**Done when:** a game finished on one device shows in the Flight Log on another, signed in to the same account. ✅ Verified (server: 3 tests in `flightlog.test.ts` — one row per signed-in player and match, once also after a restart, readable only by its owner over HTTP; client: the store reads the server when signed in and keeps nothing on the device then).
 
 ### F. Import the device's history · small
 
@@ -84,26 +84,26 @@ The user store and the sign-in endpoints, with no page yet.
 - [x] The local copy cleared afterwards
 - [x] Tests: import once, no duplicates on a second device
 
-**Done when:** a player's old games on a device appear in their account after signing in. ✅ Verified Oct 7, 2026 (server import test: valid games added, junk skipped, a second device adds nothing twice; client tests: sent once and the device copy cleared only on success).
+**Done when:** a player's old games on a device appear in their account after signing in. ✅ Verified (server import test: valid games added, junk skipped, a second device adds nothing twice; client tests: sent once and the device copy cleared only on success).
 
 ### G. Profile and history pages · small
 
 - [x] `/u/me` (or `/history`): the account's Flight Log, all games, newest first
 - [x] Texts in en, vi, fr
 
-**Done when:** a signed-in player sees their whole history on one page. ✅ Verified Oct 7, 2026 (`/history` page tests signed in and signed out; the game's `History` component in the module contract replaces the planned `Summary` card).
+**Done when:** a signed-in player sees their whole history on one page. ✅ Verified (`/history` page tests signed in and signed out; the game's `History` component in the module contract replaces the planned `Summary` card).
 
 ### H. Account deletion and going live · small
 
 - [x] Delete account: the user, their sessions, provider links and Flight Log rows; their seats become guests
-- [ ] Sign-in set up for the live site (the owner's steps are in the deployment doc, group 6b; not done yet): Google OAuth credentials with the redirect URL on `https://boardgames-dom-mam.fly.dev`, the email service's key; Fly secrets set by the owner
+- [x] Sign-in set up for the live site (the owner's steps are in the deployment doc, group 6b; set by the owner): Google OAuth credentials with the redirect URL on `https://boardgames-dom-mam.fly.dev`, the email service's key; Fly secrets set by the owner
 - [x] Deployment doc: the provider set-up, the new secrets
 - [x] One Playwright sign-in flow against a test provider
 - [x] `CLAUDE.md`, architecture and protocol docs updated
 
-**Done when:** the same history appears after signing in on another device, on the live site.
+**Done when:** the same history appears after signing in on another device, on the live site. ✅ Verified (the owner signed in on the live site on two devices; the history appeared on the second).
 
-## Decisions (Oct 7, 2026)
+## Decisions
 
 - Sign-in methods: Google, and an email one-time code.
 - Domain: `boardgames-dom-mam.fly.dev` (no custom domain); Google's redirect URL points there.
@@ -125,6 +125,6 @@ None open.
 - [x] E. The Flight Log per account
 - [x] F. Import the device's history
 - [x] G. Profile and history pages
-- [ ] H. Account deletion and going live
+- [x] H. Account deletion and going live
 
-**Done when:** the same history appears after signing in on another device.
+**Done when:** the same history appears after signing in on another device. ✅ Verified (live site, see H).

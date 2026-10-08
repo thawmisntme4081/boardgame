@@ -1,6 +1,6 @@
 # Sky Team 02: Core rules in `shared`
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done**
 
 ## Goals
 
@@ -34,6 +34,6 @@
 - [x] Script that plays random legal moves to the end, 1,000 times (`pnpm --filter @sky/shared random-play`, plus a fast-check fuzz test)
 - [x] Replace the placeholder YUL approach track with the real plane counts
 
-**Done when:** unit tests cover every rule and the random-play script never throws. ✅ Verified Sep 28, 2026: 69 tests pass, including 1,000 fuzzed games.
+**Done when:** unit tests cover every rule and the random-play script never throws. ✅ Verified: 69 tests pass, including 1,000 fuzzed games.
 
 See [game rules reference](../../reference/game-rules.md) for the numbers as implemented.

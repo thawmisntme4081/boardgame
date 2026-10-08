@@ -27,6 +27,7 @@ test('an alarm blocks the flaps until the pilot clears it with a blue 4', async 
   const flaps = copilot.getByRole('button', { name: /^Flaps 1 .*blocked by the Flaps alarm$/ });
   await expect(flaps).toBeDisabled();
 
+  await expect(pilot.getByRole('button', { name: 'Your die: 3' })).toHaveCount(2);
   await pilot.getByRole('button', { name: 'Your die: 4' }).click();
   await pilot.getByRole('button', { name: 'Flaps alarm (pilot, needs 4)' }).click();
   await expect(copilot.getByRole('img', { name: 'Flaps alarm: cleared' })).toBeVisible();

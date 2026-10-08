@@ -65,7 +65,7 @@ Repeated requests must be harmless: a `match:move` with a `seq` already accepted
 
 ## No-talking rule
 
-There is no in-game chat (removed Sep 28, 2026): players talk outside the app (in person or a call) during the `strategy` phase, and each presses "Roll dice" (in the dice tray) when the discussion is over. From the roll until the round ends they stay silent by agreement, as at the table; a red "No talking" pill reminds them.
+There is no in-game chat (removed: players talk outside the app (in person or a call) during the `strategy` phase, and each presses "Roll dice" (in the dice tray) when the discussion is over. From the roll until the round ends they stay silent by agreement, as at the table; a red "No talking" pill reminds them.
 
 ## Site password (HTTP, before the socket)
 

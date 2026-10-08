@@ -1,6 +1,6 @@
 # Sky Team 06: Robustness
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 29, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done**
 
 ## Goals
 
@@ -28,4 +28,4 @@
 - [x] Room cleanup: idle rooms removed after 30 minutes (swept every minute); at most 5 live rooms per creator IP (`too-many-rooms`)
 - [x] Leaving mid-game: `room:leave` frees the seat; the partner is told and waits for someone new; both leaving deletes the room
 
-**Done when:** refreshing either tab mid-round resumes the game exactly. ✅ Verified Sep 29, 2026: in Chromium (desktop + emulated iPhone 13) reloading each tab mid-round showed identical dice, placed dice, turn and round; plus drop/return and leave flows. 155 tests pass.
+**Done when:** refreshing either tab mid-round resumes the game exactly. ✅ Verified: in Chromium (desktop + emulated iPhone 13) reloading each tab mid-round showed identical dice, placed dice, turn and round; plus drop/return and leave flows. 155 tests pass.

@@ -1,6 +1,6 @@
 # Platform 04: Match log (persistence for every game)
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 6, 2026)** · Effort: **medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium**
 
 Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), section 4.4 (step D).
 
@@ -12,9 +12,9 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 ## Feature scope
 
 - **In:** a `MatchStore` interface replacing [Sky Team 12](../sky-team/phase-12-persistence.md)'s `RoomStore`; tables `matches`, `match_seats`, `match_moves`, `match_snapshots`; load = snapshot + replay; `rules_version` and `migrate`; a one-off migration of Sky Team 12's stored rooms.
-- **Out:** several instances (Platform 07).
+- **Out:** several instances ([Scale-out 01](../scale-out/phase-01-scale-out.md)).
 
-**Storage decided (Oct 4, 2026): SQLite** on the Fly volume from [Sky Team 12](../sky-team/phase-12-persistence.md), through Drizzle. Plenty for a private multi-game site; Postgres only if [Platform 07](phase-07-scale-out.md) ever happens, and the interface keeps that move small. With auto stop/start, scheduled moves (`schedule`) are stored with their due time and applied when the match is next loaded or touched if they fell due while the machine was stopped.
+**Storage decided: SQLite** on the Fly volume from [Sky Team 12](../sky-team/phase-12-persistence.md), through Drizzle. Plenty for a private multi-game site; Postgres only if [Scale-out 01](../scale-out/phase-01-scale-out.md) ever happens, and the interface keeps that move small. With auto stop/start, scheduled moves (`schedule`) are stored with their due time and applied when the match is next loaded or touched if they fell due while the machine was stopped.
 
 ## Technical tasks
 
@@ -47,7 +47,7 @@ From Platform 03: rooms already have a match id (`<code>-<n>`), a `version` coun
 
 ## Checklist
 
-- [x] Storage decision: SQLite on the Fly volume (Oct 4, 2026)
+- [x] Storage decision: SQLite on the Fly volume
 - [x] `MatchStore` + in-memory and database versions
 - [x] Moves appended before broadcast; snapshots
 - [x] Load on startup; timers re-armed
@@ -56,4 +56,4 @@ From Platform 03: rooms already have a match id (`<code>-<n>`), a `version` coun
 - [x] Tests: replay equals live state for random games; restart integration test
 - [x] Deployment doc and `CLAUDE.md` updated
 
-**Done when:** a match in progress continues with identical views after a restart, and replaying any stored match from its log reproduces its final state exactly. ✅ Verified Oct 6, 2026 (restart tests on a SQLite file: same views for both players after a clean restart, the same game rebuilt from the log alone after an unclean stop, and a timed round that ran out while down; eight random games through the room manager each replay to exactly their live state, from the latest snapshot and from the first one; 422 unit and integration tests and 41 Playwright tests on three devices pass, 4 intentional skips; typecheck, lint, format and build pass).
+**Done when:** a match in progress continues with identical views after a restart, and replaying any stored match from its log reproduces its final state exactly. ✅ Verified (restart tests on a SQLite file: same views for both players after a clean restart, the same game rebuilt from the log alone after an unclean stop, and a timed round that ran out while down; eight random games through the room manager each replay to exactly their live state, from the latest snapshot and from the first one; 422 unit and integration tests and 41 Playwright tests on three devices pass, 4 intentional skips; typecheck, lint, format and build pass).

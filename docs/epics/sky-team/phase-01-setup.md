@@ -1,6 +1,6 @@
 # Sky Team 01: Project setup
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done**
 
 ## Goals
 
@@ -31,7 +31,7 @@
 - [x] Add a CI workflow (`.github/workflows/ci.yml`: typecheck, lint, format check, test, build)
 - [x] Push to GitHub (`origin` = `thawmisntme4081/boardgame`)
 
-**Done when:** `pnpm dev` starts both apps and `pnpm test` runs an empty suite. ✅ Verified Sep 28, 2026.
+**Done when:** `pnpm dev` starts both apps and `pnpm test` runs an empty suite. ✅ Verified.
 
 ## Notes
 

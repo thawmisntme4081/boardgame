@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 400" width="740" height="400" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" role="img" aria-label="Pandemic phases 01 to 07 make the base game; 08 to 13 are the optional expansions">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7280"/></marker></defs>
+<path d="M160 35H198" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M350 35H388" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M540 35H578" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M160 135H198" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M350 135H388" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M540 135H578" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M160 235H198" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M350 235H388" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M540 235H578" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M160 335H198" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M655.0 60V85H85.0V108" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M655.0 170V185H85.0V208" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M655.0 260V285H85.0V308" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="10" y="10" width="150" height="50" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="85.0" y="39.5" text-anchor="middle" fill="#713f12">01 Rules core</text>
+<rect x="200" y="10" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="275.0" y="31.5" text-anchor="middle" fill="#374151">02 N seats</text>
+<text x="275.0" y="47.5" text-anchor="middle" fill="#374151">+ skeleton</text>
+<rect x="390" y="10" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="465.0" y="31.5" text-anchor="middle" fill="#374151">03 Board</text>
+<text x="465.0" y="47.5" text-anchor="middle" fill="#374151">and client</text>
+<rect x="580" y="10" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="655.0" y="39.5" text-anchor="middle" fill="#374151">04 Roles</text>
+<rect x="10" y="110" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="85.0" y="139.5" text-anchor="middle" fill="#374151">05 Events</text>
+<rect x="200" y="110" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="275.0" y="131.5" text-anchor="middle" fill="#374151">06 Setup</text>
+<text x="275.0" y="147.5" text-anchor="middle" fill="#374151">and history</text>
+<rect x="390" y="110" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="465.0" y="139.5" text-anchor="middle" fill="#374151">07 Translations</text>
+<rect x="580" y="110" width="150" height="60" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="655.0" y="128.5" text-anchor="middle" fill="#14532d">Base game done:</text>
+<text x="655.0" y="144.5" text-anchor="middle" fill="#14532d">2-4 players</text>
+<text x="655.0" y="160.5" text-anchor="middle" fill="#14532d">finish on phones</text>
+<rect x="10" y="210" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="85.0" y="231.5" text-anchor="middle" fill="#374151">08 Expansion</text>
+<text x="85.0" y="247.5" text-anchor="middle" fill="#374151">modules</text>
+<rect x="200" y="210" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="275.0" y="231.5" text-anchor="middle" fill="#374151">09 On the Brink:</text>
+<text x="275.0" y="247.5" text-anchor="middle" fill="#374151">roles, events</text>
+<rect x="390" y="210" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="465.0" y="231.5" text-anchor="middle" fill="#374151">10 On the Brink:</text>
+<text x="465.0" y="247.5" text-anchor="middle" fill="#374151">challenges</text>
+<rect x="580" y="210" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="655.0" y="239.5" text-anchor="middle" fill="#374151">11 In the Lab</text>
+<rect x="10" y="310" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="85.0" y="331.5" text-anchor="middle" fill="#374151">12 State of</text>
+<text x="85.0" y="347.5" text-anchor="middle" fill="#374151">Emergency</text>
+<rect x="200" y="310" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
+<text x="275.0" y="331.5" text-anchor="middle" fill="#374151">13 Expansion</text>
+<text x="275.0" y="347.5" text-anchor="middle" fill="#374151">translations</text>
+<text x="10" y="392" fill="#6b7280" font-size="12">Dashed arrow: the expansions (08–13) are optional and come after the base game.</text></svg>

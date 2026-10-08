@@ -1,6 +1,6 @@
 # Sky Team 03: Server and rooms
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done**
 
 ## Goals
 
@@ -28,6 +28,6 @@
 - [x] Zod schemas for every incoming payload; bad payloads, missing acks and handler errors answer `bad-request` without crashing
 - [x] `viewFor` in `shared/views.ts` and the typed protocol in `shared/events.ts` (needed for `game:view`)
 
-**Done when:** two socket clients in an integration test can join the same room and both receive a `game:view`. ✅ Verified Sep 28, 2026: 99 tests pass (30 new: rooms, schemas, `viewFor`, and Socket.IO integration tests against a real server).
+**Done when:** two socket clients in an integration test can join the same room and both receive a `game:view`. ✅ Verified: 99 tests pass (30 new: rooms, schemas, `viewFor`, and Socket.IO integration tests against a real server).
 
 See [protocol reference](../../reference/protocol.md).

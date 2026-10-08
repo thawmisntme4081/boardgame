@@ -1,6 +1,6 @@
 # Proposal: from Sky Team Online to a multi-game platform
 
-**Status: draft for discussion (Oct 4, 2026).** Nothing here is decided. The [open questions](#11-open-questions) at the end shape the final design.
+**Status: draft for discussion.** Nothing here is decided. The [open questions](#11-open-questions) at the end shape the final design.
 
 ## 1. Context
 
@@ -54,34 +54,34 @@ These keep today's principles and make them general:
 
 ```mermaid
 flowchart TB
-  subgraph Client["Browser (React)"]
-    Shell["Platform shell<br/>lobby · game picker · room · presence · i18n"]
-    GUI["Game UI module<br/>(lazy-loaded per game)"]
-    Shell -->|"view, send(move)"| GUI
-  end
+ subgraph Client["Browser (React)"]
+ Shell["Platform shell<br/>lobby · game picker · room · presence · i18n"]
+ GUI["Game UI module<br/>(lazy-loaded per game)"]
+ Shell -->|"view, send(move)"| GUI
+ end
 
-  subgraph Server["Node process (modular monolith)"]
-    GW["Realtime gateway<br/>Socket.IO, Zod envelope"]
-    RS["Room & match service<br/>seats, presence, lobby"]
-    MR["Match runner<br/>one serialized queue per match"]
-    SCH["Scheduler<br/>timed system moves"]
-    REG["Game registry"]
-    ST["Store<br/>event log + snapshots"]
-    GW --> RS --> MR
-    MR --> REG
-    MR --> ST
-    SCH --> MR
-  end
+ subgraph Server["Node process (modular monolith)"]
+ GW["Realtime gateway<br/>Socket.IO, Zod envelope"]
+ RS["Room & match service<br/>seats, presence, lobby"]
+ MR["Match runner<br/>one serialized queue per match"]
+ SCH["Scheduler<br/>timed system moves"]
+ REG["Game registry"]
+ ST["Store<br/>event log + snapshots"]
+ GW --> RS --> MR
+ MR --> REG
+ MR --> ST
+ SCH --> MR
+ end
 
-  subgraph Games["Game modules (pure TS)"]
-    SKY["sky-team"]
-    PAN["pandemic (later)"]
-    TS["twilight-struggle (later)"]
-  end
+ subgraph Games["Game modules (pure TS)"]
+ SKY["sky-team"]
+ PAN["pandemic (later)"]
+ TS["twilight-struggle (later)"]
+ end
 
-  REG --> SKY & PAN & TS
-  GUI -.->|"same package, client half"| SKY
-  Client <-->|"WebSocket"| GW
+ REG --> SKY & PAN & TS
+ GUI -.->|"same package, client half"| SKY
+ Client <-->|"WebSocket"| GW
 ```
 
 ### 4.1 The game contract (`@platform/engine`)
@@ -91,45 +91,45 @@ The heart of the design is one interface. Every game implements it; the platform
 ```ts
 /** A board game the platform can host. S = state, M = move, V = view, C = setup config. */
 export interface GameDefinition<S, M, V, C> {
-  id: string;                         // 'sky-team'
-  version: number;                    // rules version, bumped on breaking changes
-  meta: {
-    seats: readonly string[];         // ['pilot', 'copilot'] or ['p1'..'p4']
-    minPlayers: number;
-    maxPlayers: number;
-    mode: 'coop' | 'competitive';
-  };
+ id: string; // 'sky-team'
+ version: number; // rules version, bumped on breaking changes
+ meta: {
+ seats: readonly string[]; // ['pilot', 'copilot'] or ['p1'..'p4']
+ minPlayers: number;
+ maxPlayers: number;
+ mode: 'coop' | 'competitive';
+ };
 
-  configSchema: ZodType<C>;           // scenario, timer, expansions…
-  moveSchema: ZodType<M>;             // every move a client may send
+ configSchema: ZodType<C>; // scenario, timer, expansions…
+ moveSchema: ZodType<M>; // every move a client may send
 
-  setup(ctx: { config: C; seats: SeatId[]; seed: number }): S;
+ setup(ctx: { config: C; seats: SeatId[]; seed: number }): S;
 
-  /** Who may send which moves now (turn, simultaneous commit, prompt). */
-  actors(state: S): Actor[];
+ /** Who may send which moves now (turn, simultaneous commit, prompt). */
+ actors(state: S): Actor[];
 
-  /** Pure validation; also usable on the client against a view when the game allows. */
-  validate(state: S, move: M, by: SeatId | 'system'): Result<void, string>;
+ /** Pure validation; also usable on the client against a view when the game allows. */
+ validate(state: S, move: M, by: SeatId | 'system'): Result<void, string>;
 
-  /** Pure, deterministic. Randomness only from the RNG stored in S. */
-  apply(state: S, move: M, by: SeatId | 'system'): S;
+ /** Pure, deterministic. Randomness only from the RNG stored in S. */
+ apply(state: S, move: M, by: SeatId | 'system'): S;
 
-  /** The only exit: what one seat (or a spectator) may see. */
-  view(state: S, viewer: SeatId | 'spectator'): V;
+ /** The only exit: what one seat (or a spectator) may see. */
+ view(state: S, viewer: SeatId | 'spectator'): V;
 
-  /** Moves the server must make later: timeouts, auto-rolls, end-of-round pauses. */
-  schedule?(state: S): ScheduledMove<M>[];   // [{ at: 'phase-start' + ms, move }]
+ /** Moves the server must make later: timeouts, auto-rolls, end-of-round pauses. */
+ schedule?(state: S): ScheduledMove<M>[]; // [{ at: 'phase-start' + ms, move }]
 
-  outcome(state: S): Outcome | null;   // null while playing; win/loss/scores when over
+ outcome(state: S): Outcome | null; // null while playing; win/loss/scores when over
 
-  /** Upgrades a saved state from an older rules version. */
-  migrate?(state: unknown, fromVersion: number): S;
+ /** Upgrades a saved state from an older rules version. */
+ migrate?(state: unknown, fromVersion: number): S;
 }
 
 type Actor =
-  | { seat: SeatId; kind: 'turn' }
-  | { seat: SeatId; kind: 'simultaneous'; committed: boolean }
-  | { seat: SeatId; kind: 'prompt'; prompt: string };
+ | { seat: SeatId; kind: 'turn' }
+ | { seat: SeatId; kind: 'simultaneous'; committed: boolean }
+ | { seat: SeatId; kind: 'prompt'; prompt: string };
 ```
 
 Why these choices:
@@ -145,12 +145,12 @@ Two families of events, with the game's payload typed by generics:
 
 ```ts
 // Platform: unchanged in spirit from today.
-'room:create'  { game: 'sky-team', config: unknown }   // config checked by configSchema
+'room:create' { game: 'sky-team', config: unknown } // config checked by configSchema
 'room:join' | 'room:rejoin' | 'room:leave' | 'room:choose-seat'
 'room:presence' { seats: Record<SeatId, PlayerInfo | null>, you?: SeatId }
 
 // Game: one envelope for every game.
-'match:move' { matchId, seq: number, move: unknown }  → ack { ok } | { ok: false, error }
+'match:move' { matchId, seq: number, move: unknown } → ack { ok } | { ok: false, error }
 'match:view' { matchId, version: number, view: V }
 ```
 
@@ -178,8 +178,8 @@ Because every change is a move and `apply` is deterministic:
 ```
 matches(id, game_id, rules_version, config jsonb, seed, status, created_at, ended_at)
 match_seats(match_id, seat, user_id | guest_name, token_hash)
-match_moves(match_id, n, by, move jsonb, at)          -- append-only log
-match_snapshots(match_id, n, state jsonb)             -- every ~50 moves and at game end
+match_moves(match_id, n, by, move jsonb, at) -- append-only log
+match_snapshots(match_id, n, state jsonb) -- every ~50 moves and at game end
 ```
 
 - **Load** = latest snapshot + replay of the later moves.
@@ -187,7 +187,7 @@ match_snapshots(match_id, n, state jsonb)             -- every ~50 moves and at 
 - **Debugging**: a bug report is a match id; replay it locally with the exact seed.
 - **Rules upgrades**: a match records `rules_version`; `migrate` upgrades old snapshots, or old matches finish on the old version.
 
-**Storage (decided Oct 4, 2026): SQLite** on a Fly.io volume, through Drizzle, backed up with Litestream. The site stays private (friends only), so one machine with auto stop/start is enough even with four games, accounts and history; SQLite has no extra service, no second cold start and no free-tier quota. **Postgres** becomes the choice only if the site goes public or needs several instances (Platform 07); `MatchStore` and Drizzle keep that move to a data copy plus a driver switch.
+**Storage: SQLite** on a Fly.io volume, through Drizzle, backed up with Litestream. The site stays private (friends only), so one machine with auto stop/start is enough even with four games, accounts and history; SQLite has no extra service, no second cold start and no free-tier quota. **Postgres** becomes the choice only if the site goes public or needs several instances (Scale-out 01); `MatchStore` and Drizzle keep that move to a data copy plus a driver switch.
 
 **Auto stop/start:** the machine stops when nobody is connected, so no timer runs while everyone is away. Scheduled moves are stored with their due time and applied when the match is next loaded or touched; notifications for long games (if added) come from an outside cron (e.g. a Cloudflare Worker) that wakes the app.
 
@@ -195,17 +195,17 @@ match_snapshots(match_id, n, state jsonb)             -- every ~50 moves and at 
 
 ```
 apps/web (platform shell)
-  ├── lobby: game picker → per-game setup form (from the game's client module)
-  ├── room: seats, presence, invite link, reconnection, toasts, language
-  └── <GameHost matchId>: loads the game's UI with React.lazy, passes props
+ ├── lobby: game picker → per-game setup form (from the game's client module)
+ ├── room: seats, presence, invite link, reconnection, toasts, language
+ └── <GameHost matchId>: loads the game's UI with React.lazy, passes props
 
 games/<id>/client (one per game)
-  export const client: GameClientModule<V, M, C> = {
-    Board,        // ({ view, seat, send, pending }) => JSX
-    SetupForm,    // the lobby options (scenario, timer…)
-    Summary,      // the game-over / history card
-    locales,      // i18n namespace: { en, vi }
-  };
+ export const client: GameClientModule<V, M, C> = {
+ Board, // ({ view, seat, send, pending }) => JSX
+ SetupForm, // the lobby options (scenario, timer…)
+ Summary, // the game-over / history card
+ locales, // i18n namespace: { en, vi }
+ };
 ```
 
 - **Store split:** the platform store keeps `connection`, `session`, `presence` and the latest `view` per match. UI state that belongs to one game (`selectedDieId`, `coffeeDelta`, `internSlot`, `rerollPick`) moves into that game's own Zustand slice.
@@ -214,32 +214,32 @@ games/<id>/client (one per game)
 - **Bundles:** each game's UI is a lazy chunk, so adding games does not slow the first load.
 - **Routing:** today there is no router. `App.tsx` picks the screen from the store, and the only URL is the `/r/CODE` invite link (`codeFromPath`, `setUrl` with `history.replaceState`). With several games, the platform has real pages, so add **TanStack Router** (typed routes and search parameters, per-route lazy loading, works with Vite without server rendering). React Router v7 is the safe alternative. The store keeps the live connection and views; the router only decides which page shows. Proposed routes:
 
-  ```
-  /                      game picker
-  /play/:gameId          setup and create (scenario, timer…)
-  /r/:code               join or rejoin a room (keeps existing invite links)
-  /m/:matchId            the match (board)
-  /history               match history (the Flight Log)
-  /u/:userId             profile (with accounts)
-  ```
+ ```
+ / game picker
+ /play/:gameId setup and create (scenario, timer…)
+ /r/:code join or rejoin a room (keeps existing invite links)
+ /m/:matchId the match (board)
+ /history match history (the Flight Log)
+ /u/:userId profile (with accounts)
+ ```
 
-  The server's "any HTML GET returns `index.html`" fallback already supports these paths.
+ The server's "any HTML GET returns `index.html`" fallback already supports these paths.
 
 ### 4.6 Repository layout
 
 ```
 packages/
-  engine/            GameDefinition, RNG, Result, test kit (fuzzer, leak check, replay)
-  protocol/          envelope types + Zod for room:* and match:*
-  server/            gateway, rooms, match runner, scheduler, store, registry
-  web/               platform shell (React)
-  ui/                design system: Tailwind theme, shadcn components
+ engine/ GameDefinition, RNG, Result, test kit (fuzzer, leak check, replay)
+ protocol/ envelope types + Zod for room:* and match:*
+ server/ gateway, rooms, match runner, scheduler, store, registry
+ web/ platform shell (React)
+ ui/ design system: Tailwind theme, shadcn components
 games/
-  sky-team/
-    rules/           today's packages/shared (createGame, placeDie, modules, scenarios…)
-    client/          today's cockpit, tray, tracks, preflight, svgs
-    test/            rules tests, random play
-  <next-game>/
+ sky-team/
+ rules/ today's packages/shared (createGame, placeDie, modules, scenarios…)
+ client/ today's cockpit, tray, tracks, preflight, svgs
+ test/ rules tests, random play
+ <next-game>/
 ```
 
 The **engine test kit** generalizes what Sky Team already has (`random-play`, view-leak checks in integration tests). Every game gets these checks for free:
@@ -279,9 +279,9 @@ Sizing note: a board-game match is tiny (kilobytes of state, a move every few se
 | **E. Client split** | Platform 05 | platform shell + `games/sky-team/client`; router (TanStack Router, routes in 4.5) with a game picker page; i18n namespaces; game-specific UI state into a game slice | medium: mostly moving files (the recent refactor already grouped cockpit and tray) |
 | **F. Second game** | Second game epic | a small game first (e.g. a simple simultaneous-reveal card game) to prove simultaneous moves and N seats before investing in a large game | low |
 | **G. Big games** | One epic per game | Pandemic (N seats, out-of-turn events), then Twilight Struggle (prompts, long games, maybe async play) | high: rules size, not architecture |
-| **H. Scale-out** | Platform 07 | stage 2 above, only when metrics ask for it | medium |
+| **H. Scale-out** | Scale-out 01 | stage 2 above, only when metrics ask for it | medium |
 
-Steps A–E are a refactor of the existing app. Steps F–G add product. Accounts (Platform 06) sit between them. Order decided Oct 4, 2026: Sky Team is finished and deployed first (Sky Team 11–13), so Sky Team 12's store is reworked into the match log in Platform 04; keeping it behind an interface keeps that rework small.
+Steps A–E are a refactor of the existing app. Steps F–G add product. Accounts (Platform 06) sit between them. Order decided: Sky Team is finished and deployed first (Sky Team 11–13), so Sky Team 12's store is reworked into the match log in Platform 04; keeping it behind an interface keeps that rework small.
 
 ## 8. What changes in the project rules (CLAUDE.md)
 
@@ -309,10 +309,10 @@ Steps A–E are a refactor of the existing app. Steps F–G add product. Account
 
 ## 11. Open questions
 
-1. ~~**Public or private?**~~ Settled Oct 4, 2026: private (Cloudflare Access). A public site with published games needs licenses; a private, invite-only site changes priorities (accounts, moderation, scale).
+1. ~~**Public or private?**~~ Settled: private (Cloudflare Access). A public site with published games needs licenses; a private, invite-only site changes priorities (accounts, moderation, scale).
 2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favours the event log and adds notifications.
 3. **Accounts:** required for every player, or guests plus optional accounts (as planned in Platform 06)?
 4. **Bots:** will any game need computer players (solo Pandemic, practice Twilight Struggle)? That decides whether stage 3 matters.
-5. ~~**Storage:**~~ Settled Oct 4, 2026: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Platform 07 happens.
+5. ~~**Storage:**~~ Settled: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Scale-out 01 happens.
 6. **Second game:** which small game should prove the engine before the big ones?
-7. ~~**Order:**~~ Settled Oct 4, 2026: finish Sky Team first (Sky Team 11–13), then the Platform epic, then one epic per game (restructured into epics Oct 5, 2026).
+7. ~~**Order:**~~ Settled: finish Sky Team first (Sky Team 11–13), then the Platform epic, then one epic per game (restructured into epics).

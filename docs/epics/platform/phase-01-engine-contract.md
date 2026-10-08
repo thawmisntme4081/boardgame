@@ -1,6 +1,6 @@
 # Platform 01: Engine contract
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 6, 2026)** · Effort: **low-medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **low-medium**
 
 Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 4.1 and 4.6 (step A).
 
@@ -42,4 +42,4 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 - [x] Engine test kit, passing on Sky Team (every scenario)
 - [x] Architecture doc and `CLAUDE.md` updated
 
-**Done when:** the engine test kit plays every Sky Team scenario through `GameDefinition` without errors or view leaks, and all existing tests still pass unchanged. ✅ Verified Oct 6, 2026 (the kit plays all 40 scenarios with two seeds each and timed games with scheduled time-ups, and catches a planted leak; 398 unit and integration tests, 41 Playwright tests on three devices with 4 intentional skips; typecheck, lint, format and build pass; no existing test changed).
+**Done when:** the engine test kit plays every Sky Team scenario through `GameDefinition` without errors or view leaks, and all existing tests still pass unchanged. ✅ Verified (the kit plays all 40 scenarios with two seeds each and timed games with scheduled time-ups, and catches a planted leak; 398 unit and integration tests, 41 Playwright tests on three devices with 4 intentional skips; typecheck, lint, format and build pass; no existing test changed).

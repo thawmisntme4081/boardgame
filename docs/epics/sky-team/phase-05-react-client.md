@@ -1,6 +1,6 @@
 # Sky Team 05: React client
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done**
 
 ## Goals
 
@@ -29,12 +29,12 @@
 - [x] Board: axis, engines, radio, gear, flaps, brakes, concentration, altitude and approach tracks (SVG with a `viewBox`; slots are 48 px buttons)
 - [x] Dice tray: tap a die, then tap a slot; valid slots highlighted via the shared rules; the radio target shows on the approach track
 - [x] Coffee ± control, turn indicator, round and altitude display, all with 44 px touch targets
-- [x] ~~Strategy-phase chat panel~~ Built, then removed Sep 28, 2026 (no in-game chat)
+- [x] ~~Strategy-phase chat panel~~ Built, then removed (no in-game chat)
 - [x] Reconnect on `visibilitychange` when a phone brings the tab back (also on reload, from the saved session)
 - [x] Game over screen with reason (every failed landing condition) and rematch
 - [x] Reroll flow: spend a token, tick dice, reroll or keep all
 
-**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ✅ Verified Sep 28–29, 2026 (desktop Chromium + emulated iPhone 13 through lobby → game → rematch, also over the LAN address and a Cloudflare tunnel).
+**Done when:** two people on your LAN, one on a desktop and one on a phone in portrait, can finish the base scenario. ✅ Verified (desktop Chromium + emulated iPhone 13 through lobby → game → rematch, also over the LAN address and a Cloudflare tunnel).
 
 ## Notes
 

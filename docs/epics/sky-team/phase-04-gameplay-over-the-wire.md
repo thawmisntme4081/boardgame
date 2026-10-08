@@ -1,6 +1,6 @@
 # Sky Team 04: Gameplay over the wire
 
-[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Sep 28, 2026)**
+[← Sky Team epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done**
 
 ## Goals
 
@@ -24,12 +24,12 @@
 
 - [x] `game:place` handler using the shared rules (rule reasons returned in the ack; illegal moves change nothing)
 - [x] `viewFor` filtering, emitted to each seat after every change
-- [x] ~~Chat locked during `placing`~~ Built, then removed Sep 28, 2026 at the user's request: players talk outside the app
+- [x] ~~Chat locked during `placing`~~ Built, then removed at the user's request: players talk outside the app
 - [x] Round resolution and game over broadcast (every view carries `phase`, `endReason`, `landingFailures`)
 - [x] Reroll events: `game:spend-reroll`, `game:reroll`
 - [x] `game:rematch`: fresh game in the same room once the game is over (either player can start it)
 
-**Done when:** a scripted two-client test plays a full game over sockets and no payload ever contains the partner's dice values. ✅ Verified Sep 28, 2026: 110 tests pass (seed 1: 6 rounds, over 40 actions; plus a broadcast landing win).
+**Done when:** a scripted two-client test plays a full game over sockets and no payload ever contains the partner's dice values. ✅ Verified: 110 tests pass (seed 1: 6 rounds, over 40 actions; plus a broadcast landing win).
 
 ## Notes
 

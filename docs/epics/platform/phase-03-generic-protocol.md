@@ -1,6 +1,6 @@
 # Platform 03: Generic protocol
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (Oct 6, 2026)** · Effort: **medium**
+[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium**
 
 Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), sections 4.2 and 4.3 (step C).
 
@@ -12,7 +12,7 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 ## Feature scope
 
 - **In:** a `packages/protocol` (envelope types + Zod); `room:create { game, config }`; `match:move { matchId, seq, move }` validated by the game's `moveSchema`; `match:view { matchId, version, view }`; a match runner with one serialized queue per match; a game registry.
-- **Out:** several server instances (Platform 07); storage (Platform 04).
+- **Out:** several server instances ([Scale-out 01](../scale-out/phase-01-scale-out.md)); storage (Platform 04).
 
 ## Technical tasks
 
@@ -46,4 +46,4 @@ None open.
 - [x] Integration tests (socket.io-client) and Playwright green
 - [x] Protocol doc and `CLAUDE.md` updated
 
-**Done when:** a full Sky Team game plays over `match:move` / `match:view` only, with the view-leak checks passing on every broadcast. ✅ Verified Oct 6, 2026 (the integration test that plays a whole seeded game over sockets, now on `match:move` / `match:view`, ends exactly like the in-process game and checks every view each client received for the partner's dice; no `game:*` event is left in the code; `handlers.ts` and `rooms.ts` import only the engine, the protocol and the registry; 413 unit and integration tests and 41 Playwright tests on three devices pass, 4 intentional skips; typecheck, lint, format and build pass).
+**Done when:** a full Sky Team game plays over `match:move` / `match:view` only, with the view-leak checks passing on every broadcast. ✅ Verified (the integration test that plays a whole seeded game over sockets, now on `match:move` / `match:view`, ends exactly like the in-process game and checks every view each client received for the partner's dice; no `game:*` event is left in the code; `handlers.ts` and `rooms.ts` import only the engine, the protocol and the registry; 413 unit and integration tests and 41 Playwright tests on three devices pass, 4 intentional skips; typecheck, lint, format and build pass).

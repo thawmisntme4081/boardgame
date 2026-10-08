@@ -5,17 +5,17 @@
 Mobile-first: a phone in portrait (360–430 px wide) is the hardest screen, so it is built first and larger screens spread the same components out. The same React components rearrange through CSS Grid areas; only the layout changes, never the game logic. The detailed, always-current UI rules live in `CLAUDE.md` ("UI rules").
 
 ```
-Phone portrait (< 600 px)        Desktop (>= 1024 px, centred container, max 72rem)
-+----------------------+            +--------------------------------------+
-| Status bar (sticky)  |            | Status bar (sticky)                  |
-+----------------------+            +--------------------------------------+
-| Tracks strip         |            |   Altitude track   Approach track    |
-+----------------------+            +--------------------------------------+
-| Cockpit panels       |            | Cockpit board (named grid areas)     |
-| (page scrolls; your  |            |                                      |
-|  systems first)      |            +--------------------------------------+
-+----------------------+            | Dice tray (sticky)                   |
-| Dice tray (sticky)   |            +--------------------------------------+
+Phone portrait (< 600 px) Desktop (>= 1024 px, centred container, max 72rem)
++----------------------+ +--------------------------------------+
+| Status bar (sticky) | | Status bar (sticky) |
++----------------------+ +--------------------------------------+
+| Tracks strip | | Altitude track Approach track |
++----------------------+ +--------------------------------------+
+| Cockpit panels | | Cockpit board (named grid areas) |
+| (page scrolls; your | | |
+| systems first) | +--------------------------------------+
++----------------------+ | Dice tray (sticky) |
+| Dice tray (sticky) | +--------------------------------------+
 +----------------------+
 ```
 

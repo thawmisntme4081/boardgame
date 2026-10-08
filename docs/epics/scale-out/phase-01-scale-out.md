@@ -1,6 +1,6 @@
-# Platform 07: Scale-out
+# Scale-out 01: Several servers
 
-[← Platform epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started (only when metrics ask for it)** · Effort: **medium**
+[← Scale-out epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started (only when metrics ask for it)** · Effort: **medium**
 
 Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), section 5 (step H).
 
