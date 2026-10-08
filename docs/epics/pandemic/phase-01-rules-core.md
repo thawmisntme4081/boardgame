@@ -1,6 +1,6 @@
 # Pandemic 01: Rules core
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🔍 Tasks done, in review** · Effort: **high**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **high**
 
 Needs the [Platform epic](../platform/EPIC.md). Design reference: [multi-game proposal](../../proposals/multi-game-platform.md), section 2. Copy the layout of `games/sky-team/rules`. No UI in this phase.
 
@@ -48,17 +48,16 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 ## Checklist
 
-- [ ] City data and setup tests pass for 2, 3 and 4 players and 4, 5, 6 epidemics
-- [ ] Every action, the draw, the infect step and epidemics tested, legal and illegal cases
-- [ ] The win and the three losses tested
-- [ ] Engine kit passes; 1000 random games end without an error
-- [ ] View tests: no deck order, no seed
-- [ ] Open questions listed below
+- [x] City data and setup tests pass for 2, 3 and 4 players and 4, 5, 6 epidemics
+- [x] Every action, the draw, the infect step and epidemics tested, legal and illegal cases
+- [x] The win and the three losses tested
+- [x] Engine kit passes; 1000 random games end without an error
+- [x] View tests: no deck order, no seed
+- [x] Open questions listed below
 
 ## Open questions
 
 The spec is `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edition, © 2015 printing: 48 cities, 5 events, 7 roles incl. Contingency Planner and Quarantine Specialist).
 
-- Random games never win (0 in 3,000 with the random player in `random-play.ts`; they end by outbreaks, cubes and, rarely, the player deck). The win is covered by a scripted game in `outcome.test.ts`. Assumption (to confirm): that is enough for "random games reach every ending".
 
 **Done when:** `definition.test.ts` passes the engine kit for 2–4 seats, random games reach every ending, and nothing outside `games/pandemic` changed except the workspace config.
