@@ -9,9 +9,8 @@
   "lobby": {
     "roundTimer": "Minuteur de manche",
     "roundTimerHint": "{{time}} pour poser tous les dés à chaque manche, sinon c’est perdu",
-    "waitingFor_pilot": "En attente de votre pilote",
-    "waitingFor_copilot": "En attente de votre copilote",
-    "timedGame": " Partie chronométrée : {{time}} par manche."
+    "timedGame": " Partie chronométrée : {{time}} par manche.",
+    "waitingFor_teammate": "En attente de votre coéquipier"
   },
   "scenario": {
     "label": "Scénario",
@@ -295,7 +294,9 @@
     "flyAgain": "Revoler",
     "offerWaiting": "En attente de l’accord de {{name}}…",
     "cancelOffer": "Annuler",
-    "offered": "{{name}} veut rejouer :"
+    "offered": "{{name}} veut rejouer :",
+    "viewBoard": "Voir le tableau de bord",
+    "showResult": "Afficher le résultat"
   },
   "flightLog": {
     "open": "Carnet de vol",

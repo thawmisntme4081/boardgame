@@ -9,9 +9,8 @@
   "lobby": {
     "roundTimer": "Round timer",
     "roundTimerHint": "{{time}} to place all the dice each round, or you lose",
-    "waitingFor_pilot": "Waiting for your pilot",
-    "waitingFor_copilot": "Waiting for your co-pilot",
-    "timedGame": " Timed game: {{time}} per round."
+    "timedGame": " Timed game: {{time}} per round.",
+    "waitingFor_teammate": "Waiting for your teammate"
   },
   "scenario": {
     "label": "Scenario",
@@ -295,7 +294,9 @@
     "flyAgain": "Fly again",
     "offerWaiting": "Waiting for {{name}} to agree…",
     "cancelOffer": "Take back",
-    "offered": "{{name}} wants to fly again:"
+    "offered": "{{name}} wants to fly again:",
+    "viewBoard": "View board",
+    "showResult": "Show result"
   },
   "flightLog": {
     "open": "Flight Log",

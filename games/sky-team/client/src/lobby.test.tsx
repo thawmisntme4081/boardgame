@@ -49,15 +49,13 @@ describe('the lobby options (SetupForm)', () => {
 });
 
 describe('the waiting room heading (WaitingInfo)', () => {
-  const seated = { name: 'Ana', online: true, creator: true };
-
-  it('names the missing seat and says when the game is timed', () => {
+  it('asks for a teammate and says when the game is timed', () => {
     const view = makeView('copilot', {
       rolled: false,
       patch: { phase: 'setup', timerMs: ROUND_TIMER_MS },
     });
-    render(<WaitingInfo view={view} presence={{ pilot: null, copilot: seated }} />);
-    expect(screen.getByText('Waiting for your pilot')).toBeInTheDocument();
+    render(<WaitingInfo view={view} />);
+    expect(screen.getByText('Waiting for your teammate')).toBeInTheDocument();
     expect(screen.getByText(/Timed game: 3:00 per round/)).toBeInTheDocument();
   });
 
@@ -68,8 +66,8 @@ describe('the waiting room heading (WaitingInfo)', () => {
       scenario: scenario.id,
       patch: { phase: 'setup' },
     });
-    render(<WaitingInfo view={view} presence={{ pilot: seated, copilot: null }} />);
-    expect(screen.getByText('Waiting for your co-pilot')).toBeInTheDocument();
+    render(<WaitingInfo view={view} />);
+    expect(screen.getByText('Waiting for your teammate')).toBeInTheDocument();
     expect(screen.getByText(scenario.name)).toBeInTheDocument();
     expect(screen.getByText(scenarioSummary(scenario))).toBeInTheDocument();
   });

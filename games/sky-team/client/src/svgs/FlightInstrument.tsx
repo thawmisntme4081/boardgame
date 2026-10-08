@@ -7,6 +7,8 @@ import {
 } from '@sky/rules';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@platform/ui/utils';
+import { endHighlight } from '../lib/endHighlight';
+import { useSkyTeam } from '../store';
 import { arc as arcAround, polar } from './geometry';
 
 /**
@@ -104,7 +106,7 @@ function TurnDots({ turn }: { turn: readonly number[] }) {
 }
 
 /** The 11 speed segments, the aerodynamics markers, the numbers and the speed dot. */
-function SpeedBand({ view }: { view: PlayerView }) {
+function SpeedBand({ view, marked }: { view: PlayerView; marked: boolean }) {
   const speed = view.speed === null ? null : clamp(view.speed, SPEED_MIN, SPEED_MAX);
   const markers = [
     { at: view.aeroBlue + 0.5, color: 'stroke-pilot' },
@@ -155,6 +157,9 @@ function SpeedBand({ view }: { view: PlayerView }) {
       >
         <g transform={`translate(${C + R} ${C})`}>
           <g style={turnTo(-speedAngle(speed ?? SPEED_MIN), true)} className={SLIDE}>
+            {marked && (
+              <circle r={SPEED_DOT_R + 5} className="fill-none stroke-danger" strokeWidth="4" />
+            )}
             <circle r={SPEED_DOT_R} className="fill-foreground" />
             <text y="4" textAnchor="middle" className="fill-background text-[11px] font-semibold">
               {view.speed}
@@ -203,6 +208,9 @@ export function FlightInstrument({
 }) {
   const { t } = useTranslation('sky-team');
   const needle = clamp(view.axis, -AXIS_LIMIT, AXIS_LIMIT) * MARK_ANGLE;
+  const viewingBoard = useSkyTeam((s) => s.viewingBoard);
+  const mark = viewingBoard ? endHighlight(view) : null;
+  const markedZone = mark?.axisZone ?? null;
   const axisLabel =
     view.axis === 0
       ? t('tracks.axisLevel')
@@ -225,6 +233,18 @@ export function FlightInstrument({
         role="img"
         aria-label={`${axisLabel}. ${speedLabel}`}
       >
+        {/* Looking at a lost game's board: a halo on the red zone the needle ended in. */}
+        {markedZone !== null && (
+          <path
+            d={arc(
+              axisAngle(markedZone - 0.5) + AXIS_GAP,
+              axisAngle(markedZone + 0.5) - AXIS_GAP,
+              R,
+            )}
+            strokeWidth={AXIS_WIDTH + 12}
+            className="fill-none stroke-danger/40"
+          />
+        )}
         {/* Axis: 7 parts over the top. */}
         {AXIS_ZONES.map((color, i) => (
           <path
@@ -234,7 +254,7 @@ export function FlightInstrument({
             className={cn('fill-none', color)}
           />
         ))}
-        <SpeedBand view={view} />
+        <SpeedBand view={view} marked={mark?.speed === true} />
         <BrakeSections view={view} />
         <line
           x1={C}

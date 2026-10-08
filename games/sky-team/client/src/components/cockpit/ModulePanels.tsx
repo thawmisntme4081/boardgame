@@ -13,6 +13,8 @@ import { BellRing, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SLOT_SIZE } from '../../lib/classes';
+import { endHighlight } from '../../lib/endHighlight';
+import { useSkyTeam } from '../../store';
 import { cn } from '@platform/ui/utils';
 import { InternBadge } from '../../svgs/InternBadge';
 import { WindRing } from '../../svgs/WindRing';
@@ -26,7 +28,7 @@ const KEROSENE_LOW = 6;
  * The kerosene track. When fuel burns, the bar slides down and a red "−N" floats up and fades
  * (keyed per drop, so each burn replays it).
  */
-function KeroseneGauge({ kerosene }: { kerosene: number }) {
+function KeroseneGauge({ kerosene, marked }: { kerosene: number; marked: boolean }) {
   const { t } = useTranslation('sky-team');
   const low = kerosene <= KEROSENE_LOW;
   // The last value seen and how much the latest burn took (state from the previous render).
@@ -51,7 +53,11 @@ function KeroseneGauge({ kerosene }: { kerosene: number }) {
         aria-valuemin={0}
         aria-valuemax={KEROSENE_START}
         aria-valuenow={kerosene}
-        className="h-3 overflow-hidden rounded-full bg-muted desktop:flex desktop:h-auto desktop:min-h-24 desktop:w-3 desktop:flex-1 desktop:flex-col desktop:justify-end"
+        className={cn(
+          'h-3 overflow-hidden rounded-full bg-muted desktop:flex desktop:h-auto desktop:min-h-24 desktop:w-3 desktop:flex-1 desktop:flex-col desktop:justify-end',
+          // Looking at a lost game's board: the fuel ran out.
+          marked && 'ring-4 ring-danger ring-offset-2',
+        )}
       >
         <div
           className={cn(
@@ -74,12 +80,14 @@ export function KerosenePanel({ view }: { view: PlayerView }) {
   const leak = view.scenario.modules.includes('kerosene-leak');
   const { t } = useTranslation('sky-team');
   const key = leak ? 'keroseneLeak' : 'kerosene';
+  const viewingBoard = useSkyTeam((s) => s.viewingBoard);
+  const marked = viewingBoard && endHighlight(view)?.gauge === 'kerosene';
   return (
     <Panel title={t(`modules.${key}`)} hint={t(`modules.${key}Hint`)}>
       {/* The Kerosene space above the gauge. */}
       <div className="flex flex-col gap-3 desktop:flex-1 desktop:items-center">
         {!leak && <Slot slot="kerosene" view={view} />}
-        <KeroseneGauge kerosene={view.kerosene ?? 0} />
+        <KeroseneGauge kerosene={view.kerosene ?? 0} marked={marked} />
       </div>
     </Panel>
   );

@@ -17,7 +17,7 @@ test('pick Sky Team, create a game and see the invite code', async ({ page }) =>
   await expect(create).toBeDisabled();
   await page.getByLabel('Your name').fill('Ana');
   await create.click();
-  await expect(page.getByText('Waiting for your co-pilot')).toBeVisible();
+  await expect(page.getByText('Waiting for your teammate')).toBeVisible();
   await expect(page.getByLabel(/^Game code/)).toHaveText(/^[A-HJ-NP-Z]{4}$/);
   await expect(page).toHaveURL(/\/r\/[A-Z]{4}$/);
 });
@@ -47,7 +47,7 @@ test('the creator chooses the seats before round 1; the traffic die waits for bo
   await pilot.getByLabel('Your name').fill('Ana');
   await pilot.getByRole('button', { name: 'Create a game' }).click();
   // Wait for the waiting room: the lobby's own "Game code" field would match too.
-  await expect(pilot.getByText('Waiting for your co-pilot')).toBeVisible();
+  await expect(pilot.getByText('Waiting for your teammate')).toBeVisible();
   const code = (await pilot.getByLabel(/^Game code/).textContent())!.trim();
   await copilot.goto(`/r/${code}`);
   await expect(copilot.getByLabel('Game code')).toHaveValue(code);

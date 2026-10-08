@@ -216,6 +216,59 @@ describe('GameOverDialog', () => {
     expect(api.rematch).toHaveBeenCalledWith();
   });
 
+  it('hides the dialog to look at the board, and a banner brings it back', async () => {
+    const view = makeView('pilot', { patch: { phase: 'lost', endReason: 'spin' } });
+    render(<GameOverDialog view={view} presence={presence()} rematch={NO_OFFER} />);
+    await userEvent.click(screen.getByRole('button', { name: 'View board' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByText('Crashed')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show result' }));
+    expect(screen.getByRole('dialog', { name: 'Crashed' })).toBeInTheDocument();
+  });
+
+  it('marks the Axis spaces after a spin once the result is hidden to look at the board', async () => {
+    const spin = makeView('pilot', {
+      patch: {
+        phase: 'lost',
+        endReason: 'spin',
+        axis: -3,
+        placed: {
+          axisPilot: { seat: 'pilot', dieId: 'a', value: 6 },
+          axisCopilot: { seat: 'copilot', dieId: 'b', value: 3 },
+        },
+      },
+    });
+    render(
+      <>
+        <GameOverDialog view={spin} presence={presence()} rematch={NO_OFFER} />
+        <Cockpit view={spin} />
+      </>,
+    );
+    const axis = () => screen.getByRole('button', { name: /^Axis 1 \(pilot\)/, hidden: true });
+    expect(axis()).not.toHaveClass('ring-danger');
+    await userEvent.click(screen.getByRole('button', { name: 'View board' }));
+    expect(axis()).toHaveClass('ring-danger');
+    await userEvent.click(screen.getByRole('button', { name: 'Show result' }));
+    expect(axis()).not.toHaveClass('ring-danger');
+  });
+
+  it('shows the dialog again when the partner offers to fly again', async () => {
+    const view = makeView('pilot', { patch: { phase: 'lost', endReason: 'spin' } });
+    const { rerender } = render(
+      <GameOverDialog view={view} presence={presence()} rematch={NO_OFFER} />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'View board' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    rerender(
+      <GameOverDialog
+        view={view}
+        presence={presence()}
+        rematch={{ by: 'copilot', config: { scenario: 'yul-green' } }}
+      />,
+    );
+    expect(screen.getByText(/Ben wants to fly again:/)).toBeInTheDocument();
+  });
+
   it('celebrates a landing and stays closed during play', () => {
     const { rerender } = render(
       <GameOverDialog view={makeView('pilot')} presence={presence()} rematch={NO_OFFER} />,

@@ -116,7 +116,7 @@ test.describe('a two-player game', () => {
     await copilot.getByRole('dialog').getByRole('button', { name: 'Leave game' }).click();
     await expect(copilot.getByRole('button', { name: 'Create a game' })).toBeVisible();
     await expect(pilot.getByText(/Ben left the game/)).toBeVisible();
-    await expect(pilot.getByText('Waiting for your co-pilot')).toBeVisible();
+    await expect(pilot.getByText('Waiting for your teammate')).toBeVisible();
 
     const newcomer = await (await browser.newContext(device)).newPage();
     await newcomer.goto(`/r/${code}`);

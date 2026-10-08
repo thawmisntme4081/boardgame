@@ -39,7 +39,7 @@ export async function startGame(
     await pilot.getByRole('option', { name: scenario }).click();
   }
   await pilot.getByRole('button', { name: 'Create a game' }).click();
-  await expect(pilot.getByText('Waiting for your co-pilot')).toBeVisible();
+  await expect(pilot.getByText('Waiting for your teammate')).toBeVisible();
   const code = (await pilot.getByLabel(/^Game code/).textContent())!.trim();
 
   await copilot.goto(`/r/${code}`);

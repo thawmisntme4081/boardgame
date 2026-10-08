@@ -35,6 +35,9 @@ export interface SkyTeamStore {
   roundDeadline: number | null;
   /** When the green "Next turn in 5s" after a round's last die ends (this device's clock). */
   nextTurnAt: number | null;
+  /** After a lost game: the player hid the result to look at the board (what caused it is marked). */
+  viewingBoard: boolean;
+  setViewingBoard: (viewing: boolean) => void;
   /** Finished games saved on this device (the Flight Log), newest first. */
   history: GameRecord[];
 
@@ -58,6 +61,7 @@ const fresh = {
   rerollPick: [],
   roundDeadline: null,
   nextTurnAt: null,
+  viewingBoard: false,
 };
 
 export const useSkyTeam = create<SkyTeamStore>()((set, get) => ({
@@ -88,6 +92,8 @@ export const useSkyTeam = create<SkyTeamStore>()((set, get) => ({
         rerollPick: view.rerollPending[view.seat] ? s.rerollPick.filter((id) => ids.has(id)) : [],
         roundDeadline: view.roundTimeLeftMs === null ? null : Date.now() + view.roundTimeLeftMs,
         // The round's last die was just placed and the game goes on: a 5 s breather.
+        // The marks on the final board go away with the game.
+        viewingBoard: isGameOver(view) ? s.viewingBoard : false,
         nextTurnAt:
           view.phase !== 'strategy'
             ? null
@@ -124,5 +130,6 @@ export const useSkyTeam = create<SkyTeamStore>()((set, get) => ({
     const records = await platform().flightLog(NS);
     if (records && signedIn()) set({ history: records.filter(isRecord) });
   },
+  setViewingBoard: (viewingBoard) => set({ viewingBoard }),
   reset: () => set(fresh),
 }));

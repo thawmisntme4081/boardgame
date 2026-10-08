@@ -3,6 +3,7 @@ import { SCENARIOS, type PlayerView, type Presence } from '@sky/rules';
 import {
   CircleCheck,
   CircleX,
+  Eye,
   Hourglass,
   OctagonAlert,
   PlaneLanding,
@@ -26,6 +27,7 @@ import {
 } from '@platform/ui/components/dialog';
 import { cn } from '@platform/ui/utils';
 import { formatNumber } from '../i18n';
+import { useSkyTeam } from '../store';
 import { endReasonText } from '../messages';
 import { difficultyName } from '../scenarioText';
 
@@ -129,63 +131,106 @@ export function GameOverDialog({
   const won = view.phase === 'won';
   const reasons = view.landingFailures ?? (view.endReason ? [view.endReason] : []);
   const Icon = won ? PlaneLanding : OctagonAlert;
+  // "View board" hides the dialog to look at the final board; a banner brings it back. A
+  // rematch offer (or taking one back) shows the dialog again, so nobody misses it.
+  const [hiddenFor, setHiddenFor] = useState<string | null | false>(false);
+  const setViewingBoard = useSkyTeam((s) => s.setViewingBoard);
+  const hidden = hiddenFor !== false && hiddenFor === rematch.by;
 
   return (
-    <Dialog open={over}>
-      <DialogContent
-        showCloseButton={false}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        className={cn(
-          'max-h-[90dvh] gap-0 overflow-y-auto p-0 ring-2 desktop:max-w-lg!',
-          won ? 'ring-emerald-600' : 'ring-danger',
-        )}
-      >
-        <DialogHeader
+    <>
+      {over && hidden && (
+        <div
+          role="status"
           className={cn(
-            'flex-row items-center gap-3 px-4 py-4 text-white',
+            'fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-md items-center gap-3 rounded-xl px-4 py-3 text-white shadow-lg',
             won ? 'bg-emerald-600' : 'bg-danger',
           )}
         >
-          <Icon aria-hidden="true" className="size-10 shrink-0" />
-          <div className="flex min-w-0 flex-col gap-0.5 text-left">
-            <DialogTitle className="text-2xl font-bold text-white">
-              {won ? t('gameOver.landed') : t('gameOver.crashed')}
-            </DialogTitle>
-            <DialogDescription className="text-white/90">
-              {won
-                ? t('gameOver.landedAt', { airport: view.scenario.airport, round: view.round })
-                : t('gameOver.crashedAt', {
-                    round: view.round,
-                    altitude: formatNumber(view.altitude),
-                  })}
-            </DialogDescription>
-          </div>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4 p-4">
-          {won ? (
-            <p className="flex items-center gap-2 text-sm">
-              <DifficultyDot scenario={view.scenario} />
-              <span className="font-medium">{view.scenario.name}</span>
-              <span className="text-muted-foreground">
-                · {difficultyName(view.scenario.difficulty)}
-              </span>
-              <CircleCheck aria-label={t('gameOver.done')} className="size-4 text-emerald-600" />
-            </p>
-          ) : (
-            <ul className="space-y-1.5 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm">
-              {reasons.map((reason) => (
-                <li key={reason} className="flex items-start gap-2">
-                  <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-danger" />
-                  {endReasonText(reason)}
-                </li>
-              ))}
-            </ul>
-          )}
-          <RematchForm view={view} won={won} presence={presence} rematch={rematch} />
-          <FlightLog className="self-center" />
+          <Icon aria-hidden="true" className="size-6 shrink-0" />
+          <span className="min-w-0 flex-1 font-semibold">
+            {won ? t('gameOver.landed') : t('gameOver.crashed')}
+          </span>
+          <Button
+            variant="secondary"
+            className="h-11"
+            onClick={() => {
+              setHiddenFor(false);
+              setViewingBoard(false);
+            }}
+          >
+            {t('gameOver.showResult')}
+          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+      <Dialog open={over && !hidden}>
+        <DialogContent
+          showCloseButton={false}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          className={cn(
+            'max-h-[90dvh] gap-0 overflow-y-auto p-0 ring-2 desktop:max-w-lg!',
+            won ? 'ring-emerald-600' : 'ring-danger',
+          )}
+        >
+          <DialogHeader
+            className={cn(
+              'flex-row items-center gap-3 px-4 py-4 text-white',
+              won ? 'bg-emerald-600' : 'bg-danger',
+            )}
+          >
+            <Icon aria-hidden="true" className="size-10 shrink-0" />
+            <div className="flex min-w-0 flex-col gap-0.5 text-left">
+              <DialogTitle className="text-2xl font-bold text-white">
+                {won ? t('gameOver.landed') : t('gameOver.crashed')}
+              </DialogTitle>
+              <DialogDescription className="text-white/90">
+                {won
+                  ? t('gameOver.landedAt', { airport: view.scenario.airport, round: view.round })
+                  : t('gameOver.crashedAt', {
+                      round: view.round,
+                      altitude: formatNumber(view.altitude),
+                    })}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 p-4">
+            {won ? (
+              <p className="flex items-center gap-2 text-sm">
+                <DifficultyDot scenario={view.scenario} />
+                <span className="font-medium">{view.scenario.name}</span>
+                <span className="text-muted-foreground">
+                  · {difficultyName(view.scenario.difficulty)}
+                </span>
+                <CircleCheck aria-label={t('gameOver.done')} className="size-4 text-emerald-600" />
+              </p>
+            ) : (
+              <ul className="space-y-1.5 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm">
+                {reasons.map((reason) => (
+                  <li key={reason} className="flex items-start gap-2">
+                    <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-danger" />
+                    {endReasonText(reason)}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <RematchForm view={view} won={won} presence={presence} rematch={rematch} />
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button
+                variant="ghost"
+                className="h-11"
+                onClick={() => {
+                  setHiddenFor(rematch.by);
+                  setViewingBoard(true);
+                }}
+              >
+                <Eye /> {t('gameOver.viewBoard')}
+              </Button>
+              <FlightLog />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

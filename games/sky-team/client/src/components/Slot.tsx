@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { placeSelected } from '../api';
 import { t } from '../i18n';
 import { SLOT_SIZE } from '../lib/classes';
+import { endHighlight } from '../lib/endHighlight';
 import { slotValid } from '../lib/moves';
 import { SEAT_STYLE } from '../lib/seatStyle';
 import { cn } from '@platform/ui/utils';
@@ -74,6 +75,8 @@ function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
   const placed = view.placed[slot];
   const valid = slotValid(view, { selectedDieId, coffeeDelta, internSlot }, slot);
   const chosen = internSlot === slot;
+  const viewingBoard = useSkyTeam((s) => s.viewingBoard);
+  const marked = viewingBoard && (endHighlight(view)?.slots.includes(slot) ?? false);
   const both = def.seats.length === 2;
   const seat = def.seats[0]!;
   // Alarms: a face-up token blocks this space until it is cleared.
@@ -100,6 +103,8 @@ function OpenSlot({ slot, view }: { slot: SlotId; view: PlayerView }) {
         selectedDieId && !valid && !placed && !chosen && 'opacity-40',
         valid && 'ring-4 ring-light-on ring-offset-1',
         chosen && 'ring-4 ring-foreground ring-offset-1',
+        // Looking at a lost game's board: the spaces that caused the end.
+        marked && 'ring-4 ring-danger ring-offset-2',
       )}
     >
       {placed ? (

@@ -2,6 +2,8 @@ import type { PlayerView } from '@sky/rules';
 import { BellRing, VolumeX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { t } from '../i18n';
+import { endHighlight } from '../lib/endHighlight';
+import { useSkyTeam } from '../store';
 import { trackWidth } from '../lib/trackRow';
 import { cn } from '@platform/ui/utils';
 import { DIFFICULTY_BADGE } from '../scenarioText';
@@ -96,6 +98,9 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
       if (space !== null) addedPlanes[space] = (addedPlanes[space] ?? 0) + 1;
     }
   }
+  // Looking at a lost game's board: the spaces that caused the end.
+  const viewingBoard = useSkyTeam((s) => s.viewingBoard);
+  const marked = viewingBoard ? (endHighlight(view)?.approach ?? []) : [];
   const hereTurn = scenario.turns?.[here];
   const hereAlarms = scenario.alarms?.[here] ?? 0;
   const hereTrust = (scenario.totalTrust?.[here] ?? 0) > 0;
@@ -150,6 +155,17 @@ export function ApproachTrack({ view, radioTarget }: { view: PlayerView; radioTa
                 strokeWidth="1"
                 className={cn(i === airport ? 'fill-light-on/20' : 'fill-card', 'stroke-border')}
               />
+              {marked.includes(i) && (
+                <rect
+                  x={x + 1}
+                  y="1"
+                  width={CELL - 2}
+                  height="48"
+                  rx="7"
+                  strokeWidth="3"
+                  className="fill-none stroke-danger"
+                />
+              )}
               {i === airport && (
                 <rect
                   x={x + CELL / 2 - 3}

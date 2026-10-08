@@ -102,7 +102,7 @@ describe('a room', () => {
       presence: { pilot: { name: 'Ana', online: true, creator: true }, copilot: null },
     });
     await renderAt('/r/QRST');
-    expect(await screen.findByText('Waiting for your co-pilot')).toBeInTheDocument();
+    expect(await screen.findByText('Waiting for your teammate')).toBeInTheDocument();
     expect(screen.getByText(YUL.name)).toBeInTheDocument();
     expect(screen.getByLabelText('Game code Q R S T')).toHaveTextContent('QRST');
     await userEvent.click(screen.getByRole('button', { name: 'Share invite' }));
