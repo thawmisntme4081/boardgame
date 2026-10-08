@@ -26,11 +26,11 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Actions**
 
-- [ ] 5. **L** `checkAction(state, seat, action)` returning a reason code (`not-your-turn`, `no-actions-left`, `not-adjacent`, `card-missing`, …) and the 4-actions counter; Pass.
-- [ ] 6. **M** Movement: Drive / Ferry, Direct, Charter and Shuttle Flight, with their discards.
-- [ ] 7. **L** Build a Research Station (at most 6; moving one when all are placed), Treat Disease, eradication.
-- [ ] 8. **M** Share Knowledge (give or take) as `share-offer` by the active player, then `share-accept` / `share-decline` by the partner or `share-cancel` by the active player; the action is spent only when accepted; while an offer is open the active player can only cancel it; a receiver over 7 cards owes a discard. No undo for any action.
-- [ ] 9. **L** Discover a Cure (5 cards of one color at a station); a fast-check property: cubes on the map plus the supply always equal the starting total per color.
+- [x] 5. **L** `checkAction(state, seat, action)` returning a reason code (`not-your-turn`, `no-actions-left`, `not-adjacent`, `card-missing`, …) and the 4-actions counter; Pass.
+- [x] 6. **M** Movement: Drive / Ferry, Direct, Charter and Shuttle Flight, with their discards.
+- [x] 7. **L** Build a Research Station (at most 6; moving one when all are placed), Treat Disease, eradication.
+- [x] 8. **M** Share Knowledge (give or take) as `share-offer` by the active player, then `share-accept` / `share-decline` by the partner or `share-cancel` by the active player; the action is spent only when accepted; while an offer is open the active player can only cancel it; a receiver over 7 cards owes a discard. No undo for any action.
+- [x] 9. **L** Discover a Cure (5 cards of one color at a station); a fast-check property: cubes on the map plus the supply always equal the starting total per color.
 
 **Draw and infect**
 
