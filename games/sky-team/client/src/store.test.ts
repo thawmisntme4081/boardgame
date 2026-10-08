@@ -1,10 +1,16 @@
 import type { PlatformApi } from '@platform/ui/game';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { connectPlatform } from './platform';
 import { useSkyTeam } from './store';
 import { makeView, resetStore, showView } from './test/fixtures';
 
-beforeEach(resetStore);
+vi.mock('sonner', () => ({ toast: { message: vi.fn() } }));
+
+beforeEach(() => {
+  resetStore();
+  vi.mocked(toast.message).mockClear();
+});
 
 describe("Sky Team's store", () => {
   it('toggles the selected die and resets its coffee', () => {
@@ -104,5 +110,30 @@ describe("the Flight Log's source", () => {
     } as unknown as PlatformApi<never, never>);
     await useSkyTeam.getState().syncHistory();
     expect(localStorage.getItem('sky-team:history')).not.toBeNull();
+  });
+});
+
+describe('a reroll started by the partner', () => {
+  const pending = (by: 'pilot' | 'copilot', on: boolean) =>
+    makeView('pilot', {
+      patch: { rerollPending: { pilot: on, copilot: on }, rerollBy: by },
+    });
+
+  it('tells you who started it, every time, and never for your own', () => {
+    showView(makeView('pilot'));
+    showView(pending('copilot', true));
+    expect(toast.message).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(toast.message).mock.calls[0]![0]).toContain('is using a reroll');
+    // The same partner spends a second token later in the game: told again.
+    showView(pending('copilot', false));
+    showView(pending('copilot', true));
+    expect(toast.message).toHaveBeenCalledTimes(2);
+    // A new view while it is still pending does not repeat the message.
+    showView(pending('copilot', true));
+    expect(toast.message).toHaveBeenCalledTimes(2);
+    // Your own reroll shows no message.
+    showView(pending('pilot', false));
+    showView(pending('pilot', true));
+    expect(toast.message).toHaveBeenCalledTimes(2);
   });
 });

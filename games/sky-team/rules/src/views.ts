@@ -52,6 +52,10 @@ export interface PlayerView {
   coffee: number;
   rerolls: number;
   rerollPending: Record<Seat, boolean>;
+  /** Who spent the token that opened the current reroll. */
+  rerollBy: Seat | null;
+  /** Your own dice selected in the last reroll; partner dice remain secret. */
+  rerolledDice: string[];
   speed: number | null;
   /** The finished round's dice and speed, until the next roll. */
   lastRound: GameState['lastRound'];
@@ -119,6 +123,8 @@ export function viewFor(state: GameState, seat: Seat, now = Date.now()): PlayerV
     coffee: state.coffee,
     rerolls: state.rerolls,
     rerollPending: { ...state.rerollPending },
+    rerollBy: state.rerollBy,
+    rerolledDice: state.lastReroll?.seat === seat ? [...state.lastReroll.dieIds] : [],
     speed: state.speed,
     lastRound: structuredClone(state.lastRound),
     timerMs: state.timerMs,

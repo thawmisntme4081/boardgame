@@ -9,6 +9,6 @@ export function DiceTray({ view, presence }: { view: PlayerView; presence: Prese
   if (view.phase === 'setup') return <SetupNote />;
   if (view.phase === 'strategy') return <StrategyTray view={view} presence={presence} />;
   if (view.phase !== 'placing') return null;
-  if (view.rerollPending[view.seat]) return <RerollTray view={view} />;
+  if (view.rerollPending[view.seat]) return <RerollTray view={view} presence={presence} />;
   return <PlacingTray view={view} presence={presence} />;
 }

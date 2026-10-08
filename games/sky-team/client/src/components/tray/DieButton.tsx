@@ -13,6 +13,7 @@ export function DieButton({
   kind,
   label,
   pressed,
+  animate,
   disabled,
   onClick,
   className,
@@ -22,11 +23,13 @@ export function DieButton({
   kind?: 'traffic';
   label: string;
   pressed: boolean;
+  /** Whether this die has just been rolled, rather than merely remounted. */
+  animate?: boolean;
   disabled?: boolean;
   onClick: () => void;
   className?: string;
 }) {
-  const face = useRolledValue(value);
+  const face = useRolledValue(value, animate);
   return (
     <button
       type="button"

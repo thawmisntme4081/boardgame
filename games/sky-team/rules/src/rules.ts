@@ -685,6 +685,8 @@ function endRound(state: GameState): void {
   state.setAside = { pilot: 0, copilot: 0 };
   state.speed = null;
   state.rerollPending = { pilot: false, copilot: false };
+  state.rerollBy = null;
+  state.lastReroll = null;
   state.abilityUse = {
     ...state.abilityUse,
     anticipation: false,
@@ -741,6 +743,8 @@ export function spendReroll(state: GameState, seat: Seat): GameState {
     pilot: s.dice.pilot.length > 0,
     copilot: s.dice.copilot.length > 0,
   };
+  s.rerollBy = seat;
+  s.lastReroll = null;
   s.log.push({ type: 'reroll-spent', round: s.round, seat });
   return s;
 }
@@ -764,6 +768,7 @@ export function rerollDice(state: GameState, seat: Seat, dieIds: string[]): Game
   const rolled = rollFor(s, dieIds);
   s.dice[seat] = s.dice[seat].map((d) => rolled.find((r) => r.id === d.id) ?? d);
   s.rerollPending[seat] = false;
+  s.lastReroll = { seat, dieIds: [...dieIds] };
   s.log.push({ type: 'reroll', round: s.round, seat, dice: rolled });
   // New values can leave the seat on turn without a legal move.
   settleTurn(s);

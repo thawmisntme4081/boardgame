@@ -93,6 +93,8 @@ export function createGame(
     // The reroll token on the first altitude goes straight to the supply.
     rerolls: first.reroll ? 1 : 0,
     rerollPending: { pilot: false, copilot: false },
+    rerollBy: null,
+    lastReroll: null,
     speed: null,
     lastRound: null,
     rngSeed: seed,

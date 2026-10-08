@@ -46,6 +46,9 @@
     "nextTurnLabel": "Manche suivante dans {{seconds}} secondes",
     "totalTrust": "Confiance totale"
   },
+  "toast": {
+    "partnerReroll": "{{name}} utilise une relance."
+  },
   "leave": {
     "button": "Quitter la partie",
     "title": "Quitter cette partie ?",
@@ -62,7 +65,8 @@
     "abilities": "Capacités :",
     "trafficLabel_one": "Dé Trafic",
     "trafficLabel_other": "Dés Trafic",
-    "rerollIntro": "Relance : cochez les dés à relancer (une fois).",
+    "rerollIntro": "{{name}} a lancé une relance : cochez les dés à relancer (une fois).",
+    "you": "Vous",
     "rerollDie": "Dé {{value}}",
     "rerollDieChosen": "Dé {{value}}, sera relancé",
     "rerollButton": "Relancer {{count}}",

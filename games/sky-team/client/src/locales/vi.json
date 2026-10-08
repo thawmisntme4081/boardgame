@@ -44,6 +44,9 @@
     "nextTurnLabel": "Vòng sau bắt đầu sau {{seconds}} giây",
     "totalTrust": "Tin tưởng tuyệt đối"
   },
+  "toast": {
+    "partnerReroll": "{{name}} đang dùng lượt đổ lại."
+  },
   "leave": {
     "button": "Rời ván",
     "title": "Rời ván chơi này?",
@@ -60,7 +63,8 @@
     "abilities": "Kỹ năng:",
     "trafficLabel_one": "Xúc xắc giao thông",
     "trafficLabel_other": "Xúc xắc giao thông",
-    "rerollIntro": "Đổ lại: chọn các xúc xắc muốn đổ lại (một lần).",
+    "rerollIntro": "{{name}} đã dùng lượt đổ lại: chọn các xúc xắc muốn đổ lại (một lần).",
+    "you": "Bạn",
     "rerollDie": "Xúc xắc {{value}}",
     "rerollDieChosen": "Xúc xắc {{value}}, sẽ đổ lại",
     "rerollButton": "Đổ lại {{count}}",

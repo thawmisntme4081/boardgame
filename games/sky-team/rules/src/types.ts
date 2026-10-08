@@ -263,6 +263,10 @@ export interface GameState {
   rerolls: number;
   /** Seats that may still reroll after a token was spent this round. */
   rerollPending: Record<Seat, boolean>;
+  /** Who spent the current reroll token, until the next round starts. */
+  rerollBy: Seat | null;
+  /** The most recent reroll, used only to animate the dice its owner chose. */
+  lastReroll: { seat: Seat; dieIds: string[] } | null;
   /** Engine sum this round, once both engine dice are placed. */
   speed: number | null;
   /** The finished round's board (dice and speed), kept until the next roll so players can look back. */

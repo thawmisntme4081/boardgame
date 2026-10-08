@@ -10,6 +10,9 @@ import {
 } from './lib/history';
 import { NS } from './i18n';
 import { platform, signedIn } from './platform';
+import { toast } from 'sonner';
+import { t } from './i18n';
+import { partnerOf } from './partner';
 
 /**
  * Sky Team's own UI state, next to the platform's store (connection, session, the latest view
@@ -62,6 +65,14 @@ export const useSkyTeam = create<SkyTeamStore>()((set, get) => ({
   history: loadHistory(),
 
   onView: (view, before, presence) => {
+    // The partner spent a reroll token: say who, every time (the same player may spend two).
+    if (
+      view.rerollPending[view.seat] &&
+      !before?.rerollPending[view.seat] &&
+      view.rerollBy !== view.seat
+    ) {
+      toast.message(t('toast.partnerReroll', { name: partnerOf(view, presence).name }));
+    }
     set((s) => {
       const ids = new Set(view.myDice.map((d) => d.id));
       // Synchronization: the co-pilot may be holding the traffic die.

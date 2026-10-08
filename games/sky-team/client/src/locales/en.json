@@ -46,6 +46,9 @@
     "nextTurnLabel": "Next turn in {{seconds}} seconds",
     "totalTrust": "Total Trust"
   },
+  "toast": {
+    "partnerReroll": "{{name}} is using a reroll."
+  },
   "leave": {
     "button": "Leave game",
     "title": "Leave this game?",
@@ -62,7 +65,8 @@
     "abilities": "Abilities:",
     "trafficLabel_one": "Traffic die",
     "trafficLabel_other": "Traffic dice",
-    "rerollIntro": "Reroll: tick the dice to roll again (once).",
+    "rerollIntro": "{{name}} started a reroll: tick the dice to roll again (once).",
+    "you": "You",
     "rerollDie": "Die {{value}}",
     "rerollDieChosen": "Die {{value}}, will reroll",
     "rerollButton": "Reroll {{count}}",

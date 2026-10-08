@@ -105,6 +105,7 @@ function PlacingDice({ view }: { view: PlayerView }) {
             value={shown}
             seat={view.seat}
             pressed={isSelected}
+            animate={view.rerollBy === null || view.rerolledDice.includes(die.id)}
             label={t('tray.yourDie', { value: shown })}
             disabled={spare}
             onClick={() => selectDie(die.id)}
