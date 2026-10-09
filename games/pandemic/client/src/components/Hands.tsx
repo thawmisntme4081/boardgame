@@ -9,30 +9,32 @@ export function Hands({ view, presence }: { view: PandemicView; presence: SeatPr
   const { t } = useTranslation('pandemic');
   const cardText = useCardText();
   return (
-    <section aria-labelledby="hands-title" className="flex flex-col gap-2 text-sm">
+    <section aria-labelledby="hands-title" className="flex flex-col gap-1 text-sm">
       <h2 id="hands-title" className="font-semibold">
         {t('hands.title')}
       </h2>
-      {view.seats.map((seat) => {
-        const hand = view.hands[seat] ?? [];
-        return (
-          <div key={seat}>
-            <p className="font-medium">
-              {seatName(presence, seat)}
-              {seat === view.you ? ` (${t('board.you')})` : ''}
-            </p>
-            {hand.length === 0 ? (
-              <p className="text-muted-foreground">{t('hands.empty')}</p>
-            ) : (
-              <ul>
-                {hand.map((card, i) => (
-                  <li key={i}>{cardText(card)}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        );
-      })}
+      <div className="flex gap-8">
+        {view.seats.map((seat) => {
+          const hand = view.hands[seat] ?? [];
+          return (
+            <div key={seat}>
+              <p className="font-medium">
+                {seatName(presence, seat)}
+                {seat === view.you ? ` (${t('board.you')})` : ''}
+              </p>
+              {hand.length === 0 ? (
+                <p className="text-muted-foreground">{t('hands.empty')}</p>
+              ) : (
+                <ul>
+                  {hand.map((card, i) => (
+                    <li key={i}>{cardText(card)}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

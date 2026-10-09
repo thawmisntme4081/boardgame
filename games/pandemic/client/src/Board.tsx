@@ -1,13 +1,15 @@
-// The plain board (Pandemic 02): lists and buttons, no map yet. Everything it shows comes from
-// the view; every button is enabled by `canActInView`, so no rule lives here.
+// The board: the map with its tracks and piles in the middle, the actions on the side, the hands
+// below it. It fills one window (desktop only) and never scrolls as a page. Everything it shows
+// comes from the view; every button is enabled by `canActInView`, so no rule lives here.
 import type { TableView } from '@pandemic/rules';
 import type { BoardProps } from '@platform/ui/game';
 import { useTranslation } from 'react-i18next';
 import { ActionBar } from './components/ActionBar';
-import { Cities } from './components/Cities';
+import { MapPieces } from './components/MapPieces';
+import { MapTracks } from './components/MapTracks';
 import { Hands } from './components/Hands';
 import { Prompts } from './components/Prompts';
-import { Tracks } from './components/Tracks';
+import { WorldMap } from './components/WorldMap';
 import { seatName } from './lib/names';
 
 export function Board({ view, presence }: BoardProps<TableView>) {
@@ -20,9 +22,8 @@ export function Board({ view, presence }: BoardProps<TableView>) {
       ? t('board.yourTurn')
       : t('board.turnOf', { name: seatName(presence, turn.seat) });
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">{t('board.title')}</h1>
+    <main className="mx-auto flex h-dvh max-w-[90rem] flex-col gap-3 overflow-hidden p-3">
+      <header className="shrink-0">
         {view.status === 'playing' ? (
           <p>
             {turnText} · {t(`board.step.${turn.step}`)} ·{' '}
@@ -38,16 +39,22 @@ export function Board({ view, presence }: BoardProps<TableView>) {
           </p>
         )}
       </header>
-      <Prompts view={view} presence={presence} />
-      <div className="grid gap-6 desktop:grid-cols-2">
-        <div className="flex flex-col gap-6">
-          <Tracks view={view} />
-          <Cities view={view} presence={presence} />
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_20rem] gap-3">
+        <div className="flex min-h-0 flex-col gap-3">
+          <div className="min-h-0 flex-1">
+            <WorldMap cures={view.cures}>
+              <MapTracks view={view} />
+              <MapPieces view={view} presence={presence} />
+            </WorldMap>
+          </div>
+          <div className="max-h-44 shrink-0 overflow-auto">
+            <Hands view={view} presence={presence} />
+          </div>
         </div>
-        <div className="flex flex-col gap-6">
-          <Hands view={view} presence={presence} />
+        <aside className="flex min-h-0 flex-col gap-3 overflow-auto">
+          <Prompts view={view} presence={presence} />
           {view.status === 'playing' && <ActionBar view={view} presence={presence} />}
-        </div>
+        </aside>
       </div>
     </main>
   );

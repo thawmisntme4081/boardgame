@@ -10,7 +10,6 @@
     "epidemics_other": "{{count}} epidemic cards"
   },
   "board": {
-    "title": "Pandemic",
     "turnOf": "{{name}}'s turn",
     "yourTurn": "Your turn",
     "actionsLeft_one": "{{count}} action left",
@@ -43,6 +42,10 @@
     "playerDeck": "Player deck: {{count}} cards",
     "infectionDeck": "Infection deck: {{count}} cards",
     "supply": "Cubes left",
+    "stationsLeft": "Research stations left: {{count}}",
+    "supplyOf": "{{color}} cubes left",
+    "infectionDiscard": "Infection discard pile: {{count}} cards",
+    "playerDiscard": "Player discard pile: {{count}} cards",
     "cures": "Cures",
     "cureState": {
       "none": "not cured",

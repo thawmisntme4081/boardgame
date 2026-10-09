@@ -8,7 +8,7 @@ The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edi
 
 | File | Contents |
 | --- | --- |
-| `cities.ts` | The 48 cities: `color`, `links` (the white lines, Pacific ones included, in a fixed order) and `at` (a position on the map picture, as fractions of its width and height); `cityOf`, `areLinked`, `PACIFIC_LINKS`. Written from the standard board (the rulebook's text has none of it); to be checked against the physical board |
+| `cities.ts` | The 48 cities: `color`, `links` (the white lines, Pacific ones included, in a fixed order; where each city sits on the map picture is the client's `lib/mapGeometry.ts`); `cityOf`, `areLinked`, `PACIFIC_LINKS`. Written from the standard board (the rulebook's text has none of it); to be checked against the physical board |
 | `types.ts` | `SeatId` (`p1`–`p4`), the rulebook's numbers, `EVENT_IDS`, `ROLE_IDS`, `PlayerCard` / `HandCard`, `Turn`, `Pending`, `GameState`; `ActionState` (the fields the move checks read: a state or a view) |
 | `setup.ts` | `createGame({ seats, epidemics, seed })`, the seeded `shuffle`, `pileSizes` |
 | `actions.ts` | The actions: `checkAction` (a reason code), `applyAction`, `spendAction`, `cubesOnBoard`, `cardsToCure` |
