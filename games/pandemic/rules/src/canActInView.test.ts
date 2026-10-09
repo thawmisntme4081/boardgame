@@ -6,6 +6,7 @@ import { CITIES, COLORS } from './cities';
 import { candidateActions } from './legal';
 import { canActInView, type PandemicMove } from './moves';
 import { agentMove } from './random-play';
+import { dealt } from './test-utils';
 import { SEATS, type GameState } from './types';
 import { viewFor } from './views';
 
@@ -43,7 +44,7 @@ describe('canActInView', () => {
           seats,
           seed,
           nextMove(state, random) {
-            visited.push(state);
+            visited.push(dealt(state));
             return agentMove(state, random);
           },
           maxSteps: 3000,

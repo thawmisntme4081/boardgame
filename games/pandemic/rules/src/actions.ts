@@ -49,7 +49,11 @@ export type ActionReason =
   | 'no-offer'
   | 'not-your-answer'
   // Turn steps (see turn.ts)
-  | 'nothing-to-discard';
+  | 'nothing-to-discard'
+  // The table (see table.ts)
+  | 'bad-seat'
+  | 'room-full'
+  | 'not-started';
 
 export type ActionCheck = { ok: true } | { ok: false; reason: ActionReason };
 

@@ -51,13 +51,17 @@
     "gameCodeLabel": "Code de la partie {{spelled}}",
     "shareInvite": "Partager l’invitation",
     "cancel": "Annuler",
-    "connecting": "Connexion à votre partie…"
+    "connecting": "Connexion à votre partie…",
+    "seatsTitle": "Joueurs ({{taken}} sur {{total}})",
+    "seatEmpty": "En attente d’un joueur…",
+    "seatYou": "(vous)",
+    "seatOffline": "(hors ligne)"
   },
   "toast": {
     "noAnswer": "Le serveur n’a pas répondu. Vérifiez votre connexion.",
     "inviteCopied": "Lien d’invitation copié",
     "shareText": "Rejoins ma partie",
-    "partnerLeft": "{{name}} a quitté la partie. Partagez le code pour voler avec quelqu’un d’autre.",
+    "partnerLeft": "{{name}} a quitté la partie. Partagez le code pour inviter quelqu’un d’autre.",
     "partnerJoined": "{{name}} a rejoint la partie.",
     "partnerOffline": "{{name}} a perdu la connexion. Son poste lui est gardé.",
     "partnerBack": "{{name}} est de retour."

@@ -322,6 +322,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@pandemic/rules':
+        specifier: workspace:*
+        version: link:../../games/pandemic/rules
       '@platform/engine':
         specifier: workspace:*
         version: link:../engine

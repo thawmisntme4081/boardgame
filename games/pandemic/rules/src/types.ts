@@ -129,3 +129,20 @@ export type ActionState = Pick<
   GameState,
   'seats' | 'status' | 'turn' | 'pending' | 'pawns' | 'hands' | 'cubes' | 'stations' | 'cures'
 >;
+
+/**
+ * Before the game: the seats taken so far. The game is dealt (`createGame`) when `players` seats
+ * are taken; until then nobody plays.
+ */
+export interface WaitingState {
+  status: 'waiting';
+  /** Seats in the order they were taken. */
+  seated: SeatId[];
+  /** Players the creator chose in the lobby (2 to 4). */
+  players: number;
+  epidemics: number;
+  seed: number;
+}
+
+/** A Pandemic table: waiting for players, or a game. */
+export type PandemicState = WaitingState | GameState;

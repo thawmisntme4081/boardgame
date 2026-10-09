@@ -1,7 +1,19 @@
 // Helpers for tests: a seeded game with an empty board, so each test sets up only what it needs.
 import { CITIES, type CityId, type Color } from './cities';
 import { createGame } from './setup';
-import { CUBES_PER_COLOR, type GameState, type HandCard, type SeatId } from './types';
+import {
+  CUBES_PER_COLOR,
+  type GameState,
+  type HandCard,
+  type PandemicState,
+  type SeatId,
+} from './types';
+
+/** The game of a table that has every seat taken (tests set it up that way). */
+export function dealt(state: PandemicState): GameState {
+  if (state.status === 'waiting') throw new Error('the game is still waiting for players');
+  return state;
+}
 
 export const city = (id: CityId): HandCard => ({ kind: 'city', city: id });
 

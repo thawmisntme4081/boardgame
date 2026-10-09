@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@pandemic/rules": "workspace:*",
     "@platform/engine": "workspace:*",
     "@platform/protocol": "workspace:*",
     "@sentry/node": "^11.4.0",
