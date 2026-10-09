@@ -24,7 +24,7 @@
 
 - [x] Unit, property, integration and component suites (Vitest): 159 tests
 - [x] Playwright E2E on Desktop Chrome, iPhone 13 (WebKit) and Pixel 7: lobby, invite link, unknown code, a full game to a crash + "Fly again", a landing from a prepared final round, refreshing mid-round, leaving and a newcomer joining, one desktop + phone game
-- [x] CI workflow: `check` on every push to `main` and every PR; `e2e` after it
+- [x] CI workflow: `check` on every push to `main` or `release/*` and every PR into them; `e2e` after it
 - [x] Suites green in GitHub Actions
 - [x] Lighthouse mobile audit in CI (`pnpm lighthouse`); local run: accessibility 100, best practices 100, touch targets pass, performance 87. Runs in CI (Linux) only: `lhci` fails its temp-folder cleanup on Windows
 
