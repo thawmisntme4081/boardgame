@@ -15,7 +15,7 @@ import {
 } from '@sky/rules';
 import { applyAgentAction, createRandomAgent, playRandomGame } from '@sky/rules/random-play';
 import { afterEach, describe, expect, it } from 'vitest';
-import { RoomManager } from './rooms';
+import { SkyRooms as RoomManager } from './test-server';
 import {
   move,
   moveWithSeq,

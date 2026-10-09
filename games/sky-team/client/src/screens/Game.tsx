@@ -92,7 +92,7 @@ export default function Game({
   useTurnBuzz(view);
 
   return (
-    // On desktop the game sits in a centred container over a muted page.
+    // On desktop the game sits in a centered container over a muted page.
     <div className="bg-muted">
       <div
         className="game-grid bg-background desktop:border-x desktop:shadow-sm"

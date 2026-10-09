@@ -2,6 +2,7 @@
 // hand limit, infect cities, then the next player's turn. Every card is its own move of the
 // active player, so events (Pandemic 05) can be played between them.
 import type { ActionCheck, ActionReason } from './actions';
+import { nextTurnLog, type LogEntry } from './log';
 import { infectCity, lose } from './outbreak';
 import { shuffle } from './setup';
 import {
@@ -61,8 +62,19 @@ function beginInfect(state: GameState): void {
   }
 }
 
+const record = (state: GameState, entry: LogEntry): void => {
+  state.log.current.entries.push(entry);
+};
+
+/** Infects `city` with `count` cubes and writes what happened to the log. */
+function infectAndLog(state: GameState, city: CityId, count: number, epidemic: boolean): void {
+  const done = infectCity(state, city, count);
+  record(state, { type: 'infect', city, epidemic, ...done });
+}
+
 function endTurn(state: GameState): void {
   const next = state.seats[(state.seats.indexOf(state.turn.seat) + 1) % state.seats.length];
+  state.log = nextTurnLog(state.log, next as SeatId);
   state.turn = {
     seat: next as SeatId,
     actionsLeft: ACTIONS_PER_TURN,
@@ -87,7 +99,9 @@ function draw(state: GameState): void {
     lose(state, 'player-deck');
     return;
   }
-  for (const card of state.playerDeck.splice(0, 2)) {
+  const cards = state.playerDeck.splice(0, 2);
+  record(state, { type: 'draw', cards });
+  for (const card of cards) {
     if (card.kind === 'epidemic') turn.epidemics += 1;
     else (state.hands[turn.seat] as HandCard[]).push(card);
   }
@@ -104,16 +118,21 @@ function epidemic(state: GameState): void {
   switch (turn.epidemicStep) {
     case 'increase':
       state.infectionRate = Math.min(state.infectionRate + 1, INFECTION_RATES.length - 1);
+      record(state, {
+        type: 'epidemic-increase',
+        rate: INFECTION_RATES[state.infectionRate] as number,
+      });
       turn.epidemicStep = 'infect';
       return;
     case 'infect': {
       const bottom = state.infectionDeck.pop() as CityId;
-      infectCity(state, bottom, 3);
+      infectAndLog(state, bottom, 3, true);
       state.infectionDiscard.push(bottom);
       turn.epidemicStep = 'intensify';
       return;
     }
     case 'intensify':
+      record(state, { type: 'epidemic-intensify', cards: state.infectionDiscard.length });
       intensify(state);
       turn.epidemics -= 1;
       if (turn.epidemics > 0) turn.epidemicStep = 'increase';
@@ -127,7 +146,7 @@ function infect(state: GameState): void {
   // An empty deck flips nothing (it is not expected: epidemics refill it); the discard stays.
   const top = state.infectionDeck.shift();
   if (top !== undefined) {
-    infectCity(state, top, 1);
+    infectAndLog(state, top, 1, false);
     state.infectionDiscard.push(top);
   }
   turn.infectionsLeft -= 1;

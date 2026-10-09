@@ -15,7 +15,7 @@ Needs [Pandemic 08](phase-08-expansion-modules.md). Expansion phases are optiona
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 - [ ] 1. **L** Read the rulebook; write the full content list into Open questions; confirm with the user.
 - [ ] 2. **M** Superbug module: rules and tests.
@@ -34,4 +34,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - The expansion's exact content (fill in at task 1).
 
-**Done when:** each State of Emergency module plays on phones, alone and combined with the others.
+**Done when:** each State of Emergency module plays on desktop, alone and combined with the others.

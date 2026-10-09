@@ -7,7 +7,13 @@ import { cubesOnBoard } from './actions';
 import { legalActions, legalShareOffers } from './legal';
 import type { PandemicMove } from './moves';
 import { shareAnswerer } from './share';
-import { CARDS_TO_CURE, type GameState, type HandCard, type SeatId } from './types';
+import {
+  CARDS_TO_CURE,
+  type GameState,
+  type HandCard,
+  type PandemicState,
+  type SeatId,
+} from './types';
 
 const pick = <T>(items: readonly T[], random: () => number): T =>
   items[Math.floor(random() * items.length)] as T;
@@ -52,7 +58,9 @@ function cardToDiscard(hand: readonly HandCard[]): HandCard {
 }
 
 /** The next move of a random game: any seat, in any state. */
-export function agentMove(state: GameState, random: () => number): NextMove<PandemicMove> {
+export function agentMove(table: PandemicState, random: () => number): NextMove<PandemicMove> {
+  if (table.status === 'waiting') throw new Error('random play needs every seat taken');
+  const state: GameState = table;
   const { pending, turn } = state;
   if (pending?.kind === 'discard') {
     const card = cardToDiscard(state.hands[pending.seat] as HandCard[]);

@@ -81,7 +81,7 @@ boardgame/
 │ ├── ui/ # @platform/ui: the client kit every game builds with
 │ │ └── src/
 │ │ ├── components/ # shadcn components (added here)
-│ │ ├── theme.css # Tailwind theme: fonts, colour tokens, dark mode, breakpoints
+│ │ ├── theme.css # Tailwind theme: fonts, color tokens, dark mode, breakpoints
 │ │ ├── i18n.ts # the one i18next instance; addLocales(namespace, texts)
 │ │ ├── locales/ # the platform namespace: en, vi, fr
 │ │ ├── LanguageSwitch.tsx
@@ -123,7 +123,7 @@ boardgame/
 │ │ # GameOverDialog, ScenarioPicker, FlightLog
 │ ├── svgs/ # DieFace, FlightInstrument, tracks, WindRing, markers…
 │ ├── lib/ # moves, setup, history, seat styles, small hooks
-│ └── styles.css # seat colours, cockpit and game grids, animations
+│ └── styles.css # seat colors, cockpit and game grids, animations
 ├── e2e/ # Playwright tests
 └──.github/workflows/ci.yml
 ```

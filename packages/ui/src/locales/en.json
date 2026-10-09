@@ -10,6 +10,10 @@
     "sky-team": {
       "name": "Sky Team",
       "blurb": "Two players, cooperative: land the plane together without talking."
+    },
+    "pandemic": {
+      "name": "Pandemic",
+      "blurb": "Two to four players, cooperative: cure four diseases before they overrun the world."
     }
   },
   "gate": {
@@ -51,13 +55,17 @@
     "gameCodeLabel": "Game code {{spelled}}",
     "shareInvite": "Share invite",
     "cancel": "Cancel",
-    "connecting": "Connecting to your game…"
+    "connecting": "Connecting to your game…",
+    "seatsTitle": "Players ({{taken}} of {{total}})",
+    "seatEmpty": "Waiting for a player…",
+    "seatYou": "(you)",
+    "seatOffline": "(offline)"
   },
   "toast": {
     "noAnswer": "The server did not answer. Check your connection.",
     "inviteCopied": "Invite link copied",
     "shareText": "Join my game",
-    "partnerLeft": "{{name}} left the game. Share the code to fly with someone else.",
+    "partnerLeft": "{{name}} left the game. Share the code to invite someone else.",
     "partnerJoined": "{{name}} joined the game.",
     "partnerOffline": "{{name}} lost connection. Their seat is kept for them.",
     "partnerBack": "{{name}} is back."

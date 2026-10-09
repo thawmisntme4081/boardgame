@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer, type ServerOptions } from './app';
-import { RoomManager } from './rooms';
+import { SkyRooms as RoomManager } from './test-server';
 
 let close: (() => Promise<void>) | undefined;
 

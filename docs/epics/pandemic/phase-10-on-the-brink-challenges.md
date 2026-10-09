@@ -15,7 +15,7 @@ Needs [Pandemic 09](phase-09-on-the-brink-roles-events.md). Expansion phases are
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Virulent Strain**
 
@@ -47,4 +47,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - Rule details, from the rulebook (to fill in at the start of each challenge).
 
-**Done when:** the three challenges play separately and together on phones, with no leak of the hidden role.
+**Done when:** the three challenges play separately and together on desktop, with no leak of the hidden role.

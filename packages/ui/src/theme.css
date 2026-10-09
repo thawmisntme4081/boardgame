@@ -1,4 +1,4 @@
-/* The platform's look, shared by every game: fonts, the shadcn colour tokens (light and
+/* The platform's look, shared by every game: fonts, the shadcn color tokens (light and
    dark), breakpoints and base styles. A game adds its own tokens in its own stylesheet. */
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';

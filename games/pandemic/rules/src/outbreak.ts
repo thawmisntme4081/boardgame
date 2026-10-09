@@ -23,9 +23,10 @@ function placeCubes(state: GameState, city: CityId, color: Color, count: number)
 /**
  * An outbreak of `color` in `start`: the marker moves, every connected city gets a cube, and a
  * city that would get a fourth has a chain reaction after this outbreak is done (first in, first
- * out). A city outbreaks once per call, so a loop of cities ends.
+ * out). A city outbreaks once per call, so a loop of cities ends. Returns the cities that
+ * outbroke, in order.
  */
-function outbreak(state: GameState, start: CityId, color: Color): void {
+function outbreak(state: GameState, start: CityId, color: Color): CityId[] {
   const queue: CityId[] = [start];
   const queued = new Set<CityId>(queue);
   const outbroken = new Set<CityId>();
@@ -34,7 +35,7 @@ function outbreak(state: GameState, start: CityId, color: Color): void {
     state.outbreaks += 1;
     if (state.outbreaks >= MAX_OUTBREAKS) {
       lose(state, 'outbreaks');
-      return;
+      return [...outbroken];
     }
     for (const next of cityOf(city).links) {
       if (outbroken.has(next) || queued.has(next)) continue;
@@ -42,20 +43,37 @@ function outbreak(state: GameState, start: CityId, color: Color): void {
         queued.add(next);
         queue.push(next);
       } else if (!placeCubes(state, next, color, 1)) {
-        return;
+        return [...outbroken];
       }
     }
   }
+  return [...outbroken];
+}
+
+/** What infecting a city did (see `infectCity`). */
+export interface Infection {
+  color: Color;
+  /** Cubes put on the city itself. */
+  cubes: number;
+  eradicated: boolean;
+  /** The cities that outbroke, in order: the city itself first, then its chain. */
+  outbreaks: CityId[];
 }
 
 /**
  * Infects a city with `count` cubes of its color (1 for an infection card, 3 for an epidemic):
  * nothing if the disease is eradicated; cubes up to 3, and an outbreak when there was not room.
  */
-export function infectCity(state: GameState, city: CityId, count: number): void {
+export function infectCity(state: GameState, city: CityId, count: number): Infection {
   const color = cityOf(city).color;
-  if (state.cures[color] === 'eradicated') return;
+  if (state.cures[color] === 'eradicated') {
+    return { color, cubes: 0, eradicated: true, outbreaks: [] };
+  }
   const room = CUBES_PER_CITY - state.cubes[city][color];
-  if (!placeCubes(state, city, color, Math.min(count, room))) return;
-  if (count > room) outbreak(state, city, color);
+  const cubes = Math.min(count, room);
+  if (!placeCubes(state, city, color, cubes)) {
+    return { color, cubes: 0, eradicated: false, outbreaks: [] };
+  }
+  const outbreaks = count > room ? outbreak(state, city, color) : [];
+  return { color, cubes, eradicated: false, outbreaks };
 }

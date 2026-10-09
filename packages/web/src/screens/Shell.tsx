@@ -1,4 +1,4 @@
-// The platform's pages around the games: a centred card on a muted page, and its parts.
+// The platform's pages around the games: a centered card on a muted page, and its parts.
 import { Button } from '@platform/ui/components/button';
 import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';

@@ -15,7 +15,7 @@ Needs [Pandemic 03](phase-03-board-and-client.md). Rules and UI together.
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Rules**
 

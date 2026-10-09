@@ -1,4 +1,4 @@
-/* Sky Team's own look: seat colours and cockpit lights (as Tailwind tokens), the cockpit and
+/* Sky Team's own look: seat colors and cockpit lights (as Tailwind tokens), the cockpit and
    game grids, and its animations. Imported by the platform shell's stylesheet. */
 @theme {
   /* Seat colors and cockpit lights, usable as utilities and as SVG fills. */
@@ -54,7 +54,7 @@
     grid-template-areas: 'status status' 'tracks tray' 'cockpit tray';
   }
 
-  /* One centred column in a container: tracks above the cockpit, dice tray below. */
+  /* One centered column in a container: tracks above the cockpit, dice tray below. */
   @variant desktop {
     max-width: min(100%, calc(72rem + var(--module-columns, 0) * 7.75rem));
     margin-inline: auto;
@@ -89,7 +89,7 @@
     fill: oklch(63.7% 0.237 25.331); /* red-500 */
   }
 }
-/* The same on a dark board: light grey and red. */
+/* The same on a dark board: light gray and red. */
 @keyframes traffic-plane-dark {
   0%,
   100% {

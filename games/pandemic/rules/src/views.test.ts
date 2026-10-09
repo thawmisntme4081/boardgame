@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { pandemic } from './definition';
+import { dealt } from './test-utils';
 import { viewFor } from './views';
 import type { GameState } from './types';
 
 const game = (seed: number): GameState =>
-  pandemic.setup({
-    config: { players: 3, epidemics: 5 },
-    seats: ['p1', 'p2', 'p3'],
-    host: 'p1',
-    seed,
-  });
+  dealt(
+    pandemic.setup({
+      config: { players: 3, epidemics: 5 },
+      seats: ['p1', 'p2', 'p3'],
+      host: 'p1',
+      seed,
+    }),
+  );
 
 describe('views', () => {
   it('show every hand to every seat, and to a spectator', () => {

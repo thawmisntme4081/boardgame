@@ -6,7 +6,7 @@ Needs [Pandemic 05](phase-05-events.md).
 
 ## Goals
 
-- Everything chosen before the first turn, and each player's record of past games. Ends with the epic's check: 2–4 players finish a game on phones and desktop.
+- Everything chosen before the first turn, and each player's record of past games. Ends with the epic's check: 2–4 players finish a game on desktop.
 
 ## Feature scope
 
@@ -14,7 +14,7 @@ Needs [Pandemic 05](phase-05-events.md).
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Rules**
 
@@ -30,7 +30,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Checks**
 
-- [ ] 7. **M** Playwright: a full 3-player game on iPhone 13 and Pixel 7; 2- and 4-player smoke tests; the full run (`pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`).
+- [ ] 7. **M** Playwright: a full 3-player game on Desktop Chrome; 2- and 4-player smoke tests; the full run (`pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`).
 
 ## Checklist
 
@@ -43,4 +43,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - Roles: random deal by default (as the rulebook), choosing as an option. Assumption (to confirm).
 
-**Done when:** 2, 3 and 4 players finish a game on phones and desktop at each difficulty, and it shows in their Flight Log.
+**Done when:** 2, 3 and 4 players finish a game on desktop at each difficulty, and it shows in their Flight Log.
