@@ -1,6 +1,7 @@
 // Setting up a game from a seed: the same seed always gives the same game.
 import { nextRandom } from '@platform/engine';
 import { CITIES, cityOf, type CityId, type Color } from './cities';
+import { emptyLog } from './log';
 import {
   ACTIONS_PER_TURN,
   CUBES_PER_COLOR,
@@ -154,6 +155,7 @@ export function createGame({ seats, epidemics, seed }: CreateGameOptions): GameS
     outbreaks: 0,
     infectionRate: 0,
     cures: perColor('none'),
+    log: emptyLog(order.items[0] as SeatId),
     rngSeed: seed,
     rngState,
   };

@@ -1,5 +1,4 @@
 import {
-  CITIES,
   COLORS,
   MAX_STATIONS,
   canActInView,
@@ -17,19 +16,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
-import { usePandemic } from '../store';
 
 const send = (move: PandemicMove) => void platform().send(move);
 
 const selectClass = 'h-11 rounded-md border bg-background px-2 text-sm';
 
-/** The city cards of `color` in the hand: the cards a cure would use. */
-function cureCards(view: PandemicView, seat: SeatId, color: Color): CityId[] {
+/** Every city card of `color` in the hand: the cards a cure could use. */
+function colorCards(view: PandemicView, seat: SeatId, color: Color): CityId[] {
   const hand = view.hands[seat] ?? [];
   return hand
     .flatMap((card) => (card.kind === 'city' ? [card.city] : []))
-    .filter((city) => cityOf(city).color === color)
-    .slice(0, cardsToCure());
+    .filter((city) => cityOf(city).color === color);
 }
 
 /** Every action as a plain button, enabled only where `canActInView` says it is legal. */
@@ -41,24 +38,14 @@ export function ActionBar({
   presence: SeatPresence | null;
 }) {
   const { t } = useTranslation('pandemic');
-  const target = usePandemic((s) => s.selectedCity);
-  const selectCity = usePandemic((s) => s.selectCity);
   const [moveStation, setMoveStation] = useState<CityId | ''>('');
+  // A cure with more cards of its color than it needs: the player picks which to discard.
+  const [curing, setCuring] = useState<{ color: Color; picked: CityId[] } | null>(null);
   const { you, turn } = view;
 
   if (!you) return <p className="text-sm text-muted-foreground">{t('actions.spectator')}</p>;
   const can = (move: PandemicMove) => canActInView(view, you, move);
   const stationsFull = view.stations.length >= MAX_STATIONS;
-  const move = (type: 'drive' | 'direct' | 'charter' | 'shuttle') => (
-    <Button
-      key={type}
-      variant="outline"
-      disabled={!target || !can({ type, to: target })}
-      onClick={() => target && send({ type, to: target })}
-    >
-      {t(`actions.${type}`)}
-    </Button>
-  );
 
   return (
     <section aria-labelledby="actions-title" className="flex flex-col gap-3">
@@ -68,25 +55,7 @@ export function ActionBar({
       {turn.seat !== you && (
         <p className="text-sm text-muted-foreground">{t('actions.notYourTurn')}</p>
       )}
-
-      <label className="flex flex-col gap-1 text-sm">
-        {t('actions.target')}
-        <select
-          className={selectClass}
-          value={target ?? ''}
-          onChange={(e) => selectCity((e.target.value || null) as CityId | null)}
-        >
-          <option value="">{t('actions.targetPlaceholder')}</option>
-          {CITIES.map(({ id }) => (
-            <option key={id} value={id}>
-              {cityName(id)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {(['drive', 'direct', 'charter', 'shuttle'] as const).map(move)}
-      </div>
+      <p className="text-sm text-muted-foreground">{t('actions.moveHint')}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         {stationsFull && (
@@ -125,19 +94,77 @@ export function ActionBar({
           </Button>
         ))}
         {COLORS.map((color) => {
-          const cards = cureCards(view, you, color);
+          const owned = colorCards(view, you, color);
+          const needed = cardsToCure();
+          // Which cards makes no difference to whether a cure is legal, only how many.
+          const first = owned.slice(0, needed);
           return (
             <Button
               key={`cure-${color}`}
               variant="outline"
-              disabled={!can({ type: 'cure', color, cards })}
-              onClick={() => send({ type: 'cure', color, cards })}
+              disabled={!can({ type: 'cure', color, cards: first })}
+              onClick={() =>
+                owned.length > needed
+                  ? setCuring({ color, picked: [] })
+                  : send({ type: 'cure', color, cards: first })
+              }
             >
               {t('actions.cure', { color: t(`color.${color}`) })}
             </Button>
           );
         })}
       </div>
+
+      {curing && (
+        <fieldset className="flex flex-col gap-2 rounded-md border p-2">
+          <legend className="px-1 text-sm font-medium">
+            {t('actions.cureChoose', {
+              color: t(`color.${curing.color}`),
+              count: cardsToCure(),
+            })}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {colorCards(view, you, curing.color).map((city) => {
+              const on = curing.picked.includes(city);
+              return (
+                <Button
+                  key={city}
+                  size="sm"
+                  variant={on ? 'default' : 'outline'}
+                  aria-pressed={on}
+                  onClick={() =>
+                    setCuring({
+                      ...curing,
+                      picked: on
+                        ? curing.picked.filter((picked) => picked !== city)
+                        : [...curing.picked, city],
+                    })
+                  }
+                >
+                  {cityName(city)}
+                </Button>
+              );
+            })}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {t('actions.cureChosen', { chosen: curing.picked.length, count: cardsToCure() })}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              disabled={!can({ type: 'cure', color: curing.color, cards: curing.picked })}
+              onClick={() => {
+                send({ type: 'cure', color: curing.color, cards: curing.picked });
+                setCuring(null);
+              }}
+            >
+              {t('actions.cureConfirm')}
+            </Button>
+            <Button variant="ghost" onClick={() => setCuring(null)}>
+              {t('actions.cureCancel')}
+            </Button>
+          </div>
+        </fieldset>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {view.seats

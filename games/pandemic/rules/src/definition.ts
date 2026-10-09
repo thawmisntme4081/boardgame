@@ -14,6 +14,7 @@ import { CITIES, COLORS } from './cities';
 import { applyMove, checkMove, type PandemicMove } from './moves';
 import { outcome } from './outcome';
 import { shareAnswerer } from './share';
+import { emptyLog } from './log';
 import { checkJoin, openTable, seatJoined, seatLeft } from './table';
 import {
   EPIDEMIC_COUNTS,
@@ -21,6 +22,7 @@ import {
   MAX_PLAYERS,
   MIN_PLAYERS,
   SEATS,
+  type GameState,
   type PandemicState,
   type SeatId,
 } from './types';
@@ -110,7 +112,8 @@ function actors(state: PandemicState): Actor[] {
 
 export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, PandemicConfig> = {
   id: 'pandemic',
-  version: 1,
+  // 2: the state holds a `log` (Pandemic 03).
+  version: 2,
   // A player who leaves frees the seat, not the hand: the game waits for whoever joins next.
   meta: {
     seats: SEATS,
@@ -142,6 +145,12 @@ export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, Pandemi
     return applyMove(state, ctx.by as SeatId, move as PandemicMove);
   },
   view: (state, viewer: Viewer) => tableViewFor(state, viewer),
+  migrate(state, fromVersion) {
+    if (fromVersion > 2) throw new Error(`no migration from rules version ${fromVersion}`);
+    const old = state as PandemicState;
+    if (old.status === 'waiting' || 'log' in old) return old;
+    return { ...(old as GameState), log: emptyLog((old as GameState).turn.seat) };
+  },
   started: (state) => state.status !== 'waiting',
   outcome: (state): Outcome | null => (state.status === 'waiting' ? null : outcome(state)),
 };

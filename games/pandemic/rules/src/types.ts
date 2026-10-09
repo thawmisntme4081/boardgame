@@ -1,6 +1,7 @@
 // The game's state and constants. State is plain JSON (it is saved and replayed), and the
 // rules in the other files are pure functions over it.
 import type { CityId, Color } from './cities';
+import type { GameLog } from './log';
 
 export type SeatId = 'p1' | 'p2' | 'p3' | 'p4';
 
@@ -117,6 +118,8 @@ export interface GameState {
   /** Position of the infection rate marker on `INFECTION_RATES`. */
   infectionRate: number;
   cures: Record<Color, CureState>;
+  /** What happened after the actions in the current and the previous turn (see `log.ts`). */
+  log: GameLog;
   rngSeed: number;
   rngState: number;
 }

@@ -18,9 +18,9 @@
 <rect x="200" y="10" width="150" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="275.0" y="31.5" text-anchor="middle" fill="#14532d">02 N seats</text>
 <text x="275.0" y="47.5" text-anchor="middle" fill="#14532d">+ skeleton</text>
-<rect x="390" y="10" width="150" height="50" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
-<text x="465.0" y="31.5" text-anchor="middle" fill="#713f12">03 Board</text>
-<text x="465.0" y="47.5" text-anchor="middle" fill="#713f12">and client</text>
+<rect x="390" y="10" width="150" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="465.0" y="31.5" text-anchor="middle" fill="#14532d">03 Board</text>
+<text x="465.0" y="47.5" text-anchor="middle" fill="#14532d">and client</text>
 <rect x="580" y="10" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
 <text x="655.0" y="39.5" text-anchor="middle" fill="#374151">04 Roles</text>
 <rect x="10" y="110" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>

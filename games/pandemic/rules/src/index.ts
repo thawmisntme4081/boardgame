@@ -7,6 +7,7 @@ export * from './actions';
 export * from './share';
 export * from './legal';
 export * from './outbreak';
+export * from './log';
 export * from './turn';
 export * from './outcome';
 export * from './moves';

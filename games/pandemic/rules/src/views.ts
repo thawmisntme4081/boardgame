@@ -2,6 +2,7 @@
 // the decks are only counts (no order, no split of the epidemics), and the seed never leaves.
 import type { Viewer } from '@platform/engine';
 import type { CityId, Color } from './cities';
+import type { GameLog } from './log';
 import type {
   ActionState,
   CureState,
@@ -27,6 +28,8 @@ export interface PandemicView extends ActionState {
   outbreaks: number;
   infectionRate: number;
   cures: Record<Color, CureState>;
+  /** The current and the previous turn's draws, epidemics, infections and outbreaks. */
+  log: GameLog;
 }
 
 export type { EpidemicStep };
@@ -75,5 +78,6 @@ export function viewFor(state: GameState, viewer: Viewer): PandemicView {
     outbreaks: state.outbreaks,
     infectionRate: state.infectionRate,
     cures: state.cures,
+    log: state.log,
   });
 }
