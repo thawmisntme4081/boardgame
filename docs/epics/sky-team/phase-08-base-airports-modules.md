@@ -31,7 +31,7 @@
 - [x] Scenario picker in the lobby (grouped by color, modules explained, ability chips), shown in the waiting room and after a game ("Fly again" may switch scenario)
 - [x] UI for each module on phone and desktop
 - [x] Enter every scenario's approach track from the printed tiles: 40 scenarios on 18 airports, none left commented out
-- [x] Read the Wind Ring values off the ring (`WIND_RING`: 20 spaces, +3 at the white centre down to −3 opposite)
+- [x] Read the Wind Ring values off the ring (`WIND_RING`: 20 spaces, +3 at the white center down to −3 opposite)
 - [x] Read the red/black altitude track (`HARD_ALTITUDES`: like the green/yellow side, with a reroll only at 6000)
 
 **Done when:** every base scenario plays end to end and random-play fuzzing passes on all of them. ✅ Verified with placeholder tracks (2,100 fuzzed games, every scenario won from a prepared final round, Playwright Kerosene and Intern games on three devices). ✅ Re-verified with the real tracks: 40 scenarios, 4,000 fuzzed games (100 per scenario) with no errors, every scenario won from a prepared final round, 292 unit tests and 32 Playwright tests on three devices.

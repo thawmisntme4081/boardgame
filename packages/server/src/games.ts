@@ -2,6 +2,7 @@
 // names its game by id; the lobby's choices and the server's own settings make its config.
 import type { GameDefinition } from '@platform/engine';
 import { armAutoRoll, recordOf } from '@sky/rules';
+import type { PandemicState } from '@pandemic/rules';
 import { pandemic, pandemicLobbySchema } from '@pandemic/rules/definition';
 import { skyTeam, skyTeamLobbySchema, type SkyTeamConfig } from '@sky/rules/definition';
 import { z, type ZodType } from 'zod';
@@ -117,6 +118,8 @@ export function createRegistry(settings: GameSettings = {}): GameRegistry {
         // Kept like Sky Team's ended matches.
         keepEnded: SKY_TEAM_KEEP_ENDED,
         idleTtlMs: PANDEMIC_IDLE_TTL_MS,
+        // A prepared position: the patch's fields replace the game's (test routes only).
+        e2ePatch: (game, patch) => ({ ...game, ...patch }) as PandemicState,
       }),
     ],
   ]);

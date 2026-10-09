@@ -10,6 +10,10 @@
     "sky-team": {
       "name": "Sky Team",
       "blurb": "Deux joueurs, coopératif : posez l’avion ensemble sans vous parler."
+    },
+    "pandemic": {
+      "name": "Pandemic",
+      "blurb": "Deux à quatre joueurs, coopératif : guérissez les quatre maladies avant qu’elles ne submergent le monde."
     }
   },
   "gate": {

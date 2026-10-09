@@ -337,7 +337,7 @@ Steps A–E are a refactor of the existing app. Steps F–G add product. Account
 ## 11. Open questions
 
 1. ~~**Public or private?**~~ Settled: private (Cloudflare Access). A public site with published games needs licenses; a private, invite-only site changes priorities (accounts, moderation, scale).
-2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favours the event log and adds notifications.
+2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favors the event log and adds notifications.
 3. **Accounts:** required for every player, or guests plus optional accounts (as planned in Platform 06)?
 4. **Bots:** will any game need computer players (solo Pandemic, practice Twilight Struggle)? That decides whether stage 3 matters.
 5. ~~**Storage:**~~ Settled: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Scale-out 01 happens.

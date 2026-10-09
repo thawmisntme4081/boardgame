@@ -1,6 +1,6 @@
 # Pandemic 02: Platform for N seats and a walking skeleton
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress** · Effort: **medium-high**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium-high**
 
 Needs [Pandemic 01](phase-01-rules-core.md). This is the phase that proves the platform: every change in the platform packages stays game-agnostic and is recorded in the [multi-game proposal](../../proposals/multi-game-platform.md).
 
@@ -16,7 +16,7 @@ Needs [Pandemic 01](phase-01-rules-core.md). This is the phase that proves the p
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Platform**
 
@@ -29,21 +29,21 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Skeleton client**
 
-- [ ] 7. **L** `games/pandemic/client`: package, store `usePandemic` following views through `onView`, i18n namespace `pandemic` (English only for now), `styles.css`; listed in `packages/web/src/games.ts`, `games.pandemic` texts, `@import` / `@source` in `index.css`; check the build makes a lazy `assets/pandemic-*.js`.
-- [ ] 8. **L** `SetupForm` with the number of players only; `WaitingInfo`.
-- [ ] 9. **M** Plain board: cities with cubes as a list, tracks as text, every hand, the actions as simple buttons and selects (using `canActInView`), Draw and Infect buttons, the discard and share prompts.
-- [ ] 10. **M** Playwright: three players finish a basic game on a fixed seed (`GAME_SEED`, with `E2E_HOOKS` to start near the end) on Desktop Chrome.
+- [x] 7. **L** `games/pandemic/client`: package, store `usePandemic` following views through `onView`, i18n namespace `pandemic` (English only for now), `styles.css`; listed in `packages/web/src/games.ts`, `games.pandemic` texts, `@import` / `@source` in `index.css`; check the build makes a lazy `assets/pandemic-*.js`.
+- [x] 8. **L** `SetupForm` with the number of players only; `WaitingInfo`.
+- [x] 9. **M** Plain board: cities with cubes as a list, tracks as text, every hand, the actions as simple buttons and selects (using `canActInView`), Draw and Infect buttons, the discard and share prompts.
+- [x] 10. **M** Playwright: three players finish a basic game on a fixed seed (`GAME_SEED`, with `E2E_HOOKS` to start near the end) on Desktop Chrome.
 
 ## Checklist
 
-- [ ] Registry holds two games; no Pandemic import outside the two `games.ts` registries
-- [ ] 2–4 seat rooms and N-player rematch tested
-- [ ] Sky Team's full run still green (`pnpm test`, `pnpm e2e`)
-- [ ] Three players finish a basic game in Playwright
+- [x] Registry holds two games; no Pandemic import outside the two `games.ts` registries (plus the places every game is wired: `index.css`, `i18next.d.ts`, the picker texts and the package dependencies)
+- [x] 2–4 seat rooms and N-player rematch tested
+- [x] Sky Team's full run still green (`pnpm test`, `pnpm e2e`)
+- [x] Three players finish a basic game in Playwright
 - [x] Contract changes recorded in the proposal (section 4.7)
 
 ## Open questions
 
 - None.
 
-**Done when:** three browsers finish a basic Pandemic game, Sky Team's full test run is green, and no Pandemic code is in the platform packages.
+**Done when:** three browsers finish a basic Pandemic game, Sky Team's full test run is green, and no Pandemic code is in the platform packages. ✅ Verified (`pnpm test`: 700 of 702 passed, and the two timeouts under the parallel run pass alone; `pnpm e2e`: Sky Team all green, and the Pandemic 3-player test passes on Desktop Chrome; typecheck, lint, format and build pass).

@@ -10,6 +10,10 @@
     "sky-team": {
       "name": "Sky Team",
       "blurb": "Hai người, hợp tác: cùng hạ cánh máy bay mà không nói chuyện."
+    },
+    "pandemic": {
+      "name": "Pandemic",
+      "blurb": "Hai đến bốn người, hợp tác: chữa cả bốn bệnh trước khi chúng lan khắp thế giới."
     }
   },
   "gate": {

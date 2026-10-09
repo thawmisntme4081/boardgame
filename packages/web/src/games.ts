@@ -18,6 +18,11 @@ export const GAMES: readonly GameInfo[] = [
     players: { min: 2, max: 2 },
     load: () => import('@sky/client') as Promise<{ default: GameClientModule }>,
   },
+  {
+    id: 'pandemic',
+    players: { min: 2, max: 4 },
+    load: () => import('@pandemic/client') as Promise<{ default: GameClientModule }>,
+  },
 ];
 
 export const gameInfo = (id: string): GameInfo | undefined => GAMES.find((g) => g.id === id);

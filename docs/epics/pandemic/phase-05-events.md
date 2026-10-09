@@ -14,7 +14,7 @@ Needs [Pandemic 04](phase-04-roles.md). Rules and UI together; the first real te
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Rules**
 
@@ -27,7 +27,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 **Client**
 
 - [ ] 6. **M** A "Play" button on event cards in any hand when allowed; Airlift and Grant targets chosen on the map; a toast for the other players.
-- [ ] 7. **M** Forecast dialog: drag (or up/down buttons on phones) to reorder 6 cards.
+- [ ] 7. **M** Forecast dialog: drag to reorder 6 cards.
 - [ ] 8. **L** Playwright: a player plays an event during someone else's turn.
 
 ## Checklist

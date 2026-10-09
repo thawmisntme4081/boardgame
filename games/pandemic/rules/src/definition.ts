@@ -75,6 +75,9 @@ export const pandemicLobbySchema = z
   .object({ players: z.number().int().min(MIN_PLAYERS).max(MAX_PLAYERS) })
   .partial();
 
+export type PandemicLobby = z.infer<typeof pandemicLobbySchema>;
+export type { PandemicMove };
+
 type AnyMove = PandemicMove | TableMove;
 
 const fail = (reason: string): Result => ({ ok: false, reason });

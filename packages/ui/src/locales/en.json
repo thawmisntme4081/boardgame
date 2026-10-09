@@ -10,6 +10,10 @@
     "sky-team": {
       "name": "Sky Team",
       "blurb": "Two players, cooperative: land the plane together without talking."
+    },
+    "pandemic": {
+      "name": "Pandemic",
+      "blurb": "Two to four players, cooperative: cure four diseases before they overrun the world."
     }
   },
   "gate": {

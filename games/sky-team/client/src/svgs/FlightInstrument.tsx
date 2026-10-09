@@ -14,13 +14,13 @@ import { arc as arcAround, polar } from './geometry';
 /**
  * Axis and Engines in one round instrument. Upper half: the axis dial (7 parts, the needle
  * turns one part per mark). Lower half: the speed, one segment per value 2..12, left to right
- * under the centre, coloured by how far the plane would fly (stay / 1 space / 2 spaces);
- * the gaps after the blue and orange aerodynamics markers take the marker's colour. The
+ * under the center, colored by how far the plane would fly (stay / 1 space / 2 spaces);
+ * the gaps after the blue and orange aerodynamics markers take the marker's color. The
  * speed is a black dot on its value. Outside the lower band, red sections show the brakes
  * deployed (normal brakes: up to 2, 4, 6; Ice brakes: up to 2, 3, 4, 5).
  */
 
-/** Centre and radius of the dial (a 300×300 drawing). */
+/** Center and radius of the dial (a 300×300 drawing). */
 const C = 150;
 const R = 104;
 /** The drawing cropped to the dial: from above the axis ring to below the brakes. */
@@ -71,7 +71,7 @@ const SPEED_BANDS = [
 ] as const;
 const TURN_POSITIONS = [-2, -1, 0, 1, 2];
 const SLIDE = 'transition-transform duration-500 ease-out';
-/** Turns an element drawn at angle 0 round the centre (or, `own`, round its own centre). */
+/** Turns an element drawn at angle 0 round the center (or, `own`, round its own center). */
 const turnTo = (deg: number, own = false) =>
   own
     ? {
@@ -125,7 +125,7 @@ function SpeedBand({ view, marked }: { view: PlayerView; marked: boolean }) {
           )}
         />
       ))}
-      {/* The aerodynamics markers: the gap after a band's last value, in colour. Drawn
+      {/* The aerodynamics markers: the gap after a band's last value, in color. Drawn
           at angle 0 and turned into place, so a deployed gear or flap slides it along. */}
       {markers.map(({ at, color }) => (
         <path

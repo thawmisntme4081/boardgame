@@ -10,7 +10,7 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 
 **Licensing:** a published, trademarked game. Fine for the private, invite-only site; a public site needs the publisher's permission or an original game.
 
-**Epic done when:** 2–4 players finish a base game on phones and desktop, with all its rules tested (phases 01–07). The expansions (08–13) come after, when you want them.
+**Epic done when:** 2–4 players finish a base game on desktop, with all its rules tested (phases 01–07). The expansions (08–13) come after, when you want them.
 
 ## Phases
 
@@ -19,8 +19,8 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 | # | Phase | Status | Effort | Tasks |
 | --- | --- | --- | --- | --- |
 | 01 | [Rules core](phase-01-rules-core.md): map, setup, actions, draw and infect, outbreaks, win/lose, `GameDefinition`, engine kit | ✅ Done | High | 17 |
-| 02 | [Platform for N seats and a walking skeleton](phase-02-walking-skeleton.md): generic registry, 2–4 seat rooms, N-player rematch, plain client; 3 players finish a basic game | 🚧 In progress | Medium-high | 10 |
-| 03 | [Board and client](phase-03-board-and-client.md): SVG map, hands, actions from the map, prompts, log, game over; phone, tablet, desktop | ⏳ Not started | High | 11 |
+| 02 | [Platform for N seats and a walking skeleton](phase-02-walking-skeleton.md): generic registry, 2–4 seat rooms, N-player rematch, plain client; 3 players finish a basic game | ✅ Done | Medium-high | 10 |
+| 03 | [Board and client](phase-03-board-and-client.md): SVG map, hands, actions from the map, prompts, log, game over; desktop only | ⏳ Not started | High | 11 |
 | 04 | [Roles](phase-04-roles.md): the 7 roles, rules and UI | ⏳ Not started | Medium-high | 11 |
 | 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | ⏳ Not started | Medium-high | 8 |
 | 06 | [Setup, variants and history](phase-06-setup-and-history.md): difficulty, role choice, first player, Flight Log | ⏳ Not started | Medium | 7 |

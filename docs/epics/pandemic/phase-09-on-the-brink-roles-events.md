@@ -15,7 +15,7 @@ Needs [Pandemic 08](phase-08-expansion-modules.md). Expansion phases are optiona
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 - [ ] 1. **L** Read the rulebook and write the full list of new roles and events into this file's Open questions with their exact text; confirm it with the user.
 - [ ] 2. **M** Role hooks for the new roles that change movement or treating (one sitting per two roles; add one task per extra pair).
