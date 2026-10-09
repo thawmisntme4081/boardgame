@@ -27,7 +27,7 @@ async function startThreePlayers(browser: Browser, device: ReturnType<typeof dev
     await page.getByRole('button', { name: 'Join' }).click();
   }
   for (const page of pages) {
-    await expect(page.getByRole('heading', { name: 'Pandemic', level: 1 })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Actions' })).toBeVisible();
   }
   return { ana, ben, cleo, code };
 }
@@ -78,7 +78,64 @@ test.describe('a three-player Pandemic game', () => {
 
     await ana.getByRole('button', { name: 'Discover cure: Yellow' }).click();
     for (const page of [ana, ben, cleo]) {
-      await expect(page.getByRole('status')).toHaveText('You cured all four diseases. You win!');
+      await expect(page.getByRole('heading', { name: 'Humanity is saved' })).toBeVisible();
+      await expect(
+        page.getByRole('dialog').getByText('You cured all four diseases. You win!'),
+      ).toBeVisible();
+    }
+
+    // Play again needs all three: Ana offers, Ben and Cleo accept, then a new game starts.
+    await ana.getByRole('button', { name: 'Play again' }).click();
+    await expect(ben.getByText('Ana wants to play again.')).toBeVisible();
+    await ben.getByRole('button', { name: 'Play again' }).click();
+    await expect(ana.getByText(/Waiting for Cleo/)).toBeVisible();
+    await cleo.getByRole('button', { name: 'Play again' }).click();
+    for (const page of [ana, ben, cleo]) {
+      await expect(page.getByRole('heading', { name: 'Humanity is saved' })).toBeHidden();
+      await expect(page.getByText(/4 actions left/)).toBeVisible();
+    }
+  });
+
+  test('plays a turn through the board: pass, draw, infect, then the next player', async ({
+    browser,
+  }, testInfo) => {
+    const { ana, ben, cleo } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+    const pages = [ana, ben, cleo];
+
+    // Whoever's turn it is (the order is random) plays it: pass the actions, draw, infect.
+    const turnOf = async () => {
+      for (let i = 0; i < 3; i++) {
+        if (await pages[i]!.getByText(/Your turn/).isVisible()) return i;
+      }
+      throw new Error('nobody has the turn');
+    };
+    const first = await turnOf();
+    const active = pages[first]!;
+    await active.getByRole('button', { name: 'Pass' }).click();
+    await active.getByRole('button', { name: 'Draw cards' }).click();
+    // The log of the turn shows the draw for everyone.
+    for (const page of pages) {
+      await expect(
+        page.getByRole('region', { name: 'Turn log' }).getByText(/^Drew /),
+      ).toBeVisible();
+    }
+
+    // Epidemics and the infect step are one press per step, until the turn passes on.
+    for (let i = 0; i < 12; i++) {
+      if (await active.getByText("'s turn").isVisible()) break;
+      const epidemic = active.getByRole('button', { name: /^Epidemic:/ });
+      const infect = active.getByRole('button', { name: 'Infect', exact: true });
+      if (await epidemic.isEnabled()) await epidemic.click();
+      else if (await infect.isEnabled()) await infect.click();
+      else break;
+    }
+    // The turn is now someone else's, and the log of the finished turn is the previous one.
+    await expect(active.getByText(/'s turn/)).toBeVisible();
+    for (const page of pages) {
+      await expect(page.getByText('Previous turn')).toBeVisible();
     }
   });
 });

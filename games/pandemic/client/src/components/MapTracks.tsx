@@ -20,6 +20,8 @@ import {
   playerBackUrl,
   playerCardUrl,
 } from '../lib/cardImages';
+import { useInfectionPile } from '../lib/infectionDraw';
+import { InfectionDrawFlight, INFECTION_DRAW_MS } from './InfectionDrawFlight';
 import { MovingMarker } from './MovingMarker';
 import { CubeIcon } from '../svgs/CubeIcon';
 import { Station } from '../svgs/Station';
@@ -93,7 +95,11 @@ export function MapTracks({ view }: { view: PandemicView }) {
   const { t } = useTranslation('pandemic');
   const outbreak = OUTBREAK_SLOTS[Math.min(view.outbreaks, OUTBREAK_SLOTS.length - 1)];
   const rate = INFECTION_SLOTS[Math.min(view.infectionRate, INFECTION_SLOTS.length - 1)];
-  const topInfection = view.infectionDiscard[view.infectionDiscard.length - 1];
+  const { shown: infectionDiscard, flights } = useInfectionPile(
+    view.infectionDiscard,
+    INFECTION_DRAW_MS,
+  );
+  const topInfection = infectionDiscard[infectionDiscard.length - 1];
   const topPlayer = view.playerDiscard[view.playerDiscard.length - 1];
   return (
     <g pointerEvents="none">
@@ -165,9 +171,12 @@ export function MapTracks({ view }: { view: PandemicView }) {
       <Pile
         frame={INFECTION_DISCARD_FRAME}
         href={topInfection ? infectionCardUrl(topInfection) : null}
-        count={view.infectionDiscard.length}
-        label={t('tracks.infectionDiscard', { count: view.infectionDiscard.length })}
+        count={infectionDiscard.length}
+        label={t('tracks.infectionDiscard', { count: infectionDiscard.length })}
       />
+      {flights.map((flight) => (
+        <InfectionDrawFlight key={flight.key} city={flight.city} />
+      ))}
       <Pile
         frame={PLAYER_DISCARD_FRAME}
         href={topPlayer ? playerCardUrl(topPlayer) : null}

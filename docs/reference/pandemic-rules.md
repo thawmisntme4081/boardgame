@@ -13,7 +13,8 @@ The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edi
 | `setup.ts` | `createGame({ seats, epidemics, seed })`, the seeded `shuffle`, `pileSizes` |
 | `actions.ts` | The actions: `checkAction` (a reason code), `applyAction`, `spendAction`, `cubesOnBoard`, `cardsToCure` |
 | `share.ts` | Share Knowledge as an offer and an answer: `checkShare`, `applyShare`, `shareAnswerer` |
-| `outbreak.ts` | `infectCity` (infections, epidemics, outbreaks and chain reactions), `lose` |
+| `outbreak.ts` | `infectCity` (infections, epidemics, outbreaks and chain reactions; returns the cubes placed and the cities that outbroke), `lose` |
+| `log.ts` | `GameLog`: the current and the previous turn, each a list of `LogEntry` (`draw`, `epidemic-increase`, `epidemic-intensify`, `infect` with its cubes and outbreak chain); `emptyLog`, `nextTurnLog` |
 | `turn.ts` | The steps after the actions: `draw`, `epidemic`, `infect`, `discard` (`checkTurnMove`, `applyTurnMove`) |
 | `moves.ts` | `PandemicMove`, `checkMove` / `applyMove` (one entry for every move), `canActInView` (the client's copy of the checks, read from a view) |
 | `legal.ts` | `candidateActions`, `legalActions`, `legalShareOffers` |
@@ -52,6 +53,8 @@ Decided with the user (Pandemic 01):
 ## State
 
 `GameState` holds the turn order (`seats`), the `epidemics` count, the `turn` (`seat`, `actionsLeft`, `step`: `actions` → `draw` → `epidemic` → `infect`; the epidemics left to resolve, the next `epidemicStep`, the `infectionsLeft`), `pending` (an open share offer or an owed discard), `status` and `lossReason`, `pawns`, `hands`, `cubes` (every city, per color), `supply`, `stations`, both decks (top card first) and discard piles, `outbreaks`, `infectionRate` (the marker's position), `cures` (`none` / `cured` / `eradicated`), `rngSeed` and `rngState`.
+
+The `log` keeps what happened after the actions in the current and the previous turn: the cards drawn (epidemics included), each epidemic step (the new infection rate, how many cards went back on the deck), and every city infected (by a card or an epidemic) with the cubes it got and the cities that outbroke in order. Everything in it is public, so views carry it as is. Rules version 2 added it; `migrate` gives a version-1 saved game an empty log.
 
 Every check returns `{ ok: true }` or `{ ok: false, reason }` with a code: `game-over`, `not-your-turn`, `wrong-step`, `answer-first`, `no-actions-left`, `same-city`, `not-adjacent`, `card-missing`, `no-station`, `station-exists`, `bad-station-to-move`, `no-cubes`, `already-cured`, `bad-cards`, `bad-partner`, `not-together`, `no-offer`, `not-your-answer`, `nothing-to-discard`. The `apply` functions throw on an illegal move.
 

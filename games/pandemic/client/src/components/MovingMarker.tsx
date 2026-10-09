@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
-import { prefersReducedMotion } from '../lib/frames';
 
 const at = (x: number, y: number) => `translate(${x}px, ${y}px)`;
 
@@ -23,9 +22,9 @@ const TURNS: Record<'roll' | 'flip', Keyframe[]> = {
 };
 
 /**
- * A marker centered at (`x`, `y`) of the map that hops to its new place along an arc when `x` or
- * `y` change, turning as it goes (see `TURNS`) and pulsing when it lands. It is the same piece of
- * the page between moves, so its move is not cut short by a redraw.
+ * A marker centered at (`x`, `y`) of the map that moves there in a straight line when `x` or `y`
+ * change, turning as it goes (see `TURNS`) and pulsing when it lands. It is the same piece of the
+ * page between moves, so its move is not cut short by a redraw.
  */
 export function MovingMarker({
   x,
@@ -45,17 +44,13 @@ export function MovingMarker({
   useLayoutEffect(() => {
     const prev = before.current;
     before.current = { x, y };
-    if (!prev || (prev.x === x && prev.y === y) || prefersReducedMotion()) return;
+    if (!prev || (prev.x === x && prev.y === y)) return;
     const distance = Math.hypot(x - prev.x, y - prev.y);
     const duration = 700 + Math.min(500, distance * 4);
-    outer.current?.animate(
-      [
-        { transform: at(prev.x, prev.y) },
-        { transform: at((prev.x + x) / 2, (prev.y + y) / 2 - 14), offset: 0.45 },
-        { transform: at(x, y) },
-      ],
-      { duration, easing: 'ease-in-out' },
-    );
+    outer.current?.animate([{ transform: at(prev.x, prev.y) }, { transform: at(x, y) }], {
+      duration,
+      easing: 'ease-in-out',
+    });
     inner.current?.animate(TURNS[turn], { duration, easing: 'ease-in-out' });
   }, [x, y, turn]);
 

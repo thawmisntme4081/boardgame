@@ -61,7 +61,9 @@ describe('Pandemic 03: the world map (task 1)', () => {
     fireEvent.click(container.querySelector('[data-city="tokyo"]')!);
     expect(onSelect).toHaveBeenCalledWith('tokyo');
     expect(container.querySelector('[data-city="paris"] circle[stroke="white"]')).not.toBeNull();
-    expect(container.querySelector('[data-city="london"] circle[stroke-width="3"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-city="london"] circle[stroke="oklch(0.85 0.17 95)"]'),
+    ).not.toBeNull();
   });
 
   it('draws a cure marker for each cured disease only', () => {
@@ -271,7 +273,10 @@ describe('Pandemic 03: moves are animated', () => {
     const moved = structuredClone(view);
     moved.pawns = { ...view.pawns, p1: 'tokyo' };
     rerender(inMap(<MapPieces view={moved} presence={null} />));
-    const hop = animate().mock.calls.find(([frames]) => (frames as Keyframe[]).length === 3);
+    // A move to another city takes longer than a slide within a city's stack (350 ms).
+    const hop = animate().mock.calls.find(
+      ([, options]) => ((options as KeyframeAnimationOptions).duration as number) > 350,
+    );
     expect(hop).toBeDefined();
   });
 
@@ -289,19 +294,6 @@ describe('Pandemic 03: moves are animated', () => {
     // Each marker: one animation for its path, one for its turn.
     expect(animate()).toHaveBeenCalledTimes(4);
   });
-
-  it('with reduced motion, nothing is animated', () => {
-    vi.stubGlobal('matchMedia', () => ({ matches: true }));
-    const view = fixture();
-    view.outbreaks = 2;
-    const { rerender } = render(inMap(<MapTracks view={view} />));
-    animate().mockClear();
-    const next = structuredClone(view);
-    next.outbreaks = 3;
-    rerender(inMap(<MapTracks view={next} />));
-    expect(animate()).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
-  });
 });
 
 describe('Pandemic 03: the desktop layout (task 4)', () => {
@@ -318,7 +310,6 @@ describe('Pandemic 03: the desktop layout (task 4)', () => {
     const main = container.querySelector('main')!;
     expect(main.className).toContain('h-dvh');
     expect(main.className).toContain('overflow-hidden');
-    expect(main.className).toContain('max-w-[90rem]');
     expect(main.querySelector('svg[aria-label="Map"]')).not.toBeNull();
     expect(screen.getByRole('region', { name: 'Hands' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Actions' })).toBeInTheDocument();

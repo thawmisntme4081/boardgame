@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef } from 'react';
-import { prefersReducedMotion } from '../lib/frames';
 import { Station, STATION_HEIGHT, STATION_WIDTH } from '../svgs/Station';
 
 const IN: Keyframe[] = [
@@ -21,7 +20,6 @@ export const STATION_OUT_MS = 250;
 export function StationPiece({ city, leaving }: { city: string; leaving: boolean }) {
   const group = useRef<SVGGElement>(null);
   useLayoutEffect(() => {
-    if (prefersReducedMotion()) return;
     group.current?.animate(leaving ? OUT : IN, {
       duration: leaving ? STATION_OUT_MS : 450,
       easing: 'ease-out',

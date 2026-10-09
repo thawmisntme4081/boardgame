@@ -1,6 +1,6 @@
 import type { Color } from '@pandemic/rules';
 import { useEffect, useRef, type SVGProps } from 'react';
-import { onFrame, prefersReducedMotion } from '../lib/frames';
+import { onFrame } from '../lib/frames';
 
 const HALF = 6;
 const ORBIT_SPEED = 0.5;
@@ -74,30 +74,23 @@ export function Cube({ color, seed, radius, angle, leaving = false, ...props }: 
     const wx = 0.1 + ((seed * 0.3) % 0.5);
     const wy = 0.1 + ((seed * 0.3) % 0.5);
     const wz = 0.1 + ((seed * 0.3) % 0.5);
-    const still = prefersReducedMotion();
     let r = goal.current.radius;
     let offset = goal.current.angle;
     // The cube pops in: its size springs from nothing to full, with a little overshoot.
-    let size = still ? 1 : 0;
+    let size = 0;
     let speed = 0;
     let last = 0;
     return onFrame((t) => {
       const now = goal.current;
       const dt = Math.min(0.05, Math.max(0, t - last));
       last = t;
-      if (still) {
-        r = now.radius;
-        offset = now.angle;
-        size = now.leaving ? 0 : 1;
-      } else {
-        const ease = 1 - Math.exp(-dt * 6);
-        r += (now.radius - r) * ease;
-        const turn = ((((now.angle - offset + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
-        offset += turn * ease;
-        speed += ((now.leaving ? 0 : 1) - size) * 180 * dt;
-        speed *= Math.exp(-dt * 9);
-        size = Math.max(0, size + speed * dt);
-      }
+      const ease = 1 - Math.exp(-dt * 6);
+      r += (now.radius - r) * ease;
+      const turn = ((((now.angle - offset + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
+      offset += turn * ease;
+      speed += ((now.leaving ? 0 : 1) - size) * 180 * dt;
+      speed *= Math.exp(-dt * 9);
+      size = Math.max(0, size + speed * dt);
       const ax = seed * 1.7 + wx * t;
       const ay = seed * 2.3 + wy * t;
       const az = seed * 0.9 + wz * t;

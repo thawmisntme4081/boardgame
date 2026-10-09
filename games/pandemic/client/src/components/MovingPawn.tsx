@@ -1,6 +1,5 @@
 import type { SeatId } from '@pandemic/rules';
 import { useLayoutEffect, useRef } from 'react';
-import { prefersReducedMotion } from '../lib/frames';
 import { Pawn } from '../svgs/Pawn';
 
 /** Time of a hop between two cities (longer for a longer way), and of a slide in a stack. */
@@ -10,9 +9,9 @@ const SLIDE_MS = 350;
 const at = (x: number, y: number) => `translate(${x}px, ${y}px)`;
 
 /**
- * A pawn standing at (`x`, `y`) of the map, which hops there along an arc when it comes from
- * another city, and slides when it only moves within its own city's stack. It keeps its place in
- * the page between moves, so the same pawn is moved, not drawn again.
+ * A pawn standing at (`x`, `y`) of the map, which moves there in a straight line when `x` or `y`
+ * change (a city change takes longer than a slide within the same city's stack). It keeps its
+ * place in the page between moves, so the same pawn is moved, not drawn again.
  */
 export function MovingPawn({
   seat,
@@ -33,21 +32,13 @@ export function MovingPawn({
   useLayoutEffect(() => {
     const prev = before.current;
     before.current = { x, y, city };
-    if (!prev || (prev.x === x && prev.y === y) || prefersReducedMotion()) return;
+    if (!prev || (prev.x === x && prev.y === y)) return;
     const hop = prev.city !== city;
     const distance = Math.hypot(x - prev.x, y - prev.y);
-    const lift = Math.min(40, 10 + distance * 0.12);
-    group.current?.animate(
-      [
-        { transform: at(prev.x, prev.y) },
-        ...(hop ? [{ transform: at((prev.x + x) / 2, (prev.y + y) / 2 - lift), offset: 0.5 }] : []),
-        { transform: at(x, y) },
-      ],
-      {
-        duration: hop ? Math.min(HOP_MS.max, HOP_MS.base + distance * HOP_MS.perPixel) : SLIDE_MS,
-        easing: 'ease-in-out',
-      },
-    );
+    group.current?.animate([{ transform: at(prev.x, prev.y) }, { transform: at(x, y) }], {
+      duration: hop ? Math.min(HOP_MS.max, HOP_MS.base + distance * HOP_MS.perPixel) : SLIDE_MS,
+      easing: 'ease-in-out',
+    });
   }, [x, y, city]);
 
   return (

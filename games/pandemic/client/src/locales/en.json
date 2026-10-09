@@ -1,4 +1,15 @@
 {
+  "status": {
+    "playerOnline": "{{name}} online",
+    "playerOffline": "{{name}} offline"
+  },
+  "leave": {
+    "button": "Leave the game",
+    "title": "Leave the game?",
+    "body": "Your seat stays open for someone else to take over.",
+    "stay": "Stay",
+    "confirm": "Leave"
+  },
   "lobby": {
     "players": "Players",
     "playersHint": "Everyone cooperates: cure the four diseases before they overrun the world.",
@@ -69,6 +80,8 @@
   "hands": {
     "title": "Hands",
     "empty": "No cards",
+    "count_one": "({{count}} card)",
+    "count_other": "({{count}} cards)",
     "event": "Event: {{name}}",
     "city": "{{name}} ({{color}})"
   },
@@ -79,10 +92,13 @@
     "one-quiet-night": "One Quiet Night",
     "resilient-population": "Resilient Population"
   },
+  "moveMenu": {
+    "title": "Fly to {{city}}",
+    "discard": "Discard: {{city}}"
+  },
   "actions": {
     "title": "Actions",
-    "target": "City",
-    "targetPlaceholder": "Choose a city",
+    "moveHint": "Tap a highlighted city on the map to move there.",
     "drive": "Drive / Ferry",
     "direct": "Direct Flight",
     "charter": "Charter Flight",
@@ -91,6 +107,10 @@
     "moveStation": "Station to take away",
     "treat": "Treat {{color}}",
     "cure": "Discover cure: {{color}}",
+    "cureChoose": "Choose the {{count}} {{color}} cards to discard",
+    "cureChosen": "{{chosen}} of {{count}} chosen",
+    "cureConfirm": "Discover the cure",
+    "cureCancel": "Cancel",
     "pass": "Pass",
     "draw": "Draw cards",
     "epidemic": "Epidemic: {{step}}",
@@ -136,5 +156,42 @@
     "bad-seat": "That seat does not exist.",
     "room-full": "The table is full.",
     "not-started": "The game has not started."
+  },
+  "epidemic": {
+    "title_one": "Epidemic ({{count}} to resolve)",
+    "title_other": "Epidemics ({{count}} to resolve)",
+    "step": {
+      "increase": "the infection rate marker moves forward.",
+      "infect": "the bottom infection card gets 3 cubes.",
+      "intensify": "the infection discard pile is shuffled back on top of the deck."
+    }
+  },
+  "log": {
+    "title": "Turn log",
+    "current": "This turn",
+    "previous": "Previous turn",
+    "nothingYet": "Nothing yet.",
+    "draw": "Drew {{cards}}.",
+    "epidemicCard": "an Epidemic",
+    "epidemicPrefix": "Epidemic:",
+    "epidemicIncrease": "Epidemic: the infection rate goes up to {{rate}}.",
+    "epidemicIntensify_one": "Epidemic: {{count}} infection card is shuffled back on top.",
+    "epidemicIntensify_other": "Epidemic: {{count}} infection cards are shuffled back on top.",
+    "infected_one": "{{city}} infected: {{count}} {{color}} cube.",
+    "infected_other": "{{city}} infected: {{count}} {{color}} cubes.",
+    "noRoom": "{{city}} already has 3 {{color}} cubes.",
+    "eradicated": "{{city}}: {{color}} is eradicated, nothing happens.",
+    "outbreaks": "Outbreak: {{cities}}."
+  },
+  "gameOver": {
+    "wonTitle": "Humanity is saved",
+    "lostTitle": "The world was lost",
+    "show": "Game over: play again",
+    "playAgain": "Play again",
+    "leave": "Leave",
+    "cancelOffer": "Cancel the offer",
+    "takeBack": "Take back my answer",
+    "offered": "{{name}} wants to play again.",
+    "waitingFor": "Waiting for {{names}}."
   }
 }
