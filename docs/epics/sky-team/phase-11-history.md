@@ -9,11 +9,11 @@
 
 ## Flight Log screen (target design)
 
-A "Flight Log" dialog modelled on the reference screenshot the user shared: one row per scenario, in Flight Log order (green, yellow, red, black), with columns:
+A "Flight Log" dialog modeled on the reference screenshot the user shared: one row per scenario, in Flight Log order (green, yellow, red, black), with columns:
 
 | Column | Content |
 | --- | --- |
-| Color | Badge in the scenario colour (no box label) |
+| Color | Badge in the scenario color (no box label) |
 | Code | Airport code in split-flap tiles (one dark tile per letter) |
 | Scenario | Airport name (`AIRPORT_NAMES`) |
 | Pilot (W/L) | Your wins / losses on this scenario when you flew as the pilot |
@@ -37,7 +37,7 @@ A W/L cell is green when it has at least one win, orange when it only has losses
 
 - [x] History saved on game over (local)
 - [x] ✓ on landed scenarios in the picker
-- [x] Flight Log dialog (colour badge, split-flap code, name, pilot and co-pilot W/L, green/orange cells)
+- [x] Flight Log dialog (color badge, split-flap code, name, pilot and co-pilot W/L, green/orange cells)
 - [x] History list in the lobby (a tab of the Flight Log dialog, also opened from the game-over dialog)
 - [x] Tests (component + one Playwright game ending in a recorded result)
 

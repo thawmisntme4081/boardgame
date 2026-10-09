@@ -7,9 +7,8 @@ import type Database from 'better-sqlite3';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { accounts } from './accounts';
 import { mockGoogleSignIn } from './google-test';
-import { RoomManager } from './rooms';
 import { openDatabase, SqliteMatchStore } from './store';
-import { next, startTestServer, type Client } from './test-server';
+import { next, SkyRooms as RoomManager, startTestServer, type Client } from './test-server';
 
 const SECRET = 'test-secret-that-is-long-enough-for-better-auth-0123456789';
 

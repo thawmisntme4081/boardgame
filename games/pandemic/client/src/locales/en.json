@@ -1,0 +1,137 @@
+{
+  "lobby": {
+    "players": "Players",
+    "playersHint": "Everyone cooperates: cure the four diseases before they overrun the world.",
+    "playerCount_one": "{{count}} player",
+    "playerCount_other": "{{count}} players",
+    "waitingForPlayers_one": "Waiting for {{count}} more player",
+    "waitingForPlayers_other": "Waiting for {{count}} more players",
+    "epidemics_one": "{{count}} epidemic card",
+    "epidemics_other": "{{count}} epidemic cards"
+  },
+  "board": {
+    "title": "Pandemic",
+    "turnOf": "{{name}}'s turn",
+    "yourTurn": "Your turn",
+    "actionsLeft_one": "{{count}} action left",
+    "actionsLeft_other": "{{count}} actions left",
+    "step": {
+      "actions": "Actions",
+      "draw": "Draw 2 cards",
+      "epidemic": "Epidemic",
+      "infect": "Infect cities"
+    },
+    "epidemicStep": {
+      "increase": "Increase",
+      "infect": "Infect",
+      "intensify": "Intensify"
+    },
+    "won": "You cured all four diseases. You win!",
+    "lost": "The world was lost: {{reason}}",
+    "lossReason": {
+      "outbreaks": "too many outbreaks",
+      "cubes": "out of disease cubes",
+      "player-deck": "out of player cards"
+    },
+    "you": "you",
+    "none": "none"
+  },
+  "tracks": {
+    "title": "Tracks",
+    "outbreaks": "Outbreaks: {{count}} / {{max}}",
+    "infectionRate": "Infection rate: {{count}}",
+    "playerDeck": "Player deck: {{count}} cards",
+    "infectionDeck": "Infection deck: {{count}} cards",
+    "supply": "Cubes left",
+    "cures": "Cures",
+    "cureState": {
+      "none": "not cured",
+      "cured": "cured",
+      "eradicated": "eradicated"
+    }
+  },
+  "color": {
+    "blue": "Blue",
+    "yellow": "Yellow",
+    "black": "Black",
+    "red": "Red"
+  },
+  "map": {
+    "title": "Cities with something on them",
+    "empty": "Nothing yet.",
+    "station": "research station",
+    "pawn": "{{name}}",
+    "cubes": "{{count}} {{color}}"
+  },
+  "hands": {
+    "title": "Hands",
+    "empty": "No cards",
+    "event": "Event: {{name}}",
+    "city": "{{name}} ({{color}})"
+  },
+  "events": {
+    "airlift": "Airlift",
+    "forecast": "Forecast",
+    "government-grant": "Government Grant",
+    "one-quiet-night": "One Quiet Night",
+    "resilient-population": "Resilient Population"
+  },
+  "actions": {
+    "title": "Actions",
+    "target": "City",
+    "targetPlaceholder": "Choose a city",
+    "drive": "Drive / Ferry",
+    "direct": "Direct Flight",
+    "charter": "Charter Flight",
+    "shuttle": "Shuttle Flight",
+    "build": "Build a research station",
+    "moveStation": "Station to take away",
+    "treat": "Treat {{color}}",
+    "cure": "Discover cure: {{color}}",
+    "pass": "Pass",
+    "draw": "Draw cards",
+    "epidemic": "Epidemic: {{step}}",
+    "infect": "Infect",
+    "notYourTurn": "Wait for your turn.",
+    "spectator": "You are watching."
+  },
+  "share": {
+    "title": "Share Knowledge",
+    "give": "Give a card to {{name}}",
+    "take": "Take a card from {{name}}",
+    "offered": "{{from}} offers to share the card of {{city}} with {{to}}.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel the offer"
+  },
+  "discard": {
+    "title": "Too many cards",
+    "text": "Discard a card to go down to {{limit}}.",
+    "button": "Discard {{card}}",
+    "waiting": "{{name}} must discard a card."
+  },
+  "errors": {
+    "game-over": "The game is over.",
+    "not-your-turn": "It is not your turn.",
+    "wrong-step": "Not now: finish the current step first.",
+    "answer-first": "Answer the question first.",
+    "no-actions-left": "No actions left.",
+    "same-city": "You are already there.",
+    "not-adjacent": "That city is not next to yours.",
+    "card-missing": "You do not have that card.",
+    "no-station": "A research station is needed.",
+    "station-exists": "There is a research station here already.",
+    "bad-station-to-move": "Choose a station to move.",
+    "no-cubes": "There are no cubes of that color here.",
+    "already-cured": "That disease is cured already.",
+    "bad-cards": "These cards do not make a cure.",
+    "bad-partner": "You cannot share with that player.",
+    "not-together": "You must be in the same city.",
+    "no-offer": "There is no offer to answer.",
+    "not-your-answer": "It is not your answer to give.",
+    "nothing-to-discard": "Nobody has to discard.",
+    "bad-seat": "That seat does not exist.",
+    "room-full": "The table is full.",
+    "not-started": "The game has not started."
+  }
+}

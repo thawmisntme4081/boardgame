@@ -42,7 +42,7 @@ export const alarmPool = (modules: readonly RuleModule[]): readonly AlarmId[] =>
 /**
  * Alarms (Turbulence): the tokens start face down. At the start of each round, every Alarm
  * symbol on the current approach space flips a random face-down token: its Action can take
- * no die until a die of the colour and number printed on the token is placed on it, which
+ * no die until a die of the color and number printed on the token is placed on it, which
  * removes the token (that die is used up for the round). Coffee may change the die. Alarms
  * never prevent a landing; an Alarm on Concentration only stops new coffee.
  */

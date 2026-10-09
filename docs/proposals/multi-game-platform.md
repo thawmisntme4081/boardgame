@@ -249,6 +249,33 @@ The **engine test kit** generalizes what Sky Team already has (`random-play`, vi
 - no view leaks hidden fields (seeded per game with a `secret` list);
 - every state survives a JSON round trip (so it can be persisted).
 
+### 4.7 What the second game changed (Pandemic 02)
+
+Pandemic is the first game with a different state, 2–4 seats and play outside its own turn, so it is where the contract above met reality. Every change stayed game-agnostic; Sky Team plays exactly as before. In the order they were made:
+
+**Registry (`packages/server/src/games.ts`)**
+
+- **Erased types.** A game writes its entry with its own types (`TypedGameEntry<S, M, V, C>`); `register(entry)` erases them into a `GameEntry` whose state, move and view are `unknown` and whose config is a plain object. Each game's own Zod schemas check everything at the edge. `rooms.ts`, the store and `handlers.ts` import no game; only `games.ts` (and Sky Team's own test helpers) do.
+- **Typed rooms for tests.** `Room` and `RoomManager` take the game's state and config types as optional parameters (default `unknown`); a test that plays one game names them (`SkyRooms`).
+- **Per-game settings.** `idleTtlMs`: how long a room nobody is connected to is kept (Pandemic: a day; the default stays `ROOM_TTL_MINUTES`, 30). `e2ePatch`: how the test-only route (`E2E_HOOKS`) applies a patch to that game's state, instead of the route importing Sky Team.
+
+**Seats and tables (`@platform/engine`, `rooms.ts`)**
+
+- **`setup` may return a waiting state.** A room is created with its creator alone. Pandemic's `setup` returns a `waiting` state (the seats taken, the number of players chosen in the lobby, the seed); each `table:join` adds a seat, and the last one deals the game. `started(state)` is false until then, `actors` is empty, and player moves are refused with a game reason (`not-started`).
+- **`table:join` is a real check.** `rooms.join` takes the first free seat for which the game's `validate(table:join)` is ok. A 3-player game is not joined at a 4th seat (`room-full`), and a seat left mid-game is taken over before any other. Sky Team accepts every seat, as before.
+- **`table:leave` and `meta.leave`.** A new table move, `{ type: 'table:leave', seat }`, and a game setting: `'restart'` (the default: a new match starts for whoever stays, the game never sees the move) or `'hold'` (the match goes on, the seat stays the game's with its cards and its turn, and whoever joins next takes it over). While a hold-game is still waiting, `table:leave` frees the seat. The move goes into the match log like any other. Pandemic uses `'hold'`.
+- **Presence lists the seats in play.** `room:presence` has an entry for each seat that is taken or that the game would let someone join, so a 3-player game has three. `room:choose-seat` is generic for N seats and the game may refuse it (Pandemic does: its turn order is random).
+
+**Rematch for N players (`room:rematch`, `room:rematch-offer`)**
+
+- A rematch after a game needs **every seated player**: the first request is an offer; each other player's own request accepts it; the new match starts once all seated players have asked. A player alone in the room starts at once.
+- `room:rematch-offer` and the board's `rematch` prop carry `accepted`: the seats that asked so far, the offerer first (clients show who has still to answer). `room:rematch-decline` takes the offer back (the offerer) or the player's own answer back (anyone else).
+- A player who leaves takes their request with them; if everyone left who had not answered, the offer starts at once with the players who stayed. A game's `setup` with a played `previous` sets up for the players still seated: Pandemic deals for them (2 or more, the same number of epidemics), and waits again if one is left.
+
+**Client shell (`packages/web`)**
+
+- The waiting room shows who is seated, by name, and how many seats are open when a table has more than two seats (the game's own `WaitingInfo` still says the rest). Presence toasts follow each player on their own (one's lost connection no longer hides another's); they name the player. New texts are in English, Vietnamese and French.
+
 ## 5. Scaling path
 
 Scale in stages, each triggered by a measurement rather than a guess.
@@ -310,7 +337,7 @@ Steps A–E are a refactor of the existing app. Steps F–G add product. Account
 ## 11. Open questions
 
 1. ~~**Public or private?**~~ Settled: private (Cloudflare Access). A public site with published games needs licenses; a private, invite-only site changes priorities (accounts, moderation, scale).
-2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favours the event log and adds notifications.
+2. **Async play?** Should long games such as Twilight Struggle be playable over days (move, close the tab, get notified)? That favors the event log and adds notifications.
 3. **Accounts:** required for every player, or guests plus optional accounts (as planned in Platform 06)?
 4. **Bots:** will any game need computer players (solo Pandemic, practice Twilight Struggle)? That decides whether stage 3 matters.
 5. ~~**Storage:**~~ Settled: SQLite on a Fly volume (private site, one machine with auto stop/start); Postgres only if Scale-out 01 happens.

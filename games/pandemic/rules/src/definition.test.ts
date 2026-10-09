@@ -2,6 +2,7 @@ import { checkGame } from '@platform/engine/testing';
 import { describe, expect, it } from 'vitest';
 import { pandemic, type PandemicConfig } from './definition';
 import { agentMove } from './random-play';
+import { dealt } from './test-utils';
 import { SEATS, type GameState } from './types';
 import type { PandemicView } from './views';
 
@@ -41,7 +42,7 @@ describe('the engine test kit', () => {
 
 describe('the definition', () => {
   const state = (): GameState =>
-    pandemic.setup({ config: config(2, 4), seats: ['p1', 'p2'], host: 'p1', seed: 3 });
+    dealt(pandemic.setup({ config: config(2, 4), seats: ['p1', 'p2'], host: 'p1', seed: 3 }));
 
   it('describes a cooperative game for 2 to 4 players', () => {
     expect(pandemic.meta).toMatchObject({ minPlayers: 2, maxPlayers: 4, mode: 'coop' });

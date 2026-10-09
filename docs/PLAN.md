@@ -41,7 +41,7 @@ The large games's order is open; each comes after Pandemic, which proves the pla
 
 ![Pandemic phases 01 to 07 make the base game; 08 to 13 are the optional expansions](diagrams/pandemic-phases.svg)
 
-The diagrams are SVG pictures in `docs/diagrams/`. Update `pandemic-phases.svg` when a phase changes status (change the box's fill, stroke and text colours to the `done`, `next` or `todo` set used by the other boxes), and replace it with the next epic's phases when the current one is done. Update `epics.svg` the same way when an epic changes status.
+The diagrams are SVG pictures in `docs/diagrams/`. Update `pandemic-phases.svg` when a phase changes status (change the box's fill, stroke and text colors to the `done`, `next` or `todo` set used by the other boxes), and replace it with the next epic's phases when the current one is done. Update `epics.svg` the same way when an epic changes status.
 
 - **Sky Team first**: Sky Team 12–13 finish and ship Sky Team before the platform work starts.
 - **Hosting and storage decided:** a private site on one Fly.io machine with auto stop/start, SQLite on a Fly volume (Drizzle, Litestream backups), Cloudflare Access in front; about $1.50–2.50/month plus the domain. This holds for the whole platform; Postgres only if the Scale-out epic happens.
@@ -58,13 +58,13 @@ Every new game epic follows the same shape; online play, saving and accounts com
 | --- | --- | --- |
 | 01 | Rules core | the base game without its optional parts: pure rules, `GameDefinition`, views, tests, random play through the engine test kit; no UI |
 | 02 | Platform changes and walking skeleton | whatever the platform lacks for this game (seats, move kinds, timers…), kept game-agnostic and recorded in the proposal; registry entries; a plain client; players finish a basic game in Playwright |
-| 03 | Board and client | the real `Board`: phone, tablet, desktop; acting from the board, prompts, game over |
+| 03 | Board and client | the real `Board` (a desktop-only game such as Pandemic skips phone and tablet layouts); acting from the board, prompts, game over |
 | 04+ | Feature slices | one phase per feature (roles, events, card sets…), its rules and UI together |
 | next | Setup, variants and history | lobby options, preflight choices, the Flight Log; the epic's "done when" check |
 | next | Translations | EN, VI, FR |
 | last | Expansions | only if wanted; one phase each |
 
-**Phase files:** a phase may be large (medium-high, high, extra high); its work is broken into tasks of **low or medium** effort (about one sitting each, ending with its tests passing), written as a checklist under "Tasks": `- [ ] 1. **L** …` / `- [ ] 2. **M** …`, grouped by area (rules, client, checks). The phase file also keeps its own short "Checklist" of phase-level checks, its Open questions and its "Done when" line. The `EPIC.md` phase table shows each phase's effort and number of tasks.
+**Phase files:** a phase may be large (medium-high, high, extra high); its work is broken into tasks of **low or medium** effort (about one sitting each, ending with typecheck, lint and format passing; tests come at the end of the phase, after your review), written as a checklist under "Tasks": `- [ ] 1. **L** …` / `- [ ] 2. **M** …`, grouped by area (rules, client, checks). The phase file also keeps its own short "Checklist" of phase-level checks, its Open questions and its "Done when" line. The `EPIC.md` phase table shows each phase's effort and number of tasks.
 
 A new epic gets a folder `epics/<game>/` with an `EPIC.md` and a row in the table above; its phase files are written when the epic starts (or each one when it starts, for an epic far ahead).
 

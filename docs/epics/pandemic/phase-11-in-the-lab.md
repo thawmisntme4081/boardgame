@@ -15,7 +15,7 @@ Needs [Pandemic 08](phase-08-expansion-modules.md). Expansion phases are optiona
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 - [ ] 1. **L** Read the rulebook; write the lab challenge's rules and card list into Open questions; confirm with the user.
 - [ ] 2. **M** Rules module: setup, new state fields and their hooks; tests.
@@ -33,4 +33,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - The expansion's exact content (fill in at task 1).
 
-**Done when:** a game with the lab challenge on plays to its end on phones.
+**Done when:** a game with the lab challenge on plays to its end on desktop.

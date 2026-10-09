@@ -1,45 +1,66 @@
 // The game registry: the only place the platform code learns which games it hosts. A room
 // names its game by id; the lobby's choices and the server's own settings make its config.
 import type { GameDefinition } from '@platform/engine';
-import type { GameState as SkyTeamState } from '@sky/rules';
-import {
-  skyTeam,
-  skyTeamLobbySchema,
-  type SkyTeamConfig,
-  type SkyTeamMove,
-} from '@sky/rules/definition';
-import { recordOf, type PlayerView } from '@sky/rules';
+import { armAutoRoll, recordOf } from '@sky/rules';
+import type { PandemicState } from '@pandemic/rules';
+import { pandemic, pandemicLobbySchema } from '@pandemic/rules/definition';
+import { skyTeam, skyTeamLobbySchema, type SkyTeamConfig } from '@sky/rules/definition';
 import { z, type ZodType } from 'zod';
 import type { EndedStatus } from './store';
 
-// One game for now, so the platform's types are its types. The Second game epic widens them
-// (each room then carries its game's types behind the registry).
-export type GameState = SkyTeamState;
-export type GameMove = SkyTeamMove;
-export type GameConfig = SkyTeamConfig;
-export type GameView = PlayerView;
+// At the platform's edge every game looks the same: its state, moves and views are `unknown`
+// and its config a plain object. Only the game's own definition and schemas look inside them,
+// so the platform code (rooms, store, handlers) never depends on one game's types.
+export type GameState = unknown;
+export type GameMove = unknown;
+export type GameView = unknown;
+export type GameConfig = Record<string, unknown>;
 
-export interface GameEntry {
-  definition: GameDefinition<GameState, GameMove, GameView, GameConfig>;
+/**
+ * A game's registry entry with its own types (S state, M move, V view, C config). `register`
+ * erases them into a `GameEntry`, the only shape the platform sees.
+ */
+export interface TypedGameEntry<S, M, V, C extends GameConfig> {
+  definition: GameDefinition<S, M, V, C>;
   /** What a player may choose in the lobby (or when asking for a rematch). */
-  lobby: ZodType<Partial<GameConfig>>;
+  lobby: ZodType<Partial<C>>;
   /** The server's own settings for this game (round lengths…); players cannot change them. */
-  settings: Partial<GameConfig>;
+  settings: Partial<C>;
   /**
    * How long an ended match stays in the store, by how it ended; then it is deleted, log and
    * all. A status left out is kept for good (long games played over days must not lose one).
    */
   keepEnded?: Partial<Record<EndedStatus, number>>;
   /**
+   * Rooms of this game that nobody is connected to are removed after this long without
+   * activity; without it, the server's default (`ROOM_TTL_MINUTES`, 30 minutes).
+   */
+  idleTtlMs?: number;
+  /**
    * A seat's entry in its account's Flight Log, from its final view: `others` are the other
    * players' names. A game without one keeps no Flight Log.
    */
-  flightRecord?(view: GameView, others: string[], at: number): unknown;
+  flightRecord?(view: V, others: string[], at: number): unknown;
   /**
    * A record a device kept before its owner signed in: the checked record and its end time, or
    * `undefined` when it is not a valid one. Without it, a game's records cannot be imported.
    */
   importRecord?(raw: unknown): { record: unknown; at: number } | undefined;
+  /**
+   * Test-only (`E2E_HOOKS`): the state after merging `patch` into `game` at `now`, so an end-to-end
+   * test can start from a prepared position. Without it, the game has no test route.
+   */
+  e2ePatch?(game: S, patch: Partial<S>, now: number): S;
+}
+
+/** A registry entry as the platform sees it: every game-specific type is `unknown`. */
+export type GameEntry = TypedGameEntry<GameState, GameMove, GameView, GameConfig>;
+
+/** Erases a game's types for the platform. The game's own schemas still check every input. */
+export function register<S, M, V, C extends GameConfig>(
+  entry: TypedGameEntry<S, M, V, C>,
+): GameEntry {
+  return entry as unknown as GameEntry;
 }
 
 const skyTeamRecord = z.object({
@@ -62,26 +83,44 @@ const DAY_MS = 24 * 60 * 60_000;
  */
 const SKY_TEAM_KEEP_ENDED = { abandoned: DAY_MS, over: 30 * DAY_MS };
 
+/** Pandemic games are long and may pause: an empty room waits a day before it goes. */
+const PANDEMIC_IDLE_TTL_MS = DAY_MS;
+
 export type GameRegistry = ReadonlyMap<string, GameEntry>;
 
 /** Server settings per game id, e.g. `{ 'sky-team': { roundTimerMs: 5000 } }` in tests. */
-export type GameSettings = Partial<Record<string, Partial<GameConfig>>>;
+export type GameSettings = Partial<Record<string, GameConfig>>;
 
 export function createRegistry(settings: GameSettings = {}): GameRegistry {
   return new Map<string, GameEntry>([
     [
       skyTeam.id,
-      {
+      register({
         definition: skyTeam,
         lobby: skyTeamLobbySchema,
-        settings: settings[skyTeam.id] ?? {},
+        settings: (settings[skyTeam.id] ?? {}) as Partial<SkyTeamConfig>,
         keepEnded: SKY_TEAM_KEEP_ENDED,
         flightRecord: (view, others, at) => recordOf(view, others[0] ?? '', at),
         importRecord: (raw) => {
           const parsed = skyTeamRecord.safeParse(raw);
           return parsed.success ? { record: parsed.data, at: parsed.data.at } : undefined;
         },
-      },
+        // A prepared Total Trust strategy phase still rolls by itself.
+        e2ePatch: (game, patch, now) => armAutoRoll({ ...game, ...patch }, now),
+      }),
+    ],
+    [
+      pandemic.id,
+      register({
+        definition: pandemic,
+        lobby: pandemicLobbySchema,
+        settings: settings[pandemic.id] ?? {},
+        // Kept like Sky Team's ended matches.
+        keepEnded: SKY_TEAM_KEEP_ENDED,
+        idleTtlMs: PANDEMIC_IDLE_TTL_MS,
+        // A prepared position: the patch's fields replace the game's (test routes only).
+        e2ePatch: (game, patch) => ({ ...game, ...patch }) as PandemicState,
+      }),
     ],
   ]);
 }
@@ -94,7 +133,7 @@ export function createRegistry(settings: GameSettings = {}): GameRegistry {
 export function configFor(
   entry: GameEntry,
   request: unknown,
-  base: Partial<GameConfig> = {},
+  base: GameConfig = {},
 ): GameConfig | undefined {
   const choices = entry.lobby.safeParse(request ?? {});
   if (!choices.success) return undefined;

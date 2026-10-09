@@ -35,7 +35,12 @@ export type TableMove =
    * whether that is still allowed (usually only before the game starts); the platform then
    * moves the players.
    */
-  | { type: 'table:choose-seat'; seat: SeatId };
+  | { type: 'table:choose-seat'; seat: SeatId }
+  /**
+   * The player in `seat` gave it up. Told to the game only when its `meta.leave` is
+   * `'hold'` (otherwise the match restarts and the game never sees it).
+   */
+  | { type: 'table:leave'; seat: SeatId };
 
 export const isTableMove = (move: unknown): move is TableMove => {
   const type = (move as { type?: unknown } | null)?.type;
@@ -71,6 +76,12 @@ export interface GameMeta {
   minPlayers: number;
   maxPlayers: number;
   mode: 'coop' | 'competitive';
+  /**
+   * What happens when a player gives up their seat for good: `'restart'` (the default) starts
+   * a new match for whoever stays; `'hold'` goes on with the same match, the seat stays the
+   * game's (its cards, its turn) and whoever joins next takes it over.
+   */
+  leave?: 'restart' | 'hold';
 }
 
 export interface SetupContext<C, S = unknown> {

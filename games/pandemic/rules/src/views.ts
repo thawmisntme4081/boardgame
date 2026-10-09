@@ -9,6 +9,7 @@ import type {
   GameState,
   HandCard,
   LossReason,
+  PandemicState,
   SeatId,
 } from './types';
 import { SEATS } from './types';
@@ -30,10 +31,32 @@ export interface PandemicView extends ActionState {
 
 export type { EpidemicStep };
 
+/** Before the game: who is seated, and how many players the game waits for. */
+export interface WaitingView {
+  status: 'waiting';
+  you: SeatId | null;
+  seated: SeatId[];
+  players: number;
+  epidemics: number;
+}
+
+/** What a viewer sees of a table: the wait for players, or the game. */
+export type TableView = WaitingView | PandemicView;
+
+const viewerSeat = (viewer: Viewer): SeatId | null =>
+  (SEATS as readonly string[]).includes(viewer) ? (viewer as SeatId) : null;
+
+/** The view of a table: waiting (no seed), or the game's `viewFor`. */
+export function tableViewFor(state: PandemicState, viewer: Viewer): TableView {
+  if (state.status !== 'waiting') return viewFor(state, viewer);
+  const { seated, players, epidemics } = state;
+  return { status: 'waiting', you: viewerSeat(viewer), seated: [...seated], players, epidemics };
+}
+
 export function viewFor(state: GameState, viewer: Viewer): PandemicView {
   // Every field is copied by name: a new field of the state is private until it is added here.
   return structuredClone({
-    you: (SEATS as readonly string[]).includes(viewer) ? (viewer as SeatId) : null,
+    you: viewerSeat(viewer),
     seats: state.seats,
     epidemics: state.epidemics,
     turn: state.turn,

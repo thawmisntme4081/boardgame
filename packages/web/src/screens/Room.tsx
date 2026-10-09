@@ -2,7 +2,7 @@
 // the waiting room while a seat is empty, then the game's board.
 import { Button } from '@platform/ui/components/button';
 import { Card, CardContent, CardHeader } from '@platform/ui/components/card';
-import type { GameClientModule, SeatPresence } from '@platform/ui/game';
+import { seatInfo, type GameClientModule, type SeatPresence } from '@platform/ui/game';
 import { Share2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { leaveGame, shareInvite } from '../api';
@@ -15,6 +15,39 @@ import { useName } from './useName';
 const seatsEmpty = (presence: SeatPresence | null) =>
   !presence || Object.entries(presence).some(([seat, info]) => seat !== 'you' && info === null);
 
+const seatsOf = (presence: SeatPresence | null) =>
+  Object.keys(presence ?? {}).filter((seat) => seat !== 'you');
+
+/** Who is seated and how many seats are still open: shown when a table has more than two. */
+function SeatList({ presence }: { presence: SeatPresence }) {
+  const { t } = useTranslation();
+  const seats = seatsOf(presence);
+  const taken = seats.filter((seat) => seatInfo(presence, seat)).length;
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium">{t('lobby.seatsTitle', { taken, total: seats.length })}</p>
+      <ul className="flex flex-col gap-1 text-sm">
+        {seats.map((seat) => {
+          const info = seatInfo(presence, seat);
+          return (
+            <li key={seat} className={info ? '' : 'text-muted-foreground'}>
+              {info
+                ? [
+                    info.name,
+                    seat === presence.you ? t('lobby.seatYou') : '',
+                    info.online ? '' : t('lobby.seatOffline'),
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
+                : t('lobby.seatEmpty')}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 /** Waiting for an empty seat to be filled: after creating a room, or after a partner left. */
 function WaitingRoom({ module, code }: { module: GameClientModule; code: string }) {
   const { t } = useTranslation();
@@ -26,6 +59,7 @@ function WaitingRoom({ module, code }: { module: GameClientModule; code: string 
       <Card>
         <CardHeader className="flex flex-col gap-2">
           {view !== undefined && <WaitingInfo view={view} presence={presence} />}
+          {presence && seatsOf(presence).length > 2 && <SeatList presence={presence} />}
           <p className="text-sm text-muted-foreground">{t('lobby.sendCode')}</p>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -59,7 +93,8 @@ function SeatedRoom({ gameId, code }: { gameId: string; code: string }) {
   if (seatsEmpty(presence)) return <WaitingRoom module={module} code={code} />;
   const { Board } = module;
   // An offer counts for the match on screen only.
-  const rematch = offer?.matchId === match.matchId ? offer : { by: null, config: null };
+  const rematch =
+    offer?.matchId === match.matchId ? offer : { by: null, config: null, accepted: [] };
   return <Board view={match.view} presence={presence} connection={connection} rematch={rematch} />;
 }
 

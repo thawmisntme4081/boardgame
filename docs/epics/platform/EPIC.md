@@ -6,7 +6,7 @@
 
 Turn the Sky Team app into a game-agnostic platform, like Board Game Arena: players pick a game, create a table, play, and find their history, whatever the game. Sky Team becomes one game module among others. The platform owns everything that is not a rule: rooms, seats, presence, reconnection, timers, storage, accounts and the client shell; each game plugs in through one contract (`GameDefinition`).
 
-**Epic done when:** Sky Team runs entirely through the platform (01–05, with no behaviour change for players), accounts work (06), and the [Pandemic epic](../pandemic/EPIC.md) plays on it with no game-specific code in the platform packages.
+**Epic done when:** Sky Team runs entirely through the platform (01–05, with no behavior change for players), accounts work (06), and the [Pandemic epic](../pandemic/EPIC.md) plays on it with no game-specific code in the platform packages.
 
 ## Phases
 

@@ -12,6 +12,7 @@ describe('partnerChange', () => {
   it('spots the partner dropping and coming back', () => {
     expect(partnerChange(both(), both(false), 'pilot')?.kind).toBe('offline');
     expect(partnerChange(both(false), both(), 'pilot')).toEqual({
+      seat: 'copilot',
       kind: 'back',
       text: 'Ben is back.',
     });

@@ -25,7 +25,7 @@ import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
 import { NextTurnCountdown } from './NextTurnCountdown';
 import { RoundCountdown } from './RoundCountdown';
 
-/** Whose turn it is (or the game's phase); in your seat's colour while you place. */
+/** Whose turn it is (or the game's phase); in your seat's color while you place. */
 function TurnPill({ view, partnerName }: { view: PlayerView; partnerName: string }) {
   const { t } = useTranslation('sky-team');
   const myTurn = view.phase === 'placing' && view.currentSeat === view.seat;

@@ -6,7 +6,7 @@ import { createRandomAgent } from '@sky/rules/random-play';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { accounts } from './accounts';
 import { mockGoogleSignIn } from './google-test';
-import { RoomManager, type Room } from './rooms';
+import { SkyRooms as RoomManager, type SkyRoom as Room } from './test-server';
 import { openDatabase, SqliteMatchStore } from './store';
 import { startTestServer } from './test-server';
 

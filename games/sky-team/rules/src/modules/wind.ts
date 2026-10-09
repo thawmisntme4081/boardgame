@@ -8,7 +8,7 @@ export const windSpeed = (wind: number | null): number => (wind === null ? 0 : W
 
 /**
  * Wind: after each Axis phase the blue airplane turns as many spaces as the axis is off
- * centre, to the side it tilts (negative: left, toward the pilot), even if the axis did not move; the wind speed
+ * center, to the side it tilts (negative: left, toward the pilot), even if the axis did not move; the wind speed
  * it points at is added to the engines every round, the last one included.
  */
 export const wind: RuleModule = {

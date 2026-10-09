@@ -51,12 +51,14 @@ export interface PlatformApi<Move, Setup> {
 }
 
 /**
- * A rematch after a game needs both players: one makes an offer (`by` is their seat), the
- * other accepts by asking for a rematch too, or declines. `config` is the offered setup.
+ * A rematch after a game needs every seated player: one makes an offer (`by` is their seat),
+ * the others accept by asking for a rematch too, or decline. `config` is the offered setup;
+ * `accepted` the seats that asked so far, the offerer first.
  */
 export interface RematchState {
   by: string | null;
   config: unknown;
+  accepted?: string[];
 }
 
 export interface BoardProps<View> {

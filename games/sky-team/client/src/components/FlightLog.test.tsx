@@ -30,7 +30,7 @@ const seed = (history: GameRecord[]) =>
   localStorage.setItem('sky-team:history', JSON.stringify(history));
 
 describe('FlightLog', () => {
-  it('shows wins and losses per scenario and seat, coloured by result', async () => {
+  it('shows wins and losses per scenario and seat, colored by result', async () => {
     seed([
       game({ seat: 'pilot', result: 'won' }),
       game({ seat: 'pilot', result: 'lost', reasons: ['spin'] }),
@@ -64,7 +64,7 @@ describe('FlightLog', () => {
     expect(items[1]).toHaveTextContent('as Pilot · round 7');
   });
 
-  it('numbers the code when an airport has two scenarios of a colour', async () => {
+  it('numbers the code when an airport has two scenarios of a color', async () => {
     render(<FlightLog />);
     await userEvent.click(screen.getByRole('button', { name: 'Flight Log' }));
     expect(screen.getByRole('img', { name: 'DUS1' })).toBeInTheDocument();
