@@ -3,40 +3,65 @@ import { Button } from '@platform/ui/components/button';
 import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
+import { Link, useRouter } from '@tanstack/react-router';
+import { Dices } from 'lucide-react';
 import { useState, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { joinRoom } from '../api';
 import { NAME_MAX } from '../session';
 import { AccountButton } from './Account';
 
-export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+export function Shell({
+  children,
+  wide = false,
+  full = false,
+  account = false,
+}: {
+  children: ReactNode;
+  wide?: boolean;
+  /** As wide as the top bar. */
+  full?: boolean;
+  account?: boolean;
+}) {
+  const { t } = useTranslation();
+  const inRouter = Boolean(useRouter({ warn: false }));
+  const brand = (
+    <>
+      <Dices className="size-5 shrink-0" aria-hidden="true" /> {t('app.title')}
+    </>
+  );
+  const brandClass = 'flex min-h-11 items-center gap-2 text-lg font-semibold';
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-muted/40 p-4">
-      <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>{children}</div>
-    </main>
+    <div className="flex min-h-dvh flex-col bg-muted/40">
+      <header className="border-b bg-background px-4 py-1">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2">
+          {inRouter ? (
+            <Link to="/" className={brandClass}>
+              {brand}
+            </Link>
+          ) : (
+            <span className={brandClass}>{brand}</span>
+          )}
+          <div className="flex shrink-0 items-center gap-1">
+            <LanguageSwitch />
+            {account && <AccountButton />}
+          </div>
+        </div>
+      </header>
+      <main className="flex flex-1 justify-center p-4">
+        <div className={full ? 'w-full max-w-6xl' : wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }
 
-/** A card heading with the language switch (and, if asked, sign-in) on the right. */
-export function CardTop({
-  title,
-  description,
-  account = false,
-}: {
-  title: ReactNode;
-  description?: ReactNode;
-  /** Show "Sign in" or the signed-in name (the game picker and the game pages). */
-  account?: boolean;
-}) {
+/** A card heading. */
+export function CardTop({ title, description }: { title?: ReactNode; description?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-start justify-between gap-2">
-        <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">{title}</h1>
-        <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
-          {account && <AccountButton />}
-          <LanguageSwitch />
-        </div>
-      </div>
+      {title && <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">{title}</h1>}
       {description && <p className="text-sm text-muted-foreground">{description}</p>}
     </div>
   );
