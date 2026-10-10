@@ -26,7 +26,7 @@ export function History() {
   const account = usePlatform((s) => s.account);
   const signedIn = typeof account === 'object' && account.user !== null;
   return (
-    <Shell wide>
+    <Shell wide account>
       <Card>
         <CardHeader className="flex flex-col gap-1">
           <Link
@@ -42,7 +42,6 @@ export function History() {
                 ? undefined
                 : t(signedIn ? 'history.intro' : 'history.signedOut')
             }
-            account
           />
         </CardHeader>
         {signedIn && (

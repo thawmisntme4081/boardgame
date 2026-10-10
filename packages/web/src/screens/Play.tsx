@@ -25,7 +25,7 @@ function CreateForm({ module }: { module: GameClientModule }) {
   };
 
   return (
-    <Shell>
+    <Shell account>
       <Card>
         <CardHeader>
           <Link
@@ -37,7 +37,6 @@ function CreateForm({ module }: { module: GameClientModule }) {
           <CardTop
             title={t(`games.${module.id}.name` as 'games.sky-team.name')}
             description={t(`games.${module.id}.blurb` as 'games.sky-team.blurb')}
-            account
           />
         </CardHeader>
         <CardContent className="flex flex-col gap-5">

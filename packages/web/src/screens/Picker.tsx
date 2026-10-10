@@ -1,61 +1,36 @@
 // `/`: the game picker, and joining a room by its code.
-import { Card, CardContent, CardHeader } from '@platform/ui/components/card';
 import { Link } from '@tanstack/react-router';
-import { ChevronRight, Dices } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { GAMES } from '../games';
-import { CardTop, JoinForm, NameField, Or, Shell } from './Shell';
-import { useName } from './useName';
+import { Shell } from './Shell';
 
 export function Picker() {
   const { t } = useTranslation();
-  const { name, setName, fromAccount } = useName();
   return (
-    <Shell>
-      <Card>
-        <CardHeader>
-          <CardTop
-            title={
-              <>
-                <Dices className="size-5 shrink-0" aria-hidden="true" /> {t('app.title')}
-              </>
-            }
-            description={t('app.tagline')}
-            account
-          />
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <section aria-labelledby="games" className="flex flex-col gap-2">
-            <h2 id="games" className="text-sm font-medium">
-              {t('app.chooseGame')}
-            </h2>
-            <ul className="flex flex-col gap-2">
-              {GAMES.map((game) => (
-                <li key={game.id}>
-                  <Link
-                    to="/play/$gameId"
-                    params={{ gameId: game.id }}
-                    className="flex min-h-11 items-center gap-3 rounded-xl border px-3 py-2 transition hover:bg-muted"
-                  >
-                    <span className="flex flex-1 flex-col gap-0.5">
-                      <span className="font-semibold">
-                        {t(`games.${game.id}.name` as 'games.sky-team.name')}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {t(`games.${game.id}.blurb` as 'games.sky-team.blurb')}
-                      </span>
-                    </span>
-                    <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <Or />
-          <NameField name={name} onChange={setName} fromAccount={fromAccount} />
-          <JoinForm name={name} />
-        </CardContent>
-      </Card>
+    <Shell full account>
+      <section aria-labelledby="games" className="flex flex-col gap-3">
+        <h2 id="games" className="text-xl font-semibold">
+          {t('app.chooseGame')}
+        </h2>
+        <div className="grid grid-cols-2 gap-2 tablet:grid-cols-4">
+          {GAMES.map((game) => (
+            <Link
+              key={game.id}
+              to="/play/$gameId"
+              params={{ gameId: game.id }}
+              className="group rounded outline-offset-4"
+            >
+              <img
+                src={game.image}
+                alt={game.id}
+                width={300}
+                height={400}
+                className="aspect-3/4 h-auto w-full rounded object-cover shadow-sm transition duration-200 ease-out group-hover:-translate-y-1.5 group-hover:scale-105 group-hover:shadow-xl group-focus-visible:-translate-y-1.5 group-focus-visible:scale-105 group-focus-visible:shadow-xl motion-reduce:transition-none motion-reduce:group-hover:transform-none"
+              />
+            </Link>
+          ))}
+        </div>
+      </section>
     </Shell>
   );
 }

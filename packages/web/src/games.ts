@@ -5,23 +5,21 @@ import { addLocales } from '@platform/ui/i18n';
 import { useEffect, useState } from 'react';
 
 export interface GameInfo {
-  /** The game's id, as the server's registry and the i18n namespace know it. */
   id: string;
-  /** Seats at the table, for the picker. */
-  players: { min: number; max: number };
   load: () => Promise<{ default: GameClientModule }>;
+  image: string;
 }
 
 export const GAMES: readonly GameInfo[] = [
   {
     id: 'sky-team',
-    players: { min: 2, max: 2 },
     load: () => import('@sky/client') as Promise<{ default: GameClientModule }>,
+    image: './src/assets/thumbnails/sky-team.webp',
   },
   {
     id: 'pandemic',
-    players: { min: 2, max: 4 },
     load: () => import('@pandemic/client') as Promise<{ default: GameClientModule }>,
+    image: './src/assets/thumbnails/pandemic.webp',
   },
 ];
 
