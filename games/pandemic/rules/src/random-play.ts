@@ -3,17 +3,11 @@
 // enough to be won or to run out of cards, not only to be lost to outbreaks.
 import type { NextMove } from '@platform/engine/testing';
 import { COLORS, cityOf, type CityId, type Color } from './cities';
-import { cubesOnBoard } from './actions';
-import { legalActions, legalShareOffers } from './legal';
+import { cardsToCure, cubesOnBoard } from './actions';
+import { legalActions, legalRoleActions, legalShareOffers } from './legal';
 import type { PandemicMove } from './moves';
 import { shareAnswerer } from './share';
-import {
-  CARDS_TO_CURE,
-  type GameState,
-  type HandCard,
-  type PandemicState,
-  type SeatId,
-} from './types';
+import { type GameState, type HandCard, type PandemicState, type SeatId } from './types';
 
 const pick = <T>(items: readonly T[], random: () => number): T =>
   items[Math.floor(random() * items.length)] as T;
@@ -66,6 +60,10 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
     const card = cardToDiscard(state.hands[pending.seat] as HandCard[]);
     return { by: pending.seat, move: { type: 'discard', card } };
   }
+  if (pending?.kind === 'move') {
+    if (random() < 0.05) return { by: pending.by, move: { type: 'move-cancel' } };
+    return { by: pending.pawn, move: { type: random() < 0.9 ? 'move-accept' : 'move-decline' } };
+  }
   if (pending?.kind === 'share') {
     if (random() < 0.05) return { by: turn.seat, move: { type: 'share-cancel' } };
     const by = shareAnswerer(state) as SeatId;
@@ -90,13 +88,17 @@ function actionMove(state: GameState, by: SeatId, random: () => number): Pandemi
   const here = state.pawns[by] as CityId;
   const hand = state.hands[by] ?? [];
 
+  // A role's own power now and then.
+  const powers = legalRoleActions(state, by);
+  if (powers.length > 0 && random() < 0.15) return pick(powers, random);
+
   const cure = actions.find((action) => action.type === 'cure');
   if (cure) return cure;
 
   // Hold the cards for a cure: get to a research station.
   const counts = countByColor(hand);
   const ready = COLORS.some(
-    (color) => state.cures[color] === 'none' && counts[color] >= CARDS_TO_CURE,
+    (color) => state.cures[color] === 'none' && counts[color] >= cardsToCure(state, by),
   );
   if (ready) {
     const build = actions.find((action) => action.type === 'build');

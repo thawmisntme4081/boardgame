@@ -6,7 +6,7 @@ import { useCardText } from '../lib/cards';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
 
-/** Questions that stop play: a card to discard, or a Share Knowledge offer to answer. */
+/** Questions that stop play: a card to discard, or a Share Knowledge or move offer to answer. */
 export function Prompts({ view, presence }: { view: PandemicView; presence: SeatPresence | null }) {
   const { t } = useTranslation('pandemic');
   const cardText = useCardText();
@@ -42,6 +42,46 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
             {t('discard.waiting', { name: seatName(presence, pending.seat) })}
           </p>
         )}
+      </section>
+    );
+  }
+
+  if (pending.kind === 'move') {
+    return (
+      <section
+        aria-labelledby="move-prompt-title"
+        className="flex flex-col gap-2 rounded-lg border p-3"
+      >
+        <h2 id="move-prompt-title" className="font-semibold">
+          {t('moveOffer.title')}
+        </h2>
+        <p className="text-sm">
+          {t('moveOffer.offered', {
+            by: seatName(presence, pending.by),
+            pawn: seatName(presence, pending.pawn),
+            city: cityName(pending.move.to),
+          })}
+        </p>
+        <div className="flex gap-2">
+          {you === pending.pawn && (
+            <>
+              <Button onClick={() => void platform().send({ type: 'move-accept' })}>
+                {t('moveOffer.accept')}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => void platform().send({ type: 'move-decline' })}
+              >
+                {t('moveOffer.decline')}
+              </Button>
+            </>
+          )}
+          {you === pending.by && (
+            <Button variant="outline" onClick={() => void platform().send({ type: 'move-cancel' })}>
+              {t('moveOffer.cancel')}
+            </Button>
+          )}
+        </div>
       </section>
     );
   }

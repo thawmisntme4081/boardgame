@@ -17,6 +17,16 @@ export function dealt(state: PandemicState): GameState {
 
 export const city = (id: CityId): HandCard => ({ kind: 'city', city: id });
 
+/**
+ * Roles that change no rule the older tests look at (no cube is blocked, no pawn moves for
+ * another): the same four in any game, so tests that are not about roles stay the same.
+ */
+export function neutralRoles(game: GameState): GameState {
+  const plain = ['researcher', 'scientist', 'contingency-planner', 'researcher'] as const;
+  game.seats.forEach((seat, i) => (game.roles[seat] = plain[i]));
+  return game;
+}
+
 /** A 2-player game (p1 to move, in Atlanta) with no cubes, no hands and a full supply. */
 export function blankGame(players: 2 | 3 | 4 = 2): GameState {
   const game = createGame({
@@ -25,6 +35,7 @@ export function blankGame(players: 2 | 3 | 4 = 2): GameState {
     seed: 1,
   });
   game.seats = [...game.seats].sort();
+  neutralRoles(game);
   game.turn.seat = 'p1';
   for (const c of CITIES) game.cubes[c.id] = { blue: 0, yellow: 0, black: 0, red: 0 };
   game.supply = { blue: 0, yellow: 0, black: 0, red: 0 };

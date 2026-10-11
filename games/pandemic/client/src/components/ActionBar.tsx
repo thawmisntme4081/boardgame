@@ -111,7 +111,7 @@ export function ActionBar({
         ))}
         {COLORS.map((color) => {
           const owned = colorCards(view, you, color);
-          const needed = cardsToCure();
+          const needed = cardsToCure(view, you);
           // Which cards makes no difference to whether a cure is legal, only how many.
           const first = owned.slice(0, needed);
           if (!can({ type: 'cure', color, cards: first })) return null;
@@ -136,7 +136,7 @@ export function ActionBar({
           <legend className="px-1 text-sm font-medium">
             {t('actions.cureChoose', {
               color: t(`color.${curing.color}`),
-              count: cardsToCure(),
+              count: cardsToCure(view, you),
             })}
           </legend>
           <div className="flex flex-wrap gap-2">
@@ -163,7 +163,10 @@ export function ActionBar({
             })}
           </div>
           <p className="text-sm text-muted-foreground">
-            {t('actions.cureChosen', { chosen: curing.picked.length, count: cardsToCure() })}
+            {t('actions.cureChosen', {
+              chosen: curing.picked.length,
+              count: cardsToCure(view, you),
+            })}
           </p>
           <div className="flex gap-2">
             <Button

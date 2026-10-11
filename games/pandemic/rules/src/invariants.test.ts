@@ -5,6 +5,7 @@ import { COLORS } from './cities';
 import { legalActions } from './legal';
 import { applyShare, checkShare } from './share';
 import { createGame } from './setup';
+import { neutralRoles } from './test-utils';
 import { CUBES_PER_COLOR, SEATS, type GameState } from './types';
 
 /** Starts the next player's turn (the draw and infect steps do not exist yet). */
@@ -28,7 +29,9 @@ describe('cube conservation', () => {
         fc.integer({ min: 0, max: 1000 }),
         fc.array(fc.nat(1000), { minLength: 1, maxLength: 120 }),
         (players, seed, picks) => {
-          let game = createGame({ seats: SEATS.slice(0, players), epidemics: 4, seed });
+          let game = neutralRoles(
+            createGame({ seats: SEATS.slice(0, players), epidemics: 4, seed }),
+          );
           for (const pick of picks) {
             if (game.status !== 'playing') break;
             if (game.turn.step !== 'actions') game = nextTurn(game);

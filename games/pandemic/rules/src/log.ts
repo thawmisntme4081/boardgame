@@ -15,7 +15,7 @@ export type LogEntry =
   | { type: 'epidemic-intensify'; cards: number }
   /**
    * A city infected, by an infection card or an epidemic's Infect step (`epidemic`): `cubes` put
-   * on it (0 when its disease is eradicated or it had no room), and the cities that outbroke as
+   * on it (0 when its disease is eradicated, a role protected it (`prevented`) or it had no room), and the cities that outbroke as
    * a result, in the order they did (the first is the city itself; the rest are the chain).
    */
   | {
@@ -25,6 +25,7 @@ export type LogEntry =
       epidemic: boolean;
       cubes: number;
       eradicated: boolean;
+      prevented: boolean;
       outbreaks: CityId[];
     };
 

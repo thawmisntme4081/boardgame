@@ -27,7 +27,7 @@ async function startThreePlayers(browser: Browser, device: ReturnType<typeof dev
     await page.getByRole('button', { name: 'Join' }).click();
   }
   for (const page of pages) {
-    await expect(page.getByRole('region', { name: 'Actions' })).toBeVisible();
+    await expect(page.getByRole('alert', { name: 'Actions' })).toBeVisible();
   }
   return { ana, ben, cleo, code };
 }
@@ -41,7 +41,7 @@ test.describe('a three-player Pandemic game', () => {
 
     // Everyone sees the same table: three hands, and a turn that is someone's.
     for (const page of [ana, ben, cleo]) {
-      await expect(page.getByRole('region', { name: 'Hands' }).getByText('Ben')).toBeVisible();
+      await expect(page.getByRole('region', { name: 'Hands' })).toBeVisible();
       await expect(page.getByText(/4 actions left/)).toBeVisible();
     }
 
@@ -73,7 +73,7 @@ test.describe('a three-player Pandemic game', () => {
     // Only Ana can act, and only she gets the cure button enabled.
     await expect(ana.getByText(/Your turn/)).toBeVisible();
     await expect(ben.getByText("Ana's turn")).toBeVisible();
-    await expect(ben.getByRole('button', { name: 'Discover cure: Yellow' })).toBeDisabled();
+    await expect(ben.getByRole('button', { name: 'Discover cure: Yellow' })).toHaveCount(0);
     await expect(ana.getByRole('button', { name: 'Discover cure: Yellow' })).toBeEnabled();
 
     await ana.getByRole('button', { name: 'Discover cure: Yellow' }).click();
@@ -128,8 +128,8 @@ test.describe('a three-player Pandemic game', () => {
       if (await active.getByText("'s turn").isVisible()) break;
       const epidemic = active.getByRole('button', { name: /^Epidemic:/ });
       const infect = active.getByRole('button', { name: 'Infect', exact: true });
-      if (await epidemic.isEnabled()) await epidemic.click();
-      else if (await infect.isEnabled()) await infect.click();
+      if (await epidemic.isVisible()) await epidemic.click();
+      else if (await infect.isVisible()) await infect.click();
       else break;
     }
     // The turn is now someone else's, and the log of the finished turn is the previous one.

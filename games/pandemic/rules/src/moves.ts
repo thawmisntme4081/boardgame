@@ -1,12 +1,16 @@
 // Every move a player can make, one entry point for the server and the client.
 import { applyAction, checkAction, type Action, type ActionCheck } from './actions';
+import { applyMoveOffer, checkMoveOffer, type MoveOfferMove } from './moveOffer';
+import { applyRoleAction, checkRoleAction, isRoleAction } from './roleActions';
+import type { RoleAction } from './roles';
 import { applyShare, checkShare, type ShareMove } from './share';
 import { applyTurnMove, checkTurnMove, type TurnMove } from './turn';
 import type { ActionState, GameState, SeatId } from './types';
 
-export type PandemicMove = Action | ShareMove | TurnMove;
+export type PandemicMove = Action | ShareMove | MoveOfferMove | TurnMove | RoleAction;
 
 const isShare = (move: PandemicMove): move is ShareMove => move.type.startsWith('share-');
+const isMoveOffer = (move: PandemicMove): move is MoveOfferMove => move.type.startsWith('move-');
 const isTurn = (move: PandemicMove): move is TurnMove =>
   move.type === 'draw' ||
   move.type === 'epidemic' ||
@@ -15,14 +19,18 @@ const isTurn = (move: PandemicMove): move is TurnMove =>
 
 export function checkMove(state: ActionState, seat: SeatId, move: PandemicMove): ActionCheck {
   if (isShare(move)) return checkShare(state, seat, move);
+  if (isMoveOffer(move)) return checkMoveOffer(state, seat, move);
   if (isTurn(move)) return checkTurnMove(state, seat, move);
+  if (isRoleAction(move)) return checkRoleAction(state, seat, move);
   return checkAction(state, seat, move);
 }
 
 /** Does the move (it must be legal: see `checkMove`) and returns the new state. */
 export function applyMove(state: GameState, seat: SeatId, move: PandemicMove): GameState {
   if (isShare(move)) return applyShare(state, seat, move);
+  if (isMoveOffer(move)) return applyMoveOffer(state, seat, move);
   if (isTurn(move)) return applyTurnMove(state, seat, move);
+  if (isRoleAction(move)) return applyRoleAction(state, seat, move);
   return applyAction(state, seat, move);
 }
 

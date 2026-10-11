@@ -1,5 +1,6 @@
 // The game's state and constants. State is plain JSON (it is saved and replayed), and the
 // rules in the other files are pure functions over it.
+import type { PawnMove } from './actions';
 import type { CityId, Color } from './cities';
 import type { GameLog } from './log';
 
@@ -39,7 +40,7 @@ export const EVENT_IDS = [
 ] as const;
 export type EventId = (typeof EVENT_IDS)[number];
 
-/** Roles (their rules come in Pandemic 04). */
+/** Role cards (their powers are hooks in `roles/`). */
 export const ROLE_IDS = [
   'contingency-planner',
   'dispatcher',
@@ -79,12 +80,16 @@ export interface Turn {
   epidemicStep: EpidemicStep;
   /** Infection cards still to flip in the infect step. */
   infectionsLeft: number;
+  /** A role's once-a-turn power was used this turn (Operations Expert's flight). */
+  flightUsed: boolean;
 }
 
 /** Something that must be answered before play goes on. */
 export type Pending =
   /** The active player offered to give or take a city card; the partner answers. */
   | { kind: 'share'; from: SeatId; to: SeatId; city: CityId }
+  /** `by` offered to move `pawn` (another player's); its owner answers (see `moveOffer.ts`). */
+  | { kind: 'move'; by: SeatId; pawn: SeatId; move: PawnMove }
   /** A hand over the limit: this seat discards (or plays an event) first. */
   | { kind: 'discard'; seat: SeatId };
 
@@ -101,8 +106,12 @@ export interface GameState {
   pending: Pending | null;
   status: GameStatus;
   lossReason: LossReason | null;
+  /** Each seated player's role card, dealt at random after the initial infection. */
+  roles: PerSeat<RoleId>;
   pawns: PerSeat<CityId>;
   hands: PerSeat<HandCard[]>;
+  /** The event card stored on the Contingency Planner's role card, outside the hand. */
+  contingency: EventId | null;
   cubes: Record<CityId, Cubes>;
   /** Cubes left in the supply, by color. */
   supply: Record<Color, number>;
@@ -130,7 +139,18 @@ export interface GameState {
  */
 export type ActionState = Pick<
   GameState,
-  'seats' | 'status' | 'turn' | 'pending' | 'pawns' | 'hands' | 'cubes' | 'stations' | 'cures'
+  | 'seats'
+  | 'status'
+  | 'turn'
+  | 'pending'
+  | 'roles'
+  | 'pawns'
+  | 'hands'
+  | 'contingency'
+  | 'playerDiscard'
+  | 'cubes'
+  | 'stations'
+  | 'cures'
 >;
 
 /**

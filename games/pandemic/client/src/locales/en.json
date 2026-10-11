@@ -125,6 +125,13 @@
     "decline": "Decline",
     "cancel": "Cancel the offer"
   },
+  "moveOffer": {
+    "title": "Move a pawn",
+    "offered": "{{by}} offers to move {{pawn}} to {{city}}.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel the offer"
+  },
   "discard": {
     "title": "Too many cards",
     "text": "Discard a card to go down to {{limit}}.",
@@ -179,6 +186,7 @@
     "infected_other": "{{city}} infected: {{count}} {{color}} cubes.",
     "noRoom": "{{city}} already has 3 {{color}} cubes.",
     "eradicated": "{{city}}: {{color}} is eradicated, nothing happens.",
+    "prevented": "{{city}}: a role stops the {{color}} cubes.",
     "outbreaks": "Outbreak: {{cities}}."
   },
   "gameOver": {

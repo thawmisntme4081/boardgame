@@ -8,10 +8,10 @@ test('pick Sky Team, create a game and see the invite code', async ({ page }) =>
     if (request.resourceType() === 'script') scripts.push(request.url());
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Board games' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose a game' })).toBeVisible();
   expect(scripts.filter((url) => url.includes('/assets/sky-team-'))).toEqual([]);
 
-  await page.getByRole('link', { name: /^Sky Team/ }).click();
+  await page.getByRole('link', { name: 'sky-team' }).click();
   await expect(page).toHaveURL(/\/play\/sky-team$/);
   const create = page.getByRole('button', { name: 'Create a game' });
   await expect(create).toBeDisabled();
@@ -23,7 +23,7 @@ test('pick Sky Team, create a game and see the invite code', async ({ page }) =>
 });
 
 test('joining an unknown code shows an error', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/play/sky-team');
   await page.getByLabel('Your name').fill('Ben');
   await page.getByLabel('Game code').fill('qqqq');
   await expect(page.getByLabel('Game code')).toHaveValue('QQQQ');

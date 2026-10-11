@@ -80,7 +80,7 @@ describe('switching language', () => {
     await renderAt('/');
     await userEvent.click(screen.getByRole('combobox', { name: 'Language' }));
     await userEvent.click(screen.getByRole('option', { name: 'Français' }));
-    expect(screen.getByRole('heading', { name: 'Jeux de société' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Choisissez un jeu' })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('fr');
   });
 });
