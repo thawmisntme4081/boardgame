@@ -4,6 +4,7 @@ import {
   canActInView,
   cardsToCure,
   cityOf,
+  roleOf,
   type CityId,
   type Color,
   type PandemicMove,
@@ -16,6 +17,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
+import { usePandemic } from '../store';
 
 const send = (move: PandemicMove) => void platform().send(move);
 
@@ -47,6 +49,8 @@ export function ActionBar({
   const [moveStation, setMoveStation] = useState<CityId | ''>('');
   // A cure with more cards of its color than it needs: the player picks which to discard.
   const [curing, setCuring] = useState<{ color: Color; picked: CityId[] } | null>(null);
+  const movingPawn = usePandemic((s) => s.movingPawn);
+  const setMovingPawn = usePandemic((s) => s.setMovingPawn);
   const { you, turn } = view;
 
   if (!you) return <p className="text-sm text-muted-foreground">{t('actions.spectator')}</p>;
@@ -59,6 +63,13 @@ export function ActionBar({
   }
   const can = (move: PandemicMove) => canActInView(view, you, move);
   const stationsFull = view.stations.length >= MAX_STATIONS;
+  const here = view.pawns[you] as CityId;
+  // A role that moves other pawns picks which one the map moves.
+  const movesPawns = roleOf(view, you)?.movesPawns === true;
+  // Event cards in the discard pile a role may take (each once).
+  const takes = [
+    ...new Set(view.playerDiscard.flatMap((card) => (card.kind === 'event' ? [card.event] : []))),
+  ].filter((event) => can({ type: 'take-event', event }));
   const canBuild =
     can(buildMove(moveStation)) || (stationsFull && view.stations.some((id) => can(buildMove(id))));
 
@@ -71,6 +82,30 @@ export function ActionBar({
       <h2 id="actions-title" className="font-semibold">
         {t('actions.title')}
       </h2>
+
+      {movesPawns && (
+        <div
+          role="group"
+          aria-label={t('actions.movePawn')}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <span className="font-medium">{t('actions.movePawn')}</span>
+          {view.seats.map((seat) => {
+            const on = (movingPawn ?? you) === seat;
+            return (
+              <Button
+                key={seat}
+                size="sm"
+                variant={on ? 'default' : 'outline'}
+                aria-pressed={on}
+                onClick={() => setMovingPawn(seat === you ? null : seat)}
+              >
+                {seat === you ? t('actions.ownPawn') : seatName(presence, seat)}
+              </Button>
+            );
+          })}
+        </div>
+      )}
 
       {canBuild && (
         <div className="flex flex-wrap items-center gap-2">
@@ -199,6 +234,42 @@ export function ActionBar({
               );
             }),
           )}
+        {/* A role that gives any city card: one button per card and partner. */}
+        {view.seats
+          .filter((seat) => seat !== you)
+          .flatMap((seat) =>
+            (view.hands[you] ?? []).flatMap((card) => {
+              if (card.kind !== 'city' || card.city === here) return [];
+              const offer = {
+                type: 'share-offer',
+                direction: 'give',
+                with: seat,
+                city: card.city,
+              } as const;
+              if (!can(offer)) return [];
+              return [
+                <Button
+                  key={`give-${seat}-${card.city}`}
+                  variant="outline"
+                  onClick={() => send(offer)}
+                >
+                  {t('share.giveCity', {
+                    city: cityName(card.city),
+                    name: seatName(presence, seat),
+                  })}
+                </Button>,
+              ];
+            }),
+          )}
+        {takes.map((event) => (
+          <Button
+            key={`take-${event}`}
+            variant="outline"
+            onClick={() => send({ type: 'take-event', event })}
+          >
+            {t('actions.takeEvent', { event: t(`events.${event}`) })}
+          </Button>
+        ))}
       </div>
 
       <div className="flex flex-wrap gap-2">

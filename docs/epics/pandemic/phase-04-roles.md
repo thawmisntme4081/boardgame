@@ -1,6 +1,6 @@
 # Pandemic 04: Roles
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium-high**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium-high**
 
 Needs [Pandemic 03](phase-03-board-and-client.md). Rules and UI together.
 
@@ -39,18 +39,18 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Client**
 
-- [ ] 9. **L** Role card per player (name, power in a popover) and pawn colors.
-- [ ] 10. **M** Role controls: the Dispatcher choosing which pawn to move, the Operations Expert's flight, the Contingency Planner's take.
-- [ ] 11. **L** Playwright: one game where the Dispatcher and the Medic act.
+- [x] 9. **L** Role card per player (name, power in a popover) and pawn colors.
+- [x] 10. **M** Role controls: the Dispatcher choosing which pawn to move, the Operations Expert's flight, the Contingency Planner's take.
+- [x] 11. **L** Playwright: one game where the Dispatcher and the Medic act.
 
 ## Checklist
 
-- [ ] All seven roles tested on their own; the core names no role
+- [x] All seven roles tested on their own; the core names no role
 - [x] Property test with random roles passes
-- [ ] Role controls on the board, tested
+- [x] Role controls on the board, tested
 
 ## Open questions
 
 - None yet.
 
-**Done when:** a game with random roles plays every role power from the board, with their tests passing.
+**Done when:** a game with random roles plays every role power from the board, with their tests passing. ✅ Verified (`pnpm test` 746 passed, `pnpm e2e` 47 passed/10 skipped, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` all pass).

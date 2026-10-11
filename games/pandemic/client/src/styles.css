@@ -5,6 +5,17 @@
   --color-disease-red: oklch(0.6 0.22 25);
 }
 
+/* The pawn colors of the box: each role has its own. */
+@theme static {
+  --color-role-contingency-planner: oklch(0.72 0.11 195);
+  --color-role-dispatcher: oklch(0.65 0.2 320);
+  --color-role-medic: oklch(0.75 0.17 55);
+  --color-role-operations-expert: oklch(0.82 0.17 135);
+  --color-role-quarantine-specialist: oklch(0.42 0.11 150);
+  --color-role-researcher: oklch(0.5 0.08 60);
+  --color-role-scientist: oklch(0.96 0.01 100);
+}
+
 @theme static {
   --color-seat-p1: oklch(0.7 0.25 340);
   --color-seat-p2: oklch(0.75 0.2 145);

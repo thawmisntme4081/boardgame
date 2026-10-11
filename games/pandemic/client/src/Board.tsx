@@ -12,6 +12,7 @@ import { HandCards } from './components/HandCards';
 import { Hands } from './components/Hands';
 import { GameOverDialog } from './components/GameOverDialog';
 import { EpidemicSteps } from './components/EpidemicSteps';
+import { RoleCards } from './components/RoleCards';
 import { Prompts } from './components/Prompts';
 import { TurnLog } from './components/TurnLog';
 import { TopBar } from './components/TopBar';
@@ -25,13 +26,16 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
   const { t } = useTranslation('pandemic');
   const selected = usePandemic((s) => s.selectedCity);
   const selectCity = usePandemic((s) => s.selectCity);
+  const movingPawn = usePandemic((s) => s.movingPawn);
   const layout = handLayout(useWide());
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
   if (view.status === 'waiting') return null;
   const { turn, you } = view;
   const canMoveNow =
     view.status === 'playing' && !!you && you === turn.seat && turn.step === 'actions';
-  const reachable = you && canMoveNow ? reachableCities(view, you, CITIES) : new Set<CityId>();
+  const pawn = movingPawn ?? you;
+  const reachable =
+    you && pawn && canMoveNow ? reachableCities(view, you, CITIES, pawn) : new Set<CityId>();
   const turnText =
     turn.seat === you
       ? t('board.yourTurn')
@@ -66,12 +70,20 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
               <MapTracks view={view} />
               <MapPieces view={view} presence={presence} />
               {canMoveNow && selected && you && (
-                <MoveMenu view={view} you={you} city={selected} onDone={() => selectCity(null)} />
+                <MoveMenu
+                  view={view}
+                  you={you}
+                  pawn={pawn ?? you}
+                  city={selected}
+                  presence={presence}
+                  onDone={() => selectCity(null)}
+                />
               )}
             </WorldMap>
           </div>
         </div>
         <aside className="flex min-h-0 flex-col gap-3 overflow-auto">
+          <RoleCards view={view} presence={presence} />
           <Prompts view={view} presence={presence} />
           <div
             role="alert"
