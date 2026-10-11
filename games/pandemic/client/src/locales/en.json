@@ -82,8 +82,7 @@
     "empty": "No cards",
     "count_one": "({{count}} card)",
     "count_other": "({{count}} cards)",
-    "event": "Event: {{name}}",
-    "city": "{{name}} ({{color}})"
+    "event": "Event: {{name}}"
   },
   "events": {
     "airlift": "Airlift",
@@ -98,7 +97,6 @@
   },
   "actions": {
     "title": "Actions",
-    "moveHint": "Tap a highlighted city on the map to move there.",
     "drive": "Drive / Ferry",
     "direct": "Direct Flight",
     "charter": "Charter Flight",

@@ -20,6 +20,12 @@ import { platform } from '../platform';
 const send = (move: PandemicMove) => void platform().send(move);
 
 const selectClass = 'h-11 rounded-md border bg-background px-2 text-sm';
+const alertClass = 'rounded-lg border border-yellow-400 bg-yellow-100 p-3 text-sm text-yellow-950';
+
+const buildMove = (move: CityId | ''): PandemicMove => ({
+  type: 'build',
+  ...(move ? { move } : {}),
+});
 
 /** Every city card of `color` in the hand: the cards a cure could use. */
 function colorCards(view: PandemicView, seat: SeatId, color: Color): CityId[] {
@@ -29,7 +35,7 @@ function colorCards(view: PandemicView, seat: SeatId, color: Color): CityId[] {
     .filter((city) => cityOf(city).color === color);
 }
 
-/** Every action as a plain button, enabled only where `canActInView` says it is legal. */
+/** The legal actions as plain buttons (`canActInView` decides which show); on someone else's turn, a wait note. */
 export function ActionBar({
   view,
   presence,
@@ -44,50 +50,60 @@ export function ActionBar({
   const { you, turn } = view;
 
   if (!you) return <p className="text-sm text-muted-foreground">{t('actions.spectator')}</p>;
+  if (turn.seat !== you) {
+    return (
+      <section aria-label={t('actions.title')} role="alert" className={alertClass}>
+        <p>{t('actions.notYourTurn')}</p>
+      </section>
+    );
+  }
   const can = (move: PandemicMove) => canActInView(view, you, move);
   const stationsFull = view.stations.length >= MAX_STATIONS;
+  const canBuild =
+    can(buildMove(moveStation)) || (stationsFull && view.stations.some((id) => can(buildMove(id))));
 
   return (
-    <section aria-labelledby="actions-title" className="flex flex-col gap-3">
+    <section
+      aria-labelledby="actions-title"
+      role="alert"
+      className={`${alertClass} flex flex-col gap-3`}
+    >
       <h2 id="actions-title" className="font-semibold">
         {t('actions.title')}
       </h2>
-      {turn.seat !== you && (
-        <p className="text-sm text-muted-foreground">{t('actions.notYourTurn')}</p>
-      )}
-      <p className="text-sm text-muted-foreground">{t('actions.moveHint')}</p>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {stationsFull && (
-          <select
-            aria-label={t('actions.moveStation')}
-            className={selectClass}
-            value={moveStation}
-            onChange={(e) => setMoveStation(e.target.value as CityId | '')}
+      {canBuild && (
+        <div className="flex flex-wrap items-center gap-2">
+          {stationsFull && (
+            <select
+              aria-label={t('actions.moveStation')}
+              className={selectClass}
+              value={moveStation}
+              onChange={(e) => setMoveStation(e.target.value as CityId | '')}
+            >
+              <option value="">{t('actions.moveStation')}</option>
+              {view.stations.map((id) => (
+                <option key={id} value={id}>
+                  {cityName(id)}
+                </option>
+              ))}
+            </select>
+          )}
+          <Button
+            variant="outline"
+            disabled={!can(buildMove(moveStation))}
+            onClick={() => send(buildMove(moveStation))}
           >
-            <option value="">{t('actions.moveStation')}</option>
-            {view.stations.map((id) => (
-              <option key={id} value={id}>
-                {cityName(id)}
-              </option>
-            ))}
-          </select>
-        )}
-        <Button
-          variant="outline"
-          disabled={!can({ type: 'build', ...(moveStation ? { move: moveStation } : {}) })}
-          onClick={() => send({ type: 'build', ...(moveStation ? { move: moveStation } : {}) })}
-        >
-          {t('actions.build')}
-        </Button>
-      </div>
+            {t('actions.build')}
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
-        {COLORS.map((color) => (
+        {COLORS.filter((color) => can({ type: 'treat', color })).map((color) => (
           <Button
             key={`treat-${color}`}
             variant="outline"
-            disabled={!can({ type: 'treat', color })}
             onClick={() => send({ type: 'treat', color })}
           >
             {t('actions.treat', { color: t(`color.${color}`) })}
@@ -98,11 +114,11 @@ export function ActionBar({
           const needed = cardsToCure();
           // Which cards makes no difference to whether a cure is legal, only how many.
           const first = owned.slice(0, needed);
+          if (!can({ type: 'cure', color, cards: first })) return null;
           return (
             <Button
               key={`cure-${color}`}
               variant="outline"
-              disabled={!can({ type: 'cure', color, cards: first })}
               onClick={() =>
                 owned.length > needed
                   ? setCuring({ color, picked: [] })
@@ -172,13 +188,9 @@ export function ActionBar({
           .flatMap((seat) =>
             (['give', 'take'] as const).map((direction) => {
               const offer = { type: 'share-offer', direction, with: seat } as const;
+              if (!can(offer)) return null;
               return (
-                <Button
-                  key={`${direction}-${seat}`}
-                  variant="outline"
-                  disabled={!can(offer)}
-                  onClick={() => send(offer)}
-                >
+                <Button key={`${direction}-${seat}`} variant="outline" onClick={() => send(offer)}>
                   {t(`share.${direction}`, { name: seatName(presence, seat) })}
                 </Button>
               );
@@ -187,22 +199,22 @@ export function ActionBar({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button disabled={!can({ type: 'draw' })} onClick={() => send({ type: 'draw' })}>
-          {t('actions.draw')}
-        </Button>
-        <Button disabled={!can({ type: 'epidemic' })} onClick={() => send({ type: 'epidemic' })}>
-          {t('actions.epidemic', { step: t(`board.epidemicStep.${turn.epidemicStep}`) })}
-        </Button>
-        <Button disabled={!can({ type: 'infect' })} onClick={() => send({ type: 'infect' })}>
-          {t('actions.infect')}
-        </Button>
-        <Button
-          variant="ghost"
-          disabled={!can({ type: 'pass' })}
-          onClick={() => send({ type: 'pass' })}
-        >
-          {t('actions.pass')}
-        </Button>
+        {can({ type: 'draw' }) && (
+          <Button onClick={() => send({ type: 'draw' })}>{t('actions.draw')}</Button>
+        )}
+        {can({ type: 'epidemic' }) && (
+          <Button onClick={() => send({ type: 'epidemic' })}>
+            {t('actions.epidemic', { step: t(`board.epidemicStep.${turn.epidemicStep}`) })}
+          </Button>
+        )}
+        {can({ type: 'infect' }) && (
+          <Button onClick={() => send({ type: 'infect' })}>{t('actions.infect')}</Button>
+        )}
+        {can({ type: 'pass' }) && (
+          <Button variant="ghost" onClick={() => send({ type: 'pass' })}>
+            {t('actions.pass')}
+          </Button>
+        )}
       </div>
     </section>
   );

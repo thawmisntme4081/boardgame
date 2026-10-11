@@ -16,12 +16,13 @@ export function Shell({
   wide = false,
   full = false,
   account = false,
+  center = false,
 }: {
   children: ReactNode;
   wide?: boolean;
-  /** As wide as the top bar. */
   full?: boolean;
   account?: boolean;
+  center?: boolean;
 }) {
   const { t } = useTranslation();
   const inRouter = Boolean(useRouter({ warn: false }));
@@ -48,7 +49,7 @@ export function Shell({
           </div>
         </div>
       </header>
-      <main className="flex flex-1 justify-center p-4">
+      <main className={`flex flex-1 justify-center p-4 ${center ? 'items-center' : ''}`}>
         <div className={full ? 'w-full max-w-6xl' : wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
           {children}
         </div>

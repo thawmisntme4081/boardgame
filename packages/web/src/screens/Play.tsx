@@ -25,7 +25,7 @@ function CreateForm({ module }: { module: GameClientModule }) {
   };
 
   return (
-    <Shell account>
+    <Shell account center>
       <Card>
         <CardHeader>
           <Link

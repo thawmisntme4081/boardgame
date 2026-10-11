@@ -103,7 +103,7 @@ function Invite({ code }: { code: string }) {
   const { t } = useTranslation();
   const { name, setName, fromAccount } = useName();
   return (
-    <Shell>
+    <Shell center>
       <Card>
         <CardHeader>
           <CardTop title={t('app.title')} description={t('app.tagline')} />

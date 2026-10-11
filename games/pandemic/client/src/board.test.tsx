@@ -311,7 +311,7 @@ describe('Pandemic 03: the desktop layout (task 4)', () => {
     expect(main.className).toContain('h-dvh');
     expect(main.className).toContain('overflow-hidden');
     expect(main.querySelector('svg[aria-label="Map"]')).not.toBeNull();
-    expect(screen.getByRole('region', { name: 'Hands' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Hands' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Actions' })).toBeInTheDocument();
   });
 

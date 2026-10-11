@@ -9,6 +9,7 @@
 @theme {
   --breakpoint-tablet: 600px;
   --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1200px;
 }
 
 html {

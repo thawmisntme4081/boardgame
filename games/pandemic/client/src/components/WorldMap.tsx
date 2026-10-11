@@ -13,6 +13,10 @@ export interface WorldMapProps {
   reachable?: ReadonlySet<CityId>;
   /** A vial in the disease slot once cured (gold outline when eradicated). */
   cures?: Record<Color, CureState>;
+  /** Drawn in a band below the map (your hand). */
+  hand?: ReactNode;
+  /** Height of that band in map units. */
+  handHeight?: number;
   children?: ReactNode;
 }
 
@@ -26,14 +30,16 @@ export function WorldMap({
   selected = null,
   reachable,
   cures,
+  hand,
+  handHeight = 0,
   children,
 }: WorldMapProps) {
   return (
     <svg
-      viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+      viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT + (hand ? handHeight : 0)}`}
       role="group"
       aria-label="Map"
-      className="h-full w-full select-none"
+      className="w-full select-none"
       preserveAspectRatio="xMidYMid meet"
     >
       <image href={mapUrl} width={MAP_WIDTH} height={MAP_HEIGHT} onClick={onBackgroundClick} />
@@ -48,7 +54,7 @@ export function WorldMap({
             onClick={onSelect ? () => onSelect(id) : undefined}
           >
             {reachable?.has(id) && (
-              <circle r={15} fill="none" stroke="oklch(0.85 0.17 95)" strokeWidth={2}>
+              <circle r={15} fill="none" stroke="oklch(0.85 0.17 95)" strokeWidth={3}>
                 <animate attributeName="r" values="14;15;14" dur="1.4s" repeatCount="indefinite" />
                 <animate
                   attributeName="opacity"
@@ -90,6 +96,7 @@ export function WorldMap({
           );
         })}
       {children}
+      {hand && <g transform={`translate(0 ${MAP_HEIGHT})`}>{hand}</g>}
     </svg>
   );
 }

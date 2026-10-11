@@ -8,6 +8,7 @@ import { ActionBar } from './components/ActionBar';
 import { MoveMenu } from './components/MoveMenu';
 import { MapPieces } from './components/MapPieces';
 import { MapTracks } from './components/MapTracks';
+import { HandCards } from './components/HandCards';
 import { Hands } from './components/Hands';
 import { GameOverDialog } from './components/GameOverDialog';
 import { EpidemicSteps } from './components/EpidemicSteps';
@@ -15,6 +16,7 @@ import { Prompts } from './components/Prompts';
 import { TurnLog } from './components/TurnLog';
 import { TopBar } from './components/TopBar';
 import { WorldMap } from './components/WorldMap';
+import { handLayout, useWide } from './lib/handLayout';
 import { reachableCities } from './lib/moves';
 import { seatName } from './lib/names';
 import { usePandemic } from './store';
@@ -23,6 +25,7 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
   const { t } = useTranslation('pandemic');
   const selected = usePandemic((s) => s.selectedCity);
   const selectCity = usePandemic((s) => s.selectCity);
+  const layout = handLayout(useWide());
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
   if (view.status === 'waiting') return null;
   const { turn, you } = view;
@@ -36,7 +39,7 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
   return (
     <main className="mx-auto flex h-dvh flex-col gap-3 overflow-hidden px-3 pb-3">
       <TopBar view={view} presence={presence} />
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_1fr] gap-3">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,3fr)_1fr] gap-3">
         <div className="flex min-h-0 flex-col gap-3">
           <div className="min-h-0 flex-1">
             <WorldMap
@@ -49,6 +52,16 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
               onBackgroundClick={() => selectCity(null)}
               selected={selected}
               reachable={reachable}
+              hand={
+                you ? (
+                  <HandCards
+                    cards={view.hands[you] ?? []}
+                    discard={view.playerDiscard}
+                    layout={layout}
+                  />
+                ) : undefined
+              }
+              handHeight={layout.bandHeight}
             >
               <MapTracks view={view} />
               <MapPieces view={view} presence={presence} />
@@ -60,14 +73,16 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
         </div>
         <aside className="flex min-h-0 flex-col gap-3 overflow-auto">
           <Prompts view={view} presence={presence} />
-          <header className="text-sm">
+          <div
+            role="alert"
+            className="rounded-lg border border-yellow-400 bg-yellow-100 p-3 text-sm text-yellow-950"
+          >
             {view.status === 'playing' ? (
               <p>
-                {turnText} · {t(`board.step.${turn.step}`)} ·{' '}
-                {t('board.actionsLeft', { count: turn.actionsLeft })}
+                {turnText} · {t('board.actionsLeft', { count: turn.actionsLeft })}
               </p>
             ) : (
-              <p role="status" className="font-semibold">
+              <p className="font-semibold">
                 {view.status === 'won'
                   ? t('board.won')
                   : t('board.lost', {
@@ -75,7 +90,7 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
                     })}
               </p>
             )}
-          </header>
+          </div>
           <EpidemicSteps view={view} />
           <GameOverDialog view={view} presence={presence} rematch={rematch} />
           {view.status === 'playing' && <ActionBar view={view} presence={presence} />}
