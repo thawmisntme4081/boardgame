@@ -48,7 +48,8 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
       : new Set<CityId>();
   }, [view, movingPawn, canMoveNow]);
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
-  if (view.status === 'waiting') return null;
+  // The "before the game" step gets its panel in Pandemic 06 (task 4).
+  if (view.status === 'waiting' || view.status === 'setup') return null;
   const { turn, you } = view;
   const pawn = movingPawn ?? you;
   // Playing an event that needs a city: the map offers its targets instead of the move menu.

@@ -13,6 +13,9 @@ import type {
   LossReason,
   PandemicState,
   Pending,
+  PerSeat,
+  RoleId,
+  RoleMode,
   SeatId,
 } from './types';
 import { SEATS } from './types';
@@ -47,14 +50,38 @@ export interface WaitingView {
   epidemics: number;
 }
 
-/** What a viewer sees of a table: the wait for players, or the game. */
-export type TableView = WaitingView | PandemicView;
+/** The "before the game" step: everything in it is public (the order, the roles, who is ready). */
+export interface SetupView {
+  status: 'setup';
+  you: SeatId | null;
+  /** Turn order. */
+  seats: SeatId[];
+  epidemics: number;
+  roleMode: RoleMode;
+  picks: PerSeat<RoleId>;
+  confirmed: SeatId[];
+}
+
+/** What a viewer sees of a table: the wait for players, the "before the game" step, or the game. */
+export type TableView = WaitingView | SetupView | PandemicView;
 
 const viewerSeat = (viewer: Viewer): SeatId | null =>
   (SEATS as readonly string[]).includes(viewer) ? (viewer as SeatId) : null;
 
-/** The view of a table: waiting (no seed), or the game's `viewFor`. */
+/** The view of a table: waiting, the "before the game" step (no seed), or the game's `viewFor`. */
 export function tableViewFor(state: PandemicState, viewer: Viewer): TableView {
+  if (state.status === 'setup') {
+    const { seats, epidemics, roleMode, picks, confirmed } = state;
+    return structuredClone({
+      status: 'setup',
+      you: viewerSeat(viewer),
+      seats,
+      epidemics,
+      roleMode,
+      picks,
+      confirmed,
+    });
+  }
   if (state.status !== 'waiting') return viewFor(state, viewer);
   const { seated, players, epidemics } = state;
   return { status: 'waiting', you: viewerSeat(viewer), seated: [...seated], players, epidemics };

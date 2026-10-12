@@ -1,22 +1,22 @@
-// The table before the game: players take seats, and the game is dealt once the number the
-// creator chose in the lobby is seated (never earlier with fewer).
+// The table before the game: players take seats, and once the number the creator chose in the
+// lobby is seated (never earlier with fewer) the "before the game" step starts (`preflight.ts`).
 import type { ActionCheck } from './actions';
-import { createGame } from './setup';
-import { SEATS, type PandemicState, type SeatId, type WaitingState } from './types';
+import { beginSetup } from './preflight';
+import { SEATS, type PandemicState, type RoleMode, type SeatId, type WaitingState } from './types';
 
-/** A table for `players` players: the game is dealt at once if they are all seated. */
+/** A table for `players` players: the "before the game" step starts if they are all seated. */
 export function openTable(options: {
   seats: readonly SeatId[];
   players: number;
   epidemics: number;
+  roleMode: RoleMode;
   seed: number;
 }): PandemicState {
-  const { seats, players, epidemics, seed } = options;
+  const { seats, players, epidemics, roleMode, seed } = options;
   if (seats.length >= players) {
-    // The seats in a fixed order, so the deal does not depend on who sat down first.
-    return createGame({ seats: [...seats].sort().slice(0, players), epidemics, seed });
+    return beginSetup({ seats: [...seats].sort().slice(0, players), epidemics, roleMode, seed });
   }
-  return { status: 'waiting', seated: [...seats], players, epidemics, seed };
+  return { status: 'waiting', seated: [...seats], players, epidemics, roleMode, seed };
 }
 
 /**

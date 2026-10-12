@@ -214,7 +214,11 @@
     "nothing-to-discard": "Nobody has to discard.",
     "bad-seat": "That seat does not exist.",
     "room-full": "The table is full.",
-    "not-started": "The game has not started."
+    "not-started": "The game has not started.",
+    "already-confirmed": "You have confirmed already.",
+    "pick-first": "Pick a role first.",
+    "roles-dealt": "The roles are dealt at random in this game.",
+    "role-taken": "Another player has that role."
   },
   "epidemic": {
     "title_one": "Epidemic ({{count}} to resolve)",

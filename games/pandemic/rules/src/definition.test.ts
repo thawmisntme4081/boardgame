@@ -7,7 +7,11 @@ import { dealt } from './test-utils';
 import { SEATS, type GameState } from './types';
 import type { PandemicView } from './views';
 
-const config = (players: number, epidemics: number): PandemicConfig => ({ players, epidemics });
+const config = (players: number, epidemics: number): PandemicConfig => ({
+  players,
+  epidemics,
+  roleMode: 'random',
+});
 
 function findLeaks(state: GameState, view: PandemicView, viewer: Viewer): string[] {
   const json = JSON.stringify(view);

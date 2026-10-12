@@ -8,6 +8,7 @@ import {
 } from './events';
 import { applyMoveOffer, checkMoveOffer, type MoveOfferMove } from './moveOffer';
 import { applyPlayEvent, checkPlayEvent } from './playEvent';
+import { isPreflightMove, type PreflightMove } from './preflight';
 import { applyRoleAction, checkRoleAction, isRoleAction } from './roleActions';
 import type { RoleAction } from './roles';
 import { applyShare, checkShare, type ShareMove } from './share';
@@ -15,7 +16,14 @@ import { applyTurnMove, checkTurnMove, type TurnMove } from './turn';
 import type { ActionState, GameState, SeatId } from './types';
 
 export type PandemicMove =
-  Action | ShareMove | MoveOfferMove | TurnMove | RoleAction | PlayEventMove | ForecastOrderMove;
+  | Action
+  | ShareMove
+  | MoveOfferMove
+  | TurnMove
+  | RoleAction
+  | PlayEventMove
+  | ForecastOrderMove
+  | PreflightMove;
 
 const isShare = (move: PandemicMove): move is ShareMove => move.type.startsWith('share-');
 const isMoveOffer = (move: PandemicMove): move is MoveOfferMove => move.type.startsWith('move-');
@@ -29,6 +37,8 @@ const isTurn = (move: PandemicMove): move is TurnMove =>
   move.type === 'discard';
 
 export function checkMove(state: ActionState, seat: SeatId, move: PandemicMove): ActionCheck {
+  // Picking roles and confirming belong to the "before the game" step (`preflight.ts`).
+  if (isPreflightMove(move)) return { ok: false, reason: 'wrong-step' };
   if (isPlayEvent(move)) return checkPlayEvent(state, seat, move);
   if (isForecastOrder(move)) return checkForecastOrder(state, seat, move);
   if (isShare(move)) return checkShare(state, seat, move);
@@ -40,6 +50,7 @@ export function checkMove(state: ActionState, seat: SeatId, move: PandemicMove):
 
 /** Does the move (it must be legal: see `checkMove`) and returns the new state. */
 export function applyMove(state: GameState, seat: SeatId, move: PandemicMove): GameState {
+  if (isPreflightMove(move)) throw new Error(`Illegal ${move.type}: wrong-step`);
   if (isPlayEvent(move)) return applyPlayEvent(state, seat, move);
   if (isForecastOrder(move)) return applyForecastOrder(state, seat, move);
   if (isShare(move)) return applyShare(state, seat, move);

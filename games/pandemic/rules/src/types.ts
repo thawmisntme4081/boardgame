@@ -182,8 +182,31 @@ export interface WaitingState {
   /** Players the creator chose in the lobby (2 to 4). */
   players: number;
   epidemics: number;
+  roleMode: RoleMode;
   seed: number;
 }
 
-/** A Pandemic table: waiting for players, or a game. */
-export type PandemicState = WaitingState | GameState;
+/** How the roles are given out: dealt at random (the rulebook), or each player chooses. */
+export const ROLE_MODES = ['random', 'choose'] as const;
+export type RoleMode = (typeof ROLE_MODES)[number];
+
+/**
+ * Before the game, once every seat is taken and before the board is dealt: the turn order is
+ * drawn, the roles dealt at random or picked by the players (each a role nobody else has), and
+ * everyone confirms; the last confirm deals the game with that order and those roles.
+ */
+export interface SetupState {
+  status: 'setup';
+  /** Turn order, drawn when the step starts. */
+  seats: SeatId[];
+  epidemics: number;
+  roleMode: RoleMode;
+  /** Each seat's role: dealt at once in random mode, picked (and changeable) in choose mode. */
+  picks: PerSeat<RoleId>;
+  /** Seats that confirmed; a confirmed pick is locked. */
+  confirmed: SeatId[];
+  seed: number;
+}
+
+/** A Pandemic table: waiting for players, the "before the game" step, or a game. */
+export type PandemicState = WaitingState | SetupState | GameState;

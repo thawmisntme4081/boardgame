@@ -28,6 +28,10 @@ export interface CreateGameOptions {
   /** Epidemic cards in the player deck: 4 (introductory), 5 (standard) or 6 (heroic). */
   epidemics: number;
   seed: number;
+  /** The turn order already drawn (the "before the game" step): `seats` are kept in this order. */
+  ordered?: boolean;
+  /** Roles already given out (the "before the game" step); otherwise dealt at random. */
+  roles?: PerSeat<RoleId>;
 }
 
 /** Fisher-Yates with the seeded RNG; returns the shuffled copy and the next RNG state. */
@@ -61,7 +65,8 @@ const perColor = <T>(value: T): Record<Color, T> => ({
   red: value,
 });
 
-export function createGame({ seats, epidemics, seed }: CreateGameOptions): GameState {
+export function createGame(options: CreateGameOptions): GameState {
+  const { seats, epidemics, seed } = options;
   if (
     seats.length < MIN_PLAYERS ||
     seats.length > MAX_PLAYERS ||
@@ -75,8 +80,8 @@ export function createGame({ seats, epidemics, seed }: CreateGameOptions): GameS
 
   let rngState = seed;
 
-  // Turn order.
-  const order = shuffle(seats, rngState);
+  // Turn order (drawn already when the players went through the "before the game" step).
+  const order = options.ordered ? { items: [...seats], rngState } : shuffle(seats, rngState);
   rngState = order.rngState;
 
   // Player deck: shuffle the city and event cards, deal the hands.
@@ -129,10 +134,14 @@ export function createGame({ seats, epidemics, seed }: CreateGameOptions): GameS
   }
 
   // Role cards, after the initial infection (the rulebook's order), so no role changes it.
-  const roleDeal = shuffle(ROLE_IDS, rngState);
-  rngState = roleDeal.rngState;
-  const roles: PerSeat<RoleId> = {};
-  order.items.forEach((seat, i) => (roles[seat] = roleDeal.items[i]));
+  let roles: PerSeat<RoleId> = {};
+  if (options.roles) {
+    roles = { ...options.roles };
+  } else {
+    const roleDeal = shuffle(ROLE_IDS, rngState);
+    rngState = roleDeal.rngState;
+    order.items.forEach((seat, i) => (roles[seat] = roleDeal.items[i]));
+  }
 
   const pawns: PerSeat<CityId> = {};
   for (const seat of order.items) pawns[seat] = START_CITY;

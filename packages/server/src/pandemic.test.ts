@@ -31,7 +31,9 @@ function table(
 }
 
 const game = (room: Room<PandemicState>): GameState => {
-  if (room.game.status === 'waiting') throw new Error('still waiting');
+  if (room.game.status === 'waiting' || room.game.status === 'setup') {
+    throw new Error('not dealt yet');
+  }
   return room.game;
 };
 
