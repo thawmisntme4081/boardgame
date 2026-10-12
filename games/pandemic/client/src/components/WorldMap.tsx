@@ -54,15 +54,13 @@ export function WorldMap({
             onClick={onSelect ? () => onSelect(id) : undefined}
           >
             {reachable?.has(id) && (
-              <circle r={15} fill="none" stroke="oklch(0.85 0.17 95)" strokeWidth={3}>
-                <animate attributeName="r" values="14;15;14" dur="1.4s" repeatCount="indefinite" />
-                <animate
-                  attributeName="opacity"
-                  values="1;0.55;1"
-                  dur="1.4s"
-                  repeatCount="indefinite"
-                />
-              </circle>
+              <circle
+                r={15}
+                fill="none"
+                stroke="oklch(0.85 0.17 95)"
+                strokeWidth={3}
+                className="reach-ring"
+              />
             )}
             {selected === id && <circle r={17} fill="none" stroke="white" strokeWidth={3} />}
             <circle r={15} fill="transparent" />

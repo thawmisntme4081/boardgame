@@ -55,7 +55,7 @@ function WaitingRoom({ module, code }: { module: GameClientModule; code: string 
   const presence = usePlatform((s) => s.presence);
   const { WaitingInfo } = module;
   return (
-    <Shell>
+    <Shell center>
       <Card>
         <CardHeader className="flex flex-col gap-2">
           {view !== undefined && <WaitingInfo view={view} presence={presence} />}

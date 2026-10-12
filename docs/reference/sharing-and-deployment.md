@@ -46,8 +46,9 @@ Ship one Docker image running one Node process that serves the built React files
 **Build**
 
 1. `pnpm -r build`: Vite outputs `client/dist`, `tsc` outputs `server/dist`.
-2. Express serves `client/dist` as static files with a fallback to `index.html` for `/r/:code` links (`clientDir` in `app.ts`).
-3. Same origin for page and socket, so no CORS setup is needed in production.
+2. Express serves `client/dist` as static files with a fallback to `index.html` for `/r/:code` links (`clientDir` in `app.ts`). Hashed files under `/assets/` are sent with `Cache-Control: public, max-age=31536000, immutable`, and `index.html` (and the fallback) with `no-cache`, so a deploy reaches everyone on their next load. Responses are gzipped by the `compression` middleware, since nothing in front of `*.fly.dev` compresses. The libraries are split into their own chunks (`react`, `router`, `i18n`, `socket`; `codeSplitting.groups` in `packages/web/vite.config.ts`), so a deploy that changes only app code leaves them cached.
+3. Same origin for page and socket, so no CORS setup is needed in production. The client opens a WebSocket straight away (`transports: ['websocket', 'polling']`, `tryAllTransports` in `socket.ts`), with no long-polling handshake first, and falls back to polling only when WebSockets are blocked. Socket messages are not compressed (views are a few KB; `perMessageDeflate` would cost a zlib context per connection), and the server takes client messages of at most 64 KB (`maxHttpBufferSize`).
+4. SQLite runs in WAL mode with `synchronous = NORMAL` and `busy_timeout = 5000` (`openDatabase` in `store.ts`), as Litestream recommends. The Docker build runs `pnpm fetch` on the lockfile before copying the sources, so the download layer stays cached between deploys.
 
 The real files: [`Dockerfile`](../../Dockerfile) (multi-stage: build everything, keep only the server's production packages, add Litestream), [`deploy/start.sh`](../../deploy/start.sh) (restores the last backup onto an empty volume, then runs the server under Litestream), [`deploy/litestream.yml`](../../deploy/litestream.yml) and [`fly.toml`](../../fly.toml).
 

@@ -45,6 +45,22 @@ function shade(color: Color, lit: number): string {
     : `color-mix(in oklch, ${base}, black ${Math.round(-t * 45)}%)`;
 }
 
+/** How finely the light is graded: a face's fill changes only when it crosses a step. */
+const SHADES = 48;
+const shades = new Map<Color, string[]>();
+
+/** The shades of one color, built once: index 0 faces away from the light, `SHADES` faces it. */
+function shadesOf(color: Color): string[] {
+  let list = shades.get(color);
+  if (!list) {
+    list = Array.from({ length: SHADES + 1 }, (_, i) => shade(color, (i / SHADES) * 2 - 1));
+    shades.set(color, list);
+  }
+  return list;
+}
+
+const stillMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
 export interface CubeProps extends Omit<SVGProps<SVGGElement>, 'color'> {
   color: Color;
   seed: number;
@@ -70,6 +86,13 @@ export function Cube({ color, seed, radius, angle, leaving = false, ...props }: 
     const g = group.current;
     if (!g) return;
     const faces = Array.from(g.children) as SVGPathElement[];
+    const fills = shadesOf(color);
+    // What each face shows now: a frame only writes what changed.
+    const shownPath = faces.map(() => '');
+    const shownShade = faces.map(() => -1);
+    let shownAt = '';
+    // Reduced motion: the cube stands still (no tumbling, no orbit) and only moves when it must.
+    const still = stillMotion();
     // A different, steady spin for each cube.
     const wx = 0.1 + ((seed * 0.3) % 0.5);
     const wy = 0.1 + ((seed * 0.3) % 0.5);
@@ -80,10 +103,11 @@ export function Cube({ color, seed, radius, angle, leaving = false, ...props }: 
     let size = 0;
     let speed = 0;
     let last = 0;
-    return onFrame((t) => {
+    return onFrame((time) => {
+      const t = still ? 0 : time;
       const now = goal.current;
-      const dt = Math.min(0.05, Math.max(0, t - last));
-      last = t;
+      const dt = Math.min(0.05, Math.max(0, time - last));
+      last = time;
       const ease = 1 - Math.exp(-dt * 6);
       r += (now.radius - r) * ease;
       const turn = ((((now.angle - offset + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
@@ -95,25 +119,28 @@ export function Cube({ color, seed, radius, angle, leaving = false, ...props }: 
       const ay = seed * 2.3 + wy * t;
       const az = seed * 0.9 + wz * t;
       const theta = offset + ORBIT_SPEED * t;
-      g.setAttribute(
-        'transform',
-        `translate(${(r * Math.cos(theta)).toFixed(2)} ${(r * Math.sin(theta)).toFixed(2)})`,
-      );
+      const at = `translate(${(r * Math.cos(theta)).toFixed(2)} ${(r * Math.sin(theta)).toFixed(2)})`;
+      if (at !== shownAt) g.setAttribute('transform', (shownAt = at));
       const half = HALF * size;
       FACES.forEach(({ normal, corners }, i) => {
         const face = faces[i];
         if (!face) return;
         const [nx, ny, nz] = rotate(normal, ax, ay, az);
-        if (nz <= 0 || half < 0.05) {
-          face.setAttribute('d', '');
-          return;
+        let path = '';
+        if (nz > 0 && half >= 0.05) {
+          const points = corners.map((corner) => {
+            const [x, y] = rotate(corner, ax, ay, az);
+            return `${(x * half).toFixed(2)} ${(y * half).toFixed(2)}`;
+          });
+          path = `M${points.join('L')}Z`;
+          const lit = nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2];
+          const step = Math.min(SHADES, Math.max(0, Math.round(((lit + 1) / 2) * SHADES)));
+          if (step !== shownShade[i]) {
+            shownShade[i] = step;
+            face.style.fill = fills[step] ?? '';
+          }
         }
-        const points = corners.map((corner) => {
-          const [x, y] = rotate(corner, ax, ay, az);
-          return `${(x * half).toFixed(2)} ${(y * half).toFixed(2)}`;
-        });
-        face.setAttribute('d', `M${points.join('L')}Z`);
-        face.style.fill = shade(color, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]);
+        if (path !== shownPath[i]) face.setAttribute('d', (shownPath[i] = path));
       });
     });
   }, [color, seed]);

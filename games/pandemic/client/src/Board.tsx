@@ -3,6 +3,7 @@
 // comes from the view; every button is enabled by `canActInView`, so no rule lives here.
 import { CITIES, type CityId, type TableView } from '@pandemic/rules';
 import type { BoardProps } from '@platform/ui/game';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionBar } from './components/ActionBar';
 import { MoveMenu } from './components/MoveMenu';
@@ -28,14 +29,22 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
   const selectCity = usePandemic((s) => s.selectCity);
   const movingPawn = usePandemic((s) => s.movingPawn);
   const layout = handLayout(useWide());
+  const canMoveNow =
+    view.status === 'playing' &&
+    !!view.you &&
+    view.you === view.turn.seat &&
+    view.turn.step === 'actions';
+  // Every move to every city is checked: once per view and pawn, not on every tap.
+  const reachable = useMemo(() => {
+    const pawn = movingPawn ?? view.you;
+    return view.you && pawn && canMoveNow
+      ? reachableCities(view, view.you, CITIES, pawn)
+      : new Set<CityId>();
+  }, [view, movingPawn, canMoveNow]);
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
   if (view.status === 'waiting') return null;
   const { turn, you } = view;
-  const canMoveNow =
-    view.status === 'playing' && !!you && you === turn.seat && turn.step === 'actions';
   const pawn = movingPawn ?? you;
-  const reachable =
-    you && pawn && canMoveNow ? reachableCities(view, you, CITIES, pawn) : new Set<CityId>();
   const turnText =
     turn.seat === you
       ? t('board.yourTurn')

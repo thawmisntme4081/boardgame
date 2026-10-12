@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { GAMES, preloadGame } from './games';
 import './index.css';
 import '@platform/ui/i18n';
 
@@ -22,6 +23,11 @@ if (sentryDsn) {
     }),
   );
 }
+
+// Opening a game's page (or the Flight Log, which shows every game) directly: fetch its chunk
+// now, alongside the site password check, rather than once the page is drawn.
+const page = /^\/(?:play\/([^/]+)|history)/.exec(location.pathname);
+if (page) for (const id of page[1] ? [page[1]] : GAMES.map((g) => g.id)) preloadGame(id);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

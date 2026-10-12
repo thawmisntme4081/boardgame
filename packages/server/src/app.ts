@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
 import path from 'node:path';
+import compression from 'compression';
 import express from 'express';
 import { Server } from 'socket.io';
 import type { AccessCheck } from './access';
@@ -52,6 +53,9 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     next();
   });
+  // Pages, scripts and JSON go out gzipped: the site is reached directly, with no proxy that
+  // compresses. Socket messages stay uncompressed (views are a few KB).
+  app.use(compression());
 
   app.get('/health', (_req, res) => {
     res.json({ ok: true, rooms: rooms.size });
@@ -153,6 +157,8 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
 
   const httpServer = createServer(app);
   const io: GameServer = new Server(httpServer, {
+    // Moves are tiny (views go the other way): no client message needs more than this.
+    maxHttpBufferSize: 64 * 1024,
     ...(gates.length > 0 && {
       allowRequest: (req, callback) => {
         void Promise.all(gates.map((gate) => gate(req))).then((results) => {
@@ -202,10 +208,23 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
 
   const { clientDir } = options;
   if (clientDir && existsSync(path.join(clientDir, 'index.html'))) {
-    app.use(express.static(clientDir));
+    // Built files have a hash in their name: the browser keeps them for good. The page itself
+    // is checked on every visit, so a deploy reaches everyone at once.
+    app.use(
+      express.static(clientDir, {
+        setHeaders: (res, file) => {
+          const hashed = path.relative(clientDir, file).startsWith(`assets${path.sep}`);
+          res.setHeader(
+            'Cache-Control',
+            hashed ? 'public, max-age=31536000, immutable' : 'no-cache',
+          );
+        },
+      }),
+    );
     // Invite links like /r/ABCD are client routes: answer them with the app.
     app.use((req, res, next) => {
       if (req.method !== 'GET' || !req.accepts('html')) return next();
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(clientDir, 'index.html'));
     });
   }

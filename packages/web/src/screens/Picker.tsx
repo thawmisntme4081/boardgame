@@ -1,7 +1,7 @@
 // `/`: the game picker, and joining a room by its code.
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { GAMES } from '../games';
+import { GAMES, preloadGame } from '../games';
 import { Shell } from './Shell';
 
 export function Picker() {
@@ -18,6 +18,8 @@ export function Picker() {
               key={game.id}
               to="/play/$gameId"
               params={{ gameId: game.id }}
+              onPointerEnter={() => preloadGame(game.id)}
+              onFocus={() => preloadGame(game.id)}
               className="group rounded outline-offset-4"
             >
               <img
