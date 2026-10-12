@@ -22,7 +22,7 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 | 02 | [Platform for N seats and a walking skeleton](phase-02-walking-skeleton.md): generic registry, 2–4 seat rooms, N-player rematch, plain client; 3 players finish a basic game | ✅ Done | Medium-high | 10 |
 | 03 | [Board and client](phase-03-board-and-client.md): SVG map, hands, actions from the map, prompts, log, game over; desktop only | ✅ Done | High | 12 |
 | 04 | [Roles](phase-04-roles.md): the 7 roles, rules and UI | ✅ Done | Medium-high | 11 |
-| 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | 🚧 In progress | Medium-high | 9 |
+| 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | ✅ Done | Medium-high | 9 |
 | 06 | [Setup, variants and history](phase-06-setup-and-history.md): difficulty, role choice, first player, Flight Log | ⏳ Not started | Medium | 8 |
 | 07 | [Translations](phase-07-translations.md): EN, VI, FR | ⏳ Not started | Medium | 5 |
 | 08 | [Expansion foundation](phase-08-expansion-modules.md): modules, a variable disease list (optional from here) | ⏳ Not started | Medium-high | 8 |

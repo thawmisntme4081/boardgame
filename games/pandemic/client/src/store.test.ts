@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { usePandemic } from './store';
 
 const playing = (seat: string, actionsLeft: number) =>
-  ({ status: 'playing', turn: { seat, actionsLeft } }) as unknown as PandemicView;
+  ({
+    status: 'playing',
+    you: 'p1',
+    turn: { seat, actionsLeft },
+    log: { current: { seat, entries: [] }, previous: null },
+  }) as unknown as PandemicView;
 
 describe('the Pandemic store', () => {
   beforeEach(() => usePandemic.getState().reset());

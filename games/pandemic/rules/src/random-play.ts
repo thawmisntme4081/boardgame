@@ -2,12 +2,20 @@
 // the useful ones (cure, treat, walk to infected cities, gather cards), so that games last long
 // enough to be won or to run out of cards, not only to be lost to outbreaks.
 import type { NextMove } from '@platform/engine/testing';
-import { COLORS, cityOf, type CityId, type Color } from './cities';
+import { CITIES, COLORS, cityOf, type CityId, type Color } from './cities';
 import { cardsToCure, cubesOnBoard } from './actions';
 import { legalActions, legalRoleActions, legalShareOffers } from './legal';
-import type { PandemicMove } from './moves';
+import { canPlayCard, heldEvents } from './playEvent';
+import { checkMove, type PandemicMove } from './moves';
 import { shareAnswerer } from './share';
-import { type GameState, type HandCard, type PandemicState, type SeatId } from './types';
+import {
+  MAX_STATIONS,
+  type EventId,
+  type GameState,
+  type HandCard,
+  type PandemicState,
+  type SeatId,
+} from './types';
 
 const pick = <T>(items: readonly T[], random: () => number): T =>
   items[Math.floor(random() * items.length)] as T;
@@ -51,6 +59,43 @@ function cardToDiscard(hand: readonly HandCard[]): HandCard {
   });
 }
 
+/** A random way to play `event` (it may turn out illegal: the caller checks it). */
+function eventMove(state: GameState, event: EventId, random: () => number): PandemicMove | null {
+  switch (event) {
+    case 'airlift':
+      return {
+        type: 'play-event',
+        event,
+        pawn: pick(state.seats, random),
+        to: pick(CITIES, random).id,
+      };
+    case 'forecast':
+    case 'one-quiet-night':
+      return { type: 'play-event', event };
+    case 'government-grant': {
+      const city = pick(CITIES, random).id;
+      const move = state.stations.length >= MAX_STATIONS ? pick(state.stations, random) : undefined;
+      return { type: 'play-event', event, city, ...(move && { move }) };
+    }
+    case 'resilient-population':
+      return state.infectionDiscard.length > 0
+        ? { type: 'play-event', event, city: pick(state.infectionDiscard, random) }
+        : null;
+  }
+}
+
+/** Some seat playing one of its event cards, if one can (out of turn too), or `null`. */
+function randomEvent(state: GameState, random: () => number): NextMove<PandemicMove> | null {
+  for (const by of [...state.seats].sort(() => random() - 0.5)) {
+    for (const event of heldEvents(state, by)) {
+      if (!canPlayCard(state, by, event)) continue;
+      const move = eventMove(state, event, random);
+      if (move && checkMove(state, by, move).ok) return { by, move };
+    }
+  }
+  return null;
+}
+
 /** The next move of a random game: any seat, in any state. */
 export function agentMove(table: PandemicState, random: () => number): NextMove<PandemicMove> {
   if (table.status === 'waiting') throw new Error('random play needs every seat taken');
@@ -73,6 +118,12 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
     if (random() < 0.05) return { by: turn.seat, move: { type: 'share-cancel' } };
     const by = shareAnswerer(state) as SeatId;
     return { by, move: { type: random() < 0.9 ? 'share-accept' : 'share-decline' } };
+  }
+
+  // Event cards, now and then, whoever holds one and whoever's turn it is.
+  if (random() < 0.1) {
+    const play = randomEvent(state, random);
+    if (play) return play;
   }
 
   const by = turn.seat;

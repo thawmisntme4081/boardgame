@@ -1,6 +1,6 @@
 # Pandemic 05: Event cards
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress** · Effort: **medium-high**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium-high**
 
 Needs [Pandemic 04](phase-04-roles.md). Rules and UI together; the first real test of out-of-turn moves on the platform.
 
@@ -32,13 +32,13 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Checks**
 
-- [ ] 9. **M** Write the phase's tests (rules, client; including a per-viewer leak check: no view but the forecaster's holds the Forecast cards, spectators included; and the random player playing events in the engine kit) and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of tasks 1–8).
+- [x] 9. **M** Write the phase's tests (rules, client; including a per-viewer leak check: no view but the forecaster's holds the Forecast cards, spectators included; and the random player playing events in the engine kit) and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of tasks 1–8).
 
 ## Checklist
 
-- [ ] All five events tested, out of turn included, and refused at the forbidden moments
-- [ ] Contract note in the proposal
-- [ ] Event controls on the board, tested
+- [x] All five events tested, out of turn included, and refused at the forbidden moments
+- [x] Contract note in the proposal
+- [x] Event controls on the board, tested
 
 ## Decisions
 
@@ -57,4 +57,4 @@ Settled with the user before task 1:
 
 - None so far.
 
-**Done when:** every event plays from any seat at the allowed moments and is refused at the others, from the board and in tests.
+**Done when:** every event plays from any seat at the allowed moments and is refused at the others, from the board and in tests. ✅ Verified: 809 unit tests, 49 Playwright tests (Desktop Chrome, iPhone 13 and Pixel 7; Pandemic runs on desktop only), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm build` pass.
