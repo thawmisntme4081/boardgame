@@ -54,6 +54,11 @@ export type ActionReason =
   | 'no-pawn-there'
   | 'event-stored'
   | 'no-event'
+  // Event cards (see playEvent.ts)
+  | 'card-resolving'
+  | 'not-playable'
+  | 'no-forecast'
+  | 'bad-order'
   // Share Knowledge (see share.ts)
   | 'bad-partner'
   | 'not-together'
@@ -94,6 +99,28 @@ export function cubesOnBoard(state: Pick<GameState, 'cubes'>, color: Color): num
 /** City cards `seat` needs to discover a cure (a role may change it). */
 export const cardsToCure = (state: Pick<ActionState, 'roles'>, seat: SeatId): number =>
   roleOf(state, seat)?.cardsToCure ?? CARDS_TO_CURE;
+
+/**
+ * Whether a research station may go in `city` (Build, Government Grant): none there yet, and
+ * once all 6 are built, `move` names the one taken away (and only then).
+ */
+export function checkStationPlace(
+  state: Pick<ActionState, 'stations'>,
+  city: CityId,
+  move: CityId | undefined,
+): ActionCheck {
+  if (state.stations.includes(city)) return fail('station-exists');
+  if (state.stations.length >= MAX_STATIONS) {
+    return move !== undefined && state.stations.includes(move) ? OK : fail('bad-station-to-move');
+  }
+  return move === undefined ? OK : fail('bad-station-to-move');
+}
+
+/** Puts a research station in `city` (it was checked), taking `move` away if given. */
+export function placeStation(state: GameState, city: CityId, move: CityId | undefined): void {
+  if (move !== undefined) state.stations = state.stations.filter((c) => c !== move);
+  state.stations.push(city);
+}
 
 /** The checks every action shares: the game is on, it is `seat`'s actions step, one is left. */
 export function checkTurnAction(state: ActionState, seat: SeatId): ActionCheck {
@@ -147,12 +174,7 @@ export function checkAction(state: ActionState, seat: SeatId, action: Action): A
     case 'build':
       if (state.stations.includes(here)) return fail('station-exists');
       if (!role?.buildsWithoutCard && !hasCityCard(hand, here)) return fail('card-missing');
-      if (state.stations.length >= MAX_STATIONS) {
-        return action.move !== undefined && state.stations.includes(action.move)
-          ? OK
-          : fail('bad-station-to-move');
-      }
-      return action.move === undefined ? OK : fail('bad-station-to-move');
+      return checkStationPlace(state, here, action.move);
     case 'treat':
       return state.cubes[here][action.color] > 0 ? OK : fail('no-cubes');
     case 'cure': {
@@ -236,8 +258,7 @@ export function applyAction(state: GameState, seat: SeatId, action: Action): Gam
       return s;
     case 'build':
       if (!role?.buildsWithoutCard) discardCity(s, seat, here);
-      if (action.move !== undefined) s.stations = s.stations.filter((c) => c !== action.move);
-      s.stations.push(here);
+      placeStation(s, here, action.move);
       break;
     case 'treat': {
       const cubes = s.cubes[here];

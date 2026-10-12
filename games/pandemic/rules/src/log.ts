@@ -1,12 +1,20 @@
 // What happened after the actions, for the players to read back: the cards drawn, each step of an
-// epidemic, every city infected and the outbreaks it set off. Only the current and the previous
+// epidemic, every city infected and the outbreaks it set off; and every event card played, at
+// any moment of the turn. Only the current and the previous
 // turn are kept, so the state (and every view) stays small. Everything in it is already public
 // once it happens: drawn cards go to open hands or out of the game, infection cards to the
 // discard pile.
 import type { CityId, Color } from './cities';
-import type { PlayerCard, SeatId } from './types';
+import type { EventId, PlayerCard, SeatId } from './types';
 
 export type LogEntry =
+  /**
+   * `seat` played an event card, from its hand or its role card (`stored`: Contingency Planner),
+   * on this pawn and city when the card has them (Airlift's pawn and city, a Grant's city).
+   */
+  | { type: 'event'; seat: SeatId; event: EventId; stored: boolean; pawn?: SeatId; city?: CityId }
+  /** One Quiet Night: this turn's infect step was skipped. */
+  | { type: 'quiet-night' }
   /** The 2 cards drawn from the player deck, epidemics included. */
   | { type: 'draw'; cards: PlayerCard[] }
   /** Epidemic, Increase: the infection rate is now `rate` cards per turn. */

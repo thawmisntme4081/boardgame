@@ -16,6 +16,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 2. **M** `vi.json` and `fr.json` for the new keys; the key-parity test passes.
 - [ ] 3. **L** Check long labels on a desktop screen in all three languages.
 
+**Checks**
+
+- [ ] 4. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
+
 ## Checklist
 
 - [ ] Glossary updated and reviewed

@@ -135,6 +135,7 @@ type Actor =
 Why these choices:
 
 - **`actors`** replaces the hard-coded `currentSeat`. Isle of Skye's secret pricing is `simultaneous` for every seat; a Twilight Struggle event asking the opponent to discard is a `prompt`.
+- **Optional out-of-turn moves need no contract change** (Pandemic 05). `actors` lists who *must* act now; it is information for clients and tests, and the platform never refuses a move because its sender is not an actor: `validate` alone decides. A move anyone may make and nobody has to (Pandemic's event cards, played from any seat at almost any moment) is therefore allowed by `validate` and left out of `actors`. Two such moves at the same moment: the first the server receives wins, since a match has one writer.
 - **`schedule`** turns today's `syncRoundTimer`, `scheduleAutoRoll` and `NEXT_TURN_MS` handling into data. The platform's scheduler arms timers from it, re-arms them after a restart, and sends the move as `'system'`.
 - **`moveSchema` per game** keeps the "Zod for every incoming payload" rule with one generic envelope, instead of one event per action.
 - **`validate` on views** generalizes `canPlaceInView`: a game opts in when its view holds enough information to highlight legal moves.

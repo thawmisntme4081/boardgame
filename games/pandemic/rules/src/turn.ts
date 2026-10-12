@@ -1,6 +1,6 @@
 // The parts of a turn after the actions: draw 2 cards, resolve epidemics, discard down to the
 // hand limit, infect cities, then the next player's turn. Every card is its own move of the
-// active player, so events (Pandemic 05) can be played between them.
+// active player, so events (`playEvent.ts`) can be played between them.
 import type { ActionCheck, ActionReason } from './actions';
 import { nextTurnLog, type LogEntry } from './log';
 import { infectCity, lose } from './outbreak';
@@ -52,13 +52,22 @@ export function checkTurnMove(state: ActionState, seat: SeatId, move: TurnMove):
   return state.turn.step === step ? OK : fail('wrong-step');
 }
 
-/** Starts the infect step; a hand over the limit must be discarded to 7 first. */
+/**
+ * Starts the infect step; a hand over the limit must be discarded to 7 first. After One Quiet
+ * Night the step is skipped and the turn ends at once (a discard still owed blocks the next
+ * player's turn until it is done).
+ */
 function beginInfect(state: GameState): void {
   const { turn } = state;
   turn.step = 'infect';
   turn.infectionsLeft = INFECTION_RATES[state.infectionRate] as number;
   if ((state.hands[turn.seat] ?? []).length > HAND_LIMIT) {
     state.pending = { kind: 'discard', seat: turn.seat };
+  }
+  if (state.quietNight) {
+    state.quietNight = false;
+    record(state, { type: 'quiet-night' });
+    endTurn(state);
   }
 }
 
@@ -83,6 +92,7 @@ function endTurn(state: GameState): void {
     epidemicStep: 'increase',
     infectionsLeft: 0,
     flightUsed: false,
+    epidemicsResolved: 0,
   };
 }
 
@@ -136,6 +146,7 @@ function epidemic(state: GameState): void {
       record(state, { type: 'epidemic-intensify', cards: state.infectionDiscard.length });
       intensify(state);
       turn.epidemics -= 1;
+      turn.epidemicsResolved += 1;
       if (turn.epidemics > 0) turn.epidemicStep = 'increase';
       else beginInfect(state);
       return;

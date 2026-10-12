@@ -4,11 +4,29 @@ import { useTranslation } from 'react-i18next';
 import { cityName, seatName } from '../lib/names';
 import { useCardText } from '../lib/cards';
 
-/** One line of the log: a draw, an epidemic step, or a city infected and its outbreaks. */
-function Entry({ entry }: { entry: LogEntry }) {
+/**
+ * One line of the log: an event card played, a draw, an epidemic step, or a city infected and
+ * its outbreaks.
+ */
+function Entry({ entry, presence }: { entry: LogEntry; presence: SeatPresence | null }) {
   const { t } = useTranslation('pandemic');
   const cardText = useCardText();
   switch (entry.type) {
+    case 'event': {
+      const city = entry.city && cityName(entry.city);
+      const target = entry.pawn ? `${seatName(presence, entry.pawn)} → ${city}` : city;
+      return (
+        <li>
+          {t(entry.stored ? 'log.eventStored' : 'log.event', {
+            name: seatName(presence, entry.seat),
+            event: t(`events.${entry.event}`),
+          })}
+          {target && <span className="ml-1">({target})</span>}
+        </li>
+      );
+    }
+    case 'quiet-night':
+      return <li>{t('log.quietNight')}</li>;
     case 'draw':
       return (
         <li>
@@ -67,7 +85,7 @@ function Turn({
       ) : (
         <ul className="flex list-disc flex-col gap-0.5 pl-4 text-xs">
           {turn.entries.map((entry, i) => (
-            <Entry key={i} entry={entry} />
+            <Entry key={i} entry={entry} presence={presence} />
           ))}
         </ul>
       )}
@@ -75,7 +93,7 @@ function Turn({
   );
 }
 
-/** What happened after the actions in this turn and the one before: draws, epidemics, infections. */
+/** What happened in this turn and the one before: events, draws, epidemics, infections. */
 export function TurnLog({ view, presence }: { view: PandemicView; presence: SeatPresence | null }) {
   const { t } = useTranslation('pandemic');
   const { current, previous } = view.log;

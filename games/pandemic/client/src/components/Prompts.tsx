@@ -6,7 +6,10 @@ import { useCardText } from '../lib/cards';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
 
-/** Questions that stop play: a card to discard, or a Share Knowledge or move offer to answer. */
+/**
+ * Questions that stop play: a card to discard, a Share Knowledge or move offer to answer, or a
+ * Forecast being arranged.
+ */
 export function Prompts({ view, presence }: { view: PandemicView; presence: SeatPresence | null }) {
   const { t } = useTranslation('pandemic');
   const cardText = useCardText();
@@ -82,6 +85,44 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
             </Button>
           )}
         </div>
+      </section>
+    );
+  }
+
+  if (pending.kind === 'forecast') {
+    // The cards are in the view of the player arranging them only (the others get none).
+    const mine = you === pending.seat;
+    return (
+      <section
+        aria-labelledby="forecast-prompt-title"
+        className="flex flex-col gap-2 rounded-lg border p-3"
+      >
+        <h2 id="forecast-prompt-title" className="font-semibold">
+          {t('forecast.title')}
+        </h2>
+        {mine ? (
+          <>
+            <ol className="list-decimal pl-5 text-sm">
+              {pending.cards.map((city) => (
+                <li key={city}>{cityName(city)}</li>
+              ))}
+            </ol>
+            <Button
+              onClick={() =>
+                void platform().send({ type: 'forecast-order', cards: [...pending.cards] })
+              }
+            >
+              {t('forecast.keep')}
+            </Button>
+          </>
+        ) : (
+          <p className="text-sm">
+            {t('forecast.waiting', {
+              name: seatName(presence, pending.seat),
+              count: pending.count,
+            })}
+          </p>
+        )}
       </section>
     );
   }

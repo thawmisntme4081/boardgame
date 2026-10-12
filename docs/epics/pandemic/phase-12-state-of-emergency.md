@@ -25,6 +25,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 6. **M** Client: board elements, controls and texts for each module.
 - [ ] 7. **L** Playwright with each module on.
 
+**Checks**
+
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
+
 ## Checklist
 
 - [ ] Each module matches the rulebook and is tested, alone and with the others

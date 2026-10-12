@@ -30,6 +30,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 6. **M** The map, tracks and hands read the disease list (colors, supply per color, cure markers) instead of fixed four; `SetupForm` shows a "Modules" section (empty until 09).
 - [ ] 7. **L** Check the base game in Playwright is unchanged.
 
+**Checks**
+
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
+
 ## Checklist
 
 - [ ] Base game behaves exactly as before (all Pandemic tests and e2e green)

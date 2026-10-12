@@ -22,15 +22,15 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 | 02 | [Platform for N seats and a walking skeleton](phase-02-walking-skeleton.md): generic registry, 2–4 seat rooms, N-player rematch, plain client; 3 players finish a basic game | ✅ Done | Medium-high | 10 |
 | 03 | [Board and client](phase-03-board-and-client.md): SVG map, hands, actions from the map, prompts, log, game over; desktop only | ✅ Done | High | 12 |
 | 04 | [Roles](phase-04-roles.md): the 7 roles, rules and UI | ✅ Done | Medium-high | 11 |
-| 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | ⏳ Not started | Medium-high | 8 |
-| 06 | [Setup, variants and history](phase-06-setup-and-history.md): difficulty, role choice, first player, Flight Log | ⏳ Not started | Medium | 7 |
-| 07 | [Translations](phase-07-translations.md): EN, VI, FR | ⏳ Not started | Medium | 4 |
-| 08 | [Expansion foundation](phase-08-expansion-modules.md): modules, a variable disease list (optional from here) | ⏳ Not started | Medium-high | 7 |
-| 09 | [On the Brink: roles and events](phase-09-on-the-brink-roles-events.md) | ⏳ Not started | Medium-high | 7 |
-| 10 | [On the Brink: challenges](phase-10-on-the-brink-challenges.md): Virulent Strain, Mutation, Bio-Terrorist | ⏳ Not started | High | 8 |
-| 11 | [In the Lab](phase-11-in-the-lab.md) | ⏳ Not started | Medium-high | 6 |
-| 12 | [State of Emergency](phase-12-state-of-emergency.md): Superbug, Hinterlands, emergency events, roles | ⏳ Not started | Medium-high | 7 |
-| 13 | [Expansion translations](phase-13-expansion-translations.md) | ⏳ Not started | Low | 3 |
+| 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | 🚧 In progress | Medium-high | 9 |
+| 06 | [Setup, variants and history](phase-06-setup-and-history.md): difficulty, role choice, first player, Flight Log | ⏳ Not started | Medium | 8 |
+| 07 | [Translations](phase-07-translations.md): EN, VI, FR | ⏳ Not started | Medium | 5 |
+| 08 | [Expansion foundation](phase-08-expansion-modules.md): modules, a variable disease list (optional from here) | ⏳ Not started | Medium-high | 8 |
+| 09 | [On the Brink: roles and events](phase-09-on-the-brink-roles-events.md) | ⏳ Not started | Medium-high | 8 |
+| 10 | [On the Brink: challenges](phase-10-on-the-brink-challenges.md): Virulent Strain, Mutation, Bio-Terrorist | ⏳ Not started | High | 9 |
+| 11 | [In the Lab](phase-11-in-the-lab.md) | ⏳ Not started | Medium-high | 7 |
+| 12 | [State of Emergency](phase-12-state-of-emergency.md): Superbug, Hinterlands, emergency events, roles | ⏳ Not started | Medium-high | 8 |
+| 13 | [Expansion translations](phase-13-expansion-translations.md) | ⏳ Not started | Low | 4 |
 
 Phases 01–07 make the base game and finish the epic's "done when" check; 08–13 are the expansions, built when you want them (09–12 are independent of each other once 08 is done; expansion phase files list their card lists as Open questions, to fill from the rulebooks at their first task).
 

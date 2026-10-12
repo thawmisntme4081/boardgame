@@ -1,6 +1,7 @@
-// Moving another player's pawn (the Dispatcher; Airlift in Pandemic 05) is an offer: the pawn's
-// owner accepts or declines, and the player who offered can cancel. The action is spent only
-// when the owner accepts; while an offer is open nobody does anything else.
+// Moving another player's pawn (the Dispatcher, or the Airlift event card) is an offer: the
+// pawn's owner accepts or declines, and the player who offered can cancel. The action is spent
+// (or the card played) only when the owner accepts; while an offer is open nobody does anything
+// else.
 import {
   checkAction,
   doPawnMove,
@@ -8,6 +9,7 @@ import {
   type ActionCheck,
   type ActionReason,
 } from './actions';
+import { checkPlayEvent, resolveEvent } from './playEvent';
 import type { ActionState, GameState, SeatId } from './types';
 
 export type MoveOfferMove =
@@ -22,10 +24,12 @@ export function checkMoveOffer(state: ActionState, seat: SeatId, move: MoveOffer
   if (pending?.kind !== 'move') return fail('no-offer');
   if (move.type === 'move-cancel') return seat === pending.by ? OK : fail('not-your-turn');
   if (seat !== pending.pawn) return fail('not-your-answer');
-  // The move must still be legal as it was offered.
-  return move.type === 'move-accept'
-    ? checkAction({ ...state, pending: null }, pending.by, pending.move)
-    : OK;
+  if (move.type !== 'move-accept') return OK;
+  // The move must still be legal as it was offered (an action, or an event card still held).
+  const before = { ...state, pending: null };
+  return pending.move.type === 'play-event'
+    ? checkPlayEvent(before, pending.by, pending.move)
+    : checkAction(before, pending.by, pending.move);
 }
 
 /** Does the answer (it must be legal: see `checkMoveOffer`) and returns the new state. */
@@ -37,8 +41,13 @@ export function applyMoveOffer(state: GameState, seat: SeatId, move: MoveOfferMo
   const offer = s.pending;
   s.pending = null;
   if (move.type === 'move-accept' && offer?.kind === 'move') {
-    doPawnMove(s, offer.by, offer.move);
-    spendAction(s.turn);
+    if (offer.move.type === 'play-event') {
+      // An event card: played now, and not an action.
+      resolveEvent(s, offer.by, offer.move);
+    } else {
+      doPawnMove(s, offer.by, offer.move);
+      spendAction(s.turn);
+    }
   }
   return s;
 }

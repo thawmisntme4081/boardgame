@@ -30,7 +30,8 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Checks**
 
-- [ ] 7. **M** Playwright: a full 3-player game on Desktop Chrome; 2- and 4-player smoke tests; the full run (`pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`).
+- [ ] 7. **M** Playwright: a full 3-player game on Desktop Chrome; 2- and 4-player smoke tests.
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 

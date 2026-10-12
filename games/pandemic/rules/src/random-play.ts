@@ -64,6 +64,11 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
     if (random() < 0.05) return { by: pending.by, move: { type: 'move-cancel' } };
     return { by: pending.pawn, move: { type: random() < 0.9 ? 'move-accept' : 'move-decline' } };
   }
+  if (pending?.kind === 'forecast') {
+    // Puts the cards back as they were or upside down: any order is legal.
+    const cards = random() < 0.5 ? [...pending.cards] : [...pending.cards].reverse();
+    return { by: pending.seat, move: { type: 'forecast-order', cards } };
+  }
   if (pending?.kind === 'share') {
     if (random() < 0.05) return { by: turn.seat, move: { type: 'share-cancel' } };
     const by = shareAnswerer(state) as SeatId;

@@ -1,5 +1,6 @@
 // What a player may see: everything on the table. Hands are open (the players decided so),
-// the decks are only counts (no order, no split of the epidemics), and the seed never leaves.
+// the decks are only counts (no order, no split of the epidemics), the cards a Forecast took
+// are seen by their player only, and the seed never leaves.
 import type { Viewer } from '@platform/engine';
 import type { CityId, Color } from './cities';
 import type { GameLog } from './log';
@@ -11,6 +12,7 @@ import type {
   HandCard,
   LossReason,
   PandemicState,
+  Pending,
   SeatId,
 } from './types';
 import { SEATS } from './types';
@@ -28,6 +30,8 @@ export interface PandemicView extends ActionState {
   outbreaks: number;
   infectionRate: number;
   cures: Record<Color, CureState>;
+  /** One Quiet Night was played: the next infect step is skipped. */
+  quietNight: boolean;
   /** The current and the previous turn's draws, epidemics, infections and outbreaks. */
   log: GameLog;
 }
@@ -56,14 +60,24 @@ export function tableViewFor(state: PandemicState, viewer: Viewer): TableView {
   return { status: 'waiting', you: viewerSeat(viewer), seated: [...seated], players, epidemics };
 }
 
+/**
+ * The pending step as `you` may see it: the cards a Forecast took are the infection deck's top,
+ * so only the player arranging them sees which they are; the others see how many.
+ */
+function pendingFor(pending: Pending | null, you: SeatId | null): Pending | null {
+  if (pending?.kind !== 'forecast' || pending.seat === you) return pending;
+  return { ...pending, cards: [] };
+}
+
 export function viewFor(state: GameState, viewer: Viewer): PandemicView {
   // Every field is copied by name: a new field of the state is private until it is added here.
+  const you = viewerSeat(viewer);
   return structuredClone({
-    you: viewerSeat(viewer),
+    you,
     seats: state.seats,
     epidemics: state.epidemics,
     turn: state.turn,
-    pending: state.pending,
+    pending: pendingFor(state.pending, you),
     status: state.status,
     lossReason: state.lossReason,
     roles: state.roles,
@@ -80,6 +94,7 @@ export function viewFor(state: GameState, viewer: Viewer): PandemicView {
     outbreaks: state.outbreaks,
     infectionRate: state.infectionRate,
     cures: state.cures,
+    quietNight: state.quietNight,
     log: state.log,
   });
 }
