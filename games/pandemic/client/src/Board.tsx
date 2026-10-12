@@ -9,6 +9,7 @@ import { ActionBar } from './components/ActionBar';
 import { EventBar } from './components/EventBar';
 import { ForecastDialog } from './components/ForecastDialog';
 import { MoveMenu } from './components/MoveMenu';
+import { Preflight } from './components/Preflight';
 import { MapPieces } from './components/MapPieces';
 import { MapTracks } from './components/MapTracks';
 import { HandCards } from './components/HandCards';
@@ -48,8 +49,10 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
       : new Set<CityId>();
   }, [view, movingPawn, canMoveNow]);
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
-  // The "before the game" step gets its panel in Pandemic 06 (task 4).
-  if (view.status === 'waiting' || view.status === 'setup') return null;
+  // The last seat can be taken a moment before the game is dealt: nothing to show yet. Then the
+  // "before the game" step: turn order, roles, confirm.
+  if (view.status === 'waiting') return null;
+  if (view.status === 'setup') return <Preflight view={view} presence={presence} />;
   const { turn, you } = view;
   const pawn = movingPawn ?? you;
   // Playing an event that needs a city: the map offers its targets instead of the move menu.

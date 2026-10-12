@@ -43,7 +43,14 @@ export function beginSetup(options: {
   return { status: 'setup', seats: order.items, epidemics, roleMode, picks, confirmed: [], seed };
 }
 
-export function checkPreflight(state: SetupState, seat: SeatId, move: PreflightMove): ActionCheck {
+/** What the checks read: the step's state, or a player's view of it (the client's copy). */
+export type PreflightState = Pick<SetupState, 'seats' | 'roleMode' | 'picks' | 'confirmed'>;
+
+export function checkPreflight(
+  state: PreflightState,
+  seat: SeatId,
+  move: PreflightMove,
+): ActionCheck {
   if (!state.seats.includes(seat)) return fail('bad-seat');
   if (state.confirmed.includes(seat)) return fail('already-confirmed');
   if (move.type === 'confirm') return state.picks[seat] ? OK : fail('pick-first');

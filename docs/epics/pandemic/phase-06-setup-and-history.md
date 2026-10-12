@@ -25,7 +25,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Client**
 
-- [ ] 4. **M** `SetupForm` (players, difficulty, role mode) and the "before the game" panel (turn order, roles or the role to pick, confirm).
+- [x] 4. **M** `SetupForm` (players, difficulty, role mode) and the "before the game" panel (turn order, roles or the role to pick, confirm).
 
 **Checks**
 
