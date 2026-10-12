@@ -90,8 +90,7 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
   }
 
   if (pending.kind === 'forecast') {
-    // The cards are in the view of the player arranging them only (the others get none).
-    const mine = you === pending.seat;
+    // The player arranging them has the dialog (`ForecastDialog`); the others get no cards.
     return (
       <section
         aria-labelledby="forecast-prompt-title"
@@ -100,29 +99,9 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
         <h2 id="forecast-prompt-title" className="font-semibold">
           {t('forecast.title')}
         </h2>
-        {mine ? (
-          <>
-            <ol className="list-decimal pl-5 text-sm">
-              {pending.cards.map((city) => (
-                <li key={city}>{cityName(city)}</li>
-              ))}
-            </ol>
-            <Button
-              onClick={() =>
-                void platform().send({ type: 'forecast-order', cards: [...pending.cards] })
-              }
-            >
-              {t('forecast.keep')}
-            </Button>
-          </>
-        ) : (
-          <p className="text-sm">
-            {t('forecast.waiting', {
-              name: seatName(presence, pending.seat),
-              count: pending.count,
-            })}
-          </p>
-        )}
+        <p className="text-sm">
+          {t('forecast.waiting', { name: seatName(presence, pending.seat), count: pending.count })}
+        </p>
       </section>
     );
   }

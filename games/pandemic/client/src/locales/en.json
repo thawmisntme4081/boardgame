@@ -174,6 +174,10 @@
   },
   "forecast": {
     "title": "Forecast",
+    "hint": "Drag the cards (or use the arrows) into the order they will be flipped, then keep it.",
+    "top": "Next",
+    "up": "Move {{city}} up",
+    "down": "Move {{city}} down",
     "keep": "Keep this order",
     "waiting_one": "{{name}} is arranging the top infection card.",
     "waiting_other": "{{name}} is arranging the top {{count}} infection cards."
@@ -252,5 +256,22 @@
     "takeBack": "Take back my answer",
     "offered": "{{name}} wants to play again.",
     "waitingFor": "Waiting for {{names}}."
+  },
+  "eventBar": {
+    "title": "Event cards",
+    "play": "Play",
+    "onRole": "on the role card",
+    "cancel": "Cancel",
+    "airliftPawn": "Airlift: choose the pawn to move.",
+    "airliftCity": "Airlift {{name}}: tap the city to move to.",
+    "grantCity": "Government Grant: tap the city for the new station.",
+    "grantMove": "Government Grant in {{city}}: choose the station to take away.",
+    "population": "Resilient Population: choose the card to remove from the game.",
+    "removeCard": "Remove this card",
+    "pawnAt": "{{name}} (in {{city}})"
+  },
+  "toast": {
+    "event": "{{name}} played {{event}}.",
+    "eventStored": "{{name}} played {{event}} from the role card."
   }
 }

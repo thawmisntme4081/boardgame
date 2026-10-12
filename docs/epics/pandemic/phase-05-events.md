@@ -26,9 +26,9 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 **Client**
 
-- [ ] 6. **M** A "Play" button on event cards in any hand when allowed; Airlift and Grant targets chosen on the map; a toast for the other players.
-- [ ] 7. **M** Forecast dialog: drag to reorder 6 cards.
-- [ ] 8. **L** Playwright: a player plays an event during someone else's turn.
+- [x] 6. **M** A "Play" button on event cards in any hand when allowed; Airlift and Grant targets chosen on the map; a toast for the other players.
+- [x] 7. **M** Forecast dialog: drag to reorder 6 cards.
+- [x] 8. **L** Playwright: a player plays an event during someone else's turn.
 
 **Checks**
 

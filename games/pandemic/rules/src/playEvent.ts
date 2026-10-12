@@ -58,13 +58,22 @@ export function eventMoment(
   return { ok: true, pause: false };
 }
 
-/** Whether `seat` holds an event card it may play now (the client shows its "Play" button). */
-export function canPlayEvent(state: ActionState, seat: SeatId): boolean {
+/**
+ * Whether `seat` holds `event` and may start playing it now (the client enables its "Play"
+ * button with this; the choices the card needs are checked by the move itself).
+ */
+export function canPlayCard(state: ActionState, seat: SeatId, event: EventId): boolean {
   const moment = eventMoment(state, seat);
-  if (!moment.ok) return false;
-  return heldEvents(state, seat).some((event) => {
-    return !moment.pause || EVENTS[event].inEpidemicPause === true;
-  });
+  if (!moment.ok || eventSource(state, seat, event) === null) return false;
+  const module = EVENTS[event];
+  if (moment.pause && !module.inEpidemicPause) return false;
+  // A card with a second step needs nothing else pending (a hand-limit discard).
+  return !(state.pending && module.twoSteps);
+}
+
+/** Whether `seat` holds an event card it may play now. */
+export function canPlayEvent(state: ActionState, seat: SeatId): boolean {
+  return heldEvents(state, seat).some((event) => canPlayCard(state, seat, event));
 }
 
 /** An event that moves another player's pawn: an offer its owner answers (`moveOffer.ts`). */
