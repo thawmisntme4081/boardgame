@@ -1,6 +1,7 @@
 // The game's state and constants. State is plain JSON (it is saved and replayed), and the
 // rules in the other files are pure functions over it.
 import type { PawnMove } from './actions';
+import type { PawnEventMove } from './events';
 import type { CityId, Color } from './cities';
 import type { GameLog } from './log';
 
@@ -30,7 +31,7 @@ export const EPIDEMIC_COUNTS: readonly number[] = [4, 5, 6];
 export const SETUP_INFECTIONS: readonly number[] = [3, 2, 1];
 export const START_CITY: CityId = 'atlanta';
 
-/** Event cards (their rules come in Pandemic 05). */
+/** Event cards (their effects are modules in `events/`). */
 export const EVENT_IDS = [
   'airlift',
   'forecast',
@@ -82,16 +83,30 @@ export interface Turn {
   infectionsLeft: number;
   /** A role's once-a-turn power was used this turn (Operations Expert's flight). */
   flightUsed: boolean;
+  /**
+   * Epidemics fully resolved this turn: with two drawn together, events are allowed again once
+   * the first is resolved, but not between drawing them and resolving the first.
+   */
+  epidemicsResolved: number;
 }
 
 /** Something that must be answered before play goes on. */
 export type Pending =
   /** The active player offered to give or take a city card; the partner answers. */
   | { kind: 'share'; from: SeatId; to: SeatId; city: CityId }
-  /** `by` offered to move `pawn` (another player's); its owner answers (see `moveOffer.ts`). */
-  | { kind: 'move'; by: SeatId; pawn: SeatId; move: PawnMove }
+  /**
+   * `by` offered to move `pawn` (another player's), with an action or an event card (Airlift);
+   * its owner answers (see `moveOffer.ts`).
+   */
+  | { kind: 'move'; by: SeatId; pawn: SeatId; move: PawnMove | PawnEventMove }
   /** A hand over the limit: this seat discards (or plays an event) first. */
-  | { kind: 'discard'; seat: SeatId };
+  | { kind: 'discard'; seat: SeatId }
+  /**
+   * Forecast: `seat` took the top infection cards (`cards`, top first) and puts them back in the
+   * order it chooses; nothing else happens meanwhile. Only that seat's view holds the cards
+   * (`viewFor`); the others see `count`.
+   */
+  | { kind: 'forecast'; seat: SeatId; count: number; cards: CityId[] };
 
 export type LossReason = 'outbreaks' | 'cubes' | 'player-deck';
 
@@ -112,6 +127,8 @@ export interface GameState {
   hands: PerSeat<HandCard[]>;
   /** The event card stored on the Contingency Planner's role card, outside the hand. */
   contingency: EventId | null;
+  /** One Quiet Night was played: the next infect step that starts is skipped. */
+  quietNight: boolean;
   cubes: Record<CityId, Cubes>;
   /** Cubes left in the supply, by color. */
   supply: Record<Color, number>;
@@ -148,6 +165,7 @@ export type ActionState = Pick<
   | 'hands'
   | 'contingency'
   | 'playerDiscard'
+  | 'infectionDiscard'
   | 'cubes'
   | 'stations'
   | 'cures'

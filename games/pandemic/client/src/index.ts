@@ -19,7 +19,7 @@ export const pandemicClient: GameClientModule<TableView, PandemicMove, PandemicL
   Board,
   WaitingInfo,
   connect: connectPlatform,
-  onView: (view, before) => usePandemic.getState().onView(view, before),
+  onView: (view, before, presence) => usePandemic.getState().onView(view, before, presence),
   reset: () => usePandemic.getState().reset(),
   errorText,
 };

@@ -11,6 +11,7 @@ import type {
 } from '@platform/engine';
 import { z } from 'zod';
 import { CITIES, COLORS } from './cities';
+import { FORECAST_CARDS } from './events';
 import { applyMove, checkMove, type PandemicMove } from './moves';
 import { outcome } from './outcome';
 import { shareAnswerer } from './share';
@@ -32,6 +33,17 @@ const seat = z.enum(SEATS as unknown as [string, ...string[]]);
 const handCard = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('city'), city: cityId }),
   z.object({ kind: z.literal('event'), event: z.enum(EVENT_IDS) }),
+]);
+
+/** Playing an event card: the player's choices for each card (see `events/types.ts`). */
+const playEvent = (event: string, choices: z.ZodRawShape = {}) =>
+  z.object({ type: z.literal('play-event'), event: z.literal(event), ...choices });
+const playEventSchema = z.discriminatedUnion('event', [
+  playEvent('airlift', { pawn: seat, to: cityId }),
+  playEvent('forecast'),
+  playEvent('government-grant', { city: cityId, move: cityId.optional() }),
+  playEvent('one-quiet-night'),
+  playEvent('resilient-population', { city: cityId }),
 ]);
 
 /** Every move a player may send. */
@@ -63,6 +75,8 @@ export const pandemicMoveSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('epidemic') }),
   z.object({ type: z.literal('infect') }),
   z.object({ type: z.literal('discard'), card: handCard }),
+  playEventSchema,
+  z.object({ type: z.literal('forecast-order'), cards: z.array(cityId).max(FORECAST_CARDS) }),
 ]) as unknown as z.ZodType<PandemicMove>;
 
 export const pandemicConfigSchema = z.object({
@@ -103,6 +117,10 @@ function check(state: PandemicState, move: AnyMove, { by }: MoveContext): Result
   return checkMove(state, by, move);
 }
 
+/**
+ * Who must act now. Event cards are left out: any seat may play one at almost any moment, and
+ * nobody has to, so `validate` allows them (`checkPlayEvent`) without an actor.
+ */
 function actors(state: PandemicState): Actor[] {
   if (state.status !== 'playing') return [];
   const { pending } = state;
@@ -112,6 +130,9 @@ function actors(state: PandemicState): Actor[] {
   if (pending?.kind === 'move') {
     return [{ seat: pending.pawn, kind: 'prompt', prompt: 'move' }];
   }
+  if (pending?.kind === 'forecast') {
+    return [{ seat: pending.seat, kind: 'prompt', prompt: 'forecast' }];
+  }
   if (pending?.kind === 'share') {
     return [{ seat: shareAnswerer(state) as SeatId, kind: 'prompt', prompt: 'share' }];
   }
@@ -120,9 +141,10 @@ function actors(state: PandemicState): Actor[] {
 
 export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, PandemicConfig> = {
   id: 'pandemic',
-  // 3: the state holds the `roles` (Pandemic 04). Older matches are not migrated (Pandemic was
-  // never deployed before roles), so they are dropped on load.
-  version: 3,
+  // 3: the state holds the `roles` (Pandemic 04). 4: the turn counts `epidemicsResolved` and the
+  // state has `quietNight` (event cards, Pandemic 05). Older matches are not migrated (Pandemic
+  // was never deployed before events), so they are dropped on load.
+  version: 4,
   // A player who leaves frees the seat, not the hand: the game waits for whoever joins next.
   meta: {
     seats: SEATS,

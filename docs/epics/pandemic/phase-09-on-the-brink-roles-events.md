@@ -25,6 +25,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 6. **M** Client: role cards, role controls and event buttons for the new cards; texts in English.
 - [ ] 7. **L** Playwright: a game with the module on, one new role and one new event played.
 
+**Checks**
+
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
+
 ## Checklist
 
 - [ ] Every new role and event matches the rulebook and is tested

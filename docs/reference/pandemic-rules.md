@@ -2,7 +2,7 @@
 
 [← Master plan](../PLAN.md) · [Pandemic epic](../epics/pandemic/EPIC.md) · Sky Team's rules: [game-rules.md](game-rules.md)
 
-The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edition, © 2015 printing; kept out of git). As for Sky Team, the whole game is one plain-JSON `GameState` plus pure functions that return a new state; no rule lives in React or in socket handlers. Roles (Pandemic 04) and events (Pandemic 05) exist only as ids so far.
+The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edition, © 2015 printing; kept out of git). As for Sky Team, the whole game is one plain-JSON `GameState` plus pure functions that return a new state; no rule lives in React or in socket handlers. Roles (Pandemic 04, `roles/`) and event cards (Pandemic 05, `events/`) are modules the core rules call through hooks and never test by name.
 
 ## Files (`games/pandemic/rules/src`)
 
@@ -12,6 +12,8 @@ The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edi
 | `types.ts` | `SeatId` (`p1`–`p4`), the rulebook's numbers, `EVENT_IDS`, `ROLE_IDS`, `PlayerCard` / `HandCard`, `Turn`, `Pending`, `GameState`; `ActionState` (the fields the move checks read: a state or a view) |
 | `setup.ts` | `createGame({ seats, epidemics, seed })`, the seeded `shuffle`, `pileSizes` |
 | `actions.ts` | The actions: `checkAction` (a reason code), `applyAction`, `spendAction`, `cubesOnBoard`, `cardsToCure` |
+| `playEvent.ts` | Event cards: `eventMoment` (when events may be played), `canPlayCard` / `canPlayEvent` (the client's check too), `heldEvents`, `checkPlayEvent` / `applyPlayEvent`, `resolveEvent` (also run when an Airlift offer is accepted) |
+| `events/` | One `EventModule` per card (`airlift`, `forecast`, `governmentGrant`, `oneQuietNight`, `resilientPopulation`), their `EventPlay` choices and the `PlayEventMove` type; Forecast's second step (`forecast-order`) |
 | `share.ts` | Share Knowledge as an offer and an answer: `checkShare`, `applyShare`, `shareAnswerer` |
 | `outbreak.ts` | `infectCity` (infections, epidemics, outbreaks and chain reactions; returns the cubes placed and the cities that outbroke), `lose` |
 | `log.ts` | `GameLog`: the current and the previous turn, each a list of `LogEntry` (`draw`, `epidemic-increase`, `epidemic-intensify`, `infect` with its cubes and outbreak chain); `emptyLog`, `nextTurnLog` |
@@ -50,16 +52,31 @@ Decided with the user (Pandemic 01):
 - **Chain reactions** resolve first in, first out, neighbors in the city list's order; a city outbreaks once per infection card. The rulebook gives no order; it only matters when the cubes run out.
 - **An empty infection deck** (not expected: epidemics refill it) flips no card, and the discard pile stays.
 
+## Event cards (Pandemic 05)
+
+Decided with the user (Pandemic 05):
+
+- **Any seat, almost any moment.** `play-event` is a move of any seat holding the card (in hand, or on the Contingency Planner's role card), on its turn or not, and not an action. `validate` allows it; `actors` does not list it (nobody has to), so the platform needed no change. Two players at the same moment: the first move the server receives wins.
+- **When.** Refused after the game is over, and while something is pending (an open Share Knowledge or pawn-move offer, a Forecast being arranged: `answer-first`), except that the player owing a hand-limit discard may play an event instead of discarding. Refused from drawing an epidemic until it is resolved (`card-resolving`); Resilient Population alone may be played in the pause between an epidemic's Infect and Intensify steps; two epidemics drawn together allow events again once the first is resolved (`Turn.epidemicsResolved`).
+- **Airlift** on your own pawn moves it at once. On another player's pawn it is a move offer like the Dispatcher's (`pending.move` holds the `play-event` move): the card stays in hand until the owner accepts; declining or canceling changes nothing. No action is spent.
+- **Government Grant** builds a station with no card; once all 6 stand, `move` names the one taken away (the Build rules: `checkStationPlace`).
+- **One Quiet Night** sets `quietNight`; the next infect step that starts is skipped (the turn ends, the log says so). Played during an infect step, it skips the next turn's; epidemics still infect.
+- **Resilient Population** takes a card of the infection discard pile out of the game.
+- **Forecast** is two moves. Playing it takes the top 6 infection cards (all that are left) into `pending: { kind: 'forecast', seat, count, cards }`; nothing else can happen until that player sends `forecast-order` with the same cards in the new order (top first). Only that seat's view holds `cards`; every other view, spectators included, gets `cards: []` and the `count`. The log records that it was played, never the order. Forecast cannot be played while a hand-limit discard is owed.
+- **The hand limit.** An event played from the hand counts as a discard (the owed discard ends once the hand is back to 7). The card on the Contingency Planner's role card is outside the hand: playing it removes it from the game (not onto the discard pile) and does not relieve a discard.
+- **The log** has an `event` entry for every card played (who, which, the target city or pawn, `stored` for the role card) and a `quiet-night` entry. The client toasts the others' events.
+- New refusal codes: `card-resolving`, `not-playable`, `no-forecast`, `bad-order`. Rules version 4 (`epidemicsResolved`, `quietNight`); older saved games are dropped.
+
 ## State
 
-`GameState` holds the turn order (`seats`), the `epidemics` count, the `turn` (`seat`, `actionsLeft`, `step`: `actions` → `draw` → `epidemic` → `infect`; the epidemics left to resolve, the next `epidemicStep`, the `infectionsLeft`), `pending` (an open share offer or an owed discard), `status` and `lossReason`, `pawns`, `hands`, `cubes` (every city, per color), `supply`, `stations`, both decks (top card first) and discard piles, `outbreaks`, `infectionRate` (the marker's position), `cures` (`none` / `cured` / `eradicated`), `rngSeed` and `rngState`.
+`GameState` holds the turn order (`seats`), the `epidemics` count, the `turn` (`seat`, `actionsLeft`, `step`: `actions` → `draw` → `epidemic` → `infect`; the epidemics left to resolve, the next `epidemicStep`, the `infectionsLeft`), `pending` (an open share or pawn-move offer, an owed discard, or a Forecast being arranged), `quietNight` (One Quiet Night was played), `contingency` (the Contingency Planner's stored event), `status` and `lossReason`, `pawns`, `hands`, `cubes` (every city, per color), `supply`, `stations`, both decks (top card first) and discard piles, `outbreaks`, `infectionRate` (the marker's position), `cures` (`none` / `cured` / `eradicated`), `rngSeed` and `rngState`.
 
 The `log` keeps what happened after the actions in the current and the previous turn: the cards drawn (epidemics included), each epidemic step (the new infection rate, how many cards went back on the deck), and every city infected (by a card or an epidemic) with the cubes it got and the cities that outbroke in order. Everything in it is public, so views carry it as is. Rules version 2 added it; `migrate` gives a version-1 saved game an empty log.
 
-Every check returns `{ ok: true }` or `{ ok: false, reason }` with a code: `game-over`, `not-your-turn`, `wrong-step`, `answer-first`, `no-actions-left`, `same-city`, `not-adjacent`, `card-missing`, `no-station`, `station-exists`, `bad-station-to-move`, `no-cubes`, `already-cured`, `bad-cards`, `bad-partner`, `not-together`, `no-offer`, `not-your-answer`, `nothing-to-discard`. The `apply` functions throw on an illegal move.
+Every check returns `{ ok: true }` or `{ ok: false, reason }` with a code: `game-over`, `not-your-turn`, `wrong-step`, `answer-first`, `no-actions-left`, `same-city`, `not-adjacent`, `card-missing`, `no-station`, `station-exists`, `bad-station-to-move`, `no-cubes`, `already-cured`, `bad-cards`, `bad-partner`, `not-together`, `no-offer`, `not-your-answer`, `nothing-to-discard`, and for events `card-resolving`, `not-playable`, `no-forecast`, `bad-order`. The `apply` functions throw on an illegal move.
 
 ## Engine adapter
 
-`pandemic` (`definition.ts`): `meta` seats `p1`–`p4`, 2–4 players, `coop`; `configSchema` `{ players, epidemics }` (`setup` plays the seats actually taken); `actors` gives the active seat as `turn`, a seat owing a discard or answering a share offer as `prompt`; `table:join` changes nothing, `table:choose-seat` is refused (the order is random); no system moves and no `schedule`.
+`pandemic` (`definition.ts`): `meta` seats `p1`–`p4`, 2–4 players, `coop`; `configSchema` `{ players, epidemics }` (`setup` plays the seats actually taken); `actors` gives the active seat as `turn`, a seat owing a discard, answering a share or move offer or arranging a Forecast as `prompt` (event cards are left out: any seat may play one, `validate` allows it); `table:join` changes nothing, `table:choose-seat` is refused (the order is random); no system moves and no `schedule`.
 
 **Views** show the whole table: every hand, both discard piles, the cubes, the tracks. Each deck is only a size (`playerDeckSize`, `infectionDeckSize`), so no view holds a deck order, where the epidemics are, or the seed. Fields are copied by name: a new state field stays private until `viewFor` adds it.

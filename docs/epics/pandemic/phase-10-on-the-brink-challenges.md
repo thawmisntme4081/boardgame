@@ -36,6 +36,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 **Checks**
 
 - [ ] 8. **M** Each challenge on its own and all together in the engine kit and fast-check runs; Playwright for each challenge.
+- [ ] 9. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 

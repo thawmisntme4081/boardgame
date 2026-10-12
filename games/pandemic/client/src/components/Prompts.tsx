@@ -6,7 +6,10 @@ import { useCardText } from '../lib/cards';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
 
-/** Questions that stop play: a card to discard, or a Share Knowledge or move offer to answer. */
+/**
+ * Questions that stop play: a card to discard, a Share Knowledge or move offer to answer, or a
+ * Forecast being arranged.
+ */
 export function Prompts({ view, presence }: { view: PandemicView; presence: SeatPresence | null }) {
   const { t } = useTranslation('pandemic');
   const cardText = useCardText();
@@ -82,6 +85,23 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
             </Button>
           )}
         </div>
+      </section>
+    );
+  }
+
+  if (pending.kind === 'forecast') {
+    // The player arranging them has the dialog (`ForecastDialog`); the others get no cards.
+    return (
+      <section
+        aria-labelledby="forecast-prompt-title"
+        className="flex flex-col gap-2 rounded-lg border p-3"
+      >
+        <h2 id="forecast-prompt-title" className="font-semibold">
+          {t('forecast.title')}
+        </h2>
+        <p className="text-sm">
+          {t('forecast.waiting', { name: seatName(presence, pending.seat), count: pending.count })}
+        </p>
       </section>
     );
   }

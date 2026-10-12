@@ -64,14 +64,14 @@ Every new game epic follows the same shape; online play, saving and accounts com
 | next | Translations | EN, VI, FR |
 | last | Expansions | only if wanted; one phase each |
 
-**Phase files:** a phase may be large (medium-high, high, extra high); its work is broken into tasks of **low or medium** effort (about one sitting each, ending with typecheck, lint and format passing; tests come at the end of the phase, after your review), written as a checklist under "Tasks": `- [ ] 1. **L** …` / `- [ ] 2. **M** …`, grouped by area (rules, client, checks). The phase file also keeps its own short "Checklist" of phase-level checks, its Open questions and its "Done when" line. The `EPIC.md` phase table shows each phase's effort and number of tasks.
+**Phase files:** a phase may be large (medium-high, high, extra high); its work is broken into tasks of **low or medium** effort (about one sitting each, ending with typecheck, lint and format passing; tests come at the end of the phase, after your review), written as a checklist under "Tasks": `- [ ] 1. **L** …` / `- [ ] 2. **M** …`, grouped by area (rules, client, checks); the last task is always "Write the phase's tests and run the full suite" (`pnpm test` + `pnpm e2e`), done after your review. The phase file also keeps its own short "Checklist" of phase-level checks, its Open questions and its "Done when" line. The `EPIC.md` phase table shows each phase's effort and number of tasks.
 
 A new epic gets a folder `epics/<game>/` with an `EPIC.md` and a row in the table above; its phase files are written when the epic starts (or each one when it starts, for an epic far ahead).
 
 ## How to work with this plan
 
 1. Pick the next phase from the suggested order; read its epic's `EPIC.md` and the phase file; build it task by task.
-2. Tick task and checklist items in the **phase file** as they are completed. Leave unfinished items unticked with a reason.
+2. Tick each task in the **phase file** as soon as it is done (not at the end of the phase), and checklist items as they are completed. Leave unfinished items unticked with a reason.
 3. When a phase's "Done when" check passes (plus `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`), add "✅ Verified" to its "Done when" line and update its status in the epic's `EPIC.md` (and the epic's status here when it changes).
 4. Keep the [reference docs](#reference) and `CLAUDE.md` in sync with the code.
 5. New ideas go into the matching phase file, a new phase in the right epic, or a new epic.

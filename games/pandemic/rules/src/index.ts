@@ -16,3 +16,5 @@ export * from './views';
 export * from './table';
 export * from './roles';
 export * from './roleActions';
+export * from './events';
+export * from './playEvent';

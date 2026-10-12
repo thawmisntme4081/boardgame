@@ -6,6 +6,8 @@ import type { BoardProps } from '@platform/ui/game';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionBar } from './components/ActionBar';
+import { EventBar } from './components/EventBar';
+import { ForecastDialog } from './components/ForecastDialog';
 import { MoveMenu } from './components/MoveMenu';
 import { MapPieces } from './components/MapPieces';
 import { MapTracks } from './components/MapTracks';
@@ -18,7 +20,9 @@ import { Prompts } from './components/Prompts';
 import { TurnLog } from './components/TurnLog';
 import { TopBar } from './components/TopBar';
 import { WorldMap } from './components/WorldMap';
+import { eventTargets, grantMovesStation } from './lib/events';
 import { handLayout, useWide } from './lib/handLayout';
+import { platform } from './platform';
 import { reachableCities } from './lib/moves';
 import { seatName } from './lib/names';
 import { usePandemic } from './store';
@@ -28,6 +32,8 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
   const selected = usePandemic((s) => s.selectedCity);
   const selectCity = usePandemic((s) => s.selectCity);
   const movingPawn = usePandemic((s) => s.movingPawn);
+  const eventPlan = usePandemic((s) => s.eventPlan);
+  const planEvent = usePandemic((s) => s.planEvent);
   const layout = handLayout(useWide());
   const canMoveNow =
     view.status === 'playing' &&
@@ -45,6 +51,26 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
   if (view.status === 'waiting') return null;
   const { turn, you } = view;
   const pawn = movingPawn ?? you;
+  // Playing an event that needs a city: the map offers its targets instead of the move menu.
+  const targets = you ? eventTargets(view, you, eventPlan) : null;
+  const chooseTarget = (city: CityId) => {
+    if (eventPlan?.event === 'airlift' && eventPlan.pawn !== null) {
+      void platform().send({
+        type: 'play-event',
+        event: 'airlift',
+        pawn: eventPlan.pawn,
+        to: city,
+      });
+      planEvent(null);
+    } else if (eventPlan?.event === 'government-grant') {
+      if (grantMovesStation(view)) {
+        planEvent({ event: 'government-grant', city });
+      } else {
+        void platform().send({ type: 'play-event', event: 'government-grant', city });
+        planEvent(null);
+      }
+    }
+  };
   const turnText =
     turn.seat === you
       ? t('board.yourTurn')
@@ -58,13 +84,15 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
             <WorldMap
               cures={view.cures}
               onSelect={
-                canMoveNow
-                  ? (city) => reachable.has(city) && selectCity(selected === city ? null : city)
-                  : undefined
+                targets
+                  ? (city) => targets.has(city) && chooseTarget(city)
+                  : canMoveNow
+                    ? (city) => reachable.has(city) && selectCity(selected === city ? null : city)
+                    : undefined
               }
               onBackgroundClick={() => selectCity(null)}
-              selected={selected}
-              reachable={reachable}
+              selected={targets ? null : selected}
+              reachable={targets ?? reachable}
               hand={
                 you ? (
                   <HandCards
@@ -78,7 +106,7 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
             >
               <MapTracks view={view} />
               <MapPieces view={view} presence={presence} />
-              {canMoveNow && selected && you && (
+              {!targets && canMoveNow && selected && you && (
                 <MoveMenu
                   view={view}
                   you={you}
@@ -94,6 +122,8 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
         <aside className="flex min-h-0 flex-col gap-3 overflow-auto">
           <RoleCards view={view} presence={presence} />
           <Prompts view={view} presence={presence} />
+          <EventBar view={view} presence={presence} />
+          <ForecastDialog view={view} />
           <div
             role="alert"
             className="rounded-lg border border-yellow-400 bg-yellow-100 p-3 text-sm text-yellow-950"

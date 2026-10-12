@@ -60,6 +60,8 @@ describe('random roles', () => {
           let game = createGame({ seats: SEATS.slice(0, players), epidemics: 4, seed });
           // The roles are chosen by the property, so every role plays in some run.
           game.seats.forEach((seat, i) => (game.roles[seat] = roles[i] as RoleId));
+          // A stored event card, once played, leaves the game: those are the only missing cards.
+          let removed = 0;
           let n = 0;
           const random = () => randoms[n++ % randoms.length] as number;
           for (let step = 0; step < 300 && game.status === 'playing'; step++) {
@@ -67,11 +69,13 @@ describe('random roles', () => {
             const move = next as PandemicMove;
             const by = who as SeatId;
             expect(checkMove(game, by as SeatId, move).ok).toBe(true);
+            const stored = game.contingency;
             game = applyMove(game, by as SeatId, move);
+            if (stored !== null && game.contingency === null) removed += 1;
             for (const color of COLORS) {
               expect(cubesOnBoard(game, color) + game.supply[color]).toBe(CUBES_PER_COLOR);
             }
-            expect(cardsInGame(game)).toBe(CARDS);
+            expect(cardsInGame(game) + removed).toBe(CARDS);
           }
         },
       ),

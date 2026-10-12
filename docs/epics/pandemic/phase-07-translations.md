@@ -21,6 +21,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 3. **M** `fr.json`.
 - [ ] 4. **L** City names on the map in each language; check that long labels fit.
 
+**Checks**
+
+- [ ] 5. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
+
 ## Checklist
 
 - [ ] Glossary written and reviewed

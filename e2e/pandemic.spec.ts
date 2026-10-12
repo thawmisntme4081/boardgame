@@ -228,4 +228,126 @@ test.describe('a three-player Pandemic game', () => {
     await expect(ben.getByText(/3 actions left/)).toBeVisible();
     await expect(ana.locator('[data-supply="yellow"]')).toContainText(String(CUBES_PER_COLOR));
   });
+  /** Ana's turn, in its actions step, with the given hands; no one holds anything else. */
+  const anasTurn = {
+    turn: {
+      seat: 'p1',
+      actionsLeft: 4,
+      step: 'actions',
+      epidemics: 0,
+      epidemicStep: 'increase',
+      infectionsLeft: 0,
+      flightUsed: false,
+      epidemicsResolved: 0,
+    },
+    pending: null,
+    roles: { p1: 'medic', p2: 'researcher', p3: 'scientist' },
+    pawns: { p1: 'atlanta', p2: 'atlanta', p3: 'atlanta' },
+    stations: ['atlanta'],
+    contingency: null,
+    quietNight: false,
+  };
+
+  test("an event is played during someone else's turn: Ben's Government Grant on Ana's turn", async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const { ana, ben, cleo, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+    await setGame(request, code, {
+      ...anasTurn,
+      hands: { p1: [], p2: [{ kind: 'event', event: 'government-grant' }], p3: [] },
+    });
+
+    // Only the player holding the card has an event panel, and its button works out of turn.
+    await expect(ana.getByText(/Your turn/)).toBeVisible();
+    await expect(ana.getByRole('region', { name: 'Event cards' })).toHaveCount(0);
+    await expect(cleo.getByRole('region', { name: 'Event cards' })).toHaveCount(0);
+    const events = ben.getByRole('region', { name: 'Event cards' });
+    await expect(events.getByRole('button', { name: 'Play' })).toBeEnabled();
+    await events.getByRole('button', { name: 'Play' }).click();
+
+    // The grant asks for a city on the map: a station goes up in Tokyo for everyone.
+    await expect(events.getByText(/tap the city for the new station/)).toBeVisible();
+    await ben.locator('[data-city="tokyo"]').click();
+    for (const page of [ana, ben, cleo]) {
+      await expect(page.locator('[data-station="tokyo"]')).toBeVisible();
+    }
+
+    // The others are told, the turn log says who played what, and Ana's turn was not touched.
+    for (const page of [ana, cleo]) {
+      await expect(
+        page.locator('[data-sonner-toast]').getByText('Ben played Government Grant.'),
+      ).toBeVisible();
+    }
+    await expect(
+      ana.getByRole('region', { name: 'Turn log' }).getByText(/Ben played Government Grant/),
+    ).toBeVisible();
+    await expect(ana.getByText(/Your turn/)).toBeVisible();
+    await expect(ana.getByText(/4 actions left/)).toBeVisible();
+    await expect(ben.getByRole('region', { name: 'Event cards' })).toHaveCount(0);
+  });
+
+  test("Forecast is arranged in private, and its order is the next infection's", async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const { ana, ben, cleo, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+    await setGame(request, code, {
+      ...anasTurn,
+      infectionDeck: ['tokyo', 'osaka', 'seoul', 'paris', 'london', 'essen', 'milan'],
+      infectionDiscard: [],
+      hands: { p1: [], p2: [], p3: [{ kind: 'event', event: 'forecast' }] },
+    });
+
+    await expect(ana.getByText(/Your turn/)).toBeVisible();
+    await cleo
+      .getByRole('region', { name: 'Event cards' })
+      .getByRole('button', { name: 'Play' })
+      .click();
+
+    // Cleo alone sees the top 6 in a dialog; the others only hear that she is arranging them.
+    const dialog = cleo.getByRole('dialog', { name: 'Forecast' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('Tokyo')).toBeVisible();
+    for (const page of [ana, ben]) {
+      await expect(page.getByText('Cleo is arranging the top 6 infection cards.')).toBeVisible();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Move .* (up|down)$/ })).toHaveCount(0);
+    }
+
+    // Nothing else can happen meanwhile: Ana's actions are gone until the order is kept.
+    await expect(ana.getByRole('button', { name: 'Pass' })).toHaveCount(0);
+
+    // Tokyo moves down one place, so Osaka is next.
+    await dialog.getByRole('button', { name: 'Move Tokyo down' }).click();
+    await expect(dialog.getByRole('listitem').first()).toContainText('Osaka');
+    await dialog.getByRole('button', { name: 'Keep this order' }).click();
+    for (const page of [ana, ben, cleo]) {
+      await expect(page.getByText(/is arranging/)).toHaveCount(0);
+    }
+    await expect(cleo.getByRole('dialog')).toHaveCount(0);
+
+    // The next infection card flipped is Osaka.
+    await setGame(request, code, {
+      turn: {
+        ...anasTurn.turn,
+        actionsLeft: 0,
+        step: 'infect',
+        infectionsLeft: 1,
+      },
+    });
+    await ana.getByRole('button', { name: 'Infect', exact: true }).click();
+    await expect(
+      ben
+        .getByRole('region', { name: 'Turn log' })
+        .getByText(/^Osaka/)
+        .first(),
+    ).toBeVisible();
+  });
 });

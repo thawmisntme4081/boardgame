@@ -27,6 +27,11 @@ export interface RoleModule {
   movesPawns?: boolean;
   /** Builds a research station without discarding the city's card (Operations Expert). */
   buildsWithoutCard?: boolean;
+  /**
+   * Keeps an event card on the role card (`GameState.contingency`), playable like one in hand;
+   * once played it leaves the game (Contingency Planner).
+   */
+  storesEvent?: boolean;
   /** Treat Disease removes every cube of the color, cured or not (Medic). */
   treatsAll?: boolean;
   /** After `holder`'s pawn arrives in a city, however it got there (Medic). */

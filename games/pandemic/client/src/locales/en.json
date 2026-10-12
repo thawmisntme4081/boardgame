@@ -172,6 +172,16 @@
     "decline": "Decline",
     "cancel": "Cancel the offer"
   },
+  "forecast": {
+    "title": "Forecast",
+    "hint": "Drag the cards (or use the arrows) into the order they will be flipped, then keep it.",
+    "top": "Next",
+    "up": "Move {{city}} up",
+    "down": "Move {{city}} down",
+    "keep": "Keep this order",
+    "waiting_one": "{{name}} is arranging the top infection card.",
+    "waiting_other": "{{name}} is arranging the top {{count}} infection cards."
+  },
   "discard": {
     "title": "Too many cards",
     "text": "Discard a card to go down to {{limit}}.",
@@ -193,6 +203,10 @@
     "no-cubes": "There are no cubes of that color here.",
     "already-cured": "That disease is cured already.",
     "bad-cards": "These cards do not make a cure.",
+    "card-resolving": "Not now: a card is being resolved.",
+    "not-playable": "This event cannot be played like that.",
+    "no-forecast": "No Forecast is being arranged.",
+    "bad-order": "Put back exactly the cards you took.",
     "bad-partner": "You cannot share with that player.",
     "not-together": "You must be in the same city.",
     "no-offer": "There is no offer to answer.",
@@ -216,6 +230,9 @@
     "current": "This turn",
     "previous": "Previous turn",
     "nothingYet": "Nothing yet.",
+    "event": "{{name}} played {{event}}.",
+    "eventStored": "{{name}} played {{event}} from the role card (removed from the game).",
+    "quietNight": "One Quiet Night: no cities are infected this turn.",
     "draw": "Drew {{cards}}.",
     "epidemicCard": "an Epidemic",
     "epidemicPrefix": "Epidemic:",
@@ -239,5 +256,22 @@
     "takeBack": "Take back my answer",
     "offered": "{{name}} wants to play again.",
     "waitingFor": "Waiting for {{names}}."
+  },
+  "eventBar": {
+    "title": "Event cards",
+    "play": "Play",
+    "onRole": "on the role card",
+    "cancel": "Cancel",
+    "airliftPawn": "Airlift: choose the pawn to move.",
+    "airliftCity": "Airlift {{name}}: tap the city to move to.",
+    "grantCity": "Government Grant: tap the city for the new station.",
+    "grantMove": "Government Grant in {{city}}: choose the station to take away.",
+    "population": "Resilient Population: choose the card to remove from the game.",
+    "removeCard": "Remove this card",
+    "pawnAt": "{{name}} (in {{city}})"
+  },
+  "toast": {
+    "event": "{{name}} played {{event}}.",
+    "eventStored": "{{name}} played {{event}} from the role card."
   }
 }

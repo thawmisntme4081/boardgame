@@ -1,3 +1,4 @@
+import type { Viewer } from '@platform/engine';
 import { checkGame } from '@platform/engine/testing';
 import { describe, expect, it } from 'vitest';
 import { pandemic, type PandemicConfig } from './definition';
@@ -8,11 +9,21 @@ import type { PandemicView } from './views';
 
 const config = (players: number, epidemics: number): PandemicConfig => ({ players, epidemics });
 
-function findLeaks(_state: GameState, view: PandemicView): string[] {
+function findLeaks(state: GameState, view: PandemicView, viewer: Viewer): string[] {
   const json = JSON.stringify(view);
-  return ['"rngState"', '"rngSeed"', '"playerDeck"', '"infectionDeck"'].filter((key) =>
+  const leaks = ['"rngState"', '"rngSeed"', '"playerDeck"', '"infectionDeck"'].filter((key) =>
     json.includes(key),
   );
+  // The cards of a Forecast are the infection deck's top: only the player arranging them sees them.
+  const { pending } = state;
+  if (
+    pending?.kind === 'forecast' &&
+    pending.seat !== viewer &&
+    view.pending?.kind === 'forecast'
+  ) {
+    if (view.pending.cards.length > 0) leaks.push(`the forecast cards, to ${viewer}`);
+  }
+  return leaks;
 }
 
 function run(players: number, epidemics: number, seed: number) {
