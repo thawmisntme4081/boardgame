@@ -82,6 +82,7 @@ function endTurn(state: GameState): void {
     epidemics: 0,
     epidemicStep: 'increase',
     infectionsLeft: 0,
+    flightUsed: false,
   };
 }
 

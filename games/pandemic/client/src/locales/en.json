@@ -77,13 +77,45 @@
     "pawn": "{{name}}",
     "cubes": "{{count}} {{color}}"
   },
+  "roles": {
+    "title": "Roles",
+    "contingency-planner": {
+      "name": "Contingency Planner",
+      "power": "As an action, take an Event card from the player discard pile and keep it on this card. Play it as usual; it then leaves the game. It does not count toward the hand limit."
+    },
+    "dispatcher": {
+      "name": "Dispatcher",
+      "power": "Move another player's pawn as if it were yours, if its owner agrees. Or move any pawn to a city with another pawn, for one action."
+    },
+    "medic": {
+      "name": "Medic",
+      "power": "Treat Disease removes all cubes of one color. A cured disease's cubes are removed from your city at once, and none can be placed there."
+    },
+    "operations-expert": {
+      "name": "Operations Expert",
+      "power": "Build a research station without discarding a card. Once a turn, from a station, discard any City card to move to any city."
+    },
+    "quarantine-specialist": {
+      "name": "Quarantine Specialist",
+      "power": "No disease cubes are placed in your city or the cities connected to it, and no outbreaks happen there."
+    },
+    "researcher": {
+      "name": "Researcher",
+      "power": "On your turn, give any City card from your hand to a player in your city. Another player can still only take the card of the city you share."
+    },
+    "scientist": {
+      "name": "Scientist",
+      "power": "Discover a cure with only 4 City cards of one color."
+    },
+    "info": "What {{role}} can do",
+    "stored": "Stored: {{event}}"
+  },
   "hands": {
     "title": "Hands",
     "empty": "No cards",
     "count_one": "({{count}} card)",
     "count_other": "({{count}} cards)",
-    "event": "Event: {{name}}",
-    "city": "{{name}} ({{color}})"
+    "event": "Event: {{name}}"
   },
   "events": {
     "airlift": "Airlift",
@@ -94,15 +126,20 @@
   },
   "moveMenu": {
     "title": "Fly to {{city}}",
+    "titleFor": "Move {{name}} to {{city}}",
     "discard": "Discard: {{city}}"
   },
   "actions": {
     "title": "Actions",
-    "moveHint": "Tap a highlighted city on the map to move there.",
     "drive": "Drive / Ferry",
     "direct": "Direct Flight",
     "charter": "Charter Flight",
     "shuttle": "Shuttle Flight",
+    "join": "To a pawn there",
+    "ops-flight": "Operations flight",
+    "movePawn": "Pawn to move",
+    "ownPawn": "Yours",
+    "takeEvent": "Take {{event}} from the discard pile",
     "build": "Build a research station",
     "moveStation": "Station to take away",
     "treat": "Treat {{color}}",
@@ -122,7 +159,15 @@
     "title": "Share Knowledge",
     "give": "Give a card to {{name}}",
     "take": "Take a card from {{name}}",
+    "giveCity": "Give {{city}} to {{name}}",
     "offered": "{{from}} offers to share the card of {{city}} with {{to}}.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel the offer"
+  },
+  "moveOffer": {
+    "title": "Move a pawn",
+    "offered": "{{by}} offers to move {{pawn}} to {{city}}.",
     "accept": "Accept",
     "decline": "Decline",
     "cancel": "Cancel the offer"
@@ -181,6 +226,7 @@
     "infected_other": "{{city}} infected: {{count}} {{color}} cubes.",
     "noRoom": "{{city}} already has 3 {{color}} cubes.",
     "eradicated": "{{city}}: {{color}} is eradicated, nothing happens.",
+    "prevented": "{{city}}: a role stops the {{color}} cubes.",
     "outbreaks": "Outbreak: {{cities}}."
   },
   "gameOver": {

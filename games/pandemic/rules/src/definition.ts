@@ -14,7 +14,6 @@ import { CITIES, COLORS } from './cities';
 import { applyMove, checkMove, type PandemicMove } from './moves';
 import { outcome } from './outcome';
 import { shareAnswerer } from './share';
-import { emptyLog } from './log';
 import { checkJoin, openTable, seatJoined, seatLeft } from './table';
 import {
   EPIDEMIC_COUNTS,
@@ -22,7 +21,6 @@ import {
   MAX_PLAYERS,
   MIN_PLAYERS,
   SEATS,
-  type GameState,
   type PandemicState,
   type SeatId,
 } from './types';
@@ -38,22 +36,29 @@ const handCard = z.discriminatedUnion('kind', [
 
 /** Every move a player may send. */
 export const pandemicMoveSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('drive'), to: cityId }),
-  z.object({ type: z.literal('direct'), to: cityId }),
-  z.object({ type: z.literal('charter'), to: cityId }),
-  z.object({ type: z.literal('shuttle'), to: cityId }),
+  z.object({ type: z.literal('drive'), to: cityId, pawn: seat.optional() }),
+  z.object({ type: z.literal('direct'), to: cityId, pawn: seat.optional() }),
+  z.object({ type: z.literal('charter'), to: cityId, pawn: seat.optional() }),
+  z.object({ type: z.literal('shuttle'), to: cityId, pawn: seat.optional() }),
+  z.object({ type: z.literal('join'), to: cityId, pawn: seat.optional() }),
   z.object({ type: z.literal('build'), move: cityId.optional() }),
   z.object({ type: z.literal('treat'), color }),
   z.object({ type: z.literal('cure'), color, cards: z.array(cityId).max(5) }),
   z.object({ type: z.literal('pass') }),
+  z.object({ type: z.literal('ops-flight'), to: cityId, card: cityId }),
+  z.object({ type: z.literal('take-event'), event: z.enum(EVENT_IDS) }),
   z.object({
     type: z.literal('share-offer'),
     direction: z.enum(['give', 'take']),
     with: seat,
+    city: cityId.optional(),
   }),
   z.object({ type: z.literal('share-accept') }),
   z.object({ type: z.literal('share-decline') }),
   z.object({ type: z.literal('share-cancel') }),
+  z.object({ type: z.literal('move-accept') }),
+  z.object({ type: z.literal('move-decline') }),
+  z.object({ type: z.literal('move-cancel') }),
   z.object({ type: z.literal('draw') }),
   z.object({ type: z.literal('epidemic') }),
   z.object({ type: z.literal('infect') }),
@@ -104,6 +109,9 @@ function actors(state: PandemicState): Actor[] {
   if (pending?.kind === 'discard') {
     return [{ seat: pending.seat, kind: 'prompt', prompt: 'discard' }];
   }
+  if (pending?.kind === 'move') {
+    return [{ seat: pending.pawn, kind: 'prompt', prompt: 'move' }];
+  }
   if (pending?.kind === 'share') {
     return [{ seat: shareAnswerer(state) as SeatId, kind: 'prompt', prompt: 'share' }];
   }
@@ -112,8 +120,9 @@ function actors(state: PandemicState): Actor[] {
 
 export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, PandemicConfig> = {
   id: 'pandemic',
-  // 2: the state holds a `log` (Pandemic 03).
-  version: 2,
+  // 3: the state holds the `roles` (Pandemic 04). Older matches are not migrated (Pandemic was
+  // never deployed before roles), so they are dropped on load.
+  version: 3,
   // A player who leaves frees the seat, not the hand: the game waits for whoever joins next.
   meta: {
     seats: SEATS,
@@ -145,12 +154,6 @@ export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, Pandemi
     return applyMove(state, ctx.by as SeatId, move as PandemicMove);
   },
   view: (state, viewer: Viewer) => tableViewFor(state, viewer),
-  migrate(state, fromVersion) {
-    if (fromVersion > 2) throw new Error(`no migration from rules version ${fromVersion}`);
-    const old = state as PandemicState;
-    if (old.status === 'waiting' || 'log' in old) return old;
-    return { ...(old as GameState), log: emptyLog((old as GameState).turn.seat) };
-  },
   started: (state) => state.status !== 'waiting',
   outcome: (state): Outcome | null => (state.status === 'waiting' ? null : outcome(state)),
 };

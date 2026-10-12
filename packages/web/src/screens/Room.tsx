@@ -55,7 +55,7 @@ function WaitingRoom({ module, code }: { module: GameClientModule; code: string 
   const presence = usePlatform((s) => s.presence);
   const { WaitingInfo } = module;
   return (
-    <Shell>
+    <Shell center>
       <Card>
         <CardHeader className="flex flex-col gap-2">
           {view !== undefined && <WaitingInfo view={view} presence={presence} />}
@@ -103,7 +103,7 @@ function Invite({ code }: { code: string }) {
   const { t } = useTranslation();
   const { name, setName, fromAccount } = useName();
   return (
-    <Shell>
+    <Shell center>
       <Card>
         <CardHeader>
           <CardTop title={t('app.title')} description={t('app.tagline')} />

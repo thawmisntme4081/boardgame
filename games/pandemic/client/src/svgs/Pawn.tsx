@@ -1,4 +1,4 @@
-import type { SeatId } from '@pandemic/rules';
+import type { RoleId, SeatId } from '@pandemic/rules';
 import type { SVGProps } from 'react';
 
 export const PAWN_WIDTH = 22;
@@ -6,18 +6,20 @@ export const PAWN_HEIGHT = 37;
 
 export interface PawnProps extends SVGProps<SVGSVGElement> {
   seat: SeatId;
+  /** The player's role: the pawn takes its color (the seat's color without one). */
+  role?: RoleId;
 }
 
 const mix = (base: string, to: string, percent: number) =>
   `color-mix(in oklch, ${base}, ${to} ${percent}%)`;
 
 /**
- * A player's pawn, in the seat's color, as a lit solid: a sphere head on a bell-shaped body with a
+ * A player's pawn, in its role's color, as a lit solid: a sphere head on a bell-shaped body with a
  * round foot and a soft shadow on the ground. The shape is traced from the Researcher's picture.
  * Draw it inside an <svg>.
  */
-export function Pawn({ seat, children, ...props }: PawnProps) {
-  const base = `var(--color-seat-${seat})`;
+export function Pawn({ seat, role, children, ...props }: PawnProps) {
+  const base = role ? `var(--color-role-${role})` : `var(--color-seat-${seat})`;
   const body = `pawn-body-${seat}`;
   const head = `pawn-head-${seat}`;
   return (

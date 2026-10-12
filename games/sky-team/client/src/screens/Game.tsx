@@ -27,6 +27,15 @@ function useRadioTarget(view: PlayerView): number | undefined {
   return radioOk ? view.approachIndex + value - 1 : undefined;
 }
 
+/**
+ * The approach track with the radio target marked. The selection is read here, not in `Game`:
+ * tapping a die or changing coffee redraws this track, not the whole board.
+ */
+function ApproachWithRadio({ view }: { view: PlayerView }) {
+  const radioTarget = useRadioTarget(view);
+  return <ApproachTrack view={view} radioTarget={radioTarget} />;
+}
+
 /** A short buzz on Android when it becomes your turn. */
 function useTurnBuzz(view: PlayerView): void {
   const myTurn = view.phase === 'placing' && view.currentSeat === view.seat;
@@ -88,7 +97,6 @@ export default function Game({
   const { t } = useTranslation('sky-team');
   const [statusRef, statusHeight] = useHeight<HTMLDivElement>();
   const shown = useShownView(view);
-  const radioTarget = useRadioTarget(view);
   useTurnBuzz(view);
 
   return (
@@ -115,7 +123,7 @@ export default function Game({
           {/* Side by side on phones (compact strip) and desktop, stacked on tablets. */}
           <div className="grid content-start gap-3 border-b bg-background px-4 py-2 tablet:grid-cols-1 tablet:py-3 desktop:grid-cols-[repeat(2,minmax(0,30rem))] desktop:justify-center desktop:gap-x-10">
             <AltitudeTrack view={view} />
-            <ApproachTrack view={view} radioTarget={radioTarget} />
+            <ApproachWithRadio view={view} />
           </div>
         </div>
 

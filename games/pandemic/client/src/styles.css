@@ -5,9 +5,40 @@
   --color-disease-red: oklch(0.6 0.22 25);
 }
 
+/* The pawn colors of the box: each role has its own. */
+@theme static {
+  --color-role-contingency-planner: oklch(0.72 0.11 195);
+  --color-role-dispatcher: oklch(0.65 0.2 320);
+  --color-role-medic: oklch(0.75 0.17 55);
+  --color-role-operations-expert: oklch(0.82 0.17 135);
+  --color-role-quarantine-specialist: oklch(0.42 0.11 150);
+  --color-role-researcher: oklch(0.5 0.08 60);
+  --color-role-scientist: oklch(0.96 0.01 100);
+}
+
 @theme static {
   --color-seat-p1: oklch(0.7 0.25 340);
   --color-seat-p2: oklch(0.75 0.2 145);
   --color-seat-p3: oklch(0.78 0.17 60);
   --color-seat-p4: oklch(0.65 0.2 295);
+}
+
+/* A city you can move to: its ring breathes. Scale and opacity only, so the browser animates it
+   without redrawing the map. */
+@keyframes reach-ring {
+  50% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+}
+.reach-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.93);
+  animation: reach-ring 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reach-ring {
+    animation: none;
+  }
 }

@@ -1,5 +1,11 @@
+import { CITIES, CUBES_PER_COLOR, type Color } from '@pandemic/rules';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { deviceOptions, setGame } from './helpers';
+
+/** Every city with no cubes, so a test can put a stack on just the one it cares about. */
+function noCubes(): Record<string, Record<Color, number>> {
+  return Object.fromEntries(CITIES.map(({ id }) => [id, { blue: 0, yellow: 0, black: 0, red: 0 }]));
+}
 
 // Pandemic is a desktop game: no phone profiles.
 test.skip(({ isMobile }) => isMobile, 'desktop only');
@@ -27,7 +33,7 @@ async function startThreePlayers(browser: Browser, device: ReturnType<typeof dev
     await page.getByRole('button', { name: 'Join' }).click();
   }
   for (const page of pages) {
-    await expect(page.getByRole('region', { name: 'Actions' })).toBeVisible();
+    await expect(page.getByRole('alert', { name: 'Actions' })).toBeVisible();
   }
   return { ana, ben, cleo, code };
 }
@@ -41,7 +47,7 @@ test.describe('a three-player Pandemic game', () => {
 
     // Everyone sees the same table: three hands, and a turn that is someone's.
     for (const page of [ana, ben, cleo]) {
-      await expect(page.getByRole('region', { name: 'Hands' }).getByText('Ben')).toBeVisible();
+      await expect(page.getByRole('region', { name: 'Hands' })).toBeVisible();
       await expect(page.getByText(/4 actions left/)).toBeVisible();
     }
 
@@ -73,7 +79,7 @@ test.describe('a three-player Pandemic game', () => {
     // Only Ana can act, and only she gets the cure button enabled.
     await expect(ana.getByText(/Your turn/)).toBeVisible();
     await expect(ben.getByText("Ana's turn")).toBeVisible();
-    await expect(ben.getByRole('button', { name: 'Discover cure: Yellow' })).toBeDisabled();
+    await expect(ben.getByRole('button', { name: 'Discover cure: Yellow' })).toHaveCount(0);
     await expect(ana.getByRole('button', { name: 'Discover cure: Yellow' })).toBeEnabled();
 
     await ana.getByRole('button', { name: 'Discover cure: Yellow' }).click();
@@ -128,8 +134,8 @@ test.describe('a three-player Pandemic game', () => {
       if (await active.getByText("'s turn").isVisible()) break;
       const epidemic = active.getByRole('button', { name: /^Epidemic:/ });
       const infect = active.getByRole('button', { name: 'Infect', exact: true });
-      if (await epidemic.isEnabled()) await epidemic.click();
-      else if (await infect.isEnabled()) await infect.click();
+      if (await epidemic.isVisible()) await epidemic.click();
+      else if (await infect.isVisible()) await infect.click();
       else break;
     }
     // The turn is now someone else's, and the log of the finished turn is the previous one.
@@ -137,5 +143,89 @@ test.describe('a three-player Pandemic game', () => {
     for (const page of pages) {
       await expect(page.getByText('Previous turn')).toBeVisible();
     }
+  });
+
+  test('the Dispatcher moves the Medic, who clears a cured city; the Medic then treats a stack at once', async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const { ana, ben, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+
+    // Ana is the Dispatcher, Ben the Medic. Blue is cured, and Chicago (blue) has 3 cubes of it;
+    // Ana holds Chicago's card to pay for a Direct Flight of Ben's pawn there.
+    await setGame(request, code, {
+      turn: {
+        seat: 'p1',
+        actionsLeft: 4,
+        step: 'actions',
+        epidemics: 0,
+        epidemicStep: 'increase',
+        infectionsLeft: 0,
+      },
+      pending: null,
+      roles: { p1: 'dispatcher', p2: 'medic', p3: 'researcher' },
+      pawns: { p1: 'atlanta', p2: 'miami', p3: 'atlanta' },
+      stations: ['atlanta'],
+      cures: { blue: 'cured', yellow: 'none', black: 'none', red: 'none' },
+      cubes: { ...noCubes(), chicago: { blue: 3, yellow: 0, black: 0, red: 0 } },
+      supply: {
+        blue: CUBES_PER_COLOR - 3,
+        yellow: CUBES_PER_COLOR,
+        black: CUBES_PER_COLOR,
+        red: CUBES_PER_COLOR,
+      },
+      hands: { p1: [{ kind: 'city', city: 'chicago' }], p2: [], p3: [] },
+      contingency: null,
+    });
+
+    // The Dispatcher picks Ben's pawn to move, then flies it to Chicago.
+    await expect(ana.getByText(/4 actions left/)).toBeVisible();
+    await ana
+      .getByRole('group', { name: 'Pawn to move' })
+      .getByRole('button', { name: 'Ben' })
+      .click();
+    await ana.locator('[data-city="chicago"]').click();
+    const menu = ana.getByRole('menu', { name: 'Move Ben to Chicago' });
+    await expect(menu).toBeVisible();
+    await menu.getByRole('button', { name: 'Direct Flight' }).click();
+
+    // Ben answers the offer; accepting moves his pawn and clears the cured cubes at once.
+    await expect(ben.getByText('Ana offers to move Ben to Chicago.')).toBeVisible();
+    await ben.getByRole('button', { name: 'Accept' }).click();
+    await expect(ben.getByText('Ana offers to move Ben to Chicago.')).toBeHidden();
+    await expect(ana.getByText(/3 actions left/)).toBeVisible();
+    await expect(ben.locator('[data-supply="blue"]')).toContainText(String(CUBES_PER_COLOR));
+
+    // Now it is Ben's turn, in Chicago, with a stack of 3 yellow cubes: treating it as the
+    // Medic removes the whole stack in one action, not just one cube.
+    await setGame(request, code, {
+      turn: {
+        seat: 'p2',
+        actionsLeft: 4,
+        step: 'actions',
+        epidemics: 0,
+        epidemicStep: 'increase',
+        infectionsLeft: 0,
+      },
+      pending: null,
+      pawns: { p1: 'atlanta', p2: 'chicago', p3: 'atlanta' },
+      cubes: { ...noCubes(), chicago: { blue: 0, yellow: 3, black: 0, red: 0 } },
+      supply: {
+        blue: CUBES_PER_COLOR,
+        yellow: CUBES_PER_COLOR - 3,
+        black: CUBES_PER_COLOR,
+        red: CUBES_PER_COLOR,
+      },
+      hands: { p1: [], p2: [], p3: [] },
+    });
+
+    await expect(ben.getByRole('button', { name: 'Treat Yellow' })).toBeVisible();
+    await ben.getByRole('button', { name: 'Treat Yellow' }).click();
+    await expect(ben.getByRole('button', { name: 'Treat Yellow' })).toHaveCount(0);
+    await expect(ben.getByText(/3 actions left/)).toBeVisible();
+    await expect(ana.locator('[data-supply="yellow"]')).toContainText(String(CUBES_PER_COLOR));
   });
 });

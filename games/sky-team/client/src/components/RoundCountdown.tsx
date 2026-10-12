@@ -15,7 +15,7 @@ const WARN_MS = 30_000;
 export function RoundCountdown() {
   const { t } = useTranslation('sky-team');
   const deadline = useSkyTeam((s) => s.roundDeadline);
-  const now = useNow();
+  const now = useNow(deadline);
 
   if (deadline === null) return null;
   const left = Math.max(0, deadline - now);

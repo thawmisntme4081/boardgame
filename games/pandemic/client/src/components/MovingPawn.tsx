@@ -1,4 +1,4 @@
-import type { SeatId } from '@pandemic/rules';
+import type { RoleId, SeatId } from '@pandemic/rules';
 import { useLayoutEffect, useRef } from 'react';
 import { Pawn } from '../svgs/Pawn';
 
@@ -15,12 +15,14 @@ const at = (x: number, y: number) => `translate(${x}px, ${y}px)`;
  */
 export function MovingPawn({
   seat,
+  role,
   city,
   x,
   y,
   name,
 }: {
   seat: SeatId;
+  role?: RoleId;
   city: string;
   x: number;
   y: number;
@@ -43,7 +45,7 @@ export function MovingPawn({
 
   return (
     <g ref={group} style={{ transform: at(x, y) }}>
-      <Pawn data-pawn={seat} seat={seat} x={0} y={0}>
+      <Pawn data-pawn={seat} seat={seat} role={role} x={0} y={0}>
         <title>{name}</title>
       </Pawn>
     </g>

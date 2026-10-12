@@ -10,6 +10,7 @@ import {
   HAND_SIZES,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  ROLE_IDS,
   SETUP_INFECTIONS,
   START_CITY,
   type Cubes,
@@ -17,6 +18,7 @@ import {
   type HandCard,
   type PerSeat,
   type PlayerCard,
+  type RoleId,
   type SeatId,
 } from './types';
 
@@ -126,6 +128,12 @@ export function createGame({ seats, epidemics, seed }: CreateGameOptions): GameS
     }
   }
 
+  // Role cards, after the initial infection (the rulebook's order), so no role changes it.
+  const roleDeal = shuffle(ROLE_IDS, rngState);
+  rngState = roleDeal.rngState;
+  const roles: PerSeat<RoleId> = {};
+  order.items.forEach((seat, i) => (roles[seat] = roleDeal.items[i]));
+
   const pawns: PerSeat<CityId> = {};
   for (const seat of order.items) pawns[seat] = START_CITY;
 
@@ -139,12 +147,15 @@ export function createGame({ seats, epidemics, seed }: CreateGameOptions): GameS
       epidemics: 0,
       epidemicStep: 'increase',
       infectionsLeft: 0,
+      flightUsed: false,
     },
     pending: null,
     status: 'playing',
     lossReason: null,
+    roles,
     pawns,
     hands,
+    contingency: null,
     cubes,
     supply,
     stations: [START_CITY],

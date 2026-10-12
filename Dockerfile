@@ -5,8 +5,11 @@
 FROM node:24-slim AS build
 WORKDIR /app
 RUN corepack enable
+# Download the packages from the lockfile alone: this layer stays cached until it changes.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm fetch
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --offline --frozen-lockfile
 # Optional: client error tracking (fly deploy --build-arg VITE_SENTRY_DSN=...).
 ARG VITE_SENTRY_DSN
 RUN pnpm build

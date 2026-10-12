@@ -31,9 +31,11 @@ function Entry({ entry }: { entry: LogEntry }) {
           {entry.epidemic && <span className="font-medium">{t('log.epidemicPrefix')} </span>}
           {entry.eradicated
             ? t('log.eradicated', { city, color })
-            : entry.cubes > 0
-              ? t('log.infected', { city, color, count: entry.cubes })
-              : t('log.noRoom', { city, color })}
+            : entry.prevented
+              ? t('log.prevented', { city, color })
+              : entry.cubes > 0
+                ? t('log.infected', { city, color, count: entry.cubes })
+                : t('log.noRoom', { city, color })}
           {entry.outbreaks.length > 0 && (
             <span className="ml-1 font-medium text-danger">
               {t('log.outbreaks', { cities: entry.outbreaks.map(cityName).join(' → ') })}

@@ -92,6 +92,7 @@ export function MapPieces({
           <MovingPawn
             key={seat}
             seat={seat}
+            role={view.roles[seat]}
             city={city}
             x={x - stackWidth / 2 + here.indexOf(seat) * PAWN_STEP}
             y={y - PAWN_HEIGHT / 2}

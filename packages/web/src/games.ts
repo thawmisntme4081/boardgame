@@ -3,29 +3,39 @@
 import type { GameClientModule, PlatformApi } from '@platform/ui/game';
 import { addLocales } from '@platform/ui/i18n';
 import { useEffect, useState } from 'react';
+import pandemicImage from './assets/thumbnails/pandemic.webp';
+import skyTeamImage from './assets/thumbnails/sky-team.webp';
 
 export interface GameInfo {
-  /** The game's id, as the server's registry and the i18n namespace know it. */
   id: string;
-  /** Seats at the table, for the picker. */
-  players: { min: number; max: number };
   load: () => Promise<{ default: GameClientModule }>;
+  image: string;
 }
 
 export const GAMES: readonly GameInfo[] = [
   {
     id: 'sky-team',
-    players: { min: 2, max: 2 },
     load: () => import('@sky/client') as Promise<{ default: GameClientModule }>,
+    image: skyTeamImage,
   },
   {
     id: 'pandemic',
-    players: { min: 2, max: 4 },
     load: () => import('@pandemic/client') as Promise<{ default: GameClientModule }>,
+    image: pandemicImage,
   },
 ];
 
 export const gameInfo = (id: string): GameInfo | undefined => GAMES.find((g) => g.id === id);
+
+/**
+ * Starts downloading a game's chunk before a page needs it (hovering its card, opening its page
+ * directly); `loadGame` then finds it ready. Unknown ids are ignored.
+ */
+export function preloadGame(id: string): void {
+  void gameInfo(id)
+    ?.load()
+    .catch(() => undefined);
+}
 
 let services: PlatformApi<unknown, unknown> | null = null;
 const loading = new Map<string, Promise<GameClientModule>>();
