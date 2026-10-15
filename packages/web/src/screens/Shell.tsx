@@ -5,24 +5,20 @@ import { Label } from '@platform/ui/components/label';
 import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
 import { Link, useRouter } from '@tanstack/react-router';
 import { Dices } from 'lucide-react';
-import { useState, type SubmitEvent, type ReactNode } from 'react';
+import { useState, type ComponentProps, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { joinRoom } from '../api';
 import { NAME_MAX } from '../session';
 import { AccountButton } from './Account';
 
-export function Shell({
-  children,
-  wide = false,
-  full = false,
+/** The site's header: the brand (a link home inside the router), the language and the account. */
+export function SiteHeader({
   account = false,
-  center = false,
+  extra,
 }: {
-  children: ReactNode;
-  wide?: boolean;
-  full?: boolean;
   account?: boolean;
-  center?: boolean;
+  /** A game's own part of the header (who is online, leaving), left of the language. */
+  extra?: ReactNode;
 }) {
   const { t } = useTranslation();
   const inRouter = Boolean(useRouter({ warn: false }));
@@ -33,27 +29,54 @@ export function Shell({
   );
   const brandClass = 'flex min-h-11 items-center gap-2 text-lg font-semibold';
   return (
+    <header className="border-b bg-background px-4 py-1">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2">
+        {inRouter ? (
+          <Link to="/" className={brandClass}>
+            {brand}
+          </Link>
+        ) : (
+          <span className={brandClass}>{brand}</span>
+        )}
+        <div className="flex min-w-0 items-center gap-3">
+          {extra}
+          <LanguageSwitch />
+          {account && <AccountButton />}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/** A page's content, centered on the muted page below the header (the layout draws the header). */
+export function Page({
+  children,
+  wide = false,
+  full = false,
+  center = false,
+}: {
+  children: ReactNode;
+  wide?: boolean;
+  full?: boolean;
+  center?: boolean;
+}) {
+  return (
+    <main className={`flex flex-1 justify-center p-4 ${center ? 'items-center' : ''}`}>
+      <div className={full ? 'w-full max-w-6xl' : wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
+        {children}
+      </div>
+    </main>
+  );
+}
+
+/** The whole page with its own header, for what is shown outside the router (the password). */
+export function Shell({ children, wide, full, center }: ComponentProps<typeof Page>) {
+  return (
     <div className="flex min-h-dvh flex-col bg-muted/40">
-      <header className="border-b bg-background px-4 py-1">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2">
-          {inRouter ? (
-            <Link to="/" className={brandClass}>
-              {brand}
-            </Link>
-          ) : (
-            <span className={brandClass}>{brand}</span>
-          )}
-          <div className="flex shrink-0 items-center gap-1">
-            <LanguageSwitch />
-            {account && <AccountButton />}
-          </div>
-        </div>
-      </header>
-      <main className={`flex flex-1 justify-center p-4 ${center ? 'items-center' : ''}`}>
-        <div className={full ? 'w-full max-w-6xl' : wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
-          {children}
-        </div>
-      </main>
+      <SiteHeader />
+      <Page wide={wide} full={full} center={center}>
+        {children}
+      </Page>
     </div>
   );
 }
@@ -90,7 +113,7 @@ export function NameField({
         readOnly={fromAccount}
         aria-describedby={fromAccount ? 'name-from-account' : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 text-base read-only:bg-muted read-only:text-muted-foreground"
+        className="text-base read-only:bg-muted read-only:text-muted-foreground desktop:text-sm"
       />
       {fromAccount && (
         <p id="name-from-account" className="text-xs text-muted-foreground">
@@ -128,9 +151,9 @@ export function JoinForm({ name, initialCode = '' }: { name: string; initialCode
           autoComplete="off"
           placeholder="ABCD"
           onChange={(e) => setCode(e.target.value.replace(/[^a-z]/gi, '').toUpperCase())}
-          className="h-11 font-mono text-base tracking-widest uppercase"
+          className="h-11 font-mono text-base tracking-widest uppercase desktop:h-9 desktop:text-sm"
         />
-        <Button type="submit" className="h-11" disabled={busy || !ready}>
+        <Button type="submit" className="h-11 desktop:h-9" disabled={busy || !ready}>
           {t('lobby.join')}
         </Button>
       </div>
@@ -148,13 +171,15 @@ export function Or() {
   );
 }
 
-export function Connecting() {
+/** "Connecting…": in a page of the layout, or (`framed`) alone on the page, before the router. */
+export function Connecting({ framed = false }: { framed?: boolean }) {
   const { t } = useTranslation();
+  const Frame = framed ? Shell : Page;
   return (
-    <Shell>
+    <Frame>
       <p className="text-center text-sm text-muted-foreground" role="status">
         {t('lobby.connecting')}
       </p>
-    </Shell>
+    </Frame>
   );
 }

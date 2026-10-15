@@ -30,11 +30,13 @@ const reason = (game: GameState, seat: SeatId, move: PandemicMove) => {
 };
 
 describe('when an event card may be played', () => {
-  it('from any seat holding it, on its turn or not, and it is not an action', () => {
+  it('from any seat, on its turn or not, and it is not an action', () => {
     const game = holding('one-quiet-night', 'p2');
     expect(game.turn.seat).toBe('p1');
     expect(canPlayEvent(game, 'p2')).toBe(true);
-    expect(canPlayEvent(game, 'p1')).toBe(false);
+    // Anyone may play anyone's card; with no event card on the table, nobody can.
+    expect(canPlayEvent(game, 'p1')).toBe(true);
+    expect(canPlayEvent(blankGame(3), 'p1')).toBe(false);
     const next = applyMove(game, 'p2', play('one-quiet-night'));
     expect(next.turn.actionsLeft).toBe(game.turn.actionsLeft);
     expect(next.turn.seat).toBe('p1');
@@ -124,6 +126,88 @@ describe('when an event card may be played', () => {
     const view = viewFor(game, 'p2');
     expect(canActInView(view, 'p2', play('one-quiet-night'))).toBe(true);
     expect(canActInView(view, 'p3', play('one-quiet-night'))).toBe(false);
+  });
+});
+
+describe("playing another player's card", () => {
+  it('lets any player play a card held by another: it leaves the owner, the player chooses', () => {
+    const game = holding('government-grant', 'p2');
+    expect(canPlayCard(game, 'p3', 'government-grant', 'p2')).toBe(true);
+    expect(canPlayCard(game, 'p3', 'government-grant')).toBe(false);
+    expect(canPlayEvent(game, 'p3')).toBe(true);
+
+    const next = applyMove(game, 'p3', play('government-grant', { owner: 'p2', city: 'tokyo' }));
+    expect(next.stations).toContain('tokyo');
+    expect(next.hands.p2).toEqual([]);
+    expect(next.playerDiscard).toEqual([event('government-grant')]);
+    expect(next.log.current.entries).toContainEqual(
+      expect.objectContaining({
+        type: 'event',
+        seat: 'p3',
+        owner: 'p2',
+        event: 'government-grant',
+      }),
+    );
+  });
+
+  it('refuses a card its named owner does not hold, and a seat that is not in the game', () => {
+    const game = holding('airlift', 'p2');
+    expect(reason(game, 'p3', play('airlift', { owner: 'p1', pawn: 'p3', to: 'paris' }))).toBe(
+      'card-missing',
+    );
+    expect(reason(game, 'p3', play('airlift', { owner: 'p4', pawn: 'p3', to: 'paris' }))).toBe(
+      'card-missing',
+    );
+    expect(reason(game, 'p3', play('one-quiet-night', { owner: 'p2' }))).toBe('card-missing');
+  });
+
+  it("plays the Contingency Planner's stored card too, which leaves the game", () => {
+    const game = blankGame(3);
+    game.roles.p2 = 'contingency-planner';
+    game.contingency = 'one-quiet-night';
+    const next = applyMove(game, 'p3', play('one-quiet-night', { owner: 'p2' }));
+    expect(next.contingency).toBeNull();
+    expect(next.playerDiscard).toEqual([]);
+    expect(next.quietNight).toBe(true);
+  });
+
+  it('keeps an offer for a pawn: the card stays with its owner until the pawn owner accepts', () => {
+    const game = holding('airlift', 'p2');
+    const offered = applyMove(
+      game,
+      'p3',
+      play('airlift', { owner: 'p2', pawn: 'p1', to: 'tokyo' }),
+    );
+    expect(offered.pending).toMatchObject({ kind: 'move', by: 'p3', pawn: 'p1' });
+    expect(offered.hands.p2).toEqual([event('airlift')]);
+    const accepted = applyMoveOffer(offered, 'p1', { type: 'move-accept' });
+    expect(accepted.pawns.p1).toBe('tokyo');
+    expect(accepted.hands.p2).toEqual([]);
+    expect(accepted.playerDiscard).toEqual([event('airlift')]);
+  });
+
+  it("brings the owner's hand under the limit, and lets only the player who owes the discard play", () => {
+    const game = blankGame(3);
+    for (const c of ['paris', 'london', 'essen', 'milan', 'madrid', 'moscow', 'tokyo'] as const) {
+      give(game, 'p2', city(c));
+    }
+    give(game, 'p2', event('one-quiet-night'));
+    game.pending = { kind: 'discard', seat: 'p2' };
+    // p3 may not play meanwhile, not even p2's card.
+    expect(reason(game, 'p3', play('one-quiet-night', { owner: 'p2' }))).toBe('answer-first');
+    // p2 may, and the discard is no longer owed.
+    const next = applyMove(game, 'p2', play('one-quiet-night'));
+    expect(next.hands.p2).toHaveLength(7);
+    expect(next.pending).toBeNull();
+  });
+
+  it('is part of the move schema', () => {
+    expect(pandemicMoveSchema.safeParse(play('one-quiet-night', { owner: 'p2' })).success).toBe(
+      true,
+    );
+    expect(pandemicMoveSchema.safeParse(play('one-quiet-night', { owner: 'p9' })).success).toBe(
+      false,
+    );
   });
 });
 

@@ -308,11 +308,13 @@ describe('Pandemic 03: the desktop layout (task 4)', () => {
       />,
     );
     const main = container.querySelector('main')!;
-    expect(main.className).toContain('h-dvh');
+    expect(main.className).toContain('flex-1');
     expect(main.className).toContain('overflow-hidden');
     expect(main.querySelector('svg[aria-label="Map"]')).not.toBeNull();
     expect(screen.getByRole('group', { name: 'Hands' })).toBeInTheDocument();
-    expect(screen.getByRole('alert', { name: 'Actions' })).toBeInTheDocument();
+    // The role cards, with the player whose turn it is marked; the actions are the active player's.
+    expect(screen.getByRole('region', { name: 'Roles' })).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-role][aria-current="true"]')).toHaveLength(1);
   });
 
   it('shows nothing while the table waits for players', () => {

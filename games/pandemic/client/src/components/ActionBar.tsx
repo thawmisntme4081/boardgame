@@ -4,6 +4,8 @@ import {
   canActInView,
   cardsToCure,
   cityOf,
+  HAND_LIMIT,
+  heldEvents,
   roleOf,
   type CityId,
   type Color,
@@ -15,6 +17,8 @@ import { Button } from '@platform/ui/components/button';
 import type { SeatPresence } from '@platform/ui/game';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DISEASE_PALE_TEXT, diseasePale } from '../lib/colors';
+import { EventControls } from './EventControls';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
 import { usePandemic } from '../store';
@@ -49,17 +53,20 @@ export function ActionBar({
   const [moveStation, setMoveStation] = useState<CityId | ''>('');
   // A cure with more cards of its color than it needs: the player picks which to discard.
   const [curing, setCuring] = useState<{ color: Color; picked: CityId[] } | null>(null);
+  // A share with several possible partners: the group whose partner is being chosen.
+  const [sharing, setSharing] = useState<string | null>(null);
   const movingPawn = usePandemic((s) => s.movingPawn);
   const setMovingPawn = usePandemic((s) => s.setMovingPawn);
   const { you, turn } = view;
 
   if (!you) return <p className="text-sm text-muted-foreground">{t('actions.spectator')}</p>;
-  if (turn.seat !== you) {
-    return (
-      <section aria-label={t('actions.title')} role="alert" className={alertClass}>
-        <p>{t('actions.notYourTurn')}</p>
-      </section>
-    );
+  // Someone else's turn: only the event cards on the table can be played (their role card is highlighted).
+  const mine = turn.seat === you;
+  // A hand over the limit: its owner discards (by pressing a card), the others wait.
+  const owing = view.pending?.kind === 'discard' ? view.pending.seat : null;
+  const toDiscard = owing ? Math.max(1, (view.hands[owing]?.length ?? 0) - HAND_LIMIT) : 0;
+  if (!mine && !owing && view.seats.every((seat) => heldEvents(view, seat).length === 0)) {
+    return null;
   }
   const can = (move: PandemicMove) => canActInView(view, you, move);
   const stationsFull = view.stations.length >= MAX_STATIONS;
@@ -73,17 +80,162 @@ export function ActionBar({
   const canBuild =
     can(buildMove(moveStation)) || (stationsFull && view.stations.some((id) => can(buildMove(id))));
 
+  // Each group of buttons is drawn only if it has one.
+  const colorButtons = [
+    ...COLORS.filter((color) => can({ type: 'treat', color })).map((color) => (
+      <Button
+        key={`treat-${color}`}
+        className={`hover:brightness-95 ${DISEASE_PALE_TEXT}`}
+        style={diseasePale(color)}
+        onClick={() => send({ type: 'treat', color })}
+      >
+        {t('actions.treat', { color: t(`color.${color}`) })}
+      </Button>
+    )),
+    ...COLORS.flatMap((color) => {
+      const owned = colorCards(view, you, color);
+      const needed = cardsToCure(view, you);
+      // Which cards makes no difference to whether a cure is legal, only how many.
+      const first = owned.slice(0, needed);
+      if (!can({ type: 'cure', color, cards: first })) return [];
+      return [
+        <Button
+          key={`cure-${color}`}
+          variant="outline"
+          onClick={() =>
+            owned.length > needed
+              ? setCuring({ color, picked: [] })
+              : send({ type: 'cure', color, cards: first })
+          }
+        >
+          {t('actions.cure', { color: t(`color.${color}`) })}
+        </Button>,
+      ];
+    }),
+  ];
+  const partners = view.seats.filter((seat) => seat !== you);
+  // Share Knowledge offers, grouped by direction and card: with one possible partner the button
+  // names them ("Give Paris to Medic"); with several it asks which one after the click.
+  const groups = new Map<string, { direction: 'give' | 'take'; city: CityId; seats: SeatId[] }>();
+  const addOffer = (direction: 'give' | 'take', city: CityId, seat: SeatId) => {
+    const offer = {
+      type: 'share-offer',
+      direction,
+      with: seat,
+      ...(city === here ? {} : { city }),
+    } as const;
+    if (!can(offer)) return;
+    const key = `${direction}:${city}`;
+    const group = groups.get(key) ?? { direction, city, seats: [] };
+    group.seats.push(seat);
+    groups.set(key, group);
+  };
+  for (const direction of ['give', 'take'] as const) {
+    for (const seat of partners) addOffer(direction, here, seat);
+  }
+  // A role that gives any city card: its other cards too.
+  for (const card of view.hands[you] ?? []) {
+    if (card.kind !== 'city' || card.city === here) continue;
+    for (const seat of partners) addOffer('give', card.city, seat);
+  }
+  const sendShare = (direction: 'give' | 'take', city: CityId, seat: SeatId) => {
+    setSharing(null);
+    send({
+      type: 'share-offer',
+      direction,
+      with: seat,
+      ...(city === here ? {} : { city }),
+    });
+  };
+  const roleName = (seat: SeatId) => {
+    const role = view.roles[seat];
+    return role ? t(`roles.${role}.name`) : seatName(presence, seat);
+  };
+  const shareButtons = [
+    ...[...groups.entries()].map(([key, { direction, city, seats }]) => {
+      const names = { city: cityName(city) };
+      const only = seats.length === 1 ? (seats[0] as SeatId) : null;
+      return (
+        <Button
+          key={`share-${key}`}
+          variant="outline"
+          onClick={() =>
+            only ? sendShare(direction, city, only) : setSharing(sharing === key ? null : key)
+          }
+        >
+          {only
+            ? t(direction === 'give' ? 'share.giveTo' : 'share.takeFrom', {
+                ...names,
+                role: roleName(only),
+              })
+            : t(direction === 'give' ? 'share.giveCard' : 'share.takeCard', names)}
+        </Button>
+      );
+    }),
+    ...takes.map((event) => (
+      <Button
+        key={`take-${event}`}
+        variant="outline"
+        onClick={() => send({ type: 'take-event', event })}
+      >
+        {t('actions.takeEvent', { event: t(`events.${event}`) })}
+      </Button>
+    )),
+  ];
+  const stepButtons = [
+    can({ type: 'draw' }) && (
+      <Button key="draw" onClick={() => send({ type: 'draw' })}>
+        {t('actions.draw')}
+      </Button>
+    ),
+    can({ type: 'epidemic' }) && (
+      <Button key="epidemic" onClick={() => send({ type: 'epidemic' })}>
+        {t('actions.epidemic', { step: t(`board.epidemicStep.${turn.epidemicStep}`) })}
+      </Button>
+    ),
+    can({ type: 'infect' }) && (
+      <Button key="infect" onClick={() => send({ type: 'infect' })}>
+        {t('actions.infect')}
+      </Button>
+    ),
+    can({ type: 'pass' }) && (
+      <Button
+        key="pass"
+        className="bg-destructive text-white hover:bg-destructive/90"
+        onClick={() => send({ type: 'pass' })}
+      >
+        {t('actions.pass')}
+      </Button>
+    ),
+    can({ type: 'restart-turn' }) && (
+      <Button key="restart" variant="outline" onClick={() => send({ type: 'restart-turn' })}>
+        {t('actions.restart')}
+      </Button>
+    ),
+  ].filter(Boolean);
+
   return (
     <section
       aria-labelledby="actions-title"
       role="alert"
       className={`${alertClass} flex flex-col gap-3`}
     >
-      <h2 id="actions-title" className="font-semibold">
-        {t('actions.title')}
-      </h2>
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 id="actions-title" className="font-semibold">
+          {t('actions.title')}
+        </h2>
+        {mine && <span>{t('board.actionsLeft', { count: turn.actionsLeft })}</span>}
+      </div>
 
-      {movesPawns && (
+      {owing && (
+        <p className="font-medium">
+          {owing === you
+            ? t('actions.discard', { count: toDiscard })
+            : t('actions.discardWaiting', { name: seatName(presence, owing), count: toDiscard })}
+        </p>
+      )}
+
+      {mine && movesPawns && (
         <div
           role="group"
           aria-label={t('actions.movePawn')}
@@ -134,37 +286,7 @@ export function ActionBar({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {COLORS.filter((color) => can({ type: 'treat', color })).map((color) => (
-          <Button
-            key={`treat-${color}`}
-            variant="outline"
-            onClick={() => send({ type: 'treat', color })}
-          >
-            {t('actions.treat', { color: t(`color.${color}`) })}
-          </Button>
-        ))}
-        {COLORS.map((color) => {
-          const owned = colorCards(view, you, color);
-          const needed = cardsToCure(view, you);
-          // Which cards makes no difference to whether a cure is legal, only how many.
-          const first = owned.slice(0, needed);
-          if (!can({ type: 'cure', color, cards: first })) return null;
-          return (
-            <Button
-              key={`cure-${color}`}
-              variant="outline"
-              onClick={() =>
-                owned.length > needed
-                  ? setCuring({ color, picked: [] })
-                  : send({ type: 'cure', color, cards: first })
-              }
-            >
-              {t('actions.cure', { color: t(`color.${color}`) })}
-            </Button>
-          );
-        })}
-      </div>
+      {colorButtons.length > 0 && <div className="flex flex-wrap gap-2">{colorButtons}</div>}
 
       {curing && (
         <fieldset className="flex flex-col gap-2 rounded-md border p-2">
@@ -220,76 +342,39 @@ export function ActionBar({
         </fieldset>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {view.seats
-          .filter((seat) => seat !== you)
-          .flatMap((seat) =>
-            (['give', 'take'] as const).map((direction) => {
-              const offer = { type: 'share-offer', direction, with: seat } as const;
-              if (!can(offer)) return null;
-              return (
-                <Button key={`${direction}-${seat}`} variant="outline" onClick={() => send(offer)}>
-                  {t(`share.${direction}`, { name: seatName(presence, seat) })}
-                </Button>
-              );
-            }),
-          )}
-        {/* A role that gives any city card: one button per card and partner. */}
-        {view.seats
-          .filter((seat) => seat !== you)
-          .flatMap((seat) =>
-            (view.hands[you] ?? []).flatMap((card) => {
-              if (card.kind !== 'city' || card.city === here) return [];
-              const offer = {
-                type: 'share-offer',
-                direction: 'give',
-                with: seat,
-                city: card.city,
-              } as const;
-              if (!can(offer)) return [];
-              return [
-                <Button
-                  key={`give-${seat}-${card.city}`}
-                  variant="outline"
-                  onClick={() => send(offer)}
-                >
-                  {t('share.giveCity', {
-                    city: cityName(card.city),
-                    name: seatName(presence, seat),
-                  })}
-                </Button>,
-              ];
-            }),
-          )}
-        {takes.map((event) => (
-          <Button
-            key={`take-${event}`}
-            variant="outline"
-            onClick={() => send({ type: 'take-event', event })}
-          >
-            {t('actions.takeEvent', { event: t(`events.${event}`) })}
+      {shareButtons.length > 0 && <div className="flex flex-wrap gap-2">{shareButtons}</div>}
+      {sharing && groups.get(sharing) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium">
+            {t(
+              groups.get(sharing)!.direction === 'give' ? 'share.chooseGive' : 'share.chooseTake',
+              {
+                city: cityName(groups.get(sharing)!.city),
+              },
+            )}
+          </span>
+          {groups.get(sharing)!.seats.map((seat) => (
+            <Button
+              key={seat}
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const { direction, city } = groups.get(sharing)!;
+                sendShare(direction, city, seat);
+              }}
+            >
+              {roleName(seat)}
+            </Button>
+          ))}
+          <Button size="sm" variant="ghost" onClick={() => setSharing(null)}>
+            {t('actions.cureCancel')}
           </Button>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <div className="flex flex-wrap gap-2">
-        {can({ type: 'draw' }) && (
-          <Button onClick={() => send({ type: 'draw' })}>{t('actions.draw')}</Button>
-        )}
-        {can({ type: 'epidemic' }) && (
-          <Button onClick={() => send({ type: 'epidemic' })}>
-            {t('actions.epidemic', { step: t(`board.epidemicStep.${turn.epidemicStep}`) })}
-          </Button>
-        )}
-        {can({ type: 'infect' }) && (
-          <Button onClick={() => send({ type: 'infect' })}>{t('actions.infect')}</Button>
-        )}
-        {can({ type: 'pass' }) && (
-          <Button variant="ghost" onClick={() => send({ type: 'pass' })}>
-            {t('actions.pass')}
-          </Button>
-        )}
-      </div>
+      <EventControls view={view} presence={presence} />
+
+      {stepButtons.length > 0 && <div className="flex flex-wrap gap-2">{stepButtons}</div>}
     </section>
   );
 }

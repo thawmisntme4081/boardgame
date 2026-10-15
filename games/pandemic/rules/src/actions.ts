@@ -66,6 +66,13 @@ export type ActionReason =
   | 'not-your-answer'
   // Turn steps (see turn.ts)
   | 'nothing-to-discard'
+  // Before the game (see preflight.ts)
+  | 'already-confirmed'
+  | 'cannot-restart'
+  | 'not-confirmed'
+  | 'pick-first'
+  | 'roles-dealt'
+  | 'role-taken'
   // The table (see table.ts)
   | 'bad-seat'
   | 'room-full'

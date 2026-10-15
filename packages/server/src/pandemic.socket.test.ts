@@ -43,6 +43,10 @@ const presenceWhere = (client: Client, ok: (presence: Presence) => boolean) =>
     client.on('room:presence', onPresence as never);
   });
 
+/** A player's move, sent as the clients do (`seq` counts that player's moves). */
+const moveOf = (client: Client, matchId: string, seq: number, move: unknown) =>
+  send<{ ok: boolean; error?: string }>(client, 'match:move', { matchId, seq, move });
+
 describe('Pandemic over sockets', () => {
   it('seats 3 players, deals when the third sits down and refuses a fourth', async () => {
     server = await startTestServer(new RoomManager({ seed: () => 5 }));
@@ -68,10 +72,22 @@ describe('Pandemic over sockets', () => {
     expect(benJoined).toMatchObject({ ok: true, seat: 'p2' });
     expect(await waitingTwo).toMatchObject({ status: 'waiting', seated: ['p1', 'p2'], players: 3 });
 
-    const anaDealt = viewWhere(ana!, (v) => v.status === 'playing');
-    const benDealt = viewWhere(ben!, (v) => v.status === 'playing');
+    // The third seat starts the "before the game" step: the turn order and roles, no board yet.
+    const anaStep = viewWhere(ana!, (v) => v.status === 'setup');
     const cyJoined = await send<JoinResult>(cy!, 'room:join', { code: created.code, name: 'Cy' });
     expect(cyJoined).toMatchObject({ ok: true, seat: 'p3' });
+    const step = await anaStep;
+    expect(step).toMatchObject({ status: 'setup', you: 'p1', roleMode: 'random', confirmed: [] });
+    expect([...(step.seats as string[])].sort()).toEqual(['p1', 'p2', 'p3']);
+    expect(Object.keys(step.picks as object)).toHaveLength(3);
+    expect(JSON.stringify(step)).not.toMatch(/rngSeed|"seed"|"playerDeck"|"infectionDeck"/);
+
+    // The board is dealt when all three have confirmed.
+    const anaDealt = viewWhere(ana!, (v) => v.status === 'playing');
+    const benDealt = viewWhere(ben!, (v) => v.status === 'playing');
+    for (const client of [ana!, ben!, cy!]) {
+      expect(await moveOf(client, created.matchId, 1, { type: 'confirm' })).toEqual({ ok: true });
+    }
     const dealt = await anaDealt;
     expect(dealt).toMatchObject({ status: 'playing', you: 'p1' });
     expect((await benDealt).you).toBe('p2');
@@ -104,13 +120,14 @@ describe('Pandemic over sockets', () => {
     expect(afterLeave.p3).toMatchObject({ name: 'Cy' });
     expect(afterLeave.p4).toBeUndefined(); // a 3-player game has no 4th seat
 
-    const taken = viewWhere(ana!, (v) => v.status === 'playing' && v.you === 'p1');
+    // The table is full, so the "before the game" step is on: the seat left stays the game's.
+    const taken = viewWhere(ana!, (v) => v.status === 'setup' && v.you === 'p1');
     const newcomer = await send<JoinResult>(dee!, 'room:join', { code: created.code, name: 'Dee' });
     expect(newcomer).toMatchObject({ ok: true, seat: 'p2' });
-    expect(await taken).toMatchObject({ status: 'playing', you: 'p1' });
+    expect(await taken).toMatchObject({ status: 'setup', you: 'p1' });
   });
 
-  it('refuses a seat choice, and moves only from a dealt game', async () => {
+  it('refuses a seat choice, and moves only from a dealt game (not in the step before)', async () => {
     server = await startTestServer(new RoomManager({ seed: () => 5 }));
     const [ana, ben] = await Promise.all([1, 2].map(() => server!.connect()));
     const created = await send<JoinResult>(ana!, 'room:create', {
@@ -128,11 +145,21 @@ describe('Pandemic over sockets', () => {
     // Alone at the table, nobody may move yet.
     expect(await move(ana!, created.matchId, 1)).toEqual({ ok: false, error: 'not-started' });
     await send(ben!, 'room:join', { code: created.code, name: 'Ben' });
+    // Seated, but still in the "before the game" step: no game move yet, only picking and
+    // confirming.
+    expect(await move(ana!, created.matchId, 2)).toEqual({ ok: false, error: 'not-started' });
+    expect(await move(ben!, created.matchId, 1)).toEqual({ ok: false, error: 'not-started' });
+    expect(await moveOf(ana!, created.matchId, 3, { type: 'pick-role', role: 'medic' })).toEqual({
+      ok: false,
+      error: 'roles-dealt',
+    });
+    expect(await moveOf(ana!, created.matchId, 4, { type: 'confirm' })).toEqual({ ok: true });
+    expect(await moveOf(ben!, created.matchId, 2, { type: 'confirm' })).toEqual({ ok: true });
     const results = await Promise.all([
-      move(ana!, created.matchId, 2),
-      move(ben!, created.matchId, 1),
+      move(ana!, created.matchId, 5),
+      move(ben!, created.matchId, 3),
     ]);
-    // Exactly one of the two is on turn.
+    // Dealt: exactly one of the two is on turn.
     expect(results.filter((r) => (r as { ok: boolean }).ok)).toHaveLength(1);
   });
 });

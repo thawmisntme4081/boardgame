@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { toOwnRoom } from '../ownRoom';
 import { Room } from '../screens/Room';
 
-export const Route = createFileRoute('/r/$code')({
+export const Route = createFileRoute('/_site/r/$code')({
   beforeLoad: ({ params }) => toOwnRoom(params.code),
   component: function RoomPage() {
     return <Room code={Route.useParams().code} />;

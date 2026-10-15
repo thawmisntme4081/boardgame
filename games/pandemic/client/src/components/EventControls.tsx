@@ -13,7 +13,7 @@ import { Button } from '@platform/ui/components/button';
 import type { SeatPresence } from '@platform/ui/game';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { EventPlan } from '../lib/events';
+import { ownerPart, type EventPlan } from '../lib/events';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
 import { usePandemic } from '../store';
@@ -54,7 +54,7 @@ function PlanStep({
                 key={seat}
                 variant="outline"
                 size="sm"
-                onClick={() => planEvent({ event: 'airlift', pawn: seat })}
+                onClick={() => planEvent({ event: 'airlift', owner: plan.owner, pawn: seat })}
               >
                 {t('eventBar.pawnAt', {
                   name: seatName(presence, seat),
@@ -97,7 +97,13 @@ function PlanStep({
               variant="outline"
               size="sm"
               onClick={() =>
-                send({ type: 'play-event', event: 'government-grant', city, move: station })
+                send({
+                  type: 'play-event',
+                  event: 'government-grant',
+                  ...ownerPart(you, plan.owner),
+                  city,
+                  move: station,
+                })
               }
             >
               {cityName(station)}
@@ -135,12 +141,18 @@ function PlanStep({
             !canActInView(view, you, {
               type: 'play-event',
               event: 'resilient-population',
+              ...ownerPart(you, plan.owner),
               city: removed,
             })
           }
           onClick={() =>
             removed !== '' &&
-            send({ type: 'play-event', event: 'resilient-population', city: removed })
+            send({
+              type: 'play-event',
+              event: 'resilient-population',
+              ...ownerPart(you, plan.owner),
+              city: removed,
+            })
           }
         >
           {t('eventBar.removeCard')}
@@ -152,12 +164,13 @@ function PlanStep({
 }
 
 /**
- * Your event cards, in hand and on the Contingency Planner's role card, each with a "Play"
- * button when the rules allow it now: on your turn or not, never while a card is being resolved.
- * Forecast and One Quiet Night are played at once; the others ask for their choices here and on
- * the map (`eventPlan`).
+ * Every event card on the table, in hands and on the Contingency Planner's role card, yours
+ * first, each with a "Play" button when the rules allow it now: on your turn or not, never while a
+ * card is being resolved. Anyone may play anyone's card.
+ * Forecast and One Quiet Night are played at once; the others ask for their choices below the
+ * buttons and on the map (`eventPlan`). Drawn inside the action bar.
  */
-export function EventBar({
+export function EventControls({
   view,
   presence,
 }: {
@@ -169,55 +182,57 @@ export function EventBar({
   const planEvent = usePandemic((s) => s.planEvent);
   const { you } = view;
   if (!you || view.status !== 'playing') return null;
-  const events = heldEvents(view, you);
-  if (events.length === 0) return null;
-  // The card on the role card, when this seat has one, is the last of `heldEvents`.
-  const storedIndex =
-    view.contingency !== null && roleOf(view, you)?.storesEvent ? events.length - 1 : -1;
+  // Every event card on the table, yours first: anyone may play anyone's card.
+  const owners = [...view.seats].sort((a, b) => Number(b === you) - Number(a === you));
+  const cards = owners.flatMap((owner) => {
+    const events = heldEvents(view, owner);
+    // The card on the role card, when the owner has one, is the last of `heldEvents`.
+    const storedIndex =
+      view.contingency !== null && roleOf(view, owner)?.storesEvent ? events.length - 1 : -1;
+    return events.map((event, i) => ({ owner, event, stored: i === storedIndex }));
+  });
+  if (cards.length === 0) return null;
 
-  const play = (event: EventId) => {
+  const play = (event: EventId, owner: SeatId) => {
     switch (event) {
       case 'forecast':
       case 'one-quiet-night':
-        void platform().send({ type: 'play-event', event });
+        void platform().send({ type: 'play-event', event, ...ownerPart(you, owner) });
         return;
       case 'airlift':
-        planEvent({ event, pawn: null });
+        planEvent({ event, owner, pawn: null });
         return;
       case 'government-grant':
-        planEvent({ event, city: null });
+        planEvent({ event, owner, city: null });
         return;
       case 'resilient-population':
-        planEvent({ event });
+        planEvent({ event, owner });
         return;
     }
   };
 
   return (
-    <section aria-labelledby="events-title" className="flex flex-col gap-2 rounded-lg border p-3">
-      <h2 id="events-title" className="font-semibold">
-        {t('eventBar.title')}
-      </h2>
-      <ul className="flex flex-col gap-1">
-        {events.map((event, i) => (
-          <li key={`${event}-${i}`} className="flex items-center justify-between gap-2 text-sm">
-            <span>
-              {t(`events.${event}`)}
-              {i === storedIndex && (
-                <span className="ml-1 text-muted-foreground">({t('eventBar.onRole')})</span>
-              )}
-            </span>
+    <>
+      <div className="flex flex-wrap gap-2">
+        {cards.map(({ owner, event }, i) => {
+          const label = t('eventBar.playEvent', {
+            event: t(`events.${event}`),
+          });
+          return (
             <Button
-              size="sm"
-              disabled={!canPlayCard(view, you, event) || plan !== null}
-              onClick={() => play(event)}
+              key={`${owner}-${event}-${i}`}
+              variant="outline"
+              disabled={!canPlayCard(view, you, event, owner) || plan !== null}
+              onClick={() => play(event, owner)}
             >
-              {t('eventBar.play')}
+              {owner === you
+                ? label
+                : t('eventBar.ofPlayer', { label, name: seatName(presence, owner) })}
             </Button>
-          </li>
-        ))}
-      </ul>
+          );
+        })}
+      </div>
       {plan && <PlanStep view={view} you={you} plan={plan} presence={presence} />}
-    </section>
+    </>
   );
 }

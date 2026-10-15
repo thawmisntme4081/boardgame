@@ -20,6 +20,8 @@ export function MovingPawn({
   x,
   y,
   name,
+  enter = false,
+  order = 0,
 }: {
   seat: SeatId;
   role?: RoleId;
@@ -27,6 +29,9 @@ export function MovingPawn({
   x: number;
   y: number;
   name: string;
+  /** The pawn is being dealt onto the map: it drops in when it first appears (`order`: its turn). */
+  enter?: boolean;
+  order?: number;
 }) {
   const group = useRef<SVGGElement>(null);
   const before = useRef<{ x: number; y: number; city: string } | null>(null);
@@ -34,13 +39,27 @@ export function MovingPawn({
   useLayoutEffect(() => {
     const prev = before.current;
     before.current = { x, y, city };
-    if (!prev || (prev.x === x && prev.y === y)) return;
+    if (!prev) {
+      if (enter) {
+        group.current?.animate(
+          [
+            { opacity: 0, transform: at(x, y - 26) },
+            { opacity: 1, transform: at(x, y) },
+          ],
+          { duration: 450, delay: order * 90, easing: 'ease-out', fill: 'backwards' },
+        );
+      }
+      return;
+    }
+    if (prev.x === x && prev.y === y) return;
     const hop = prev.city !== city;
     const distance = Math.hypot(x - prev.x, y - prev.y);
     group.current?.animate([{ transform: at(prev.x, prev.y) }, { transform: at(x, y) }], {
       duration: hop ? Math.min(HOP_MS.max, HOP_MS.base + distance * HOP_MS.perPixel) : SLIDE_MS,
       easing: 'ease-in-out',
     });
+    // The entrance plays once, when the pawn first appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [x, y, city]);
 
   return (

@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { toOwnRoom } from '../ownRoom';
 import { Play } from '../screens/Play';
 
-export const Route = createFileRoute('/play/$gameId')({
+export const Route = createFileRoute('/_site/play/$gameId')({
   beforeLoad: () => toOwnRoom(),
   component: function PlayPage() {
     return <Play gameId={Route.useParams().gameId} />;

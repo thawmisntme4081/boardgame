@@ -1,18 +1,36 @@
 // Helpers for tests: a seeded game with an empty board, so each test sets up only what it needs.
 import { CITIES, type CityId, type Color } from './cities';
+import { applyPreflight } from './preflight';
 import { createGame } from './setup';
 import {
   CUBES_PER_COLOR,
+  ROLE_IDS,
   type GameState,
+  type RoleId,
+  type SetupState,
   type HandCard,
   type PandemicState,
   type SeatId,
 } from './types';
 
-/** The game of a table that has every seat taken (tests set it up that way). */
+/**
+ * The game of a table that has every seat taken (tests set it up that way): the "before the
+ * game" step is gone through (in choose mode each seat takes the first free role).
+ */
 export function dealt(state: PandemicState): GameState {
   if (state.status === 'waiting') throw new Error('the game is still waiting for players');
-  return state;
+  let table: PandemicState = state;
+  while (table.status === 'setup') {
+    const setup: SetupState = table;
+    const seat = setup.seats.find((s) => !setup.confirmed.includes(s)) as SeatId;
+    if (!setup.picks[seat]) {
+      const free = ROLE_IDS.find((role) => !Object.values(setup.picks).includes(role)) as RoleId;
+      table = applyPreflight(setup, seat, { type: 'pick-role', role: free });
+    } else {
+      table = applyPreflight(setup, seat, { type: 'confirm' });
+    }
+  }
+  return table as GameState;
 }
 
 export const city = (id: CityId): HandCard => ({ kind: 'city', city: id });

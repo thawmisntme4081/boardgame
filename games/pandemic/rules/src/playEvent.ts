@@ -59,21 +59,29 @@ export function eventMoment(
 }
 
 /**
- * Whether `seat` holds `event` and may start playing it now (the client enables its "Play"
- * button with this; the choices the card needs are checked by the move itself).
+ * Whether `seat` may start playing `event`, a card held by `owner` (by default `seat` itself;
+ * anyone may play anyone's card): the client enables its "Play" button with this; the choices the
+ * card needs are checked by the move itself.
  */
-export function canPlayCard(state: ActionState, seat: SeatId, event: EventId): boolean {
+export function canPlayCard(
+  state: ActionState,
+  seat: SeatId,
+  event: EventId,
+  owner: SeatId = seat,
+): boolean {
   const moment = eventMoment(state, seat);
-  if (!moment.ok || eventSource(state, seat, event) === null) return false;
+  if (!moment.ok || eventSource(state, owner, event) === null) return false;
   const module = EVENTS[event];
   if (moment.pause && !module.inEpidemicPause) return false;
   // A card with a second step needs nothing else pending (a hand-limit discard).
   return !(state.pending && module.twoSteps);
 }
 
-/** Whether `seat` holds an event card it may play now. */
+/** Whether `seat` may play an event card now: one of its own or of any other player's. */
 export function canPlayEvent(state: ActionState, seat: SeatId): boolean {
-  return heldEvents(state, seat).some((event) => canPlayCard(state, seat, event));
+  return state.seats.some((owner) =>
+    heldEvents(state, owner).some((event) => canPlayCard(state, seat, event, owner)),
+  );
 }
 
 /** An event that moves another player's pawn: an offer its owner answers (`moveOffer.ts`). */
@@ -83,7 +91,7 @@ export const isPawnOffer = (seat: SeatId, move: PlayEventMove): move is PawnEven
 export function checkPlayEvent(state: ActionState, seat: SeatId, move: PlayEventMove): ActionCheck {
   const moment = eventMoment(state, seat);
   if (!moment.ok) return moment;
-  if (eventSource(state, seat, move.event) === null) return fail('card-missing');
+  if (eventSource(state, move.owner ?? seat, move.event) === null) return fail('card-missing');
   const module = EVENTS[move.event];
   if (moment.pause && !module.inEpidemicPause) return fail('card-resolving');
   // A hand over the limit is brought down first: an offer would wait for an answer, and a
@@ -99,15 +107,17 @@ export function checkPlayEvent(state: ActionState, seat: SeatId, move: PlayEvent
  * accepted (`moveOffer.ts`).
  */
 export function resolveEvent(s: GameState, seat: SeatId, move: PlayEventMove): void {
-  const source = eventSource(s, seat, move.event);
+  // The card leaves its owner's hand (or role card); `seat` chooses what it does.
+  const owner = move.owner ?? seat;
+  const source = eventSource(s, owner, move.event);
   if (source === 'hand') {
-    const hand = s.hands[seat] ?? [];
+    const hand = s.hands[owner] ?? [];
     const [card] = hand.splice(
       hand.findIndex((c) => c.kind === 'event' && c.event === move.event),
       1,
     );
     if (card) s.playerDiscard.push(card);
-    if (s.pending?.kind === 'discard' && s.pending.seat === seat && hand.length <= HAND_LIMIT) {
+    if (s.pending?.kind === 'discard' && s.pending.seat === owner && hand.length <= HAND_LIMIT) {
       s.pending = null;
     }
   } else {
@@ -118,6 +128,7 @@ export function resolveEvent(s: GameState, seat: SeatId, move: PlayEventMove): v
     seat,
     event: move.event,
     stored: source === 'role',
+    ...(owner !== seat && { owner }),
     ...('pawn' in move && { pawn: move.pawn }),
     ...('to' in move && { city: move.to }),
     ...('city' in move && { city: move.city }),

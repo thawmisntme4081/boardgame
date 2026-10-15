@@ -1,14 +1,12 @@
-// The board: the map with its tracks and piles in the middle, the actions and the hands on the
-// side. It fills one window (desktop only) and never scrolls as a page. Everything it shows
-// comes from the view; every button is enabled by `canActInView`, so no rule lives here.
 import { CITIES, type CityId, type TableView } from '@pandemic/rules';
 import type { BoardProps } from '@platform/ui/game';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionBar } from './components/ActionBar';
-import { EventBar } from './components/EventBar';
 import { ForecastDialog } from './components/ForecastDialog';
 import { MoveMenu } from './components/MoveMenu';
+import { PilesDialog } from './components/PilesDialog';
+import { Preflight } from './components/Preflight';
 import { MapPieces } from './components/MapPieces';
 import { MapTracks } from './components/MapTracks';
 import { HandCards } from './components/HandCards';
@@ -17,30 +15,32 @@ import { GameOverDialog } from './components/GameOverDialog';
 import { EpidemicSteps } from './components/EpidemicSteps';
 import { RoleCards } from './components/RoleCards';
 import { Prompts } from './components/Prompts';
-import { TurnLog } from './components/TurnLog';
-import { TopBar } from './components/TopBar';
 import { WorldMap } from './components/WorldMap';
-import { eventTargets, grantMovesStation } from './lib/events';
+import { eventTargets, grantMovesStation, ownerPart } from './lib/events';
 import { handLayout, useWide } from './lib/handLayout';
+import { MAP_HEIGHT, MAP_WIDTH } from './lib/mapGeometry';
 import { platform } from './platform';
+import { useDeal } from './lib/deal';
 import { reachableCities } from './lib/moves';
-import { seatName } from './lib/names';
 import { usePandemic } from './store';
 
-export function Board({ view, presence, rematch }: BoardProps<TableView>) {
+export function Board({ view: live, presence, rematch }: BoardProps<TableView>) {
   const { t } = useTranslation('pandemic');
+  const { view, dealing, progress: deal } = useDeal(live);
   const selected = usePandemic((s) => s.selectedCity);
   const selectCity = usePandemic((s) => s.selectCity);
   const movingPawn = usePandemic((s) => s.movingPawn);
   const eventPlan = usePandemic((s) => s.eventPlan);
   const planEvent = usePandemic((s) => s.planEvent);
+  const hoverCity = usePandemic((s) => s.hoverCity);
   const layout = handLayout(useWide());
   const canMoveNow =
+    !dealing &&
     view.status === 'playing' &&
     !!view.you &&
     view.you === view.turn.seat &&
     view.turn.step === 'actions';
-  // Every move to every city is checked: once per view and pawn, not on every tap.
+
   const reachable = useMemo(() => {
     const pawn = movingPawn ?? view.you;
     return view.you && pawn && canMoveNow
@@ -48,8 +48,11 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
       : new Set<CityId>();
   }, [view, movingPawn, canMoveNow]);
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
+  // The last seat can be taken a moment before the game is dealt: nothing to show yet. Then the
+  // "before the game" step: turn order, roles, confirm.
   if (view.status === 'waiting') return null;
-  const { turn, you } = view;
+  if (view.status === 'setup') return <Preflight view={view} presence={presence} />;
+  const { you } = view;
   const pawn = movingPawn ?? you;
   // Playing an event that needs a city: the map offers its targets instead of the move menu.
   const targets = you ? eventTargets(view, you, eventPlan) : null;
@@ -58,29 +61,34 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
       void platform().send({
         type: 'play-event',
         event: 'airlift',
+        ...(you ? ownerPart(you, eventPlan.owner) : {}),
         pawn: eventPlan.pawn,
         to: city,
       });
       planEvent(null);
     } else if (eventPlan?.event === 'government-grant') {
       if (grantMovesStation(view)) {
-        planEvent({ event: 'government-grant', city });
+        planEvent({ event: 'government-grant', owner: eventPlan.owner, city });
       } else {
-        void platform().send({ type: 'play-event', event: 'government-grant', city });
+        void platform().send({
+          type: 'play-event',
+          event: 'government-grant',
+          ...(you ? ownerPart(you, eventPlan.owner) : {}),
+          city,
+        });
         planEvent(null);
       }
     }
   };
-  const turnText =
-    turn.seat === you
-      ? t('board.yourTurn')
-      : t('board.turnOf', { name: seatName(presence, turn.seat) });
+  const mapRatio = MAP_WIDTH / (MAP_HEIGHT + (you ? layout.bandHeight : 0));
   return (
-    <main className="mx-auto flex h-dvh flex-col gap-3 overflow-hidden px-3 pb-3">
-      <TopBar view={view} presence={presence} />
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,3fr)_1fr] gap-3">
+    <main className="mx-auto flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden px-3 py-3">
+      <div className="grid min-h-0 flex-1 grid-cols-[auto_minmax(16rem,34rem)] justify-center gap-3">
         <div className="flex min-h-0 flex-col gap-3">
-          <div className="min-h-0 flex-1">
+          <div
+            className="h-full min-h-0 max-w-[calc(100dvw-22rem)]"
+            style={{ aspectRatio: mapRatio }}
+          >
             <WorldMap
               cures={view.cures}
               onSelect={
@@ -92,6 +100,7 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
               }
               onBackgroundClick={() => selectCity(null)}
               selected={targets ? null : selected}
+              highlight={hoverCity}
               reachable={targets ?? reachable}
               hand={
                 you ? (
@@ -99,12 +108,18 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
                     cards={view.hands[you] ?? []}
                     discard={view.playerDiscard}
                     layout={layout}
+                    // Over the hand limit: pick a card here to discard it.
+                    onPick={
+                      view.pending?.kind === 'discard' && view.pending.seat === you
+                        ? (card) => void platform().send({ type: 'discard', card })
+                        : undefined
+                    }
                   />
                 ) : undefined
               }
               handHeight={layout.bandHeight}
             >
-              <MapTracks view={view} />
+              <MapTracks view={view} deal={deal} />
               <MapPieces view={view} presence={presence} />
               {!targets && canMoveNow && selected && you && (
                 <MoveMenu
@@ -122,17 +137,13 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
         <aside className="flex min-h-0 flex-col gap-3 overflow-auto">
           <RoleCards view={view} presence={presence} />
           <Prompts view={view} presence={presence} />
-          <EventBar view={view} presence={presence} />
           <ForecastDialog view={view} />
-          <div
-            role="alert"
-            className="rounded-lg border border-yellow-400 bg-yellow-100 p-3 text-sm text-yellow-950"
-          >
-            {view.status === 'playing' ? (
-              <p>
-                {turnText} · {t('board.actionsLeft', { count: turn.actionsLeft })}
-              </p>
-            ) : (
+          <PilesDialog view={view} />
+          {view.status !== 'playing' && (
+            <div
+              role="alert"
+              className="rounded-lg border border-yellow-400 bg-yellow-100 p-3 text-sm text-yellow-950"
+            >
               <p className="font-semibold">
                 {view.status === 'won'
                   ? t('board.won')
@@ -140,13 +151,12 @@ export function Board({ view, presence, rematch }: BoardProps<TableView>) {
                       reason: view.lossReason ? t(`board.lossReason.${view.lossReason}`) : '',
                     })}
               </p>
-            )}
-          </div>
+            </div>
+          )}
           <EpidemicSteps view={view} />
           <GameOverDialog view={view} presence={presence} rematch={rematch} />
-          {view.status === 'playing' && <ActionBar view={view} presence={presence} />}
           <Hands view={view} presence={presence} />
-          <TurnLog view={view} presence={presence} />
+          {view.status === 'playing' && !dealing && <ActionBar view={view} presence={presence} />}
         </aside>
       </div>
     </main>

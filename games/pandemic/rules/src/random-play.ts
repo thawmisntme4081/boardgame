@@ -10,11 +10,13 @@ import { checkMove, type PandemicMove } from './moves';
 import { shareAnswerer } from './share';
 import {
   MAX_STATIONS,
+  ROLE_IDS,
   type EventId,
   type GameState,
   type HandCard,
   type PandemicState,
   type SeatId,
+  type SetupState,
 } from './types';
 
 const pick = <T>(items: readonly T[], random: () => number): T =>
@@ -96,9 +98,22 @@ function randomEvent(state: GameState, random: () => number): NextMove<PandemicM
   return null;
 }
 
+/** Before the game: someone picks a free role (now and then changing it), or confirms. */
+function preflightMove(state: SetupState, random: () => number): NextMove<PandemicMove> {
+  const waiting = state.seats.filter((seat) => !state.confirmed.includes(seat));
+  const by = pick(waiting, random);
+  const free = ROLE_IDS.filter((role) => !state.seats.some((seat) => state.picks[seat] === role));
+  const choose = state.roleMode === 'choose' && free.length > 0;
+  if (choose && (!state.picks[by] || random() < 0.2)) {
+    return { by, move: { type: 'pick-role', role: pick(free, random) } };
+  }
+  return { by, move: { type: 'confirm' } };
+}
+
 /** The next move of a random game: any seat, in any state. */
 export function agentMove(table: PandemicState, random: () => number): NextMove<PandemicMove> {
   if (table.status === 'waiting') throw new Error('random play needs every seat taken');
+  if (table.status === 'setup') return preflightMove(table, random);
   const state: GameState = table;
   const { pending, turn } = state;
   if (pending?.kind === 'discard') {

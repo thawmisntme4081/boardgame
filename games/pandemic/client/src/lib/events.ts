@@ -14,9 +14,13 @@ import {
  * Forecast and One Quiet Night need none and are sent at once.
  */
 export type EventPlan =
-  | { event: 'airlift'; pawn: SeatId | null }
-  | { event: 'government-grant'; city: CityId | null }
-  | { event: 'resilient-population' };
+  | { event: 'airlift'; owner: SeatId; pawn: SeatId | null }
+  | { event: 'government-grant'; owner: SeatId; city: CityId | null }
+  | { event: 'resilient-population'; owner: SeatId };
+
+/** The `owner` part of a `play-event` move: only when the card is another player's. */
+export const ownerPart = (you: SeatId, owner: SeatId): { owner?: SeatId } =>
+  owner === you ? {} : { owner };
 
 /** The cities the map offers for the plan (tap one to choose it), or `null` when it is not a map choice. */
 export function eventTargets(
@@ -28,7 +32,13 @@ export function eventTargets(
     const { pawn } = plan;
     return new Set(
       CITIES.filter(({ id }) =>
-        canActInView(view, seat, { type: 'play-event', event: 'airlift', pawn, to: id }),
+        canActInView(view, seat, {
+          type: 'play-event',
+          event: 'airlift',
+          ...ownerPart(seat, plan.owner),
+          pawn,
+          to: id,
+        }),
       ).map(({ id }) => id),
     );
   }

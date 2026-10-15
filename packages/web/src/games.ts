@@ -67,6 +67,20 @@ export function loadGame(id: string): Promise<GameClientModule> {
 /** A game's module if it has loaded already (for code outside React: views, errors). */
 export const loadedGame = (id: string): GameClientModule | undefined => loaded.get(id);
 
+/** Like `useGameModule`, for a page that may not be in a game (`null`: no module, nothing loads). */
+export function useGameModuleOf(id: string | null): GameClientModule | null {
+  const [module, setModule] = useState(() => (id ? (loadedGame(id) ?? null) : null));
+  useEffect(() => {
+    if (!id) return;
+    let live = true;
+    void loadGame(id).then((m) => live && setModule(m));
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  return id && module?.id === id ? module : null;
+}
+
 /** A game's module for a page: `null` while it loads (at once if it has loaded already). */
 export function useGameModule(id: string): GameClientModule | null {
   const [module, setModule] = useState(() => loadedGame(id) ?? null);

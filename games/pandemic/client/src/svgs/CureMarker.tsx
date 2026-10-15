@@ -19,17 +19,18 @@ export function CureMarker({ color, eradicated = false, ...props }: CureMarkerPr
       height={CURE_MARKER_HEIGHT}
       {...props}
     >
-      <g
-        transform="matrix(1.3 0 0 1.3 -4.5 -9.5)"
-        stroke={eradicated ? 'oklch(0.85 0.17 95)' : '#fff'}
-      >
+      <g transform="matrix(1.3 0 0 1.3 -4.5 -9.5)" stroke="#fff">
         <path
           d="M10 9h10c2 0 2 3 .2 4.5C24 15 25 17 25 20v12c0 3-1.5 4.5-5 4.5H10c-3.5 0-5-1.5-5-4.5V20c0-3 1-5 4.8-6.5C8 12 8 9 10 9Z"
           fill={`var(--color-disease-${color})`}
-          strokeWidth={eradicated ? 1.5 : 0.75}
+          strokeWidth={1}
         />
-        <circle cx={15} cy={24} r={6} fill="none" stroke="#fff" strokeWidth={1.12} />
-        <path stroke="#fff" strokeWidth={1.12} d="m10.8 19.8 8.4 8.4" />
+        {eradicated && (
+          <>
+            <circle cx={15} cy={24} r={6} fill="none" stroke="#fff" strokeWidth={1.12} />
+            <path stroke="#fff" strokeWidth={1.12} d="m10.8 19.8 8.4 8.4" />
+          </>
+        )}
       </g>
     </svg>
   );

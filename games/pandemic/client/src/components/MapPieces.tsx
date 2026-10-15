@@ -5,7 +5,9 @@ import { seatName } from '../lib/names';
 import { Cube } from '../svgs/Cube';
 import { PAWN_HEIGHT, PAWN_WIDTH } from '../svgs/Pawn';
 import { useLeaving } from '../lib/leaving';
+import { usePandemic } from '../store';
 import { MovingPawn } from './MovingPawn';
+import { OutbreakFlights } from './OutbreakFlights';
 import { STATION_OUT_MS, StationPiece } from './StationPiece';
 
 /** Cubes go around the city on a circle at least this wide, with this much room for each. */
@@ -33,6 +35,8 @@ export function MapPieces({
   view: PandemicView;
   presence: SeatPresence | null;
 }) {
+  // While the deal is played, pawns drop in as they are dealt onto the map.
+  const dealing = usePandemic((s) => s.dealStartedAt !== null);
   // Each station and cube is one piece of the page for as long as it exists, so it can play its
   // entrance and, through `useLeaving`, its exit.
   const stations = useLeaving(view.stations, (city) => city, STATION_OUT_MS);
@@ -97,9 +101,12 @@ export function MapPieces({
             x={x - stackWidth / 2 + here.indexOf(seat) * PAWN_STEP}
             y={y - PAWN_HEIGHT / 2}
             name={seatName(presence, seat)}
+            enter={dealing}
+            order={view.seats.indexOf(seat)}
           />
         );
       })}
+      <OutbreakFlights view={view} />
     </g>
   );
 }

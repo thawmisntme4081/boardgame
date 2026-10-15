@@ -8,7 +8,12 @@ const system = { by: 'system', at: 0 } as const;
 
 /** A table for `players`, opened by p1 alone (as the platform creates a room). */
 const opened = (players: number): PandemicState =>
-  pandemic.setup({ config: { players, epidemics: 4 }, seats: ['p1'], host: 'p1', seed: 7 });
+  pandemic.setup({
+    config: { players, epidemics: 4, roleMode: 'random' },
+    seats: ['p1'],
+    host: 'p1',
+    seed: 7,
+  });
 
 const join = (state: PandemicState, seat: SeatId): PandemicState =>
   pandemic.apply(state, { type: 'table:join', seat }, system);
@@ -16,7 +21,14 @@ const join = (state: PandemicState, seat: SeatId): PandemicState =>
 describe('the table', () => {
   it('waits for the number of players chosen in the lobby', () => {
     const state = opened(3);
-    expect(state).toEqual({ status: 'waiting', seated: ['p1'], players: 3, epidemics: 4, seed: 7 });
+    expect(state).toEqual({
+      status: 'waiting',
+      seated: ['p1'],
+      players: 3,
+      epidemics: 4,
+      roleMode: 'random',
+      seed: 7,
+    });
     expect(pandemic.started?.(state)).toBe(false);
     expect(pandemic.actors(state)).toEqual([]);
     expect(pandemic.outcome(state)).toBeNull();
@@ -34,7 +46,13 @@ describe('the table', () => {
 
   it('deals the same game as a table opened with everyone seated', () => {
     const joined = join(opened(2), 'p2');
-    const direct = openTable({ seats: ['p1', 'p2'], players: 2, epidemics: 4, seed: 7 });
+    const direct = openTable({
+      seats: ['p1', 'p2'],
+      players: 2,
+      epidemics: 4,
+      roleMode: 'random',
+      seed: 7,
+    });
     expect(joined).toEqual(direct);
   });
 

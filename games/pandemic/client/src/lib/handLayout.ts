@@ -1,8 +1,8 @@
 import { MAP_WIDTH } from './mapGeometry';
 import { useSyncExternalStore } from 'react';
 
-/** Width where the wide layout starts: the theme's `wide` breakpoint. */
-const WIDE_QUERY = '(min-width: 1200px)';
+/** Where the wide hand layout starts: Tailwind's `xl` breakpoint (1280px). */
+const WIDE_QUERY = '(min-width: 1280px)';
 
 const subscribe = (notify: () => void) => {
   if (typeof window.matchMedia !== 'function') return () => {};
@@ -13,11 +13,13 @@ const subscribe = (notify: () => void) => {
 const isWide = () =>
   typeof window.matchMedia === 'function' && window.matchMedia(WIDE_QUERY).matches;
 
-/** True from the `wide` breakpoint (1200px) up. */
+/** True from the `xl` breakpoint up. */
 export const useWide = (): boolean => useSyncExternalStore(subscribe, isWide, () => false);
 
-const HAND_LIMIT = 7;
+/** The most cards a hand holds: the limit of 7, plus the 2 just drawn (or a shared one) before it is discarded down. */
+const MAX_HAND = 9;
 const GAP = 6;
+/** Card width where the cards are in two rows. */
 const CARD_WIDTH = 130;
 /** Space between the map and the first row. */
 const MAP_GAP = 16;
@@ -35,18 +37,22 @@ export interface HandLayout {
   bandHeight: number;
 }
 
-/** Narrow: 2 rows of 4 cards (the hand limit is 7). Wide: all of them in one row. */
+/**
+ * Narrow: 2 rows (5 and 4 cards). Wide (`xl` and up): all 9 in one row, the cards as wide as the
+ * map allows, so the band is shorter and the map taller.
+ */
 export function handLayout(wide: boolean): HandLayout {
-  const columns = wide ? HAND_LIMIT : 4;
-  const rows = Math.ceil(HAND_LIMIT / columns);
-  const cardHeight = Math.round((CARD_WIDTH * 290) / 208);
+  const columns = wide ? MAX_HAND : Math.ceil(MAX_HAND / 2);
+  const rows = Math.ceil(MAX_HAND / columns);
+  const cardWidth = wide ? Math.floor((MAP_WIDTH - (columns - 1) * GAP) / columns) : CARD_WIDTH;
+  const cardHeight = Math.round((cardWidth * 290) / 208);
   return {
     columns,
     gap: GAP,
-    cardWidth: CARD_WIDTH,
+    cardWidth,
     cardHeight,
     mapGap: MAP_GAP,
-    left: (MAP_WIDTH - (columns * CARD_WIDTH + (columns - 1) * GAP)) / 2,
+    left: (MAP_WIDTH - (columns * cardWidth + (columns - 1) * GAP)) / 2,
     bandHeight: MAP_GAP + rows * cardHeight + (rows - 1) * GAP + GAP,
   };
 }

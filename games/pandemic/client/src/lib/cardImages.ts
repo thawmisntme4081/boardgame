@@ -85,3 +85,6 @@ export const playerCardUrl = (card: HandCard): string =>
 
 /** The back of a player card. */
 export const playerBackUrl = (): string => url('player-cards', 'back');
+
+/** The picture of an Epidemic card (it is shown only while the player deck is built). */
+export const epidemicCardUrl = (): string => url('player-cards', 'epidemic');

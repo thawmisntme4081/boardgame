@@ -12,6 +12,19 @@
   --color-plane: oklch(0.45 0.02 260);
 }
 
+/* Orange is the co-pilot's color here (and blue the pilot's), so Sky Team keeps the platform's
+   earlier dark primary for its buttons in the game instead of the theme's orange (the lobby keeps
+   the theme). The shell marks the page of a game room (`useGameTheme`); dialogs and toasts
+   inherit it from the page. */
+html[data-game='sky-team'] {
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+}
+html.dark[data-game='sky-team'] {
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+}
+
 /* A space either player can use (concentration): half pilot blue, half co-pilot orange,
    fill and border. Two background layers, because a border cannot have two colors. */
 .slot-shared {

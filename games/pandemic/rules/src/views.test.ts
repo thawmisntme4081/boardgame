@@ -7,7 +7,7 @@ import type { GameState } from './types';
 const game = (seed: number): GameState =>
   dealt(
     pandemic.setup({
-      config: { players: 3, epidemics: 5 },
+      config: { players: 3, epidemics: 5, roleMode: 'random' },
       seats: ['p1', 'p2', 'p3'],
       host: 'p1',
       seed,

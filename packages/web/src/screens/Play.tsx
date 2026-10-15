@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createRoom } from '../api';
 import { gameInfo, useGameModule } from '../games';
-import { CardTop, Connecting, JoinForm, NameField, Or, Shell } from './Shell';
+import { CardTop, Connecting, JoinForm, NameField, Or, Page } from './Shell';
 import { useName } from './useName';
 
 function CreateForm({ module }: { module: GameClientModule }) {
@@ -25,12 +25,12 @@ function CreateForm({ module }: { module: GameClientModule }) {
   };
 
   return (
-    <Shell account center>
+    <Page center>
       <Card>
         <CardHeader>
           <Link
             to="/"
-            className="-ml-1 flex min-h-11 w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="-ml-1 flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft aria-hidden="true" className="size-4" /> {t('app.allGames')}
           </Link>
@@ -46,7 +46,7 @@ function CreateForm({ module }: { module: GameClientModule }) {
           <SetupForm value={setup} onChange={setSetup} />
           <Button
             variant="secondary"
-            className="h-11"
+            className="h-11 desktop:h-9"
             disabled={busy || !nameOk}
             onClick={() => void create()}
           >
@@ -54,7 +54,7 @@ function CreateForm({ module }: { module: GameClientModule }) {
           </Button>
         </CardContent>
       </Card>
-    </Shell>
+    </Page>
   );
 }
 
