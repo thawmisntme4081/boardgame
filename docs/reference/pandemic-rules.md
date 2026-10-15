@@ -10,7 +10,8 @@ The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edi
 | --- | --- |
 | `cities.ts` | The 48 cities: `color`, `links` (the white lines, Pacific ones included, in a fixed order; where each city sits on the map picture is the client's `lib/mapGeometry.ts`); `cityOf`, `areLinked`, `PACIFIC_LINKS`. Written from the standard board (the rulebook's text has none of it); to be checked against the physical board |
 | `types.ts` | `SeatId` (`p1`–`p4`), the rulebook's numbers, `EVENT_IDS`, `ROLE_IDS`, `PlayerCard` / `HandCard`, `Turn`, `Pending`, `GameState`; `ActionState` (the fields the move checks read: a state or a view) |
-| `setup.ts` | `createGame({ seats, epidemics, seed })`, the seeded `shuffle`, `pileSizes` |
+| `setup.ts` | `createGame({ seats, epidemics, seed, ordered?, roles? })`, the seeded `shuffle`, `pileSizes` |
+| `preflight.ts` | The "before the game" step: `beginSetup`, `checkPreflight` / `applyPreflight` (`pick-role`, `confirm`, `unconfirm`); the last confirm deals the board |
 | `actions.ts` | The actions: `checkAction` (a reason code), `applyAction`, `spendAction`, `cubesOnBoard`, `cardsToCure` |
 | `playEvent.ts` | Event cards: `eventMoment` (when events may be played), `canPlayCard` / `canPlayEvent` (the client's check too), `heldEvents`, `checkPlayEvent` / `applyPlayEvent`, `resolveEvent` (also run when an Airlift offer is accepted) |
 | `events/` | One `EventModule` per card (`airlift`, `forecast`, `governmentGrant`, `oneQuietNight`, `resilientPopulation`), their `EventPlay` choices and the `PlayEventMove` type; Forecast's second step (`forecast-order`) |
@@ -52,6 +53,16 @@ Decided with the user (Pandemic 01):
 - **Chain reactions** resolve first in, first out, neighbors in the city list's order; a city outbreaks once per infection card. The rulebook gives no order; it only matters when the cubes run out.
 - **An empty infection deck** (not expected: epidemics refill it) flips no card, and the discard pile stays.
 
+## Before the game (Pandemic 06)
+
+Decided with the user:
+
+- **The lobby chooses** the players (2 to 4), the difficulty (`epidemics` 4, 5 or 6: introductory, standard, heroic) and the **role mode** (`roleMode`: `random`, the default, or `choose`).
+- **A step before the deal** (`status: 'setup'`, `SetupState`, `preflight.ts`): when the last seat is taken the turn order is drawn (from the seed, whoever sat down first) and, in random mode, the roles are dealt; in choose mode each player picks a role nobody else has (`pick-role`, changeable until confirming). Everyone presses `confirm` (a confirm can be taken back with `unconfirm` until the last one); the last confirm deals the board (`createGame` with that order and those roles). The step is public (`SetupView`: order, roles, who is ready; no seed, no decks) and counts as part of the match (`started`), with every unconfirmed seat an actor (`simultaneous`).
+- **A rematch** keeps the players still seated (2 or more), the difficulty and the role mode, draws a new turn order, and starts the step again: random roles are dealt again, and in choose mode everyone picks again from scratch.
+- **The deal is played back by the client** (`lib/deal.ts`): the server deals at once; when a view turns from the step to the dealt board in this session, the board shows a display view that fills on a timeline of about 10 s (the station and the pawns, each starting infection card then its cubes, the hands card by card in turn order, then the player deck built in its epidemic piles) with the actions off, and not for a page opened later or with reduced motion.
+- No Flight Log for Pandemic.
+
 ## Event cards (Pandemic 05)
 
 Decided with the user (Pandemic 05):
@@ -86,6 +97,6 @@ Every check returns `{ ok: true }` or `{ ok: false, reason }` with a code: `game
 
 ## Engine adapter
 
-`pandemic` (`definition.ts`): `meta` seats `p1`–`p4`, 2–4 players, `coop`; `configSchema` `{ players, epidemics }` (`setup` plays the seats actually taken); `actors` gives the active seat as `turn`, a seat owing a discard, answering a share or move offer or arranging a Forecast as `prompt` (event cards are left out: any seat may play one, `validate` allows it); `table:join` changes nothing, `table:choose-seat` is refused (the order is random); no system moves and no `schedule`.
+`pandemic` (`definition.ts`): `meta` seats `p1`–`p4`, 2–4 players, `coop`; `configSchema` `{ players, epidemics, roleMode }` (`setup` plays the seats actually taken); `actors` gives the active seat as `turn`, a seat owing a discard, answering a share or move offer or arranging a Forecast as `prompt` (event cards are left out: any seat may play one, `validate` allows it); `table:join` changes nothing, `table:choose-seat` is refused (the order is random); no system moves and no `schedule`.
 
 **Views** show the whole table: every hand, both discard piles, the cubes, the tracks. Each deck is only a size (`playerDeckSize`, `infectionDeckSize`), so no view holds a deck order, where the epidemics are, or the seed. Fields are copied by name: a new state field stays private until `viewFor` adds it.

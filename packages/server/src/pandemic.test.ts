@@ -63,8 +63,67 @@ describe('Pandemic rooms', () => {
     unwrap(rooms.join(room.code, 'Ben', 's1'));
     expect(pandemicRoom.game.status).toBe('waiting');
     unwrap(rooms.join(room.code, 'Cy', 's2'));
+    // The last seat starts the "before the game" step; the last confirm deals the board.
+    expect(pandemicRoom.game).toMatchObject({ status: 'setup', roleMode: 'random', confirmed: [] });
+    confirmAll(rooms, pandemicRoom);
     expect([...game(pandemicRoom).seats].sort()).toEqual(['p1', 'p2', 'p3']);
-    expect(room.config).toEqual({ players: 3, epidemics: 4 });
+    expect(room.config).toEqual({ players: 3, epidemics: 4, roleMode: 'random' });
+  });
+
+  it('refuses a difficulty or a role mode out of range', () => {
+    const rooms = new RoomManager();
+    for (const config of [{ epidemics: 3 }, { epidemics: 7 }, { roleMode: 'nobody' }]) {
+      expect(rooms.create('Ana', 's0', 'ip', { game: 'pandemic', config })).toEqual({
+        ok: false,
+        error: 'bad-request',
+      });
+    }
+    const ok = rooms.create('Ana', 's1', 'ip', {
+      game: 'pandemic',
+      config: { players: 2, epidemics: 6, roleMode: 'choose' },
+    });
+    expect(unwrap(ok).room.config).toEqual({ players: 2, epidemics: 6, roleMode: 'choose' });
+  });
+
+  it('goes through the "before the game" step: roles dealt, or picked, then everyone confirms', () => {
+    const manager = new RoomManager({ seed: () => 11 });
+    const { room } = unwrap(
+      manager.create('Ana', 's0', 'ip', {
+        game: 'pandemic',
+        config: { players: 2, roleMode: 'choose' },
+      }),
+    );
+    unwrap(manager.join(room.code, 'Ben', 's1'));
+    const step = () => room.game as SetupState;
+    expect(step()).toMatchObject({ status: 'setup', roleMode: 'choose', picks: {}, confirmed: [] });
+    const [first, second] = step().seats;
+
+    // Nobody confirms without a role, and a role goes to one player only.
+    expect(manager.move(room, first!, { type: 'confirm' })).toEqual({
+      ok: false,
+      error: 'pick-first',
+    });
+    unwrap(manager.move(room, first!, { type: 'pick-role', role: 'medic' }));
+    expect(manager.move(room, second!, { type: 'pick-role', role: 'medic' })).toEqual({
+      ok: false,
+      error: 'role-taken',
+    });
+    unwrap(manager.move(room, second!, { type: 'pick-role', role: 'scientist' }));
+    // A game move is refused until the board is dealt.
+    expect(manager.move(room, first!, { type: 'pass' }).ok).toBe(false);
+
+    unwrap(manager.move(room, first!, { type: 'confirm' }));
+    expect(step().confirmed).toEqual([first]);
+    unwrap(manager.move(room, first!, { type: 'unconfirm' }));
+    expect(step().confirmed).toEqual([]);
+    unwrap(manager.move(room, first!, { type: 'confirm' }));
+    unwrap(manager.move(room, second!, { type: 'confirm' }));
+    expect(game(room as Room<PandemicState>).roles).toEqual({
+      [first!]: 'medic',
+      [second!]: 'scientist',
+    });
+    // The turn order drawn in the step is the game's.
+    expect(game(room as Room<PandemicState>).seats).toEqual([first, second]);
   });
 
   it('refuses a lobby choice out of range', () => {
@@ -186,6 +245,7 @@ describe('Pandemic rooms with N seats', () => {
     expect(unwrap(manager.join(room.code, 'Di', 's3')).player.seat).toBe('p2');
     expect(room.game).toMatchObject({ status: 'waiting', seated: ['p1', 'p3', 'p2'] });
     unwrap(manager.join(room.code, 'Ed', 's4'));
+    confirmAll(manager, room as Room<PandemicState>);
     expect([...game(room as Room<PandemicState>).seats].sort()).toEqual(['p1', 'p2', 'p3', 'p4']);
   });
 
@@ -199,6 +259,7 @@ describe('Pandemic rooms with N seats', () => {
     manager.leave('s1');
     unwrap(manager.join(room.code, 'Cy', 's2'));
     unwrap(manager.join(room.code, 'Di', 's3'));
+    confirmAll(manager, room as Room<PandemicState>);
     expect(game(room as Room<PandemicState>)).toEqual(game(inOrder));
   });
 
@@ -313,6 +374,9 @@ describe('Pandemic rematch with N players', () => {
     unwrap(manager.requestRematch(room, first, 'p3'));
     expect(room.match.id).not.toBe(first);
     expect(room.match.previousId).toBe(first);
+    // A new game starts with the "before the game" step again, with the same setup.
+    expect(room.game).toMatchObject({ status: 'setup', epidemics: 4, roleMode: 'random' });
+    confirmAll(manager, room);
     expect(game(room)).toMatchObject({ status: 'playing', epidemics: 4 });
     expect([...game(room).seats].sort()).toEqual(['p1', 'p2', 'p3']);
     expect(manager.rematchOfferOf(room)).toMatchObject({ by: null, accepted: [] });
@@ -329,6 +393,7 @@ describe('Pandemic rematch with N players', () => {
     expect(room.match.id).toBe(first);
     unwrap(manager.requestRematch(room, first, 'p1'));
     expect(room.match.id).not.toBe(first);
+    confirmAll(manager, room);
     expect(game(room).seats).toHaveLength(2);
   });
 
@@ -357,6 +422,7 @@ describe('Pandemic rematch with N players', () => {
     unwrap(manager.join(room.code, 'Ben', 's1'));
     unwrap(manager.join(room.code, 'Cy', 's2'));
     const pandemicRoom = room as Room<PandemicState>;
+    confirmAll(manager, pandemicRoom);
     end(pandemicRoom);
     manager.leave('s2');
 
@@ -364,6 +430,7 @@ describe('Pandemic rematch with N players', () => {
     unwrap(manager.requestRematch(room, match, 'p1'));
     unwrap(manager.requestRematch(room, match, 'p2'));
     expect(room.match.id).not.toBe(match);
+    confirmAll(manager, pandemicRoom);
     expect([...game(pandemicRoom).seats].sort()).toEqual(['p1', 'p2']);
     expect(game(pandemicRoom).epidemics).toBe(4);
     expect(manager.join(room.code, 'Late', 'late')).toEqual({ ok: false, error: 'room-full' });
@@ -378,7 +445,35 @@ describe('Pandemic rematch with N players', () => {
     unwrap(manager.requestRematch(room, match, 'p2'));
     manager.leave('s2');
     expect(room.match.id).not.toBe(match);
+    confirmAll(manager, room);
     expect([...game(room).seats].sort()).toEqual(['p1', 'p2']);
+  });
+
+  it('keeps the difficulty and the role mode, and a choose game starts with no picks', () => {
+    const manager = rooms();
+    const { room } = unwrap(
+      manager.create('Ana', 's0', 'ip', {
+        game: 'pandemic',
+        config: { players: 2, epidemics: 6, roleMode: 'choose' },
+      }),
+    );
+    unwrap(manager.join(room.code, 'Ben', 's1'));
+    const pandemicRoom = room as Room<PandemicState>;
+    const [first, second] = (pandemicRoom.game as SetupState).seats;
+    unwrap(manager.move(pandemicRoom, first!, { type: 'pick-role', role: 'medic' }));
+    unwrap(manager.move(pandemicRoom, second!, { type: 'pick-role', role: 'scientist' }));
+    confirmAll(manager, pandemicRoom);
+    end(pandemicRoom);
+    const match = room.match.id;
+    unwrap(manager.requestRematch(room, match, 'p1'));
+    unwrap(manager.requestRematch(room, match, 'p2'));
+    expect(room.match.id).not.toBe(match);
+    expect(room.game).toMatchObject({
+      status: 'setup',
+      epidemics: 6,
+      roleMode: 'choose',
+      picks: {},
+    });
   });
 
   it('drops the offer of a player who leaves', () => {

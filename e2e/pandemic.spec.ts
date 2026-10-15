@@ -482,6 +482,55 @@ test.describe('before the game', () => {
     }
   });
 
+  test('a new game is dealt step by step, and a reload during play shows the board at once', async ({
+    browser,
+  }, testInfo) => {
+    test.setTimeout(90_000);
+    // Motion on: the deal is played (about 10 s).
+    const { pages } = await seatPlayers(browser, deviceOptions(testInfo.project.use), 2, {
+      deal: true,
+    });
+    const [ana, ben] = pages as [Page, Page];
+    const cubes = (page: Page) => page.locator('[data-cube]');
+    // A pile on the map is labeled with its count.
+    const pile = (page: Page, label: string) => page.locator(`[data-pile="${label}"]`);
+    const discard = (page: Page) =>
+      page.locator('[data-pile^="Infection discard pile"]').getAttribute('data-pile');
+    await confirmAll(pages);
+
+    // While it is dealt, nobody has actions yet and the board fills up piece by piece.
+    for (const page of pages) await expect(page.getByText(/actions left/)).toHaveCount(0);
+    await expect(cubes(ana)).toHaveCount(0);
+    await expect(pile(ana, 'Infection discard pile: 0 cards')).toHaveCount(1);
+    // A few infection cards in: some cubes are on the map, not all of them yet.
+    await expect(async () => {
+      const count = await cubes(ana).count();
+      expect(count).toBeGreaterThan(0);
+      expect(count).toBeLessThan(18);
+    }).toPass({ timeout: 8000 });
+    expect(await discard(ana)).not.toContain('9 cards');
+    for (const page of pages) await expect(page.getByText(/actions left/)).toHaveCount(0);
+
+    // At the end: all 9 starting infections (18 cubes), the hands dealt, the actions on, for the
+    // player whose turn it is.
+    await expect(cubes(ana)).toHaveCount(18, { timeout: 20_000 });
+    await expect(pile(ana, 'Infection discard pile: 9 cards')).toHaveCount(1);
+    await expect(pile(ben, 'Infection discard pile: 9 cards')).toHaveCount(1);
+    const active = ana.locator('[data-role][aria-current="true"]');
+    const activeName = (await active.innerText()).split('\n')[0]?.trim();
+    const [mine, other] = activeName === 'Ana' ? [ana, ben] : [ben, ana];
+    await expect(mine.getByText('4 actions left')).toBeVisible({ timeout: 15_000 });
+    await expect(other.getByText(/actions left/)).toHaveCount(0);
+    // Two players, 4 cards each.
+    await expect(ana.getByRole('region', { name: 'Hands' }).getByRole('listitem')).toHaveCount(8);
+
+    // A reload during play shows the board as it is at once: no deal, the actions straight away.
+    await mine.reload();
+    await expect(mine.getByText('4 actions left')).toBeVisible({ timeout: 3000 });
+    await expect(cubes(mine)).toHaveCount(18, { timeout: 3000 });
+    await expect(pile(mine, 'Infection discard pile: 9 cards')).toHaveCount(1, { timeout: 3000 });
+  });
+
   test('a heroic 3-player game is played to its end by passing every turn', async ({
     browser,
   }, testInfo) => {

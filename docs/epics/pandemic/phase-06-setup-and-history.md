@@ -1,6 +1,6 @@
 # Pandemic 06: Setup and variants
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 In progress** · Effort: **medium**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done** · Effort: **medium**
 
 Needs [Pandemic 05](phase-05-events.md).
 
@@ -34,18 +34,18 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - [x] 6. **M** Deal playback: when a view turns from the "before the game" step to the dealt game in this session, the board shows a display view that starts empty and fills step by step on a timeline (like Sky Team's "Next turn" pause); the actions stay off meanwhile; reduced motion (the browser setting) jumps to the dealt board; a reload or reconnect mid-game shows the board at once.
 - [x] 7. **M** The steps on the board with the existing animations: the Atlanta station and the pawns, each starting infection (its card flies from the infection deck to the discard pile, then its cubes appear), the hands dealt card by card in turn order, the player deck built (the cards left split face down into one pile per epidemic card, an Epidemic card shuffled into each, the piles stacked back, larger on top; card backs only), then the first player's turn; the "no animation on the first view" rule of the hand and the infection pile gives way to the deal.
-- [ ] 8. **M** Playwright: a new game plays its deal and the board ends as dealt (the actions only then), a reload during play shows the board at once.
+- [x] 8. **M** Playwright: a new game plays its deal and the board ends as dealt (the actions only then), a reload during play shows the board at once.
 
 **Final check**
 
-- [ ] 9. **M** Write the phase's tests (deal playback included) and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
+- [x] 9. **M** Write the phase's tests (deal playback included) and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 
-- [ ] Difficulty and role choice validated and tested
-- [ ] Rematch keeps players, difficulty and role mode, tested
-- [ ] The deal is animated step by step and is not replayed on a reload
-- [ ] Full run passes
+- [x] Difficulty and role choice validated and tested
+- [x] Rematch keeps players, difficulty and role mode, tested
+- [x] The deal is animated step by step and is not replayed on a reload
+- [x] Full run passes
 
 ## Decisions
 
@@ -64,4 +64,4 @@ Settled with the user before task 1:
 
 - None so far.
 
-**Done when:** 2, 3 and 4 players finish a game on desktop at each difficulty, with roles dealt or chosen, and each new game's deal is shown step by step.
+**Done when:** 2, 3 and 4 players finish a game on desktop at each difficulty, with roles dealt or chosen, and each new game's deal is shown step by step. ✅ Verified: `pnpm test` (869 passed), `pnpm e2e` (54 passed, 24 skipped: Pandemic is desktop only), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm build` pass. Note: a few Sky Team server tests (Total Trust, rematch, rejoin) are timing-sensitive and fail now and then under the load of the whole suite, a different one each time; each passes on its own and the full run passes on a rerun.

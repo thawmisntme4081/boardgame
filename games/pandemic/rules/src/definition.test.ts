@@ -55,6 +55,25 @@ describe('the engine test kit', () => {
   }
 });
 
+describe('the engine test kit with the roles chosen by the players', () => {
+  for (const players of [2, 3, 4]) {
+    it(`plays and replays games of ${players} players that pick their roles`, () => {
+      for (let seed = 1; seed <= 6; seed++) {
+        const { outcome } = checkGame({
+          definition: pandemic,
+          config: { players, epidemics: 5, roleMode: 'choose' },
+          seats: SEATS.slice(0, players),
+          seed,
+          nextMove: (state, random) => agentMove(state, random),
+          findLeaks,
+          maxSteps: 3000,
+        });
+        expect(outcome.kind).toBe('coop');
+      }
+    });
+  }
+});
+
 describe('the definition', () => {
   const state = (): GameState =>
     dealt(pandemic.setup({ config: config(2, 4), seats: ['p1', 'p2'], host: 'p1', seed: 3 }));

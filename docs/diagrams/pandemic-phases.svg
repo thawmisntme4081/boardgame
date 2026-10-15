@@ -25,9 +25,9 @@
 <text x="655.0" y="39.5" text-anchor="middle" fill="#14532d">04 Roles</text>
 <rect x="10" y="110" width="150" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="85.0" y="139.5" text-anchor="middle" fill="#14532d">05 Events</text>
-<rect x="200" y="110" width="150" height="50" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
-<text x="275.0" y="131.5" text-anchor="middle" fill="#713f12">06 Setup</text>
-<text x="275.0" y="147.5" text-anchor="middle" fill="#713f12">and variants</text>
+<rect x="200" y="110" width="150" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="275.0" y="131.5" text-anchor="middle" fill="#14532d">06 Setup</text>
+<text x="275.0" y="147.5" text-anchor="middle" fill="#14532d">and variants</text>
 <rect x="390" y="110" width="150" height="50" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5"/>
 <text x="465.0" y="139.5" text-anchor="middle" fill="#374151">07 Translations</text>
 <rect x="580" y="110" width="150" height="60" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
