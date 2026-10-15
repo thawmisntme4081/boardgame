@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { GAMES, useGameModule } from '../games';
 import { usePlatform } from '../store';
-import { CardTop, Shell } from './Shell';
+import { CardTop, Page } from './Shell';
 
 function GameHistory({ id }: { id: string }) {
   const { t } = useTranslation();
@@ -26,12 +26,12 @@ export function History() {
   const account = usePlatform((s) => s.account);
   const signedIn = typeof account === 'object' && account.user !== null;
   return (
-    <Shell wide>
+    <Page wide>
       <Card>
         <CardHeader className="flex flex-col gap-1">
           <Link
             to="/"
-            className="-ml-1 flex min-h-11 w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="-ml-1 flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft aria-hidden="true" className="size-4" /> {t('app.allGames')}
           </Link>
@@ -42,7 +42,6 @@ export function History() {
                 ? undefined
                 : t(signedIn ? 'history.intro' : 'history.signedOut')
             }
-            account
           />
         </CardHeader>
         {signedIn && (
@@ -53,6 +52,6 @@ export function History() {
           </CardContent>
         )}
       </Card>
-    </Shell>
+    </Page>
   );
 }

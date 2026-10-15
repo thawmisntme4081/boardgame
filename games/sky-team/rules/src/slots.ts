@@ -39,7 +39,7 @@ const ice = (index: number, value: DieValue, row: 'top' | 'bottom'): SlotDef => 
   module: 'ice-brakes',
 });
 
-/** An Alarm token's space: the die of the colour and number printed on it clears the alarm. */
+/** An Alarm token's space: the die of the color and number printed on it clears the alarm. */
 const alarm = (index: number, seats: readonly Seat[], value: DieValue): SlotDef => ({
   group: 'alarm',
   index,
@@ -80,7 +80,7 @@ export const SLOTS: Record<SlotId, SlotDef> = {
   ice4Bottom: ice(2, 4, 'bottom'),
   ice5Top: ice(3, 5, 'top'),
   ice5Bottom: ice(3, 5, 'bottom'),
-  // The token colour is the partner's: an orange die clears a pilot Action's alarm.
+  // The token color is the partner's: an orange die clears a pilot Action's alarm.
   alarmConcentration: alarm(0, BOTH, 1),
   alarmBrakes: alarm(1, COPILOT, 2),
   alarmGear: alarm(2, COPILOT, 3),

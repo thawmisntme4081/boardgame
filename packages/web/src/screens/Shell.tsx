@@ -1,42 +1,91 @@
-// The platform's pages around the games: a centred card on a muted page, and its parts.
+// The platform's pages around the games: a centered card on a muted page, and its parts.
 import { Button } from '@platform/ui/components/button';
 import { Input } from '@platform/ui/components/input';
 import { Label } from '@platform/ui/components/label';
 import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
-import { useState, type SubmitEvent, type ReactNode } from 'react';
+import { Link, useRouter } from '@tanstack/react-router';
+import { Dices } from 'lucide-react';
+import { useState, type ComponentProps, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { joinRoom } from '../api';
 import { NAME_MAX } from '../session';
 import { AccountButton } from './Account';
 
-export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+/** The site's header: the brand (a link home inside the router), the language and the account. */
+export function SiteHeader({
+  account = false,
+  extra,
+}: {
+  account?: boolean;
+  /** A game's own part of the header (who is online, leaving), left of the language. */
+  extra?: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const inRouter = Boolean(useRouter({ warn: false }));
+  const brand = (
+    <>
+      <Dices className="size-5 shrink-0" aria-hidden="true" /> {t('app.title')}
+    </>
+  );
+  const brandClass = 'flex min-h-11 items-center gap-2 text-lg font-semibold';
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-muted/40 p-4">
-      <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>{children}</div>
+    <header className="border-b bg-background px-4 py-1">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2">
+        {inRouter ? (
+          <Link to="/" className={brandClass}>
+            {brand}
+          </Link>
+        ) : (
+          <span className={brandClass}>{brand}</span>
+        )}
+        <div className="flex min-w-0 items-center gap-3">
+          {extra}
+          <LanguageSwitch />
+          {account && <AccountButton />}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/** A page's content, centered on the muted page below the header (the layout draws the header). */
+export function Page({
+  children,
+  wide = false,
+  full = false,
+  center = false,
+}: {
+  children: ReactNode;
+  wide?: boolean;
+  full?: boolean;
+  center?: boolean;
+}) {
+  return (
+    <main className={`flex flex-1 justify-center p-4 ${center ? 'items-center' : ''}`}>
+      <div className={full ? 'w-full max-w-6xl' : wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
+        {children}
+      </div>
     </main>
   );
 }
 
-/** A card heading with the language switch (and, if asked, sign-in) on the right. */
-export function CardTop({
-  title,
-  description,
-  account = false,
-}: {
-  title: ReactNode;
-  description?: ReactNode;
-  /** Show "Sign in" or the signed-in name (the game picker and the game pages). */
-  account?: boolean;
-}) {
+/** The whole page with its own header, for what is shown outside the router (the password). */
+export function Shell({ children, wide, full, center }: ComponentProps<typeof Page>) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-muted/40">
+      <SiteHeader />
+      <Page wide={wide} full={full} center={center}>
+        {children}
+      </Page>
+    </div>
+  );
+}
+
+/** A card heading. */
+export function CardTop({ title, description }: { title?: ReactNode; description?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-start justify-between gap-2">
-        <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">{title}</h1>
-        <div className="-mt-2 -mr-2 flex shrink-0 items-center gap-1">
-          {account && <AccountButton />}
-          <LanguageSwitch />
-        </div>
-      </div>
+      {title && <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">{title}</h1>}
       {description && <p className="text-sm text-muted-foreground">{description}</p>}
     </div>
   );
@@ -64,7 +113,7 @@ export function NameField({
         readOnly={fromAccount}
         aria-describedby={fromAccount ? 'name-from-account' : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 text-base read-only:bg-muted read-only:text-muted-foreground"
+        className="text-base read-only:bg-muted read-only:text-muted-foreground desktop:text-sm"
       />
       {fromAccount && (
         <p id="name-from-account" className="text-xs text-muted-foreground">
@@ -102,9 +151,9 @@ export function JoinForm({ name, initialCode = '' }: { name: string; initialCode
           autoComplete="off"
           placeholder="ABCD"
           onChange={(e) => setCode(e.target.value.replace(/[^a-z]/gi, '').toUpperCase())}
-          className="h-11 font-mono text-base tracking-widest uppercase"
+          className="h-11 font-mono text-base tracking-widest uppercase desktop:h-9 desktop:text-sm"
         />
-        <Button type="submit" className="h-11" disabled={busy || !ready}>
+        <Button type="submit" className="h-11 desktop:h-9" disabled={busy || !ready}>
           {t('lobby.join')}
         </Button>
       </div>
@@ -122,13 +171,15 @@ export function Or() {
   );
 }
 
-export function Connecting() {
+/** "Connecting…": in a page of the layout, or (`framed`) alone on the page, before the router. */
+export function Connecting({ framed = false }: { framed?: boolean }) {
   const { t } = useTranslation();
+  const Frame = framed ? Shell : Page;
   return (
-    <Shell>
+    <Frame>
       <p className="text-center text-sm text-muted-foreground" role="status">
         {t('lobby.connecting')}
       </p>
-    </Shell>
+    </Frame>
   );
 }

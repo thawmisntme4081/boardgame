@@ -89,7 +89,7 @@ export function WindRing({
           </g>
         );
       })}
-      {/* Drawn pointing at the centre space, then turned: the turn animates. */}
+      {/* Drawn pointing at the center space, then turned: the turn animates. */}
       <line
         x1={C}
         y1={C}

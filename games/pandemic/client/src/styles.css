@@ -1,0 +1,89 @@
+@theme static {
+  --color-disease-blue: oklch(0.55 0.17 250);
+  --color-disease-yellow: oklch(0.85 0.17 95);
+  --color-disease-black: oklch(0.3 0.02 260);
+  --color-disease-red: oklch(0.6 0.22 25);
+}
+
+/* The pawn colors of the box: each role has its own. */
+@theme static {
+  --color-role-contingency-planner: oklch(0.72 0.11 195);
+  --color-role-dispatcher: oklch(0.65 0.2 320);
+  --color-role-medic: oklch(0.75 0.17 55);
+  --color-role-operations-expert: oklch(0.82 0.17 135);
+  --color-role-quarantine-specialist: oklch(0.42 0.11 150);
+  --color-role-researcher: oklch(0.5 0.08 60);
+  --color-role-scientist: oklch(0.96 0.01 100);
+}
+
+@theme static {
+  --color-seat-p1: oklch(0.7 0.25 340);
+  --color-seat-p2: oklch(0.75 0.2 145);
+  --color-seat-p3: oklch(0.78 0.17 60);
+  --color-seat-p4: oklch(0.65 0.2 295);
+}
+
+/* A city you can move to: its ring breathes. Scale and opacity only, so the browser animates it
+   without redrawing the map. */
+@keyframes reach-ring {
+  50% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+}
+.reach-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.93);
+  animation: reach-ring 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reach-ring {
+    animation: none;
+  }
+}
+
+/* The player whose turn it is: a yellow border around their role card that pulses softly. */
+@keyframes turn-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px oklch(0.85 0.17 95),
+      0 0 4px 1px oklch(0.85 0.17 95 / 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px oklch(0.85 0.17 95),
+      0 0 12px 4px oklch(0.85 0.17 95 / 0.7);
+  }
+}
+.turn-ring {
+  animation: turn-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .turn-ring {
+    animation: none;
+    box-shadow: 0 0 0 3px oklch(0.85 0.17 95);
+  }
+}
+
+/* The Epidemic card on the player pile: a bright frame that pulses while the epidemic is resolved. */
+@keyframes epidemic-pulse {
+  0%,
+  100% {
+    stroke-opacity: 1;
+    stroke-width: 4;
+  }
+  50% {
+    stroke-opacity: 0.35;
+    stroke-width: 7;
+  }
+}
+.epidemic-glow {
+  animation: epidemic-pulse 1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .epidemic-glow {
+    animation: none;
+  }
+}

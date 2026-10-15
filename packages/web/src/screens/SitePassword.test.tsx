@@ -30,20 +30,20 @@ describe('the site password gate', () => {
     usePlatform.setState({ siteAccess: 'checking' });
     render(<App />);
     expect(await screen.findByLabelText('Password')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /^Sky Team/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'sky-team' })).toBeNull();
     expect(api.startConnection).not.toHaveBeenCalled();
 
     await userEvent.type(screen.getByLabelText('Password'), 'bay-cung-nhau');
     await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
     expect(api.enterSitePassword).toHaveBeenCalledWith('bay-cung-nhau');
-    expect(await screen.findByRole('link', { name: /^Sky Team/ })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'sky-team' })).toBeInTheDocument();
     expect(api.startConnection).toHaveBeenCalled();
   });
 
   it('goes straight to the game picker when the site is open (no password, or already entered)', async () => {
     usePlatform.setState({ siteAccess: 'checking' });
     render(<App />);
-    expect(await screen.findByRole('link', { name: /^Sky Team/ })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'sky-team' })).toBeInTheDocument();
     await waitFor(() => expect(api.startConnection).toHaveBeenCalled());
     expect(screen.queryByLabelText('Password')).toBeNull();
   });

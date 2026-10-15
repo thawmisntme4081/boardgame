@@ -144,7 +144,7 @@ export interface Scenario {
   alarms?: number[];
   /** Total Trust: symbols per approach space (absent: none); needs the `total-trust` module. */
   totalTrust?: number[];
-  /** Turbulence: the replacement altitude track (absent: the colour's standard track). */
+  /** Turbulence: the replacement altitude track (absent: the color's standard track). */
   altitudeTrack?: AltitudeTrackId;
   modules: ModuleId[];
   /** How many Special Ability cards the players choose (0, 1 or 2). */
@@ -280,7 +280,7 @@ export interface GameState {
   kerosene: number | null;
   /** Intern: tokens still on the Intern board, pilot's end first; `null` without the module. */
   intern: DieValue[] | null;
-  /** Wind: the Wind Ring space the blue airplane points at (0 is the white centre); `null` without the module. */
+  /** Wind: the Wind Ring space the blue airplane points at (0 is the white center); `null` without the module. */
   wind: number | null;
   /** Alarms: tokens face up (blocking their Action) and still face down; `null` without the module. */
   alarms: { active: AlarmId[]; faceDown: AlarmId[] } | null;

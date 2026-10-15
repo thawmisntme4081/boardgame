@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
 import path from 'node:path';
-import { armAutoRoll, type GameState } from '@sky/rules';
+import compression from 'compression';
 import express from 'express';
 import { Server } from 'socket.io';
 import type { AccessCheck } from './access';
@@ -53,6 +53,9 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     next();
   });
+  // Pages, scripts and JSON go out gzipped: the site is reached directly, with no proxy that
+  // compresses. Socket messages stay uncompressed (views are a few KB).
+  app.use(compression());
 
   app.get('/health', (_req, res) => {
     res.json({ ok: true, rooms: rooms.size });
@@ -154,6 +157,8 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
 
   const httpServer = createServer(app);
   const io: GameServer = new Server(httpServer, {
+    // Moves are tiny (views go the other way): no client message needs more than this.
+    maxHttpBufferSize: 64 * 1024,
     ...(gates.length > 0 && {
       allowRequest: (req, callback) => {
         void Promise.all(gates.map((gate) => gate(req))).then((results) => {
@@ -185,14 +190,17 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
   for (const room of rooms.all()) rooms.arm(room);
 
   if (options.e2eHooks) {
-    // Merges a partial game state into a room, then sends everyone fresh views. Test-only, and
-    // Sky Team's state shape: the E2E tests only play Sky Team.
+    // Merges a partial game state into a room, then sends everyone fresh views. Test-only; each
+    // game says how a patch applies (its registry entry's `e2ePatch`).
     app.post('/__e2e/rooms/:code/game', express.json(), (req, res) => {
       const room = rooms.get(req.params.code);
       if (!room) return void res.status(404).json({ ok: false });
-      // A prepared Total Trust strategy phase still rolls by itself.
-      const patched = { ...room.game, ...(req.body as Partial<GameState>) };
-      rooms.replaceGame(room, armAutoRoll(patched, Date.now()));
+      const { e2ePatch } = rooms.entry(room);
+      const patch: unknown = req.body;
+      if (!e2ePatch || typeof patch !== 'object' || patch === null || Array.isArray(patch)) {
+        return void res.status(400).json({ ok: false });
+      }
+      rooms.replaceGame(room, e2ePatch(room.game, patch as Record<string, unknown>, Date.now()));
       broadcastRoom(io, rooms, room);
       res.json({ ok: true });
     });
@@ -200,10 +208,23 @@ export function createGameServer(rooms = new RoomManager(), options: ServerOptio
 
   const { clientDir } = options;
   if (clientDir && existsSync(path.join(clientDir, 'index.html'))) {
-    app.use(express.static(clientDir));
+    // Built files have a hash in their name: the browser keeps them for good. The page itself
+    // is checked on every visit, so a deploy reaches everyone at once.
+    app.use(
+      express.static(clientDir, {
+        setHeaders: (res, file) => {
+          const hashed = path.relative(clientDir, file).startsWith(`assets${path.sep}`);
+          res.setHeader(
+            'Cache-Control',
+            hashed ? 'public, max-age=31536000, immutable' : 'no-cache',
+          );
+        },
+      }),
+    );
     // Invite links like /r/ABCD are client routes: answer them with the app.
     app.use((req, res, next) => {
       if (req.method !== 'GET' || !req.accepts('html')) return next();
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(clientDir, 'index.html'));
     });
   }

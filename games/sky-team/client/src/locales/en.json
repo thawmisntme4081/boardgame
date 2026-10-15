@@ -217,7 +217,7 @@
     },
     "alarms": {
       "name": "Alarms",
-      "rule": "An Alarm symbol on your approach space flips a random token at the start of a round: its Action takes no dice until the die shown on the token (colour and number, coffee allowed) is placed on it. Alarms never stop a landing."
+      "rule": "An Alarm symbol on your approach space flips a random token at the start of a round: its Action takes no dice until the die shown on the token (color and number, coffee allowed) is placed on it. Alarms never stop a landing."
     },
     "total-trust": {
       "name": "Total Trust",
@@ -247,7 +247,7 @@
     },
     "synchronization": {
       "name": "Synchronization",
-      "rule": "If you have placed at least one die on Landing Gear, and one die on Flaps, immediately roll the Traffic die. Place it on any empty space on the Control Panel regardless of its colour. Apply the effect of the Traffic die as if it were a normal die. It counts as an extra action for this turn."
+      "rule": "If you have placed at least one die on Landing Gear, and one die on Flaps, immediately roll the Traffic die. Place it on any empty space on the Control Panel regardless of its color. Apply the effect of the Traffic die as if it were a normal die. It counts as an extra action for this turn."
     },
     "working-together": {
       "name": "Working Together",

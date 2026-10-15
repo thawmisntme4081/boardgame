@@ -1,7 +1,9 @@
 // What a player may see: everything on the table. Hands are open (the players decided so),
-// the decks are only counts (no order, no split of the epidemics), and the seed never leaves.
+// the decks are only counts (no order, no split of the epidemics), the cards a Forecast took
+// are seen by their player only, and the seed never leaves.
 import type { Viewer } from '@platform/engine';
 import type { CityId, Color } from './cities';
+import type { GameLog } from './log';
 import type {
   ActionState,
   CureState,
@@ -9,8 +11,14 @@ import type {
   GameState,
   HandCard,
   LossReason,
+  PandemicState,
+  Pending,
+  PerSeat,
+  RoleId,
+  RoleMode,
   SeatId,
 } from './types';
+import { isRestartable } from './restart';
 import { SEATS } from './types';
 
 export interface PandemicView extends ActionState {
@@ -26,22 +34,86 @@ export interface PandemicView extends ActionState {
   outbreaks: number;
   infectionRate: number;
   cures: Record<Color, CureState>;
+  /** One Quiet Night was played: the next infect step is skipped. */
+  quietNight: boolean;
+  /** The active player may restart the turn (see `restart.ts`). */
+  restartable: boolean;
+  /** The current and the previous turn's draws, epidemics, infections and outbreaks. */
+  log: GameLog;
 }
 
 export type { EpidemicStep };
 
+/** Before the game: who is seated, and how many players the game waits for. */
+export interface WaitingView {
+  status: 'waiting';
+  you: SeatId | null;
+  seated: SeatId[];
+  players: number;
+  epidemics: number;
+}
+
+/** The "before the game" step: everything in it is public (the order, the roles, who is ready). */
+export interface SetupView {
+  status: 'setup';
+  you: SeatId | null;
+  /** Turn order. */
+  seats: SeatId[];
+  epidemics: number;
+  roleMode: RoleMode;
+  picks: PerSeat<RoleId>;
+  confirmed: SeatId[];
+}
+
+/** What a viewer sees of a table: the wait for players, the "before the game" step, or the game. */
+export type TableView = WaitingView | SetupView | PandemicView;
+
+const viewerSeat = (viewer: Viewer): SeatId | null =>
+  (SEATS as readonly string[]).includes(viewer) ? (viewer as SeatId) : null;
+
+/** The view of a table: waiting, the "before the game" step (no seed), or the game's `viewFor`. */
+export function tableViewFor(state: PandemicState, viewer: Viewer): TableView {
+  if (state.status === 'setup') {
+    const { seats, epidemics, roleMode, picks, confirmed } = state;
+    return structuredClone({
+      status: 'setup',
+      you: viewerSeat(viewer),
+      seats,
+      epidemics,
+      roleMode,
+      picks,
+      confirmed,
+    });
+  }
+  if (state.status !== 'waiting') return viewFor(state, viewer);
+  const { seated, players, epidemics } = state;
+  return { status: 'waiting', you: viewerSeat(viewer), seated: [...seated], players, epidemics };
+}
+
+/**
+ * The pending step as `you` may see it: the cards a Forecast took are the infection deck's top,
+ * so only the player arranging them sees which they are; the others see how many.
+ */
+function pendingFor(pending: Pending | null, you: SeatId | null): Pending | null {
+  if (pending?.kind !== 'forecast' || pending.seat === you) return pending;
+  return { ...pending, cards: [] };
+}
+
 export function viewFor(state: GameState, viewer: Viewer): PandemicView {
   // Every field is copied by name: a new field of the state is private until it is added here.
+  const you = viewerSeat(viewer);
   return structuredClone({
-    you: (SEATS as readonly string[]).includes(viewer) ? (viewer as SeatId) : null,
+    you,
     seats: state.seats,
     epidemics: state.epidemics,
     turn: state.turn,
-    pending: state.pending,
+    pending: pendingFor(state.pending, you),
     status: state.status,
     lossReason: state.lossReason,
+    roles: state.roles,
     pawns: state.pawns,
     hands: state.hands,
+    contingency: state.contingency,
     cubes: state.cubes,
     supply: state.supply,
     stations: state.stations,
@@ -52,5 +124,8 @@ export function viewFor(state: GameState, viewer: Viewer): PandemicView {
     outbreaks: state.outbreaks,
     infectionRate: state.infectionRate,
     cures: state.cures,
+    quietNight: state.quietNight,
+    restartable: isRestartable(state),
+    log: state.log,
   });
 }

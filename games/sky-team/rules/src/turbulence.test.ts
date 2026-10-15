@@ -51,7 +51,7 @@ describe('altitude tracks A–D', () => {
 });
 
 describe('scenario ids', () => {
-  it('number an airport and colour that appear more than once, in list order', () => {
+  it('number an airport and color that appear more than once, in list order', () => {
     expect(
       scenarioIds([
         { airport: 'DUS', difficulty: 'red' },
@@ -232,7 +232,7 @@ describe('alarms', () => {
     expect(reason(copilotTurn, 'copilot', intent('c2', 'alarmBrakes'))).toBe('alarm-not-active');
   });
 
-  it('clear with a die of the colour and number on the token, coffee included', () => {
+  it('clear with a die of the color and number on the token, coffee included', () => {
     const s = setupRound({
       pilot: [3, 2, 3, 3],
       copilot: [2, 2, 3, 3],
@@ -250,7 +250,7 @@ describe('alarms', () => {
     expect(reason(cleared, 'copilot', intent('c1', 'flaps1'))).toBe('ok');
   });
 
-  it('take a 1 of either colour on Concentration', () => {
+  it('take a 1 of either color on Concentration', () => {
     const s = setupRound({
       pilot: [1, 2, 3, 3],
       copilot: [1, 2, 3, 3],

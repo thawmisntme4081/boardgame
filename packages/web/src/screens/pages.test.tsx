@@ -24,18 +24,16 @@ beforeEach(() => {
 });
 
 describe('the game picker', () => {
-  it('lists Sky Team and opens its page', async () => {
+  it('lists Sky Team as a thumbnail and opens its page', async () => {
     const { router } = await renderAt('/');
-    const link = screen.getByRole('link', { name: /^Sky Team/ });
-    expect(link).toHaveTextContent('Two players, cooperative');
-    await userEvent.click(link);
+    await userEvent.click(screen.getByRole('link', { name: 'sky-team' }));
     expect(router.state.location.pathname).toBe('/play/sky-team');
     expect(await screen.findByRole('button', { name: 'Create a game' })).toBeInTheDocument();
   });
 
-  it('joins by code, uppercasing and dropping anything but letters', async () => {
-    await renderAt('/');
-    await userEvent.type(screen.getByLabelText('Your name'), 'Ben');
+  it('joins by code from a game\x27s page, uppercasing and dropping anything but letters', async () => {
+    await renderAt('/play/sky-team');
+    await userEvent.type(await screen.findByLabelText('Your name'), 'Ben');
     await userEvent.type(screen.getByLabelText('Game code'), 'ab-1cd');
     expect(screen.getByLabelText('Game code')).toHaveValue('ABCD');
     await userEvent.click(screen.getByRole('button', { name: 'Join' }));

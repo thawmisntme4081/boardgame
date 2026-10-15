@@ -9,23 +9,37 @@
     "paths": {
       "@/*": ["./src/*"],
       "@sky/rules": ["../../games/sky-team/rules/src/index.ts"],
+      "@pandemic/rules": ["../../games/pandemic/rules/src/index.ts"],
+      "@pandemic/rules/definition": ["../../games/pandemic/rules/src/definition.ts"],
       "@platform/engine": ["../engine/src/index.ts"],
       "@platform/protocol": ["../protocol/src/index.ts"],
       "@platform/ui/*": ["../ui/src/*"],
       "@sky/client": ["../../games/sky-team/client/src/index.ts"],
-      "@sky/client/*": ["../../games/sky-team/client/src/*"]
+      "@sky/client/*": ["../../games/sky-team/client/src/*"],
+      "@pandemic/client": ["../../games/pandemic/client/src/index.ts"],
+      "@pandemic/client/*": ["../../games/pandemic/client/src/*"]
     }
   },
   "include": [
     "src",
     "../../games/sky-team/rules/src",
+    "../../games/pandemic/rules/src",
     "../engine/src",
     "../protocol/src",
     "../ui/src",
-    "../../games/sky-team/client/src"
+    "../../games/sky-team/client/src",
+    "../../games/pandemic/client/src"
   ],
   "exclude": [
     "../../games/sky-team/rules/src/**/*.test.ts",
+    "../../games/pandemic/rules/src/**/*.test.ts",
+    "../../games/pandemic/rules/src/test-utils.ts",
+    "../../games/pandemic/rules/src/random-play.ts",
+    "../../games/sky-team/client/src/i18next.d.ts",
+    "../../games/pandemic/client/src/i18next.d.ts",
+    "../../games/pandemic/client/src/**/*.test.ts",
+    "../../games/pandemic/client/src/**/*.test.tsx",
+    "../../games/pandemic/client/src/test-setup.ts",
     "../engine/src/**/*.test.ts",
     "../engine/src/testing.ts",
     "../../games/sky-team/client/src/**/*.test.ts",

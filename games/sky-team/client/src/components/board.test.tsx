@@ -286,7 +286,7 @@ describe('GameOverDialog', () => {
 });
 
 describe('ApproachTrack', () => {
-  it('shows the scenario in a colour-coded badge instead of a difficulty dot', () => {
+  it('shows the scenario in a color-coded badge instead of a difficulty dot', () => {
     render(<ApproachTrack view={makeView('pilot')} />);
     expect(screen.getByText('YUL Montréal-Trudeau')).toHaveClass('bg-emerald-100');
   });
@@ -703,7 +703,7 @@ describe('approach effects', () => {
 });
 
 describe('StatusBar', () => {
-  it('keeps the colour-coded difficulty and level visible while flying', () => {
+  it('keeps the color-coded difficulty and level visible while flying', () => {
     render(<StatusBar view={makeView('pilot')} presence={presence()} connection="online" />);
     expect(screen.getByText('Level 1')).toHaveClass('bg-emerald-100');
   });

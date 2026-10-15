@@ -89,8 +89,8 @@ const FLEX_COL = 'minmax(0, 1fr)';
  * The desktop grid, built from the panels in play. Landing gear left and Flaps right share
  * the top row, so they always have the same height. Axis & Engines spans the top two rows,
  * with Wind above Radio beside it (Radio alone, both rows, when there is no Wind). Brakes and
- * Concentration split the centre below. Kerosene and Intern each get a full-height column
- * left of Flaps. Alarms take a row of their own under the centre.
+ * Concentration split the center below. Kerosene and Intern each get a full-height column
+ * left of Flaps. Alarms take a row of their own under the center.
  */
 export function desktopGrid(shown: readonly Section[]): CSSProperties {
   const has = (s: Section) => shown.includes(s);
@@ -112,13 +112,13 @@ export function desktopGrid(shown: readonly Section[]): CSSProperties {
       ? [row('.', 'alarms', 'alarms', 'alarms', 'alarms', ...mods.map(() => '.'), '.')]
       : []),
   ];
-  // The centre is four columns. With Wind they are equal. Without, Radio is a narrow column
+  // The center is four columns. With Wind they are equal. Without, Radio is a narrow column
   // (its spaces stacked): 1fr · R · 1fr · R, Axis & Engines spanning the first three and
   // Radio the last, so Brakes and Concentration (1fr + R each) match and fill the width.
-  const centre = has('wind')
+  const center = has('wind')
     ? ['repeat(4, minmax(0, 1fr))']
     : [FLEX_COL, RADIO_COL, FLEX_COL, RADIO_COL];
-  const columns = [SIDE_COL, ...centre, ...mods.map(() => MODULE_COL), SIDE_COL];
+  const columns = [SIDE_COL, ...center, ...mods.map(() => MODULE_COL), SIDE_COL];
   return {
     '--cockpit-areas': rows.join(' '),
     '--cockpit-columns': columns.join(' '),

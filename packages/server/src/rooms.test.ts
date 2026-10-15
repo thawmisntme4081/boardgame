@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SCENARIO_LIST, type Scenario } from '@sky/rules';
 import { skyTeam as game } from '@sky/rules/definition';
-import { ROOM_CODE_ALPHABET, RoomManager, type Room } from './rooms';
+import { ROOM_CODE_ALPHABET } from './rooms';
+import { SkyRooms as RoomManager, type SkyRoom as Room } from './test-server';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 

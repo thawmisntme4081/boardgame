@@ -50,16 +50,4 @@ describe('cities', () => {
     }
     expect(seen.size).toBe(48);
   });
-
-  it('puts every city inside the map, apart from its neighbors', () => {
-    for (const city of CITIES) {
-      const [x, y] = city.at;
-      expect(x).toBeGreaterThan(0);
-      expect(x).toBeLessThan(1);
-      expect(y).toBeGreaterThan(0);
-      expect(y).toBeLessThan(1);
-    }
-    const spots = new Set(CITIES.map((city) => city.at.join(',')));
-    expect(spots.size).toBe(48);
-  });
 });

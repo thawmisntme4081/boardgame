@@ -15,7 +15,7 @@ Needs [Pandemic 07](phase-07-translations.md) (the base game is done). Expansion
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Rules**
 
@@ -29,6 +29,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - [ ] 6. **M** The map, tracks and hands read the disease list (colors, supply per color, cure markers) instead of fixed four; `SetupForm` shows a "Modules" section (empty until 09).
 - [ ] 7. **L** Check the base game in Playwright is unchanged.
+
+**Checks**
+
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 

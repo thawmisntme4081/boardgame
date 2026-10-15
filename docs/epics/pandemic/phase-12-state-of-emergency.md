@@ -15,7 +15,7 @@ Needs [Pandemic 08](phase-08-expansion-modules.md). Expansion phases are optiona
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 - [ ] 1. **L** Read the rulebook; write the full content list into Open questions; confirm with the user.
 - [ ] 2. **M** Superbug module: rules and tests.
@@ -24,6 +24,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 5. **M** New roles (one sitting per two roles).
 - [ ] 6. **M** Client: board elements, controls and texts for each module.
 - [ ] 7. **L** Playwright with each module on.
+
+**Checks**
+
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 
@@ -34,4 +38,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - The expansion's exact content (fill in at task 1).
 
-**Done when:** each State of Emergency module plays on phones, alone and combined with the others.
+**Done when:** each State of Emergency module plays on desktop, alone and combined with the others.

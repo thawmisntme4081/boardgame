@@ -41,7 +41,7 @@ export function pickedAbilities(state: Pick<GameState, 'scenario' | 'crew'>): Ab
   return [...new Set(picks)].slice(0, count);
 }
 
-/** The choices changed: the cards follow the picks, and every confirm is cancelled. */
+/** The choices changed: the cards follow the picks, and every confirm is canceled. */
 function resync(state: GameState): void {
   state.abilities = pickedAbilities(state);
   state.crew.confirmed = both(false);

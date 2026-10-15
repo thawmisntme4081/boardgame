@@ -15,7 +15,7 @@ Needs [Pandemic 09](phase-09-on-the-brink-roles-events.md). Expansion phases are
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 **Virulent Strain**
 
@@ -36,6 +36,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 **Checks**
 
 - [ ] 8. **M** Each challenge on its own and all together in the engine kit and fast-check runs; Playwright for each challenge.
+- [ ] 9. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 
@@ -47,4 +48,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - Rule details, from the rulebook (to fill in at the start of each challenge).
 
-**Done when:** the three challenges play separately and together on phones, with no leak of the hidden role.
+**Done when:** the three challenges play separately and together on desktop, with no leak of the hidden role.

@@ -59,7 +59,7 @@ function InstrumentColumn({ seat, view }: { seat: Seat; view: PlayerView }) {
 /** Axis & Engines: the round instrument between the pilot's spaces and the co-pilot's. */
 export function InstrumentPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
-  // Engines out (TER): the Engine spaces are covered (grey X) and there is no speed.
+  // Engines out (TER): the Engine spaces are covered (gray X) and there is no speed.
   const engines = !view.scenario.modules.includes('engines-out');
   const enginesHint = view.finalRound
     ? t('cockpit.enginesFinal')

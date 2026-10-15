@@ -5,7 +5,7 @@
 Mobile-first: a phone in portrait (360–430 px wide) is the hardest screen, so it is built first and larger screens spread the same components out. The same React components rearrange through CSS Grid areas; only the layout changes, never the game logic. The detailed, always-current UI rules live in `CLAUDE.md` ("UI rules").
 
 ```
-Phone portrait (< 600 px) Desktop (>= 1024 px, centred container, max 72rem)
+Phone portrait (< 600 px) Desktop (>= 1024 px, centered container, max 72rem)
 +----------------------+ +--------------------------------------+
 | Status bar (sticky) | | Status bar (sticky) |
 +----------------------+ +--------------------------------------+
@@ -23,7 +23,7 @@ Phone portrait (< 600 px) Desktop (>= 1024 px, centred container, max 72rem)
 | --- | --- | --- |
 | Phone portrait | under 600 px | Stacked: sticky status bar, tracks strip, cockpit (ordered per seat), sticky dice tray at the bottom |
 | Phone landscape / tablet | 600–1023 px | Two columns: tracks + cockpit left, dice tray right (sticky under the status bar) |
-| Desktop | 1024 px and up | One centred container (max 72rem): status bar, both tracks side by side, cockpit board, dice tray. Equal 16% side columns: pilot radio above landing gear on the left, co-pilot radio above flaps on the right; axis (+ wind), engines, brakes and concentration in the centre |
+| Desktop | 1024 px and up | One centered container (max 72rem): status bar, both tracks side by side, cockpit board, dice tray. Equal 16% side columns: pilot radio above landing gear on the left, co-pilot radio above flaps on the right; axis (+ wind), engines, brakes and concentration in the center |
 
 Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 
@@ -38,7 +38,7 @@ Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 ## Before take-off
 
 - Accounts (optional): "Sign in" sits next to the language switch on the game picker and the game page (`CardTop`'s `account`); signed in, it shows the name and a menu with the email and "Sign out". The sign-in dialog offers Google. If Google provides no name, a dialog asks the player to choose one once. The account menu has "Change name" (a dialog); signed in, every other name field shows the account's name read-only. With no Google account provider configured, the account controls are hidden.
-- The lobby picks the scenario and the timer only. In the game's `setup` phase a "Before take-off" panel sits above the tracks (`Preflight`): Pilot and Co-pilot buttons (outline in the seat colour; the creator clicks one, the partner sees them disabled; each player's own seat turns solid once chosen), the six Special Ability cards with their rules when the scenario has any (one each with two cards, the creator's with one), and a Confirm button at the bottom for both. Round 1 (and its traffic die) starts once both have confirmed; until then the dice tray only points to the panel. "Fly again" keeps the scenario picker and returns to the panel, with the last seats and picks kept.
+- The lobby picks the scenario and the timer only. In the game's `setup` phase a "Before take-off" panel sits above the tracks (`Preflight`): Pilot and Co-pilot buttons (outline in the seat color; the creator clicks one, the partner sees them disabled; each player's own seat turns solid once chosen), the six Special Ability cards with their rules when the scenario has any (one each with two cards, the creator's with one), and a Confirm button at the bottom for both. Round 1 (and its traffic die) starts once both have confirmed; until then the dice tray only points to the panel. "Fly again" keeps the scenario picker and returns to the panel, with the last seats and picks kept.
 
 ## Turbulence
 
@@ -46,7 +46,7 @@ Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 - Weather: Turbulence (waves) and Bad Visibility (crossed eye) icons on the altitude cards; the dice tray says what this round's weather does and shows Bad Visibility's set-aside dice face down.
 - Approach track: a red bell (Alarm) at a card's top left, a muted speaker (Total Trust) at its top right.
 - Total Trust: no "Roll dice" button; the tray explains, the status bar says "Total Trust" with a red "No talking" pill once the pause is over.
-- Covered spaces (Belly landing's stuck gear) show a grey X.
+- Covered spaces (Belly landing's stuck gear) show a gray X.
 
 ## Languages
 
@@ -62,7 +62,7 @@ Custom Tailwind breakpoints in `@theme`: `tablet` = 600px, `desktop` = 1024px.
 - No hover-only information: anything shown on hover also shows on tap (popovers). Panel hints sit behind an info icon next to the title (gray; red on the mandatory Axis and Engines).
 - Clear turn feedback: the status bar plus `navigator.vibrate` on Android when it becomes your turn.
 
-## Mobile browser behaviour
+## Mobile browser behavior
 
 - Phones pause sockets when the tab is in the background: on `visibilitychange` back to visible, reconnect and send `room:rejoin` with the saved token.
 - Optional Screen Wake Lock during a game so the phone does not sleep mid-round.

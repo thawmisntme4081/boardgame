@@ -10,6 +10,10 @@
     "sky-team": {
       "name": "Sky Team",
       "blurb": "Hai người, hợp tác: cùng hạ cánh máy bay mà không nói chuyện."
+    },
+    "pandemic": {
+      "name": "Pandemic",
+      "blurb": "Hai đến bốn người, hợp tác: chữa cả bốn bệnh trước khi chúng lan khắp thế giới."
     }
   },
   "gate": {
@@ -51,13 +55,17 @@
     "gameCodeLabel": "Mã phòng {{spelled}}",
     "shareInvite": "Chia sẻ lời mời",
     "cancel": "Hủy",
-    "connecting": "Đang kết nối…"
+    "connecting": "Đang kết nối…",
+    "seatsTitle": "Người chơi ({{taken}}/{{total}})",
+    "seatEmpty": "Đang chờ người chơi…",
+    "seatYou": "(bạn)",
+    "seatOffline": "(ngoại tuyến)"
   },
   "toast": {
     "noAnswer": "Máy chủ không phản hồi. Hãy kiểm tra kết nối.",
     "inviteCopied": "Đã sao chép đường dẫn mời",
     "shareText": "Vào chơi cùng mình nhé",
-    "partnerLeft": "{{name}} đã rời ván. Chia sẻ mã để bay cùng người khác.",
+    "partnerLeft": "{{name}} đã rời ván. Chia sẻ mã để mời người khác.",
     "partnerJoined": "{{name}} đã tham gia.",
     "partnerOffline": "{{name}} mất kết nối. Chỗ của họ vẫn được giữ.",
     "partnerBack": "{{name}} đã quay lại."

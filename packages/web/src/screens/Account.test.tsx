@@ -54,9 +54,9 @@ describe('signed out', () => {
     await loadAccount();
     const { router } = await renderAt('/');
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Your name')).not.toHaveAttribute('readonly');
     await router.navigate({ to: '/play/$gameId', params: { gameId: 'sky-team' } });
     expect(await screen.findByRole('button', { name: 'Create a game' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Your name')).not.toHaveAttribute('readonly');
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
   });
 
@@ -85,8 +85,8 @@ describe('signed in', () => {
   it('shows the name and menu; signing out brings sign-in back', async () => {
     fakeServer({ user: ana });
     await loadAccount();
-    await renderAt('/');
-    expect(screen.getByLabelText('Your name')).toHaveValue('Ana');
+    await renderAt('/play/sky-team');
+    expect(await screen.findByLabelText('Your name')).toHaveValue('Ana');
     await userEvent.click(screen.getByRole('button', { name: 'Account: Ana' }));
     expect(await screen.findByText('ana@example.com')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
@@ -97,7 +97,8 @@ describe('signed in', () => {
   it('changes the name from the menu; the lobby field follows', async () => {
     fakeServer({ user: ana });
     await loadAccount();
-    await renderAt('/');
+    await renderAt('/play/sky-team');
+    await screen.findByLabelText('Your name');
     await userEvent.click(screen.getByRole('button', { name: 'Account: Ana' }));
     await userEvent.click(screen.getByRole('button', { name: 'Change name' }));
     const field = within(screen.getByRole('dialog')).getByLabelText('Your name');

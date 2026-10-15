@@ -130,7 +130,7 @@ function PlacingDice({ view }: { view: PlayerView }) {
   );
 }
 
-/** The buttons for the die in hand (coffee, abilities), cancelling the intern, the reroll token. */
+/** The buttons for the die in hand (coffee, abilities), canceling the intern, the reroll token. */
 function PlacingActions({ view }: { view: PlayerView }) {
   const selectedDieId = useSkyTeam((s) => s.selectedDieId);
   const internSlot = useSkyTeam((s) => s.internSlot);

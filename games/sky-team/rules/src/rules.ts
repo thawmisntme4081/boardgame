@@ -114,7 +114,7 @@ export const placementContext = (state: GameState, seat: Seat): PlacementContext
 });
 
 /**
- * Colour, number and order checks for anything going on `slot`: a die, an Intern token or
+ * Color, number and order checks for anything going on `slot`: a die, an Intern token or
  * the traffic die (`seat` null: any color).
  */
 export function checkSlot(
@@ -548,7 +548,7 @@ const placedIn = (state: GameState, group: SlotGroup): boolean =>
  * die; the co-pilot places it right away on any empty space (an extra action this turn).
  * Returns whether the co-pilot now has that die to place.
  */
-function synchronise(state: GameState, after: Seat): boolean {
+function synchronize(state: GameState, after: Seat): boolean {
   if (!state.abilities.includes('synchronization') || state.abilityUse.synchronization) {
     return false;
   }
@@ -607,7 +607,7 @@ export function placeDie(state: GameState, seat: Seat, intent: PlaceIntent): Gam
     endRound(landed);
     if (landed.phase === 'won') return landed;
   }
-  if (s.phase === 'placing' && !synchronise(s, after)) nextTurn(s, after);
+  if (s.phase === 'placing' && !synchronize(s, after)) nextTurn(s, after);
   return s;
 }
 

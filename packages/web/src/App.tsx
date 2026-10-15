@@ -32,7 +32,7 @@ export function App() {
   return (
     <>
       {siteAccess === 'checking' ? (
-        <Connecting />
+        <Connecting framed />
       ) : siteAccess === 'locked' ? (
         <SitePassword />
       ) : (

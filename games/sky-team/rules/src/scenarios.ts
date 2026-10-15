@@ -650,7 +650,7 @@ const HARD: readonly Difficulty[] = ['red', 'black'];
 const baseId = (entry: Pick<Scenario, 'airport' | 'difficulty'>) =>
   `${entry.airport.toLowerCase()}-${entry.difficulty}`;
 
-/** `lhr-yellow`; when an airport and colour appear more than once: `dus-red1`, `dus-red2`. */
+/** `lhr-yellow`; when an airport and color appear more than once: `dus-red1`, `dus-red2`. */
 export const scenarioIds = (
   entries: readonly Pick<Scenario, 'airport' | 'difficulty'>[],
 ): string[] => {

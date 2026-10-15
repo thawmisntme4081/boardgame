@@ -147,6 +147,8 @@ export interface RematchOffer<Seat extends string = string> {
   by: Seat | null;
   /** The setup the offer proposes (the game reads what it needs from it). */
   config: unknown;
+  /** The seats that asked for this rematch so far, the offerer first; it starts once all have. */
+  accepted: Seat[];
 }
 
 /** Server → client. */

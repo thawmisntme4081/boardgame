@@ -1,6 +1,6 @@
 import { cn } from '@platform/ui/utils';
 
-/** A small airplane glyph, centred on (x, y), for use inside another SVG. */
+/** A small airplane glyph, centered on (x, y), for use inside another SVG. */
 export function Plane({ x, y, className }: { x: number; y: number; className?: string }) {
   return (
     <path
