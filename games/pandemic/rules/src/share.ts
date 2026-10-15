@@ -1,9 +1,12 @@
 // Share Knowledge: the active player offers to give or take the card of the city both players
-// are in (a role may allow another city card: `canGive`); the partner accepts or declines; the active player can cancel. The action is spent
-// only when the partner accepts.
+// are in (a role may allow another city card: `canGive`); the partner accepts or declines; the
+// active player can cancel. The action is spent only when the partner accepts. The active player
+// is where the pawn chosen for the turn is (`actingPawn`); the partner is in every city one of its
+// pawns is in (a Teacher's student counts as the Teacher).
 import type { ActionCheck, ActionReason } from './actions';
-import { hasCityCard, spendAction } from './actions';
+import { checkTurnAction, hasCityCard, spendAction } from './actions';
 import type { CityId } from './cities';
+import { actingPawn, pawnsOf } from './pawns';
 import { roleOf } from './roles';
 import { HAND_LIMIT, type ActionState, type GameState, type HandCard, type SeatId } from './types';
 
@@ -39,13 +42,13 @@ export function checkShare(state: ActionState, seat: SeatId, move: ShareMove): A
     return seat === shareAnswerer(state) ? OK : fail('not-your-answer');
   }
 
-  if (state.turn.seat !== seat) return fail('not-your-turn');
-  if (state.pending) return fail('answer-first');
-  if (state.turn.step !== 'actions') return fail('wrong-step');
-  if (state.turn.actionsLeft <= 0) return fail('no-actions-left');
+  const turn = checkTurnAction(state, seat);
+  if (!turn.ok) return turn;
   if (move.with === seat || !state.seats.includes(move.with)) return fail('bad-partner');
-  const here = state.pawns[seat] as CityId;
-  if (state.pawns[move.with] !== here) return fail('not-together');
+  const here = state.pawns[actingPawn(state, seat)] as CityId;
+  if (!pawnsOf(state, move.with).some((pawn) => state.pawns[pawn] === here)) {
+    return fail('not-together');
+  }
   const giver = move.direction === 'give' ? seat : move.with;
   const city = move.city ?? here;
   // Another city's card can only be given (by the active player), never taken.
@@ -62,7 +65,7 @@ export function applyShare(state: GameState, seat: SeatId, move: ShareMove): Gam
 
   const s = structuredClone(state);
   if (move.type === 'share-offer') {
-    const city = move.city ?? (s.pawns[seat] as CityId);
+    const city = move.city ?? (s.pawns[actingPawn(s, seat)] as CityId);
     s.pending =
       move.direction === 'give'
         ? { kind: 'share', from: seat, to: move.with, city }

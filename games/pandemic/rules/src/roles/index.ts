@@ -1,13 +1,15 @@
-// The seven role cards of the base game, by id. Each role's powers are hooks (`RoleModule`);
+// The seven role cards of the base game and the fan-made Teacher, by id. Each role's powers are hooks (`RoleModule`);
 // a role without powers yet is only its id.
 import type { ActionState, RoleId, SeatId } from '../types';
 import { contingencyPlanner } from './contingencyPlanner';
 import { medic } from './medic';
 import { operationsExpert } from './operationsExpert';
 import { quarantineSpecialist } from './quarantineSpecialist';
+import { teacher } from './teacher';
 import type { RoleModule } from './types';
 
 export * from './types';
+export { MAX_STUDENTS } from './teacher';
 
 export const ROLES: Readonly<Record<RoleId, RoleModule>> = {
   'contingency-planner': contingencyPlanner,
@@ -20,6 +22,7 @@ export const ROLES: Readonly<Record<RoleId, RoleModule>> = {
   researcher: { id: 'researcher', canGive: () => true },
   // Discovers a cure with 4 cards of a color.
   scientist: { id: 'scientist', cardsToCure: 4 },
+  teacher,
 };
 
 /** The role a seat holds (`undefined` for a seat not in the game). */

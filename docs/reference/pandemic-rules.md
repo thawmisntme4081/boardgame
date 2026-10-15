@@ -9,12 +9,14 @@ The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edi
 | File | Contents |
 | --- | --- |
 | `cities.ts` | The 48 cities: `color`, `links` (the white lines, Pacific ones included, in a fixed order; where each city sits on the map picture is the client's `lib/mapGeometry.ts`); `cityOf`, `areLinked`, `PACIFIC_LINKS`. Written from the standard board (the rulebook's text has none of it); to be checked against the physical board |
-| `types.ts` | `SeatId` (`p1`–`p4`), the rulebook's numbers, `EVENT_IDS`, `ROLE_IDS`, `PlayerCard` / `HandCard`, `Turn`, `Pending`, `GameState`; `ActionState` (the fields the move checks read: a state or a view) |
+| `types.ts` | `SeatId` (`p1`–`p4`), `PawnId` (a seat's own pawn `p1`, or a Teacher's students `p1-s1`, `p1-s2`), `pawnOwner`, `pawnsOnMap`, the rulebook's numbers, `EVENT_IDS`, `ROLE_IDS`, `PlayerCard` / `HandCard`, `Turn`, `Pending`, `GameState`; `ActionState` (the fields the move checks read: a state or a view) |
 | `setup.ts` | `createGame({ seats, epidemics, seed, ordered?, roles? })`, the seeded `shuffle`, `pileSizes` |
 | `preflight.ts` | The "before the game" step: `beginSetup`, `checkPreflight` / `applyPreflight` (`pick-role`, `confirm`, `unconfirm`); the last confirm deals the board |
 | `actions.ts` | The actions: `checkAction` (a reason code), `applyAction`, `spendAction`, `cubesOnBoard`, `cardsToCure` |
 | `playEvent.ts` | Event cards: `eventMoment` (when events may be played), `canPlayCard` / `canPlayEvent` (the client's check too), `heldEvents`, `checkPlayEvent` / `applyPlayEvent`, `resolveEvent` (also run when an Airlift offer is accepted) |
 | `events/` | One `EventModule` per card (`airlift`, `forecast`, `governmentGrant`, `oneQuietNight`, `resilientPopulation`), their `EventPlay` choices and the `PlayEventMove` type; Forecast's second step (`forecast-order`) |
+| `pawns.ts` | The pawn a seat acts with: `choose-pawn` (`checkChoosePawn` / `applyChoosePawn`), `actingPawn`, `startingPawn`, `pawnsOf` |
+| `roles/` | One `RoleModule` per role card, including `teacher.ts` (`create-student`, `MAX_STUDENTS`); the core calls their hooks and never names a role |
 | `share.ts` | Share Knowledge as an offer and an answer: `checkShare`, `applyShare`, `shareAnswerer` |
 | `outbreak.ts` | `infectCity` (infections, epidemics, outbreaks and chain reactions; returns the cubes placed and the cities that outbroke), `lose` |
 | `log.ts` | `GameLog`: the current and the previous turn, each a list of `LogEntry` (`draw`, `epidemic-increase`, `epidemic-intensify`, `infect` with its cubes and outbreak chain); `emptyLog`, `nextTurnLog`; the board does not show it any more (its "Turn log" section was removed) |
@@ -25,7 +27,7 @@ The spec is the rulebook in `docs/rulebooks/pandemic_rules.pdf` (Z-Man, 2013 edi
 | `outcome.ts` | `outcome(state)`: won, or lost with `outbreaks`, `cubes` or `player-deck` |
 | `definition.ts` | `pandemic`, the `GameDefinition` (imported only as `@pandemic/rules/definition`), `pandemicMoveSchema`, `pandemicConfigSchema` |
 | `random-play.ts` | `agentMove`, a random player with a taste for useful moves (imported as `@pandemic/rules/random-play`); used by the engine kit and `pnpm --filter @pandemic/rules random-play` |
-| `test-utils.ts` | `blankGame` (a seeded game with an empty board), `addCubes`, `give`, `city` |
+| `test-utils.ts` | `blankGame` (a seeded game with an empty board), `setTurnSeat` (a turn's seat and its pawn together), `addCubes`, `give`, `city` |
 
 ## Numbers (from the rulebook)
 
@@ -52,6 +54,15 @@ Decided with the user (Pandemic 01):
 - **The hand limit** is a pending `discard` that blocks play until done, even for a player outside their turn (the receiver of a shared card). After a draw it is checked once the epidemics are resolved.
 - **Chain reactions** resolve first in, first out, neighbors in the city list's order; a city outbreaks once per infection card. The rulebook gives no order; it only matters when the cubes run out.
 - **An empty infection deck** (not expected: epidemics refill it) flips no card, and the discard pile stays.
+
+## The Teacher and the pawn of the turn (Pandemic 04, tasks 12 to 18)
+
+A fan-made role the user added: the base game's seven roles plus the Teacher make eight (dealt like the others, no lobby option). Settled with the user:
+
+- **Pawns.** Every seat has its own pawn (`p1`); the Teacher may add up to two students (`p1-s1`, `p1-s2`) with `create-student`, a role action (one action) that only the teacher pawn can take, in its city. Nothing removes a pawn. A student is a plain pawn: basic actions only, no power; its owner's role hooks run only for the seat's own pawn (`movePawn`).
+- **The pawn of the turn** (`turn.pawn`): a seat with several pawns starts its turn with `null` and must `choose-pawn` (a move, not an action) before any action, Share Knowledge or role action (`choose-pawn-first`); a seat with one pawn starts with it. The choice holds until the turn ends (`pawn-chosen`; taken back only by Restart turn).
+- **Actions work on the chosen pawn** with the Teacher's one hand: drive, direct, charter (the card of the pawn's own city), shuttle, build and treat in its city, cure at a station in its city, Share Knowledge there. A partner counts as there if any of their pawns is.
+- **Other players:** the Dispatcher and Airlift may move a student; as for any other player's pawn it is an offer its owner answers (`pawnOwner`). Government Grant is unaffected.
 
 ## Before the game (Pandemic 06)
 
@@ -89,11 +100,11 @@ Decided with the user (after Pandemic 06): until the cards are drawn, the active
 
 ## State
 
-`GameState` holds the turn order (`seats`), the `epidemics` count, the `turn` (`seat`, `actionsLeft`, `step`: `actions` → `draw` → `epidemic` → `infect`; the epidemics left to resolve, the next `epidemicStep`, the `infectionsLeft`), `pending` (an open share or pawn-move offer, an owed discard, or a Forecast being arranged), `quietNight` (One Quiet Night was played), `contingency` (the Contingency Planner's stored event), `status` and `lossReason`, `pawns`, `hands`, `cubes` (every city, per color), `supply`, `stations`, both decks (top card first) and discard piles, `outbreaks`, `infectionRate` (the marker's position), `cures` (`none` / `cured` / `eradicated`), `rngSeed` and `rngState`.
+`GameState` holds the turn order (`seats`), the `epidemics` count, the `turn` (`seat`, `pawn`, `actionsLeft`, `step`: `actions` → `draw` → `epidemic` → `infect`; the epidemics left to resolve, the next `epidemicStep`, the `infectionsLeft`), `pending` (an open share or pawn-move offer, an owed discard, or a Forecast being arranged), `quietNight` (One Quiet Night was played), `contingency` (the Contingency Planner's stored event), `status` and `lossReason`, `pawns` (by `PawnId`), `hands`, `cubes` (every city, per color), `supply`, `stations`, both decks (top card first) and discard piles, `outbreaks`, `infectionRate` (the marker's position), `cures` (`none` / `cured` / `eradicated`), `rngSeed` and `rngState`.
 
 The `log` keeps what happened after the actions in the current and the previous turn: the cards drawn (epidemics included), each epidemic step (the new infection rate, how many cards went back on the deck), and every city infected (by a card or an epidemic) with the cubes it got and the cities that outbroke in order. Everything in it is public, so views carry it as is. Rules version 2 added it; `migrate` gives a version-1 saved game an empty log.
 
-Every check returns `{ ok: true }` or `{ ok: false, reason }` with a code: `game-over`, `not-your-turn`, `wrong-step`, `answer-first`, `no-actions-left`, `same-city`, `not-adjacent`, `card-missing`, `no-station`, `station-exists`, `bad-station-to-move`, `no-cubes`, `already-cured`, `bad-cards`, `bad-partner`, `not-together`, `no-offer`, `not-your-answer`, `nothing-to-discard`, and for events `card-resolving`, `not-playable`, `no-forecast`, `bad-order`. The `apply` functions throw on an illegal move.
+Every check returns `{ ok: true }` or `{ ok: false, reason }` with a code: `game-over`, `not-your-turn`, `wrong-step`, `answer-first`, `no-actions-left`, `same-city`, `not-adjacent`, `card-missing`, `no-station`, `station-exists`, `bad-station-to-move`, `no-cubes`, `already-cured`, `bad-cards`, `bad-partner`, `not-together`, `no-offer`, `not-your-answer`, `nothing-to-discard`, for the pawn of the turn `choose-pawn-first`, `pawn-chosen`, `not-your-pawn`, `teacher-pawn-only`, `no-students-left`, and for events `card-resolving`, `not-playable`, `no-forecast`, `bad-order`. The `apply` functions throw on an illegal move.
 
 ## Engine adapter
 

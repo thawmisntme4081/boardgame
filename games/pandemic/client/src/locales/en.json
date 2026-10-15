@@ -136,8 +136,18 @@
       "name": "Scientist",
       "power": "Discover a cure with only 4 City cards of one color."
     },
+    "teacher": {
+      "name": "Teacher",
+      "power": "As an action, create a student pawn in your city (at most 2 per game). At the start of your turn, choose the teacher or a student: that pawn does this turn's actions, with your hand."
+    },
+    "students": "Students: {{count}} / {{max}}",
     "info": "What {{role}} can do",
     "stored": "Stored: {{event}}"
+  },
+  "pawns": {
+    "teacher": "Teacher pawn",
+    "student": "Student {{number}}",
+    "studentOf": "{{name}}'s student"
   },
   "hands": {
     "title": "Hands",
@@ -175,6 +185,10 @@
     "join": "To a pawn there",
     "ops-flight": "Operations flight",
     "movePawn": "Pawn to move",
+    "choosePawn": "Choose the pawn for this turn",
+    "pawnAt": "{{pawn}} in {{city}}",
+    "pawnToday": "This turn: {{pawn}}",
+    "createStudent": "Create a student",
     "ownPawn": "Yours",
     "takeEvent": "Take {{event}} from the discard pile",
     "build": "Build a research station",
@@ -261,7 +275,12 @@
     "pick-first": "Pick a role first.",
     "roles-dealt": "The roles are dealt at random in this game.",
     "role-taken": "Another player has that role.",
-    "cannot-restart": "The turn cannot be restarted now."
+    "cannot-restart": "The turn cannot be restarted now.",
+    "choose-pawn-first": "Choose the pawn for this turn first.",
+    "pawn-chosen": "The pawn for this turn is chosen already.",
+    "not-your-pawn": "That pawn is not yours.",
+    "teacher-pawn-only": "Only the teacher pawn can create a student.",
+    "no-students-left": "Both students have been created."
   },
   "epidemic": {
     "title_one": "Epidemic ({{count}} to resolve)",

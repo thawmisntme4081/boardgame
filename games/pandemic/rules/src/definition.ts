@@ -24,7 +24,9 @@ import {
   EVENT_IDS,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  PAWN_IDS,
   SEATS,
+  pawnOwner,
   type PandemicState,
   type SeatId,
 } from './types';
@@ -33,6 +35,7 @@ import { tableViewFor, type TableView } from './views';
 const cityId = z.enum(CITIES.map((city) => city.id) as [string, ...string[]]);
 const color = z.enum(COLORS as unknown as [string, ...string[]]);
 const seat = z.enum(SEATS as unknown as [string, ...string[]]);
+const pawnId = z.enum(PAWN_IDS as unknown as [string, ...string[]]);
 const handCard = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('city'), city: cityId }),
   z.object({ kind: z.literal('event'), event: z.enum(EVENT_IDS) }),
@@ -47,7 +50,7 @@ const playEvent = (event: string, choices: z.ZodRawShape = {}) =>
     ...choices,
   });
 const playEventSchema = z.discriminatedUnion('event', [
-  playEvent('airlift', { pawn: seat, to: cityId }),
+  playEvent('airlift', { pawn: pawnId, to: cityId }),
   playEvent('forecast'),
   playEvent('government-grant', { city: cityId, move: cityId.optional() }),
   playEvent('one-quiet-night'),
@@ -56,17 +59,19 @@ const playEventSchema = z.discriminatedUnion('event', [
 
 /** Every move a player may send. */
 export const pandemicMoveSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('drive'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('direct'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('charter'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('shuttle'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('join'), to: cityId, pawn: seat.optional() }),
+  z.object({ type: z.literal('drive'), to: cityId, pawn: pawnId.optional() }),
+  z.object({ type: z.literal('direct'), to: cityId, pawn: pawnId.optional() }),
+  z.object({ type: z.literal('charter'), to: cityId, pawn: pawnId.optional() }),
+  z.object({ type: z.literal('shuttle'), to: cityId, pawn: pawnId.optional() }),
+  z.object({ type: z.literal('join'), to: cityId, pawn: pawnId.optional() }),
   z.object({ type: z.literal('build'), move: cityId.optional() }),
   z.object({ type: z.literal('treat'), color }),
   z.object({ type: z.literal('cure'), color, cards: z.array(cityId).max(5) }),
   z.object({ type: z.literal('pass') }),
   z.object({ type: z.literal('ops-flight'), to: cityId, card: cityId }),
   z.object({ type: z.literal('take-event'), event: z.enum(EVENT_IDS) }),
+  z.object({ type: z.literal('create-student') }),
+  z.object({ type: z.literal('choose-pawn'), pawn: pawnId }),
   z.object({
     type: z.literal('share-offer'),
     direction: z.enum(['give', 'take']),
@@ -159,7 +164,7 @@ function actors(state: PandemicState): Actor[] {
     return [{ seat: pending.seat, kind: 'prompt', prompt: 'discard' }];
   }
   if (pending?.kind === 'move') {
-    return [{ seat: pending.pawn, kind: 'prompt', prompt: 'move' }];
+    return [{ seat: pawnOwner(pending.pawn), kind: 'prompt', prompt: 'move' }];
   }
   if (pending?.kind === 'forecast') {
     return [{ seat: pending.seat, kind: 'prompt', prompt: 'forecast' }];
@@ -175,9 +180,10 @@ export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, Pandemi
   // 3: the state holds the `roles` (Pandemic 04). 4: the turn counts `epidemicsResolved` and the
   // state has `quietNight` (event cards, Pandemic 05). 5: the "before the game" step (`setup`
   // status) and the role mode (Pandemic 06). 6: the game keeps a `checkpoint` for "Restart turn".
-  // Older matches are not migrated (Pandemic was never
-  // deployed), so they are dropped on load.
-  version: 6,
+  // 7: pawns are named by `PawnId` (a seat's own pawn or a Teacher's student) instead of a seat,
+  // and the turn holds the pawn chosen for it (`turn.pawn`).
+  // Older matches are not migrated (Pandemic was never deployed), so they are dropped on load.
+  version: 7,
   // A player who leaves frees the seat, not the hand: the game waits for whoever joins next.
   meta: {
     seats: SEATS,

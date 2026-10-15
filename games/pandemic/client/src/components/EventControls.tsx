@@ -1,4 +1,5 @@
 import {
+  pawnsOnMap,
   canActInView,
   canPlayCard,
   heldEvents,
@@ -14,7 +15,7 @@ import type { SeatPresence } from '@platform/ui/game';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ownerPart, type EventPlan } from '../lib/events';
-import { cityName, seatName } from '../lib/names';
+import { cityName, pawnName, seatName } from '../lib/names';
 import { platform } from '../platform';
 import { usePandemic } from '../store';
 
@@ -49,16 +50,16 @@ function PlanStep({
         <div className="flex flex-col gap-2">
           <p className="text-sm">{t('eventBar.airliftPawn')}</p>
           <div className="flex flex-wrap gap-1">
-            {view.seats.map((seat) => (
+            {pawnsOnMap(view).map((pawn) => (
               <Button
-                key={seat}
+                key={pawn}
                 variant="outline"
                 size="sm"
-                onClick={() => planEvent({ event: 'airlift', owner: plan.owner, pawn: seat })}
+                onClick={() => planEvent({ event: 'airlift', owner: plan.owner, pawn })}
               >
                 {t('eventBar.pawnAt', {
-                  name: seatName(presence, seat),
-                  city: cityName(view.pawns[seat] as CityId),
+                  name: pawnName(presence, pawn),
+                  city: cityName(view.pawns[pawn] as CityId),
                 })}
               </Button>
             ))}
@@ -70,7 +71,7 @@ function PlanStep({
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm">
-          {t('eventBar.airliftCity', { name: seatName(presence, plan.pawn) })}
+          {t('eventBar.airliftCity', { name: pawnName(presence, plan.pawn) })}
         </p>
         <div>{cancel}</div>
       </div>

@@ -5,7 +5,7 @@
 // once it happens: drawn cards go to open hands or out of the game, infection cards to the
 // discard pile.
 import type { CityId, Color } from './cities';
-import type { EventId, PlayerCard, SeatId } from './types';
+import type { EventId, PawnId, PlayerCard, SeatId } from './types';
 
 export type LogEntry =
   /**
@@ -19,7 +19,7 @@ export type LogEntry =
       stored: boolean;
       /** Whose card it was, when not the player's own. */
       owner?: SeatId;
-      pawn?: SeatId;
+      pawn?: PawnId;
       city?: CityId;
     }
   /** One Quiet Night: this turn's infect step was skipped. */

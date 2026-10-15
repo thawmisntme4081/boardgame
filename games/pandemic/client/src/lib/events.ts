@@ -5,6 +5,7 @@ import {
   type CityId,
   type EventId,
   type PandemicView,
+  type PawnId,
   type SeatId,
 } from '@pandemic/rules';
 
@@ -14,7 +15,7 @@ import {
  * Forecast and One Quiet Night need none and are sent at once.
  */
 export type EventPlan =
-  | { event: 'airlift'; owner: SeatId; pawn: SeatId | null }
+  | { event: 'airlift'; owner: SeatId; pawn: PawnId | null }
   | { event: 'government-grant'; owner: SeatId; city: CityId | null }
   | { event: 'resilient-population'; owner: SeatId };
 

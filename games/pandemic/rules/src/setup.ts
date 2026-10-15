@@ -143,7 +143,7 @@ export function createGame(options: CreateGameOptions): GameState {
     order.items.forEach((seat, i) => (roles[seat] = roleDeal.items[i]));
   }
 
-  const pawns: PerSeat<CityId> = {};
+  const pawns: GameState['pawns'] = {};
   for (const seat of order.items) pawns[seat] = START_CITY;
 
   return {
@@ -156,6 +156,8 @@ export function createGame(options: CreateGameOptions): GameState {
       epidemics: 0,
       epidemicStep: 'increase',
       infectionsLeft: 0,
+      // Nobody has students yet: every turn starts with the seat's own pawn.
+      pawn: order.items[0] as SeatId,
       flightUsed: false,
       epidemicsResolved: 0,
     },

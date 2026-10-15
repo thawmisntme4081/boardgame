@@ -5,12 +5,15 @@ import type { NextMove } from '@platform/engine/testing';
 import { CITIES, COLORS, cityOf, type CityId, type Color } from './cities';
 import { cardsToCure, cubesOnBoard } from './actions';
 import { legalActions, legalRoleActions, legalShareOffers } from './legal';
+import { actingPawn, pawnsOf } from './pawns';
 import { canPlayCard, heldEvents } from './playEvent';
 import { checkMove, type PandemicMove } from './moves';
 import { shareAnswerer } from './share';
 import {
   MAX_STATIONS,
   ROLE_IDS,
+  pawnOwner,
+  pawnsOnMap,
   type EventId,
   type GameState,
   type HandCard,
@@ -68,7 +71,7 @@ function eventMove(state: GameState, event: EventId, random: () => number): Pand
       return {
         type: 'play-event',
         event,
-        pawn: pick(state.seats, random),
+        pawn: pick(pawnsOnMap(state), random),
         to: pick(CITIES, random).id,
       };
     case 'forecast':
@@ -122,7 +125,8 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
   }
   if (pending?.kind === 'move') {
     if (random() < 0.05) return { by: pending.by, move: { type: 'move-cancel' } };
-    return { by: pending.pawn, move: { type: random() < 0.9 ? 'move-accept' : 'move-decline' } };
+    const by = pawnOwner(pending.pawn);
+    return { by, move: { type: random() < 0.9 ? 'move-accept' : 'move-decline' } };
   }
   if (pending?.kind === 'forecast') {
     // Puts the cards back as they were or upside down: any order is legal.
@@ -150,13 +154,17 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
     case 'infect':
       return { by, move: { type: 'infect' } };
     case 'actions':
+      // A seat with several pawns (a Teacher with students) first picks one for the turn.
+      if (turn.pawn === null) {
+        return { by, move: { type: 'choose-pawn', pawn: pick(pawnsOf(state, by), random) } };
+      }
       return { by, move: actionMove(state, by, random) };
   }
 }
 
 function actionMove(state: GameState, by: SeatId, random: () => number): PandemicMove {
   const actions = legalActions(state, by);
-  const here = state.pawns[by] as CityId;
+  const here = state.pawns[actingPawn(state, by)] as CityId;
   const hand = state.hands[by] ?? [];
 
   // A role's own power now and then.

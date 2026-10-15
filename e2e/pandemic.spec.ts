@@ -96,6 +96,7 @@ test.describe('a three-player Pandemic game', () => {
         epidemics: 0,
         epidemicStep: 'increase',
         infectionsLeft: 0,
+        pawn: 'p1',
       },
       pending: null,
       pawns: { p1: 'atlanta', p2: 'atlanta', p3: 'atlanta' },
@@ -199,6 +200,7 @@ test.describe('a three-player Pandemic game', () => {
         epidemics: 0,
         epidemicStep: 'increase',
         infectionsLeft: 0,
+        pawn: 'p1',
       },
       pending: null,
       roles: { p1: 'dispatcher', p2: 'medic', p3: 'researcher' },
@@ -244,6 +246,7 @@ test.describe('a three-player Pandemic game', () => {
         epidemics: 0,
         epidemicStep: 'increase',
         infectionsLeft: 0,
+        pawn: 'p2',
       },
       pending: null,
       pawns: { p1: 'atlanta', p2: 'chicago', p3: 'atlanta' },
@@ -272,6 +275,7 @@ test.describe('a three-player Pandemic game', () => {
       epidemics: 0,
       epidemicStep: 'increase',
       infectionsLeft: 0,
+      pawn: 'p1',
       flightUsed: false,
       epidemicsResolved: 0,
     },
@@ -282,6 +286,80 @@ test.describe('a three-player Pandemic game', () => {
     contingency: null,
     quietNight: false,
   };
+
+  test('a Teacher creates a student, then uses it for a turn: the choice is fixed until the turn ends', async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const { ana, ben, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+    const turn = {
+      seat: 'p1',
+      actionsLeft: 4,
+      step: 'actions',
+      epidemics: 0,
+      epidemicStep: 'increase',
+      infectionsLeft: 0,
+      pawn: 'p1',
+      flightUsed: false,
+      epidemicsResolved: 0,
+    };
+
+    // Ana is the Teacher, with no student yet: her turn starts with the teacher pawn.
+    await setGame(request, code, {
+      turn,
+      pending: null,
+      roles: { p1: 'teacher', p2: 'medic', p3: 'researcher' },
+      pawns: { p1: 'atlanta', p2: 'atlanta', p3: 'atlanta' },
+      stations: ['atlanta'],
+      cubes: noCubes(),
+      hands: { p1: [], p2: [], p3: [] },
+      contingency: null,
+    });
+    await expect(ana.getByText(/4 actions left/)).toBeVisible();
+    await expect(ana.getByRole('group', { name: 'Choose the pawn for this turn' })).toHaveCount(0);
+
+    // Creating a student is an action; both players see the new pawn and the count on the card.
+    await ana.getByRole('button', { name: 'Create a student' }).click();
+    await expect(ana.getByText(/3 actions left/)).toBeVisible();
+    await expect(ben.locator('[data-pawn="p1-s1"]')).toBeVisible();
+    await expect(ben.getByText('Students: 1 / 2')).toBeVisible();
+
+    // Her next turn: the student is in Chicago, where 2 blue cubes are; the teacher is in Atlanta.
+    await setGame(request, code, {
+      turn: { ...turn, pawn: null },
+      pawns: { p1: 'atlanta', 'p1-s1': 'chicago', p2: 'atlanta', p3: 'atlanta' },
+      cubes: { ...noCubes(), chicago: { blue: 2, yellow: 0, black: 0, red: 0 } },
+      supply: {
+        blue: CUBES_PER_COLOR - 2,
+        yellow: CUBES_PER_COLOR,
+        black: CUBES_PER_COLOR,
+        red: CUBES_PER_COLOR,
+      },
+    });
+
+    // No action works before the choice.
+    const choice = ana.getByRole('group', { name: 'Choose the pawn for this turn' });
+    await expect(choice).toBeVisible();
+    await expect(ana.getByRole('button', { name: 'Treat Blue' })).toHaveCount(0);
+    await expect(ana.getByRole('button', { name: 'Create a student' })).toHaveCount(0);
+
+    // Choosing the student: the actions are now the student's, in Chicago.
+    await choice.getByRole('button', { name: 'Student 1 in Chicago' }).click();
+    await expect(choice).toHaveCount(0);
+    await expect(ana.getByText('This turn: Student 1 in Chicago')).toBeVisible();
+    await ana.getByRole('button', { name: 'Treat Blue' }).click();
+    await expect(ana.getByText(/3 actions left/)).toBeVisible();
+    await expect(ben.locator('[data-supply="blue"]')).toContainText(String(CUBES_PER_COLOR - 1));
+
+    // The choice holds for the rest of the turn: the other pawn cannot be picked, and a student
+    // cannot create a student.
+    await expect(choice).toHaveCount(0);
+    await expect(ana.getByRole('button', { name: 'Create a student' })).toHaveCount(0);
+    await expect(ana.getByText('This turn: Student 1 in Chicago')).toBeVisible();
+  });
 
   test("an event is played during someone else's turn: Ben's Government Grant on Ana's turn", async ({
     browser,
@@ -458,7 +536,7 @@ test.describe('before the game', () => {
 
     for (const page of pages) {
       await expect(page.getByText(/5 epidemic cards · roles chosen by the players/)).toBeVisible();
-      await expect(page.locator('[data-role]')).toHaveCount(7);
+      await expect(page.locator('[data-role]')).toHaveCount(8);
       // Nothing to confirm before a role is picked.
       await expect(page.getByRole('button', { name: 'Confirm and start' })).toBeDisabled();
     }

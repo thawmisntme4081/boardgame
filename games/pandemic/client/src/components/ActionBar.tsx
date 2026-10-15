@@ -1,4 +1,5 @@
 import {
+  actingPawn,
   COLORS,
   MAX_STATIONS,
   canActInView,
@@ -6,6 +7,8 @@ import {
   cityOf,
   HAND_LIMIT,
   heldEvents,
+  pawnsOf,
+  pawnsOnMap,
   roleOf,
   type CityId,
   type Color,
@@ -19,7 +22,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DISEASE_PALE_TEXT, diseasePale } from '../lib/colors';
 import { EventControls } from './EventControls';
-import { cityName, seatName } from '../lib/names';
+import { cityName, ownPawnLabel, pawnName, seatName } from '../lib/names';
 import { platform } from '../platform';
 import { usePandemic } from '../store';
 
@@ -70,9 +73,12 @@ export function ActionBar({
   }
   const can = (move: PandemicMove) => canActInView(view, you, move);
   const stationsFull = view.stations.length >= MAX_STATIONS;
-  const here = view.pawns[you] as CityId;
+  const here = view.pawns[actingPawn(view, you)] as CityId;
   // A role that moves other pawns picks which one the map moves.
   const movesPawns = roleOf(view, you)?.movesPawns === true;
+  // A Teacher with students chooses the pawn that does the turn's actions before the first one.
+  const ownPawns = pawnsOf(view, you);
+  const choosingPawn = mine && turn.step === 'actions' && turn.pawn === null;
   // Event cards in the discard pile a role may take (each once).
   const takes = [
     ...new Set(view.playerDiscard.flatMap((card) => (card.kind === 'event' ? [card.event] : []))),
@@ -242,20 +248,60 @@ export function ActionBar({
           className="flex flex-wrap items-center gap-2"
         >
           <span className="font-medium">{t('actions.movePawn')}</span>
-          {view.seats.map((seat) => {
-            const on = (movingPawn ?? you) === seat;
+          {pawnsOnMap(view).map((pawn) => {
+            const on = (movingPawn ?? you) === pawn;
             return (
               <Button
-                key={seat}
+                key={pawn}
                 size="sm"
                 variant={on ? 'default' : 'outline'}
                 aria-pressed={on}
-                onClick={() => setMovingPawn(seat === you ? null : seat)}
+                onClick={() => setMovingPawn(pawn === you ? null : pawn)}
               >
-                {seat === you ? t('actions.ownPawn') : seatName(presence, seat)}
+                {pawn === you ? t('actions.ownPawn') : pawnName(presence, pawn)}
               </Button>
             );
           })}
+        </div>
+      )}
+
+      {choosingPawn && (
+        <div
+          role="group"
+          aria-label={t('actions.choosePawn')}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <span className="font-medium">{t('actions.choosePawn')}</span>
+          {ownPawns.map((pawn) => (
+            <Button
+              key={pawn}
+              size="sm"
+              variant="outline"
+              onClick={() => send({ type: 'choose-pawn', pawn })}
+            >
+              {t('actions.pawnAt', {
+                pawn: ownPawnLabel(pawn),
+                city: cityName(view.pawns[pawn] as CityId),
+              })}
+            </Button>
+          ))}
+        </div>
+      )}
+      {mine && ownPawns.length > 1 && turn.pawn !== null && (
+        <p className="text-sm">
+          {t('actions.pawnToday', {
+            pawn: t('actions.pawnAt', {
+              pawn: ownPawnLabel(turn.pawn),
+              city: cityName(view.pawns[turn.pawn] as CityId),
+            }),
+          })}
+        </p>
+      )}
+      {can({ type: 'create-student' }) && (
+        <div>
+          <Button variant="outline" onClick={() => send({ type: 'create-student' })}>
+            {t('actions.createStudent')}
+          </Button>
         </div>
       )}
 

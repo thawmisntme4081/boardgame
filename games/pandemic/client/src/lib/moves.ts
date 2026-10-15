@@ -1,8 +1,11 @@
 import {
+  actingPawn,
   canActInView,
   type CityId,
   type PandemicMove,
   type PandemicView,
+  type PawnId,
+  type PawnMove,
   type SeatId,
 } from '@pandemic/rules';
 
@@ -18,11 +21,15 @@ export function movesTo(
   view: PandemicView,
   seat: SeatId,
   city: CityId,
-  pawn: SeatId = seat,
+  pawn: PawnId = actingPawn(view, seat),
 ): PandemicMove[] {
-  const other = pawn === seat ? {} : { pawn };
-  const moves: PandemicMove[] = MOVE_TYPES.map((type) => ({ type, to: city, ...other }));
-  if (pawn === seat) {
+  const own = actingPawn(view, seat);
+  const moves: PandemicMove[] = MOVE_TYPES.map((type) => {
+    const move: PawnMove = { type, to: city };
+    if (pawn !== own) move.pawn = pawn;
+    return move;
+  });
+  if (pawn === own) {
     for (const card of view.hands[seat] ?? []) {
       if (card.kind === 'city') moves.push({ type: 'ops-flight', to: city, card: card.city });
     }
@@ -35,7 +42,7 @@ export function reachableCities(
   view: PandemicView,
   seat: SeatId,
   cities: readonly { id: CityId }[],
-  pawn: SeatId = seat,
+  pawn: PawnId = actingPawn(view, seat),
 ): Set<CityId> {
   const set = new Set<CityId>();
   for (const { id } of cities) if (movesTo(view, seat, id, pawn).length > 0) set.add(id);

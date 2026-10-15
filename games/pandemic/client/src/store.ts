@@ -1,4 +1,4 @@
-import { canPlayCard, type CityId, type SeatId, type TableView } from '@pandemic/rules';
+import { canPlayCard, type CityId, type PawnId, type TableView } from '@pandemic/rules';
 import type { SeatPresence } from '@platform/ui/game';
 import { toast } from 'sonner';
 import { create } from 'zustand';
@@ -22,8 +22,8 @@ export interface PandemicStore {
   pile: 'player' | 'infection' | null;
   openPile: (pile: 'player' | 'infection' | null) => void;
   /** The pawn the map moves for a role that moves others' pawns (`null`: your own). */
-  movingPawn: SeatId | null;
-  setMovingPawn: (pawn: SeatId | null) => void;
+  movingPawn: PawnId | null;
+  setMovingPawn: (pawn: PawnId | null) => void;
   /**
    * When the deal started being shown (the game turned from the "before the game" step to the
    * dealt board in this session), until it is done; `null` otherwise (see `lib/deal.ts`).

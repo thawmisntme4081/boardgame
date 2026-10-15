@@ -1,11 +1,11 @@
 import type { ActionCheck } from '../actions';
 import type { CityId } from '../cities';
-import type { ActionState, EventId, GameState, SeatId } from '../types';
+import type { ActionState, EventId, GameState, PawnId, SeatId } from '../types';
 
 /** What the player chooses when playing each event card. */
 export type EventPlay =
   /** Move any pawn to any city (another player's pawn: its owner agrees first). */
-  | { event: 'airlift'; pawn: SeatId; to: CityId }
+  | { event: 'airlift'; pawn: PawnId; to: CityId }
   /** See the top 6 infection cards, then put them back in any order (two steps). */
   | { event: 'forecast' }
   /** A research station in any city; `move` names the one taken away once all 6 are built. */
@@ -29,7 +29,7 @@ export type PlayEventMove = {
  * An event that moves a pawn. On another player's pawn it is an offer, like the Dispatcher's
  * moves: the card stays in hand until the pawn's owner accepts.
  */
-export type PawnEventMove = Extract<PlayEventMove, { pawn: SeatId; to: CityId }>;
+export type PawnEventMove = Extract<PlayEventMove, { pawn: PawnId; to: CityId }>;
 
 /**
  * An event card's effect. The core (`playEvent.ts`) checks when events may be played and that the

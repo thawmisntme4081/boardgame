@@ -36,7 +36,7 @@ function game(...held: EventId[]): GameState {
   g.pawns = { p1: 'atlanta', p2: 'atlanta', p3: 'atlanta' };
   g.stations = ['atlanta'];
   g.pending = null;
-  g.turn = { ...g.turn, seat: 'p1', actionsLeft: 4, step: 'actions' };
+  g.turn = { ...g.turn, seat: 'p1', pawn: 'p1', actionsLeft: 4, step: 'actions' };
   return g;
 }
 

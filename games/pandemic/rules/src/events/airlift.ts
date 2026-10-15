@@ -9,8 +9,9 @@ export const airlift: EventModule = {
   id: 'airlift',
   check(state, _seat, play) {
     if (play.event !== 'airlift') return { ok: false, reason: 'not-playable' };
-    if (!state.seats.includes(play.pawn)) return { ok: false, reason: 'bad-partner' };
-    return state.pawns[play.pawn] === play.to ? { ok: false, reason: 'same-city' } : { ok: true };
+    const from = state.pawns[play.pawn];
+    if (from === undefined) return { ok: false, reason: 'bad-partner' };
+    return from === play.to ? { ok: false, reason: 'same-city' } : { ok: true };
   },
   apply(state, _seat, play) {
     if (play.event === 'airlift') movePawn(state, play.pawn, play.to);

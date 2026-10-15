@@ -7,15 +7,18 @@ export type RoleAction =
   /** Contingency Planner: take this event card from the discard pile onto the role card. */
   | { type: 'take-event'; event: EventId }
   /** Operations Expert: discard `card` (any city card) at a station and fly to `to`. */
-  | { type: 'ops-flight'; to: CityId; card: CityId };
+  | { type: 'ops-flight'; to: CityId; card: CityId }
+  /** Teacher: a student pawn in the teacher pawn's city. */
+  | { type: 'create-student' };
 
 /** The `type`s of every `RoleAction`, so a move can be routed to its role. */
-export const ROLE_ACTION_TYPES: readonly string[] = ['ops-flight', 'take-event'];
+export const ROLE_ACTION_TYPES: readonly string[] = ['ops-flight', 'take-event', 'create-student'];
 
 /**
  * A role card. The core rules call these hooks at fixed points and never test for a role by
  * name; a role that does not change a rule leaves its hook out. `holder` is the seat that holds
- * the role. Hooks that get a `GameState` mutate it (it is already cloned).
+ * the role; a power works around the holder's own pawn (`pawns[holder]`), never a Teacher's
+ * students. Hooks that get a `GameState` mutate it (it is already cloned).
  */
 export interface RoleModule {
   id: RoleId;

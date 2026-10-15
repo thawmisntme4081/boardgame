@@ -8,7 +8,22 @@ export interface PawnProps extends SVGProps<SVGSVGElement> {
   seat: SeatId;
   /** The player's role: the pawn takes its color (the seat's color without one). */
   role?: RoleId;
+  /** What names this pawn's gradients: its id (the seat's, or a student's). Defaults to the seat. */
+  id?: string;
+  /** A white star on the head: the Teacher's own pawn (its students are plain). */
+  mark?: boolean;
 }
+
+/** A five-pointed star centered on (cx, cy), as an SVG path. */
+function star(cx: number, cy: number, outer: number, inner: number): string {
+  const points = Array.from({ length: 10 }, (_, i) => {
+    const angle = (-90 + i * 36) * (Math.PI / 180);
+    const radius = i % 2 === 0 ? outer : inner;
+    return `${(cx + radius * Math.cos(angle)).toFixed(2)} ${(cy + radius * Math.sin(angle)).toFixed(2)}`;
+  });
+  return `M${points.join('L')}Z`;
+}
+const STAR = star(32, 16.5, 6.5, 2.7);
 
 const mix = (base: string, to: string, percent: number) =>
   `color-mix(in oklch, ${base}, ${to} ${percent}%)`;
@@ -18,10 +33,10 @@ const mix = (base: string, to: string, percent: number) =>
  * round foot and a soft shadow on the ground. The shape is traced from the Researcher's picture.
  * Draw it inside an <svg>.
  */
-export function Pawn({ seat, role, children, ...props }: PawnProps) {
+export function Pawn({ seat, role, id = seat, mark = false, children, ...props }: PawnProps) {
   const base = role ? `var(--color-role-${role})` : `var(--color-seat-${seat})`;
-  const body = `pawn-body-${seat}`;
-  const head = `pawn-head-${seat}`;
+  const body = `pawn-body-${id}`;
+  const head = `pawn-head-${id}`;
   return (
     <svg
       viewBox="15 5 34 57"
@@ -65,6 +80,16 @@ export function Pawn({ seat, role, children, ...props }: PawnProps) {
       />
       <circle cx={32} cy={16.5} r={10.5} fill={`url(#${head})`} />
       <ellipse cx={28} cy={12} rx={3.5} ry={2.6} fill="white" fillOpacity={0.3} />
+      {mark && (
+        <path
+          data-mark
+          d={STAR}
+          fill="white"
+          stroke="black"
+          strokeOpacity={0.35}
+          strokeWidth={0.6}
+        />
+      )}
       {children}
     </svg>
   );

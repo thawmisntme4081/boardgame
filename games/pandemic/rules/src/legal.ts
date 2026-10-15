@@ -3,13 +3,15 @@ import { checkAction, cardsToCure, type Action } from './actions';
 import { CITIES, COLORS, cityOf, type CityId } from './cities';
 import type { ShareMove } from './share';
 import { checkShare } from './share';
+import { actingPawn } from './pawns';
 import { checkRoleAction } from './roleActions';
 import { roleOf, type RoleAction } from './roles';
-import { EVENT_IDS, type GameState, type SeatId } from './types';
+import { EVENT_IDS, pawnsOnMap, type GameState, type SeatId } from './types';
 
 /** Actions worth trying, legal or not (a superset of `legalActions`). */
 export function candidateActions(state: GameState, seat: SeatId): Action[] {
-  const here = state.pawns[seat] as CityId;
+  const own = actingPawn(state, seat);
+  const here = state.pawns[own] as CityId;
   const hand = state.hands[seat] ?? [];
   const candidates: Action[] = [{ type: 'pass' }];
 
@@ -20,9 +22,9 @@ export function candidateActions(state: GameState, seat: SeatId): Action[] {
   }
   // A role that moves other pawns: every pawn move for each of them, and joins for anyone.
   if (roleOf(state, seat)?.movesPawns) {
-    for (const pawn of state.seats) {
+    for (const pawn of pawnsOnMap(state)) {
       for (const { id: to } of CITIES) candidates.push({ type: 'join', to, pawn });
-      if (pawn === seat) continue;
+      if (pawn === own) continue;
       for (const to of cityOf(state.pawns[pawn] as CityId).links) {
         candidates.push({ type: 'drive', to, pawn });
       }
@@ -51,7 +53,7 @@ export function legalActions(state: GameState, seat: SeatId): Action[] {
 
 /** The Share Knowledge offers `seat` could make now (with `city` only for another city's card). */
 export function legalShareOffers(state: GameState, seat: SeatId): ShareMove[] {
-  const here = state.pawns[seat] as CityId;
+  const here = state.pawns[actingPawn(state, seat)] as CityId;
   const cityCards = (holder: SeatId): CityId[] =>
     (state.hands[holder] ?? []).flatMap((card) =>
       card.kind === 'city' && card.city !== here ? [card.city] : [],
@@ -69,7 +71,7 @@ export function legalShareOffers(state: GameState, seat: SeatId): ShareMove[] {
   return offers.filter((offer) => checkShare(state, seat, offer).ok);
 }
 
-/** The role actions `seat` could take now (the Operations Expert's flights). */
+/** The role actions `seat` could take now (the Operations Expert's flights, a Teacher's student). */
 export function legalRoleActions(state: GameState, seat: SeatId): RoleAction[] {
   const flights: RoleAction[] = (state.hands[seat] ?? []).flatMap((card) =>
     card.kind === 'city'
@@ -77,5 +79,8 @@ export function legalRoleActions(state: GameState, seat: SeatId): RoleAction[] {
       : [],
   );
   const takes: RoleAction[] = EVENT_IDS.map((event): RoleAction => ({ type: 'take-event', event }));
-  return [...flights, ...takes].filter((action) => checkRoleAction(state, seat, action).ok);
+  const student: RoleAction = { type: 'create-student' };
+  return [...flights, ...takes, student].filter(
+    (action) => checkRoleAction(state, seat, action).ok,
+  );
 }

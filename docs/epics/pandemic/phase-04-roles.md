@@ -1,6 +1,6 @@
 # Pandemic 04: Roles
 
-[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: 🚧 Reopened (the Teacher, tasks 12 to 18)** · Effort: **medium-high**
+[← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ✅ Done (the Teacher, tasks 12 to 18, included)** · Effort: **medium-high**
 
 Needs [Pandemic 03](phase-03-board-and-client.md). Rules and UI together.
 
@@ -67,22 +67,22 @@ Settled with the user (task 12):
 It changes what a "pawn" is: every seat has exactly one pawn today (`pawns`, and `pawn?: SeatId` in moves, move offers, Airlift, the Dispatcher and the views). Task 12 settles the open questions below first; task 13 is the one large change.
 
 - [x] 12. **L** Confirm the open questions below with the user and write the settled rules into this file.
-- [ ] 13. **M** Pawn identity: a pawn is a seat's teacher or student (a reference instead of a bare seat) in `pawns`, the moves, move offers, Airlift and the Dispatcher, the views and the random player; every existing role behaves as before; the rules `version` goes up (older matches are dropped).
-- [ ] 14. **M** The Teacher module: `create-student` (an action, from the teacher pawn, at most two per game, in the pawn's city), a `choose-pawn` move at the start of the turn that fixes the pawn for the turn, and every basic action working on the chosen pawn.
-- [ ] 15. **M** What else reads a pawn's city or role: Share Knowledge, cure and build (the chosen pawn's city), the Medic and the Quarantine Specialist (only their own pawn), the Operations Expert's flight, Airlift and Government Grant targets.
-- [ ] 16. **M** Client: the teacher pawn marked and the students drawn on the map, the pawn choice at the start of the turn, the "Create student" button, the role card text and power popover, English texts; the role is dealt like the others (8 roles now).
-- [ ] 17. **L** Playwright: a Teacher creates a student, uses it for a turn (treat or build) and the choice is fixed for the turn.
-- [ ] 18. **M** Write the Teacher's tests (the rules, random games with the Teacher in the kit and the property run, the client) and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of tasks 12 to 17).
+- [x] 13. **M** Pawn identity: a pawn is a seat's teacher or student (a reference instead of a bare seat) in `pawns`, the moves, move offers, Airlift and the Dispatcher, the views and the random player; every existing role behaves as before; the rules `version` goes up (older matches are dropped). Done: `PawnId` (`p1` is a seat's own pawn, `p1-s1` / `p1-s2` its students), `pawnOwner` (who answers an offer, whose role reacts on arrival), `pawnsOnMap`; `pawns` is keyed by `PawnId`, so a stored move's `pawn: 'p2'` keeps its meaning; rules `version` 7.
+- [x] 14. **M** The Teacher module: `create-student` (an action, from the teacher pawn, at most two per game, in the pawn's city), a `choose-pawn` move at the start of the turn that fixes the pawn for the turn, and every basic action working on the chosen pawn. Done: `pawns.ts` (`turn.pawn`, `choose-pawn`, `actingPawn`, `startingPawn`: a seat with several pawns chooses, the core never names the Teacher; until then `checkTurnAction` refuses with `choose-pawn-first`), `roles/teacher.ts` (`create-student`, `MAX_STUDENTS`), drive, flights, build, treat and cure on the chosen pawn; `teacher` is in `ROLE_IDS` (dealt from 8), with its English name, power and color only so the client builds (the rest of the client is task 16).
+- [x] 15. **M** What else reads a pawn's city or role: Share Knowledge, cure and build (the chosen pawn's city), the Medic and the Quarantine Specialist (only their own pawn), the Operations Expert's flight, Airlift and Government Grant targets. Done: Share Knowledge in the chosen pawn's city, the partner there if any of its pawns is (`legalShareOffers` too; cure and build were done in task 14); `movePawn` calls `onEnterCity` only for a seat's own pawn, and role hooks read `pawns[holder]` (the own pawn), so the Medic, the Quarantine Specialist and the Operations Expert needed no change; Airlift may target any pawn (offer to its owner, task 13); Government Grant is unaffected; the action bar reads the chosen pawn's city.
+- [x] 16. **M** Client: the teacher pawn marked and the students drawn on the map, the pawn choice at the start of the turn, the "Create student" button, the role card text and power popover, English texts; the role is dealt like the others (8 roles now). Done: every pawn on the map (`PAWN_IDS` order, a student drops in), a white star on the teacher pawn, students plain in the Teacher's violet (`oklch(0.45 0.2 290)`, kept); the action bar's "Choose the pawn for this turn" (one button per own pawn) and "This turn: …" line, "Create a student"; the map and the move menu work on the chosen pawn (`actingPawn`); Airlift and the Dispatcher list every pawn ("X's student"); the Teacher's role card shows "Students: n / 2"; the pre-game grid already holds 8 roles (4 by 2); English texts only (`pawns.*`, `actions.*`, `roles.students`).
+- [x] 17. **L** Playwright: a Teacher creates a student, uses it for a turn (treat or build) and the choice is fixed for the turn. Written in `e2e/pandemic.spec.ts` (not run yet: it runs with the full suite in task 18).
+- [x] 18. **M** Update the older e2e tests and test helpers that build a `turn` (add `pawn`), then write the Teacher's tests (the rules, random games with the Teacher in the kit and the property run, the client) and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of tasks 12 to 17). Done: `setTurnSeat` in the test helpers and `pawn` in every `turn` fixture (rules, client, e2e); role counts 7 → 8 (`types.test`, `preflight.test`, the e2e role grid); `teacher.test.ts` (pawn ids, create-student, the choice, every basic action on the chosen pawn, Share Knowledge, Dispatcher and Airlift on a student, the schema, random games with a Teacher through the kit), the property run with 8 roles also checks the pawns per seat, `teacher.test.tsx` (map, choice, button, role card, the chosen pawn's moves); `pnpm test` 908 passed, `pnpm e2e` 55 passed / 26 skipped, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` pass.
 
 ## Checklist
 
 - [x] All seven roles tested on their own; the core names no role
 - [x] Property test with random roles passes
 - [x] Role controls on the board, tested
-- [ ] The Teacher: rules settled with the user, tested (random games and the property run included), and playable from the board
+- [x] The Teacher: rules settled with the user, tested (random games and the property run included), and playable from the board
 
 ## Open questions
 
 - None: every Teacher question is settled (see above).
 
-**Done when:** a game with random roles plays every role power from the board, with their tests passing. ✅ Verified (`pnpm test` 746 passed, `pnpm e2e` 47 passed/10 skipped, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` all pass).
+**Done when:** a game with random roles plays every role power from the board, with their tests passing. ✅ Verified (`pnpm test` 746 passed, `pnpm e2e` 47 passed/10 skipped, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` all pass). Teacher tasks 12 to 18 ✅ Verified (`pnpm test` 908 passed, `pnpm e2e` 55 passed/26 skipped, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` all pass).

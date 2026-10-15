@@ -10,7 +10,7 @@ import {
   type ActionReason,
 } from './actions';
 import { checkPlayEvent, resolveEvent } from './playEvent';
-import type { ActionState, GameState, SeatId } from './types';
+import { pawnOwner, type ActionState, type GameState, type SeatId } from './types';
 
 export type MoveOfferMove =
   { type: 'move-accept' } | { type: 'move-decline' } | { type: 'move-cancel' };
@@ -23,7 +23,7 @@ export function checkMoveOffer(state: ActionState, seat: SeatId, move: MoveOffer
   const { pending } = state;
   if (pending?.kind !== 'move') return fail('no-offer');
   if (move.type === 'move-cancel') return seat === pending.by ? OK : fail('not-your-turn');
-  if (seat !== pending.pawn) return fail('not-your-answer');
+  if (seat !== pawnOwner(pending.pawn)) return fail('not-your-answer');
   if (move.type !== 'move-accept') return OK;
   // The move must still be legal as it was offered (an action, or an event card still held).
   const before = { ...state, pending: null };

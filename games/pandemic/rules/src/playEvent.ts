@@ -2,7 +2,7 @@
 // and it is not an action. The rulebook allows events at any time "except in between drawing and
 // resolving a card": every card of the turn is its own move, so the moments in between are the
 // states between moves. What each card does is its module in `events/`.
-import type { ActionCheck, ActionReason } from './actions';
+import { isMoveOffer, type ActionCheck, type ActionReason } from './actions';
 import { EVENTS, type PawnEventMove, type PlayEventMove } from './events';
 import { roleOf } from './roles';
 import { HAND_LIMIT, type ActionState, type EventId, type GameState, type SeatId } from './types';
@@ -86,7 +86,7 @@ export function canPlayEvent(state: ActionState, seat: SeatId): boolean {
 
 /** An event that moves another player's pawn: an offer its owner answers (`moveOffer.ts`). */
 export const isPawnOffer = (seat: SeatId, move: PlayEventMove): move is PawnEventMove =>
-  'pawn' in move && move.pawn !== seat;
+  'pawn' in move && isMoveOffer(seat, move.pawn);
 
 export function checkPlayEvent(state: ActionState, seat: SeatId, move: PlayEventMove): ActionCheck {
   const moment = eventMoment(state, seat);

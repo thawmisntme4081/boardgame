@@ -45,6 +45,15 @@ export function neutralRoles(game: GameState): GameState {
   return game;
 }
 
+/**
+ * Makes `seat` the player to move, with its own pawn doing the turn's actions (a turn's `pawn`
+ * belongs to its seat: a test that only sets `turn.seat` would leave another seat's pawn there).
+ */
+export function setTurnSeat(game: GameState, seat: SeatId): void {
+  game.turn.seat = seat;
+  game.turn.pawn = seat;
+}
+
 /** A 2-player game (p1 to move, in Atlanta) with no cubes, no hands and a full supply. */
 export function blankGame(players: 2 | 3 | 4 = 2): GameState {
   const game = createGame({
@@ -54,7 +63,7 @@ export function blankGame(players: 2 | 3 | 4 = 2): GameState {
   });
   game.seats = [...game.seats].sort();
   neutralRoles(game);
-  game.turn.seat = 'p1';
+  setTurnSeat(game, 'p1');
   for (const c of CITIES) game.cubes[c.id] = { blue: 0, yellow: 0, black: 0, red: 0 };
   game.supply = { blue: 0, yellow: 0, black: 0, red: 0 };
   for (const color of ['blue', 'yellow', 'black', 'red'] as Color[])

@@ -4,6 +4,7 @@
 import type { ActionCheck, ActionReason } from './actions';
 import { nextTurnLog, type LogEntry } from './log';
 import { infectCity, lose } from './outbreak';
+import { startingPawn } from './pawns';
 import { shuffle } from './setup';
 import {
   ACTIONS_PER_TURN,
@@ -92,6 +93,7 @@ function endTurn(state: GameState): void {
     epidemics: 0,
     epidemicStep: 'increase',
     infectionsLeft: 0,
+    pawn: startingPawn(state, next as SeatId),
     flightUsed: false,
     epidemicsResolved: 0,
   };

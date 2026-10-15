@@ -1,4 +1,4 @@
-import type { RoleId, SeatId } from '@pandemic/rules';
+import type { PawnId, RoleId, SeatId } from '@pandemic/rules';
 import { useLayoutEffect, useRef } from 'react';
 import { Pawn } from '../svgs/Pawn';
 
@@ -14,8 +14,10 @@ const at = (x: number, y: number) => `translate(${x}px, ${y}px)`;
  * place in the page between moves, so the same pawn is moved, not drawn again.
  */
 export function MovingPawn({
+  pawn,
   seat,
   role,
+  mark = false,
   city,
   x,
   y,
@@ -23,8 +25,11 @@ export function MovingPawn({
   enter = false,
   order = 0,
 }: {
+  pawn: PawnId;
+  /** The seat that owns the pawn. */
   seat: SeatId;
   role?: RoleId;
+  mark?: boolean;
   city: string;
   x: number;
   y: number;
@@ -64,7 +69,7 @@ export function MovingPawn({
 
   return (
     <g ref={group} style={{ transform: at(x, y) }}>
-      <Pawn data-pawn={seat} seat={seat} role={role} x={0} y={0}>
+      <Pawn data-pawn={pawn} id={pawn} seat={seat} role={role} mark={mark} x={0} y={0}>
         <title>{name}</title>
       </Pawn>
     </g>

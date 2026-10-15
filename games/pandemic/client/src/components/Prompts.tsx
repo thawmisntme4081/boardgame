@@ -1,8 +1,8 @@
-import { canActInView, shareAnswerer, type PandemicView } from '@pandemic/rules';
+import { canActInView, pawnOwner, shareAnswerer, type PandemicView } from '@pandemic/rules';
 import { Button } from '@platform/ui/components/button';
 import type { SeatPresence } from '@platform/ui/game';
 import { useTranslation } from 'react-i18next';
-import { cityName, seatName } from '../lib/names';
+import { cityName, pawnName, seatName } from '../lib/names';
 import { platform } from '../platform';
 
 /**
@@ -27,12 +27,12 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
         <p className="text-sm">
           {t('moveOffer.offered', {
             by: seatName(presence, pending.by),
-            pawn: seatName(presence, pending.pawn),
+            pawn: pawnName(presence, pending.pawn),
             city: cityName(pending.move.to),
           })}
         </p>
         <div className="flex gap-2">
-          {you === pending.pawn && (
+          {you === pawnOwner(pending.pawn) && (
             <>
               <Button onClick={() => void platform().send({ type: 'move-accept' })}>
                 {t('moveOffer.accept')}

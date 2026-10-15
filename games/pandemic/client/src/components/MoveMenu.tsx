@@ -1,8 +1,15 @@
-import type { CityId, PandemicMove, PandemicView, SeatId } from '@pandemic/rules';
+import {
+  actingPawn,
+  type CityId,
+  type PandemicMove,
+  type PandemicView,
+  type PawnId,
+  type SeatId,
+} from '@pandemic/rules';
 import { useTranslation } from 'react-i18next';
 import { cityPoint, MAP_HEIGHT, MAP_WIDTH } from '../lib/mapGeometry';
 import { movesTo, type MoveType } from '../lib/moves';
-import { cityName, seatName } from '../lib/names';
+import { cityName, pawnName } from '../lib/names';
 import type { SeatPresence } from '@platform/ui/game';
 import { platform } from '../platform';
 
@@ -26,7 +33,7 @@ function costOf(move: PandemicMove, from: CityId): CityId | null {
 export function MoveMenu({
   view,
   you,
-  pawn = you,
+  pawn = actingPawn(view, you),
   city,
   onDone,
   presence,
@@ -34,7 +41,7 @@ export function MoveMenu({
   view: PandemicView;
   you: SeatId;
   /** The pawn to move: yours, or another's for a role that moves pawns. */
-  pawn?: SeatId;
+  pawn?: PawnId;
   city: CityId;
   onDone: () => void;
   presence: SeatPresence | null;
@@ -43,9 +50,9 @@ export function MoveMenu({
   const from = view.pawns[pawn] as CityId;
   const moves = movesTo(view, you, city, pawn);
   const title =
-    pawn === you
+    pawn === actingPawn(view, you)
       ? t('moveMenu.title', { city: cityName(city) })
-      : t('moveMenu.titleFor', { city: cityName(city), name: seatName(presence, pawn) });
+      : t('moveMenu.titleFor', { city: cityName(city), name: pawnName(presence, pawn) });
   if (moves.length === 0) return null;
 
   const { x, y } = cityPoint(city);
