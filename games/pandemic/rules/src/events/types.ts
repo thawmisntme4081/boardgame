@@ -15,8 +15,15 @@ export type EventPlay =
   /** Remove this card of the infection discard pile from the game. */
   | { event: 'resilient-population'; city: CityId };
 
-/** Playing an event card, from the hand or the Contingency Planner's role card. Not an action. */
-export type PlayEventMove = { type: 'play-event' } & EventPlay;
+/**
+ * Playing an event card, from a hand or the Contingency Planner's role card (the player's own,
+ * or another player's: hands are open and anyone may play any card). Not an action.
+ */
+export type PlayEventMove = {
+  type: 'play-event';
+  /** Whose card it is, if not the player's own: any player may play any player's event card. */
+  owner?: SeatId;
+} & EventPlay;
 
 /**
  * An event that moves a pawn. On another player's pawn it is an offer, like the Dispatcher's

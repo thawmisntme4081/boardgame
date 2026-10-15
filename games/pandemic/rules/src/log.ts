@@ -12,7 +12,16 @@ export type LogEntry =
    * `seat` played an event card, from its hand or its role card (`stored`: Contingency Planner),
    * on this pawn and city when the card has them (Airlift's pawn and city, a Grant's city).
    */
-  | { type: 'event'; seat: SeatId; event: EventId; stored: boolean; pawn?: SeatId; city?: CityId }
+  | {
+      type: 'event';
+      seat: SeatId;
+      event: EventId;
+      stored: boolean;
+      /** Whose card it was, when not the player's own. */
+      owner?: SeatId;
+      pawn?: SeatId;
+      city?: CityId;
+    }
   /** One Quiet Night: this turn's infect step was skipped. */
   | { type: 'quiet-night' }
   /** The 2 cards drawn from the player deck, epidemics included. */

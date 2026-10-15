@@ -28,17 +28,20 @@ export function RoleCards({
 }) {
   const { t } = useTranslation('pandemic');
   return (
-    <section aria-label={t('roles.title')} className="flex flex-wrap gap-2 text-sm">
+    <section aria-label={t('roles.title')} className="flex flex-wrap gap-2 p-1.5 text-sm">
       {view.seats.map((seat) => {
         const role = view.roles[seat];
         if (!role) return null;
         const name = t(`roles.${role}.name`);
+        // The player whose turn it is stands out: a yellow border that pulses (`.turn-ring`).
+        const active = view.status === 'playing' && view.turn.seat === seat;
         return (
           <Popover key={seat}>
             <PopoverTrigger
               aria-label={t('roles.info', { role: name })}
               data-role={role}
-              className={`flex min-w-0 flex-1 flex-col rounded-md border px-3 py-1.5 text-left shadow-sm ${TEXT_ON[role]}`}
+              aria-current={active ? 'true' : undefined}
+              className={`flex min-w-0 flex-1 flex-col rounded-md border px-3 py-1.5 text-left shadow-sm ${TEXT_ON[role]} ${active ? 'turn-ring' : ''}`}
               style={{ background: `var(--color-role-${role})` }}
             >
               <span className="truncate text-xs opacity-80">{seatName(presence, seat)}</span>

@@ -10,11 +10,12 @@ import {
   type PandemicView,
   type SeatId,
 } from '@pandemic/rules';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Board } from './Board';
-import { EventBar } from './components/EventBar';
+import { ActionBar } from './components/ActionBar';
+import { EventControls } from './components/EventControls';
 import { ForecastDialog } from './components/ForecastDialog';
 import { Prompts } from './components/Prompts';
 import { eventTargets, moveItem, newEventsOf } from './lib/events';
@@ -57,17 +58,19 @@ describe('the event helpers', () => {
 
   it('offers the map the cities an Airlift or a Grant can go to, and none for other plans', () => {
     const view = seen(game('airlift'), 'p2');
-    const airlift = eventTargets(view, 'p2', { event: 'airlift', pawn: 'p3' });
+    const airlift = eventTargets(view, 'p2', { event: 'airlift', owner: 'p2', pawn: 'p3' });
     expect(airlift?.has('tokyo')).toBe(true);
     expect(airlift?.has('atlanta')).toBe(false);
-    expect(eventTargets(view, 'p2', { event: 'airlift', pawn: null })).toBeNull();
+    expect(eventTargets(view, 'p2', { event: 'airlift', owner: 'p2', pawn: null })).toBeNull();
 
-    const grant = eventTargets(view, 'p2', { event: 'government-grant', city: null });
+    const grant = eventTargets(view, 'p2', { event: 'government-grant', owner: 'p2', city: null });
     expect(grant?.has('tokyo')).toBe(true);
     expect(grant?.has('atlanta')).toBe(false);
     expect(grant?.size).toBe(CITIES.length - 1);
-    expect(eventTargets(view, 'p2', { event: 'government-grant', city: 'tokyo' })).toBeNull();
-    expect(eventTargets(view, 'p2', { event: 'resilient-population' })).toBeNull();
+    expect(
+      eventTargets(view, 'p2', { event: 'government-grant', owner: 'p2', city: 'tokyo' }),
+    ).toBeNull();
+    expect(eventTargets(view, 'p2', { event: 'resilient-population', owner: 'p2' })).toBeNull();
     expect(eventTargets(view, 'p2', null)).toBeNull();
   });
 
@@ -104,7 +107,7 @@ describe('the store follows events', () => {
 
   it('drops a card being played when it can no longer be played', () => {
     const view = seen(game('airlift'), 'p2');
-    usePandemic.getState().planEvent({ event: 'airlift', pawn: 'p3' });
+    usePandemic.getState().planEvent({ event: 'airlift', owner: 'p2', pawn: 'p3' });
     usePandemic.getState().onView(view, view, null);
     expect(usePandemic.getState().eventPlan).not.toBeNull();
 
@@ -115,17 +118,43 @@ describe('the store follows events', () => {
   });
 });
 
-describe('the event panel', () => {
-  it('shows nothing to a player who holds no event card', () => {
-    const { container } = render(<EventBar view={seen(game('airlift'), 'p3')} presence={null} />);
+describe('the action bar and events', () => {
+  it("is drawn on someone else's turn when any event card is on the table, and not otherwise", () => {
+    const { container, rerender } = render(<ActionBar view={seen(game(), 'p3')} presence={null} />);
+    expect(container).toBeEmptyDOMElement();
+    // p2 holds the card: p2 plays it as their own, p3 as p2's.
+    rerender(<ActionBar view={seen(game('airlift'), 'p2')} presence={null} />);
+    expect(screen.getByRole('button', { name: 'Play Airlift' })).toBeEnabled();
+    expect(screen.queryByText(/actions left/)).toBeNull();
+    rerender(<ActionBar view={seen(game('airlift'), 'p3')} presence={null} />);
+    expect(screen.getByRole('button', { name: "Play Airlift · p2's card" })).toBeEnabled();
+  });
+
+  it("sends another player's card with its owner", () => {
+    render(<ActionBar view={seen(game('one-quiet-night'), 'p3')} presence={null} />);
+    fireEvent.click(screen.getByRole('button', { name: "Play One Quiet Night · p2's card" }));
+    expect(send).toHaveBeenCalledWith({
+      type: 'play-event',
+      event: 'one-quiet-night',
+      owner: 'p2',
+    });
+  });
+
+  it('shows the actions left and the event buttons on your own turn', () => {
+    render(<ActionBar view={seen(game('airlift'), 'p1')} presence={null} />);
+    expect(screen.getByText('4 actions left')).toBeInTheDocument();
+  });
+});
+
+describe('the event buttons', () => {
+  it('shows nothing when no event card is on the table', () => {
+    const { container } = render(<EventControls view={seen(game(), 'p3')} presence={null} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('has a Play button for each card held, working out of turn', () => {
-    render(<EventBar view={seen(game('one-quiet-night'), 'p2')} presence={null} />);
-    const panel = screen.getByRole('region', { name: 'Event cards' });
-    expect(within(panel).getByText('One Quiet Night')).toBeInTheDocument();
-    const button = within(panel).getByRole('button', { name: 'Play' });
+    render(<EventControls view={seen(game('one-quiet-night'), 'p2')} presence={null} />);
+    const button = screen.getByRole('button', { name: 'Play One Quiet Night' });
     expect(button).toBeEnabled();
     fireEvent.click(button);
     expect(send).toHaveBeenCalledWith({ type: 'play-event', event: 'one-quiet-night' });
@@ -136,35 +165,34 @@ describe('the event panel', () => {
     g.turn.step = 'epidemic';
     g.turn.epidemics = 1;
     g.turn.epidemicStep = 'increase';
-    render(<EventBar view={seen(g, 'p2')} presence={null} />);
-    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    render(<EventControls view={seen(g, 'p2')} presence={null} />);
+    expect(screen.getByRole('button', { name: 'Play One Quiet Night' })).toBeDisabled();
   });
 
-  it("marks the Contingency Planner's stored card", () => {
+  it("lists the Contingency Planner's stored card like the others", () => {
     const g = game();
     g.roles.p2 = 'contingency-planner';
     g.contingency = 'forecast';
-    render(<EventBar view={seen(g, 'p2')} presence={null} />);
-    expect(screen.getByText('(on the role card)')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    render(<EventControls view={seen(g, 'p2')} presence={null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play Forecast' }));
     expect(send).toHaveBeenCalledWith({ type: 'play-event', event: 'forecast' });
   });
 
   it('asks Airlift for a pawn first, then waits for a city on the map', () => {
     const view = seen(game('airlift'), 'p2');
-    const { rerender } = render(<EventBar view={view} presence={null} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
-    expect(usePandemic.getState().eventPlan).toEqual({ event: 'airlift', pawn: null });
-    rerender(<EventBar view={view} presence={null} />);
+    const { rerender } = render(<EventControls view={view} presence={null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play Airlift' }));
+    expect(usePandemic.getState().eventPlan).toEqual({ event: 'airlift', owner: 'p2', pawn: null });
+    rerender(<EventControls view={view} presence={null} />);
     expect(screen.getByText('Airlift: choose the pawn to move.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^p3 \(in Atlanta\)$/ }));
-    expect(usePandemic.getState().eventPlan).toEqual({ event: 'airlift', pawn: 'p3' });
+    expect(usePandemic.getState().eventPlan).toEqual({ event: 'airlift', owner: 'p2', pawn: 'p3' });
     expect(send).not.toHaveBeenCalled();
   });
 
   it('cancels a card being played', () => {
-    usePandemic.getState().planEvent({ event: 'government-grant', city: null });
-    render(<EventBar view={seen(game('government-grant'), 'p2')} presence={null} />);
+    usePandemic.getState().planEvent({ event: 'government-grant', owner: 'p2', city: null });
+    render(<EventControls view={seen(game('government-grant'), 'p2')} presence={null} />);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(usePandemic.getState().eventPlan).toBeNull();
   });
@@ -172,8 +200,8 @@ describe('the event panel', () => {
   it('asks which station to take away once all 6 are built', () => {
     const g = game('government-grant');
     g.stations = ['atlanta', 'paris', 'london', 'essen', 'milan', 'chicago'];
-    usePandemic.getState().planEvent({ event: 'government-grant', city: 'tokyo' });
-    render(<EventBar view={seen(g, 'p2')} presence={null} />);
+    usePandemic.getState().planEvent({ event: 'government-grant', owner: 'p2', city: 'tokyo' });
+    render(<EventControls view={seen(g, 'p2')} presence={null} />);
     fireEvent.click(screen.getByRole('button', { name: 'Paris' }));
     expect(send).toHaveBeenCalledWith({
       type: 'play-event',
@@ -186,8 +214,8 @@ describe('the event panel', () => {
   it('sends Resilient Population with the card chosen from the infection discard pile', () => {
     const g = game('resilient-population');
     g.infectionDiscard = ['paris', 'london'];
-    usePandemic.getState().planEvent({ event: 'resilient-population' });
-    render(<EventBar view={seen(g, 'p2')} presence={null} />);
+    usePandemic.getState().planEvent({ event: 'resilient-population', owner: 'p2' });
+    render(<EventControls view={seen(g, 'p2')} presence={null} />);
     const remove = screen.getByRole('button', { name: 'Remove this card' });
     expect(remove).toBeDisabled();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'london' } });
@@ -205,7 +233,7 @@ describe('the map chooses the target of an event', () => {
     render(<Board view={view} presence={null} connection="online" rematch={rematch} />);
 
   it('sends an Airlift to the city that is tapped, on the pawn chosen', () => {
-    usePandemic.getState().planEvent({ event: 'airlift', pawn: 'p3' });
+    usePandemic.getState().planEvent({ event: 'airlift', owner: 'p2', pawn: 'p3' });
     const { container } = board(seen(game('airlift'), 'p2'));
     fireEvent.click(container.querySelector('[data-city="tokyo"]')!);
     expect(send).toHaveBeenCalledWith({
@@ -218,7 +246,7 @@ describe('the map chooses the target of an event', () => {
   });
 
   it('does not send a city the card cannot go to', () => {
-    usePandemic.getState().planEvent({ event: 'airlift', pawn: 'p3' });
+    usePandemic.getState().planEvent({ event: 'airlift', owner: 'p2', pawn: 'p3' });
     const { container } = board(seen(game('airlift'), 'p2'));
     fireEvent.click(container.querySelector('[data-city="atlanta"]')!);
     expect(send).not.toHaveBeenCalled();
@@ -226,7 +254,7 @@ describe('the map chooses the target of an event', () => {
   });
 
   it('builds a Government Grant station in the tapped city when there is room', () => {
-    usePandemic.getState().planEvent({ event: 'government-grant', city: null });
+    usePandemic.getState().planEvent({ event: 'government-grant', owner: 'p2', city: null });
     const { container } = board(seen(game('government-grant'), 'p2'));
     fireEvent.click(container.querySelector('[data-city="tokyo"]')!);
     expect(send).toHaveBeenCalledWith({
@@ -239,11 +267,15 @@ describe('the map chooses the target of an event', () => {
   it('asks for the station to move first when all 6 are built', () => {
     const g = game('government-grant');
     g.stations = ['atlanta', 'paris', 'london', 'essen', 'milan', 'chicago'];
-    usePandemic.getState().planEvent({ event: 'government-grant', city: null });
+    usePandemic.getState().planEvent({ event: 'government-grant', owner: 'p2', city: null });
     const { container } = board(seen(g, 'p2'));
     fireEvent.click(container.querySelector('[data-city="tokyo"]')!);
     expect(send).not.toHaveBeenCalled();
-    expect(usePandemic.getState().eventPlan).toEqual({ event: 'government-grant', city: 'tokyo' });
+    expect(usePandemic.getState().eventPlan).toEqual({
+      event: 'government-grant',
+      owner: 'p2',
+      city: 'tokyo',
+    });
   });
 });
 

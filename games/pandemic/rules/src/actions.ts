@@ -68,6 +68,8 @@ export type ActionReason =
   | 'nothing-to-discard'
   // Before the game (see preflight.ts)
   | 'already-confirmed'
+  | 'cannot-restart'
+  | 'not-confirmed'
   | 'pick-first'
   | 'roles-dealt'
   | 'role-taken'

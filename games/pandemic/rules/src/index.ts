@@ -19,3 +19,4 @@ export * from './roleActions';
 export * from './events';
 export * from './playEvent';
 export * from './preflight';
+export * from './restart';

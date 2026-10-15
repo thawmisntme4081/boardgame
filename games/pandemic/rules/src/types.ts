@@ -146,6 +146,11 @@ export interface GameState {
   cures: Record<Color, CureState>;
   /** What happened after the actions in the current and the previous turn (see `log.ts`). */
   log: GameLog;
+  /**
+   * The game as it was before this turn's first move, for "Restart turn" (see `restart.ts`);
+   * `null` before that move and after the draw. Never part of a view.
+   */
+  checkpoint: Omit<GameState, 'checkpoint'> | null;
   rngSeed: number;
   rngState: number;
 }

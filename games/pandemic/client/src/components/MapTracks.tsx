@@ -1,4 +1,5 @@
 import { COLORS, MAX_STATIONS, type Color, type PandemicView } from '@pandemic/rules';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   INFECTION_DECK_FRAME,
@@ -20,7 +21,13 @@ import {
   playerBackUrl,
   playerCardUrl,
 } from '../lib/cardImages';
+import { epidemicCardUrl } from '../lib/cardImages';
 import { useInfectionPile } from '../lib/infectionDraw';
+import { usePandemic } from '../store';
+import type { DealProgress } from '../lib/deal';
+import { DeckBuild } from './DeckBuild';
+import { EpidemicCard } from './EpidemicCard';
+import { ShuffleFlight } from './ShuffleFlight';
 import { InfectionDrawFlight, INFECTION_DRAW_MS } from './InfectionDrawFlight';
 import { MovingMarker } from './MovingMarker';
 import { CubeIcon } from '../svgs/CubeIcon';
@@ -91,7 +98,14 @@ function Pile({
  * the infection rate marker (they slide to the new space), each disease's cubes left, and the
  * decks and discard piles in their frames. Draw it as the map's `children`.
  */
-export function MapTracks({ view }: { view: PandemicView }) {
+export function MapTracks({
+  view,
+  deal = null,
+}: {
+  view: PandemicView;
+  /** The deal being played: its last part builds the player deck in its epidemic piles. */
+  deal?: DealProgress | null;
+}) {
   const { t } = useTranslation('pandemic');
   const outbreak = OUTBREAK_SLOTS[Math.min(view.outbreaks, OUTBREAK_SLOTS.length - 1)];
   const rate = INFECTION_SLOTS[Math.min(view.infectionRate, INFECTION_SLOTS.length - 1)];
@@ -100,6 +114,19 @@ export function MapTracks({ view }: { view: PandemicView }) {
     INFECTION_DRAW_MS,
   );
   const topInfection = infectionDiscard[infectionDiscard.length - 1];
+  const openPile = usePandemic((s) => s.openPile);
+  // An epidemic being resolved: its card lies on the player pile, highlighted.
+  const epidemic =
+    view.status === 'playing' && view.turn.step === 'epidemic' && view.turn.epidemics > 0;
+  // The infection discard pile emptied onto the deck (Intensify): the shuffle is played once.
+  const [pileSize, setPileSize] = useState(view.infectionDiscard.length);
+  const [shuffles, setShuffles] = useState<{ id: number; cards: number }[]>([]);
+  if (pileSize !== view.infectionDiscard.length) {
+    setPileSize(view.infectionDiscard.length);
+    if (pileSize > 0 && view.infectionDiscard.length === 0) {
+      setShuffles((list) => [...list, { id: (list.at(-1)?.id ?? 0) + 1, cards: pileSize }]);
+    }
+  }
   const topPlayer = view.playerDiscard[view.playerDiscard.length - 1];
   return (
     <g pointerEvents="none">
@@ -179,16 +206,56 @@ export function MapTracks({ view }: { view: PandemicView }) {
       ))}
       <Pile
         frame={PLAYER_DISCARD_FRAME}
-        href={topPlayer ? playerCardUrl(topPlayer) : null}
+        href={epidemic ? epidemicCardUrl() : topPlayer ? playerCardUrl(topPlayer) : null}
         count={view.playerDiscard.length}
         label={t('tracks.playerDiscard', { count: view.playerDiscard.length })}
       />
+      {deal && deal.piles !== 0 && <DeckBuild epidemics={view.epidemics} stage={deal.piles} />}
       <Pile
         frame={PLAYER_DECK_FRAME}
-        href={view.playerDeckSize > 0 ? playerBackUrl() : null}
+        // The deck is taken apart into its piles while they are built.
+        href={
+          view.playerDeckSize > 0 && deal?.piles !== 1 && deal?.piles !== 2 ? playerBackUrl() : null
+        }
         count={view.playerDeckSize}
         label={t('tracks.playerDeck', { count: view.playerDeckSize })}
       />
+      {epidemic && <EpidemicCard key={view.turn.epidemics} count={view.turn.epidemics} />}
+      {shuffles.map(({ id, cards }) => (
+        <ShuffleFlight
+          key={id}
+          cards={cards}
+          onDone={() => setShuffles((list) => list.filter((item) => item.id !== id))}
+        />
+      ))}
+      {/* The two discard piles can be pressed to list their cards. */}
+      {(
+        [
+          ['player', PLAYER_DISCARD_FRAME, t('tracks.openPlayerDiscard')],
+          ['infection', INFECTION_DISCARD_FRAME, t('tracks.openInfectionDiscard')],
+        ] as const
+      ).map(([pile, frame, label]) => (
+        <rect
+          key={pile}
+          x={frame.x}
+          y={frame.y}
+          width={frame.width}
+          height={frame.height}
+          fill="transparent"
+          pointerEvents="all"
+          className="cursor-pointer"
+          role="button"
+          tabIndex={0}
+          aria-label={label}
+          onClick={() => openPile(pile)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openPile(pile);
+            }
+          }}
+        />
+      ))}
     </g>
   );
 }

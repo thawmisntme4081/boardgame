@@ -65,7 +65,12 @@ describe('the definition', () => {
   });
 
   it('checks the setup', () => {
-    expect(pandemic.configSchema.parse({})).toEqual({ players: 2, epidemics: 4 });
+    expect(pandemic.configSchema.parse({})).toEqual({
+      players: 2,
+      epidemics: 4,
+      roleMode: 'random',
+    });
+    expect(pandemic.configSchema.safeParse({ roleMode: 'nobody' }).success).toBe(false);
     expect(pandemic.configSchema.safeParse({ epidemics: 3 }).success).toBe(false);
     expect(pandemic.configSchema.safeParse({ players: 5 }).success).toBe(false);
   });

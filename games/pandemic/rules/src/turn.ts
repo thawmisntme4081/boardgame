@@ -84,6 +84,7 @@ function infectAndLog(state: GameState, city: CityId, count: number, epidemic: b
 function endTurn(state: GameState): void {
   const next = state.seats[(state.seats.indexOf(state.turn.seat) + 1) % state.seats.length];
   state.log = nextTurnLog(state.log, next as SeatId);
+  state.checkpoint = null;
   state.turn = {
     seat: next as SeatId,
     actionsLeft: ACTIONS_PER_TURN,
@@ -110,6 +111,8 @@ function draw(state: GameState): void {
     lose(state, 'player-deck');
     return;
   }
+  // From the draw on, the turn cannot be restarted.
+  state.checkpoint = null;
   const cards = state.playerDeck.splice(0, 2);
   record(state, { type: 'draw', cards });
   for (const card of cards) {

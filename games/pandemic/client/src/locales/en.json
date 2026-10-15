@@ -37,23 +37,19 @@
   },
   "preflight": {
     "title": "Before the game",
-    "summary_one": "{{epidemics}} epidemic card",
-    "summary_other": "{{epidemics}} epidemic cards",
+    "summary_one": "{{count}} epidemic card",
+    "summary_other": "{{count}} epidemic cards",
     "random": "roles dealt at random",
     "choose": "roles chosen by the players",
     "pickHint": "Pick a role nobody else has. You can change it until you confirm.",
-    "order": "Turn order",
     "you": "you",
     "ready": "Ready",
-    "locked": "You have confirmed your role.",
-    "yours": "Your role",
-    "takenBy": "{{name}} has this role",
+    "locked": "You have confirmed. Undo to change your role.",
     "confirm": "Confirm and start",
-    "waitingFor": "Waiting for {{names}}."
+    "leave": "Leave",
+    "undo": "Undo"
   },
   "board": {
-    "turnOf": "{{name}}'s turn",
-    "yourTurn": "Your turn",
     "actionsLeft_one": "{{count}} action left",
     "actionsLeft_other": "{{count}} actions left",
     "step": {
@@ -93,7 +89,9 @@
       "none": "not cured",
       "cured": "cured",
       "eradicated": "eradicated"
-    }
+    },
+    "openPlayerDiscard": "List the player discard pile",
+    "openInfectionDiscard": "List the infection discard pile"
   },
   "color": {
     "blue": "Blue",
@@ -144,6 +142,7 @@
   "hands": {
     "title": "Hands",
     "empty": "No cards",
+    "you": "you",
     "count_one": "({{count}} card)",
     "count_other": "({{count}} cards)",
     "event": "Event: {{name}}"
@@ -154,6 +153,13 @@
     "government-grant": "Government Grant",
     "one-quiet-night": "One Quiet Night",
     "resilient-population": "Resilient Population"
+  },
+  "eventInfo": {
+    "airlift": "Move any 1 pawn to any city. Get permission before moving another player's pawn.",
+    "forecast": "Look at the top 6 cards of the infection deck, then put them back in any order.",
+    "government-grant": "Build a research station in any city, with no card to discard.",
+    "one-quiet-night": "Skip the next Infect Cities step: no infection card is flipped.",
+    "resilient-population": "Remove any 1 card in the infection discard pile from the game. It can also be played between an epidemic's Infect and Intensify steps."
   },
   "moveMenu": {
     "title": "Fly to {{city}}",
@@ -174,7 +180,7 @@
     "build": "Build a research station",
     "moveStation": "Station to take away",
     "treat": "Treat {{color}}",
-    "cure": "Discover cure: {{color}}",
+    "cure": "Cure: {{color}}",
     "cureChoose": "Choose the {{count}} {{color}} cards to discard",
     "cureChosen": "{{chosen}} of {{count}} chosen",
     "cureConfirm": "Discover the cure",
@@ -183,14 +189,21 @@
     "draw": "Draw cards",
     "epidemic": "Epidemic: {{step}}",
     "infect": "Infect",
-    "notYourTurn": "Wait for your turn.",
-    "spectator": "You are watching."
+    "spectator": "You are watching.",
+    "restart": "Restart turn",
+    "discard_one": "Discard {{count}} card",
+    "discard_other": "Discard {{count}} cards",
+    "discardWaiting_one": "{{name}} must discard {{count}} card.",
+    "discardWaiting_other": "{{name}} must discard {{count}} cards."
   },
   "share": {
     "title": "Share Knowledge",
-    "give": "Give a card to {{name}}",
-    "take": "Take a card from {{name}}",
-    "giveCity": "Give {{city}} to {{name}}",
+    "giveTo": "Give {{city}} to {{role}}",
+    "takeFrom": "Take {{city}} from {{role}}",
+    "giveCard": "Give {{city}}",
+    "takeCard": "Take {{city}}",
+    "chooseGive": "Give {{city}} to:",
+    "chooseTake": "Take {{city}} from:",
     "offered": "{{from}} offers to share the card of {{city}} with {{to}}.",
     "accept": "Accept",
     "decline": "Decline",
@@ -214,10 +227,7 @@
     "waiting_other": "{{name}} is arranging the top {{count}} infection cards."
   },
   "discard": {
-    "title": "Too many cards",
-    "text": "Discard a card to go down to {{limit}}.",
-    "button": "Discard {{card}}",
-    "waiting": "{{name}} must discard a card."
+    "button": "Discard {{card}}"
   },
   "errors": {
     "game-over": "The game is over.",
@@ -247,9 +257,11 @@
     "room-full": "The table is full.",
     "not-started": "The game has not started.",
     "already-confirmed": "You have confirmed already.",
+    "not-confirmed": "You have not confirmed.",
     "pick-first": "Pick a role first.",
     "roles-dealt": "The roles are dealt at random in this game.",
-    "role-taken": "Another player has that role."
+    "role-taken": "Another player has that role.",
+    "cannot-restart": "The turn cannot be restarted now."
   },
   "epidemic": {
     "title_one": "Epidemic ({{count}} to resolve)",
@@ -260,42 +272,21 @@
       "intensify": "the infection discard pile is shuffled back on top of the deck."
     }
   },
-  "log": {
-    "title": "Turn log",
-    "current": "This turn",
-    "previous": "Previous turn",
-    "nothingYet": "Nothing yet.",
-    "event": "{{name}} played {{event}}.",
-    "eventStored": "{{name}} played {{event}} from the role card (removed from the game).",
-    "quietNight": "One Quiet Night: no cities are infected this turn.",
-    "draw": "Drew {{cards}}.",
-    "epidemicCard": "an Epidemic",
-    "epidemicPrefix": "Epidemic:",
-    "epidemicIncrease": "Epidemic: the infection rate goes up to {{rate}}.",
-    "epidemicIntensify_one": "Epidemic: {{count}} infection card is shuffled back on top.",
-    "epidemicIntensify_other": "Epidemic: {{count}} infection cards are shuffled back on top.",
-    "infected_one": "{{city}} infected: {{count}} {{color}} cube.",
-    "infected_other": "{{city}} infected: {{count}} {{color}} cubes.",
-    "noRoom": "{{city}} already has 3 {{color}} cubes.",
-    "eradicated": "{{city}}: {{color}} is eradicated, nothing happens.",
-    "prevented": "{{city}}: a role stops the {{color}} cubes.",
-    "outbreaks": "Outbreak: {{cities}}."
-  },
   "gameOver": {
     "wonTitle": "Humanity is saved",
     "lostTitle": "The world was lost",
-    "show": "Game over: play again",
     "playAgain": "Play again",
     "leave": "Leave",
     "cancelOffer": "Cancel the offer",
     "takeBack": "Take back my answer",
     "offered": "{{name}} wants to play again.",
-    "waitingFor": "Waiting for {{names}}."
+    "waitingFor": "Waiting for {{names}}.",
+    "cured": "All four diseases are cured",
+    "viewBoard": "View board",
+    "showResult": "Show result"
   },
   "eventBar": {
-    "title": "Event cards",
-    "play": "Play",
-    "onRole": "on the role card",
+    "playEvent": "Play {{event}}",
     "cancel": "Cancel",
     "airliftPawn": "Airlift: choose the pawn to move.",
     "airliftCity": "Airlift {{name}}: tap the city to move to.",
@@ -303,10 +294,19 @@
     "grantMove": "Government Grant in {{city}}: choose the station to take away.",
     "population": "Resilient Population: choose the card to remove from the game.",
     "removeCard": "Remove this card",
-    "pawnAt": "{{name}} (in {{city}})"
+    "pawnAt": "{{name}} (in {{city}})",
+    "ofPlayer": "{{label}} · {{name}}'s card"
   },
   "toast": {
     "event": "{{name}} played {{event}}.",
-    "eventStored": "{{name}} played {{event}} from the role card."
+    "eventStored": "{{name}} played {{event}} from the role card.",
+    "eventOf": "{{name}} played {{owner}}'s {{event}}."
+  },
+  "piles": {
+    "player": "Player discard pile",
+    "infection": "Infection discard pile",
+    "count_one": "{{count}} card, newest first",
+    "count_other": "{{count}} cards, newest first",
+    "empty": "No cards yet."
   }
 }

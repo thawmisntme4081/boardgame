@@ -7,13 +7,12 @@ import { Share2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { leaveGame, shareInvite } from '../api';
 import { useGameModule } from '../games';
+import { seatsEmpty } from '../boardShown';
+import { useGameTheme } from '../useGameTheme';
 import { inviteUrl } from '../session';
 import { usePlatform } from '../store';
-import { CardTop, Connecting, JoinForm, NameField, Shell } from './Shell';
+import { CardTop, Connecting, JoinForm, NameField, Page } from './Shell';
 import { useName } from './useName';
-
-const seatsEmpty = (presence: SeatPresence | null) =>
-  !presence || Object.entries(presence).some(([seat, info]) => seat !== 'you' && info === null);
 
 const seatsOf = (presence: SeatPresence | null) =>
   Object.keys(presence ?? {}).filter((seat) => seat !== 'you');
@@ -55,7 +54,7 @@ function WaitingRoom({ module, code }: { module: GameClientModule; code: string 
   const presence = usePlatform((s) => s.presence);
   const { WaitingInfo } = module;
   return (
-    <Shell center>
+    <Page center>
       <Card>
         <CardHeader className="flex flex-col gap-2">
           {view !== undefined && <WaitingInfo view={view} presence={presence} />}
@@ -78,12 +77,13 @@ function WaitingRoom({ module, code }: { module: GameClientModule; code: string 
           </Button>
         </CardContent>
       </Card>
-    </Shell>
+    </Page>
   );
 }
 
 /** The seated player's room, once the game's module has loaded. */
 function SeatedRoom({ gameId, code }: { gameId: string; code: string }) {
+  useGameTheme(gameId);
   const module = useGameModule(gameId);
   const match = usePlatform((s) => s.match);
   const presence = usePlatform((s) => s.presence);
@@ -103,7 +103,7 @@ function Invite({ code }: { code: string }) {
   const { t } = useTranslation();
   const { name, setName, fromAccount } = useName();
   return (
-    <Shell center>
+    <Page center>
       <Card>
         <CardHeader>
           <CardTop title={t('app.title')} description={t('app.tagline')} />
@@ -113,7 +113,7 @@ function Invite({ code }: { code: string }) {
           <JoinForm name={name} initialCode={code} />
         </CardContent>
       </Card>
-    </Shell>
+    </Page>
   );
 }
 

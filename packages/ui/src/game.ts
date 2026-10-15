@@ -95,6 +95,12 @@ export interface GameClientModule<View = unknown, Move = unknown, Setup = unknow
    * the account's records itself through `PlatformApi.flightLog`).
    */
   History?: ComponentType;
+  /**
+   * Shown in the site's header above the board (next to the language and the account), which
+   * then stays on screen and the board fills the window below it. Without it the board fills
+   * the whole window and the site's header is left out.
+   */
+  HeaderExtra?: ComponentType<{ view: View; presence: SeatPresence | null }>;
   /** The player left the room: forget the game's own UI state. */
   reset?(): void;
   /** The text for a code the server sent (a rule's reason), or `undefined` if not the game's. */

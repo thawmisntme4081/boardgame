@@ -1,5 +1,6 @@
-// The top bar: everyone else's online status on the left, language and leave on the right.
-import type { PandemicView, SeatId } from '@pandemic/rules';
+// Pandemic's part of the site header: who else is online, and leaving the game. The language and
+// the account are the site's own.
+import type { SeatId, TableView } from '@pandemic/rules';
 import { Button } from '@platform/ui/components/button';
 import {
   Dialog,
@@ -13,7 +14,6 @@ import {
 } from '@platform/ui/components/dialog';
 import type { SeatPresence } from '@platform/ui/game';
 import { seatInfo } from '@platform/ui/game';
-import { LanguageSwitch } from '@platform/ui/LanguageSwitch';
 import { cn } from '@platform/ui/utils';
 import { LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -76,19 +76,22 @@ function LeaveButton() {
   );
 }
 
-export function TopBar({ view, presence }: { view: PandemicView; presence: SeatPresence | null }) {
-  const others = view.seats.filter((seat) => seat !== view.you);
+export function HeaderExtra({
+  view,
+  presence,
+}: {
+  view: TableView;
+  presence: SeatPresence | null;
+}) {
+  const others = 'seats' in view ? view.seats.filter((seat) => seat !== view.you) : [];
   return (
-    <header className="flex items-center justify-between gap-3 border-b py-2">
+    <>
       <div className="flex min-w-0 flex-wrap items-center gap-x-3">
         {others.map((seat) => (
           <PlayerStatus key={seat} presence={presence} seat={seat} />
         ))}
       </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <LanguageSwitch />
-        <LeaveButton />
-      </div>
-    </header>
+      <LeaveButton />
+    </>
   );
 }

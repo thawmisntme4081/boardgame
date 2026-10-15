@@ -1,53 +1,19 @@
-import { HAND_LIMIT, canActInView, shareAnswerer, type PandemicView } from '@pandemic/rules';
+import { canActInView, shareAnswerer, type PandemicView } from '@pandemic/rules';
 import { Button } from '@platform/ui/components/button';
 import type { SeatPresence } from '@platform/ui/game';
 import { useTranslation } from 'react-i18next';
-import { useCardText } from '../lib/cards';
 import { cityName, seatName } from '../lib/names';
 import { platform } from '../platform';
 
 /**
- * Questions that stop play: a card to discard, a Share Knowledge or move offer to answer, or a
- * Forecast being arranged.
+ * Questions that stop play: a Share Knowledge or move offer to answer, or a Forecast being
+ * arranged. (A card to discard is asked in the action bar.)
  */
 export function Prompts({ view, presence }: { view: PandemicView; presence: SeatPresence | null }) {
   const { t } = useTranslation('pandemic');
-  const cardText = useCardText();
   const { pending, you } = view;
-  if (!pending || view.status !== 'playing') return null;
-
-  if (pending.kind === 'discard') {
-    return (
-      <section
-        aria-labelledby="discard-title"
-        className="flex flex-col gap-2 rounded-lg border p-3"
-      >
-        <h2 id="discard-title" className="font-semibold">
-          {t('discard.title')}
-        </h2>
-        {pending.seat === you ? (
-          <>
-            <p className="text-sm">{t('discard.text', { limit: HAND_LIMIT })}</p>
-            <div className="flex flex-wrap gap-2">
-              {(view.hands[pending.seat] ?? []).map((card, i) => (
-                <Button
-                  key={i}
-                  variant="outline"
-                  onClick={() => void platform().send({ type: 'discard', card })}
-                >
-                  {t('discard.button', { card: cardText(card) })}
-                </Button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p className="text-sm">
-            {t('discard.waiting', { name: seatName(presence, pending.seat) })}
-          </p>
-        )}
-      </section>
-    );
-  }
+  // A card to discard is asked in the action bar, not here.
+  if (!pending || pending.kind === 'discard' || view.status !== 'playing') return null;
 
   if (pending.kind === 'move') {
     return (

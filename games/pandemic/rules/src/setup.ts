@@ -178,6 +178,7 @@ export function createGame(options: CreateGameOptions): GameState {
     infectionRate: 0,
     cures: perColor('none'),
     log: emptyLog(order.items[0] as SeatId),
+    checkpoint: null,
     rngSeed: seed,
     rngState,
   };

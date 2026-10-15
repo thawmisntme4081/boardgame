@@ -21,7 +21,14 @@ const join = (state: PandemicState, seat: SeatId): PandemicState =>
 describe('the table', () => {
   it('waits for the number of players chosen in the lobby', () => {
     const state = opened(3);
-    expect(state).toEqual({ status: 'waiting', seated: ['p1'], players: 3, epidemics: 4, seed: 7 });
+    expect(state).toEqual({
+      status: 'waiting',
+      seated: ['p1'],
+      players: 3,
+      epidemics: 4,
+      roleMode: 'random',
+      seed: 7,
+    });
     expect(pandemic.started?.(state)).toBe(false);
     expect(pandemic.actors(state)).toEqual([]);
     expect(pandemic.outcome(state)).toBeNull();

@@ -1,5 +1,5 @@
 // Pandemic on the platform: a room through RoomManager only, as the handlers drive it.
-import type { GameState, PandemicState } from '@pandemic/rules';
+import type { GameState, PandemicState, SetupState } from '@pandemic/rules';
 import { describe, expect, it } from 'vitest';
 import { RoomManager, type Room } from './rooms';
 import { MemoryMatchStore } from './store';
@@ -27,7 +27,22 @@ function table(
   const joined = names
     .slice(1, players)
     .map((name, i) => unwrap(rooms.join(room.code, name, `${prefix}${i + 1}`)));
+  confirmAll(rooms, room as Room<PandemicState>);
   return { room: room as Room<PandemicState>, joined };
+}
+
+/**
+ * Every seat confirms the "before the game" step (roles dealt at random), which deals the board;
+ * nothing happens while the table is not full or the step is over.
+ */
+function confirmAll(rooms: RoomManager, room: Room<PandemicState>): void {
+  while (room.game.status === 'setup') {
+    const waiting = room.game.seats.find(
+      (seat) => !(room.game as SetupState).confirmed.includes(seat),
+    );
+    if (!waiting) return;
+    unwrap(rooms.move(room, waiting, { type: 'confirm' }));
+  }
 }
 
 const game = (room: Room<PandemicState>): GameState => {

@@ -2,12 +2,12 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { GAMES, preloadGame } from '../games';
-import { Shell } from './Shell';
+import { Page } from './Shell';
 
 export function Picker() {
   const { t } = useTranslation();
   return (
-    <Shell full account>
+    <Page full>
       <section aria-labelledby="games" className="flex flex-col gap-3">
         <h2 id="games" className="text-xl font-semibold">
           {t('app.chooseGame')}
@@ -33,6 +33,6 @@ export function Picker() {
           ))}
         </div>
       </section>
-    </Shell>
+    </Page>
   );
 }

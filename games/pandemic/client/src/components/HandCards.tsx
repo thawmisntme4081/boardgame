@@ -3,6 +3,8 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { playerCardUrl } from '../lib/cardImages';
 import { useCardText, sortHand } from '../lib/cards';
+import { usePandemic } from '../store';
+import { EventInfo } from './EventInfo';
 import { type HandLayout } from '../lib/handLayout';
 import { MAP_HEIGHT, PLAYER_DECK_FRAME, PLAYER_DISCARD_FRAME } from '../lib/mapGeometry';
 
@@ -36,13 +38,29 @@ function HandCardImage({
   index,
   enter,
   layout,
+  onPick,
 }: {
   card: HandCard;
   index: number;
   enter: boolean;
   layout: HandLayout;
+  /** The card can be picked (to discard it): it is outlined and a click picks it. */
+  onPick?: () => void;
 }) {
+  const { t } = useTranslation('pandemic');
   const cardText = useCardText();
+  const setHoverCity = usePandemic((s) => s.setHoverCity);
+  // The pointer on a city card points out the city on the map; on an event card, its text opens.
+  const target = (
+    <div
+      className={`size-full rounded ${onPick ? 'cursor-pointer ring-4 ring-red-500' : ''}`}
+      role={onPick ? 'button' : undefined}
+      aria-label={onPick ? t('discard.button', { card: cardText(card) }) : undefined}
+      onPointerEnter={() => card.kind === 'city' && setHoverCity(card.city)}
+      onPointerLeave={() => setHoverCity(null)}
+      onClick={onPick}
+    />
+  );
   const group = useRef<SVGGElement>(null);
   useLayoutEffect(() => {
     if (!enter) return;
@@ -74,6 +92,9 @@ function HandCardImage({
       >
         <title>{cardText(card)}</title>
       </image>
+      <foreignObject width={layout.cardWidth} height={layout.cardHeight}>
+        {card.kind === 'event' ? <EventInfo event={card.event}>{target}</EventInfo> : target}
+      </foreignObject>
     </g>
   );
 }
@@ -140,10 +161,13 @@ export function HandCards({
   cards,
   discard,
   layout,
+  onPick,
 }: {
   cards: readonly HandCard[];
   discard: readonly HandCard[];
   layout: HandLayout;
+  /** Over the hand limit: a click on a card discards it. */
+  onPick?: (card: HandCard) => void;
 }) {
   const { t } = useTranslation('pandemic');
   const sorted = sortHand(cards);
@@ -195,6 +219,7 @@ export function HandCards({
           index={i}
           layout={layout}
           enter={seen?.fresh.has(cardKey(card)) ?? false}
+          onPick={onPick && (() => onPick(card))}
         />
       ))}
       {leaving.map((entry) => (

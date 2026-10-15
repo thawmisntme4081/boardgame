@@ -40,7 +40,12 @@ const handCard = z.discriminatedUnion('kind', [
 
 /** Playing an event card: the player's choices for each card (see `events/types.ts`). */
 const playEvent = (event: string, choices: z.ZodRawShape = {}) =>
-  z.object({ type: z.literal('play-event'), event: z.literal(event), ...choices });
+  z.object({
+    type: z.literal('play-event'),
+    event: z.literal(event),
+    owner: seat.optional(),
+    ...choices,
+  });
 const playEventSchema = z.discriminatedUnion('event', [
   playEvent('airlift', { pawn: seat, to: cityId }),
   playEvent('forecast'),
@@ -82,6 +87,8 @@ export const pandemicMoveSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('forecast-order'), cards: z.array(cityId).max(FORECAST_CARDS) }),
   z.object({ type: z.literal('pick-role'), role: z.enum(ROLE_IDS) }),
   z.object({ type: z.literal('confirm') }),
+  z.object({ type: z.literal('unconfirm') }),
+  z.object({ type: z.literal('restart-turn') }),
 ]) as unknown as z.ZodType<PandemicMove>;
 
 /** Epidemic cards by difficulty: introductory, standard, heroic. */
@@ -167,9 +174,10 @@ export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, Pandemi
   id: 'pandemic',
   // 3: the state holds the `roles` (Pandemic 04). 4: the turn counts `epidemicsResolved` and the
   // state has `quietNight` (event cards, Pandemic 05). 5: the "before the game" step (`setup`
-  // status) and the role mode (Pandemic 06). Older matches are not migrated (Pandemic was never
+  // status) and the role mode (Pandemic 06). 6: the game keeps a `checkpoint` for "Restart turn".
+  // Older matches are not migrated (Pandemic was never
   // deployed), so they are dropped on load.
-  version: 5,
+  version: 6,
   // A player who leaves frees the seat, not the hand: the game waits for whoever joins next.
   meta: {
     seats: SEATS,

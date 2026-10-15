@@ -10,6 +10,8 @@ export interface WorldMapProps {
   /** Tapping the sea, a continent or any spot that is not a city. */
   onBackgroundClick?: () => void;
   selected?: CityId | null;
+  /** A city to point out (the pointer is on its card in a hand). */
+  highlight?: CityId | null;
   reachable?: ReadonlySet<CityId>;
   /** A vial in the disease slot once cured (gold outline when eradicated). */
   cures?: Record<Color, CureState>;
@@ -28,6 +30,7 @@ export function WorldMap({
   onSelect,
   onBackgroundClick,
   selected = null,
+  highlight = null,
   reachable,
   cures,
   hand,
@@ -39,7 +42,7 @@ export function WorldMap({
       viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT + (hand ? handHeight : 0)}`}
       role="group"
       aria-label="Map"
-      className="w-full select-none"
+      className="h-full w-full select-none"
       preserveAspectRatio="xMidYMid meet"
     >
       <image href={mapUrl} width={MAP_WIDTH} height={MAP_HEIGHT} onClick={onBackgroundClick} />
@@ -60,6 +63,15 @@ export function WorldMap({
                 stroke="oklch(0.85 0.17 95)"
                 strokeWidth={3}
                 className="reach-ring"
+              />
+            )}
+            {highlight === id && (
+              <circle
+                r={21}
+                fill="oklch(0.85 0.12 200 / 0.25)"
+                stroke="oklch(0.85 0.12 200)"
+                strokeWidth={4}
+                pointerEvents="none"
               />
             )}
             {selected === id && <circle r={17} fill="none" stroke="white" strokeWidth={3} />}

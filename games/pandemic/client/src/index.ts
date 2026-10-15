@@ -3,6 +3,7 @@ import type { TableView } from '@pandemic/rules';
 import type { PandemicLobby, PandemicMove } from '@pandemic/rules/definition';
 import type { GameClientModule } from '@platform/ui/game';
 import { Board } from './Board';
+import { HeaderExtra } from './components/HeaderExtra';
 import { locales, NS } from './i18n';
 import { errorText } from './messages';
 import { connectPlatform } from './platform';
@@ -17,6 +18,7 @@ export const pandemicClient: GameClientModule<TableView, PandemicMove, PandemicL
   defaultSetup: DEFAULT_SETUP,
   SetupForm,
   Board,
+  HeaderExtra,
   WaitingInfo,
   connect: connectPlatform,
   onView: (view, before, presence) => usePandemic.getState().onView(view, before, presence),

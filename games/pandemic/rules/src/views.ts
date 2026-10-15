@@ -18,6 +18,7 @@ import type {
   RoleMode,
   SeatId,
 } from './types';
+import { isRestartable } from './restart';
 import { SEATS } from './types';
 
 export interface PandemicView extends ActionState {
@@ -35,6 +36,8 @@ export interface PandemicView extends ActionState {
   cures: Record<Color, CureState>;
   /** One Quiet Night was played: the next infect step is skipped. */
   quietNight: boolean;
+  /** The active player may restart the turn (see `restart.ts`). */
+  restartable: boolean;
   /** The current and the previous turn's draws, epidemics, infections and outbreaks. */
   log: GameLog;
 }
@@ -122,6 +125,7 @@ export function viewFor(state: GameState, viewer: Viewer): PandemicView {
     infectionRate: state.infectionRate,
     cures: state.cures,
     quietNight: state.quietNight,
+    restartable: isRestartable(state),
     log: state.log,
   });
 }

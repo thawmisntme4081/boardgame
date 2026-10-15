@@ -7,6 +7,7 @@ import {
   type SetupView,
 } from '@pandemic/rules';
 import { Button } from '@platform/ui/components/button';
+import { CircleCheck } from 'lucide-react';
 import type { SeatPresence } from '@platform/ui/game';
 import { useTranslation } from 'react-i18next';
 import { seatName } from '../lib/names';
@@ -23,16 +24,29 @@ const TEXT_ON: Record<RoleId, string> = {
   scientist: 'text-black',
 };
 
-/** A role's card: its name and power, on its color. */
-function RoleFace({ role, who }: { role: RoleId; who?: string }) {
+/** A role's card: the player who has it (a check once they confirmed), its name and its power. */
+function RoleFace({
+  role,
+  who,
+  confirmed = false,
+}: {
+  role: RoleId;
+  who?: string;
+  confirmed?: boolean;
+}) {
   const { t } = useTranslation('pandemic');
   return (
     <div
       data-role={role}
-      className={`flex flex-col gap-1 rounded-lg border p-3 text-left shadow-sm ${TEXT_ON[role]}`}
+      className={`flex h-36 flex-col gap-1 rounded-lg border p-3 text-left shadow-sm ${TEXT_ON[role]}`}
       style={{ background: `var(--color-role-${role})` }}
     >
-      {who && <span className="text-xs opacity-80">{who}</span>}
+      {who && (
+        <span className="flex items-center gap-1 text-xs font-medium">
+          {who}
+          {confirmed && <CircleCheck className="size-4" aria-label={t('preflight.ready')} />}
+        </span>
+      )}
       <span className="font-semibold">{t(`roles.${role}.name`)}</span>
       <span className="text-xs">{t(`roles.${role}.power`)}</span>
     </div>
@@ -40,8 +54,9 @@ function RoleFace({ role, who }: { role: RoleId; who?: string }) {
 }
 
 /**
- * "Before the game": the turn order and the difficulty, then the roles (dealt, or picked from the
- * free ones until you confirm). Everyone confirms; the last confirm deals the board. Nothing here
+ * "Before the game": the difficulty and the roles (dealt, shown in turn order; or picked from the
+ * free ones until you confirm). Everyone confirms, shown by a check next to their name; the last
+ * confirm deals the board. Nothing here
  * decides a rule: the buttons follow `checkPreflight`, the same check the server runs.
  */
 export function Preflight({ view, presence }: { view: SetupView; presence: SeatPresence | null }) {
@@ -49,12 +64,13 @@ export function Preflight({ view, presence }: { view: SetupView; presence: SeatP
   const { you, seats, picks, confirmed, roleMode } = view;
   const can = (move: PreflightMove) => !!you && checkPreflight(view, you, move).ok;
   const send = (move: PreflightMove) => void platform().send(move);
-  const waiting = seats.filter((seat) => !confirmed.includes(seat));
-  const holder = (role: RoleId): SeatId | undefined => seats.find((seat) => picks[seat] === role);
   const done = !!you && confirmed.includes(you);
+  const holder = (role: RoleId): SeatId | undefined => seats.find((seat) => picks[seat] === role);
+  const name = (seat: SeatId) =>
+    seat === you ? `${seatName(presence, seat)} (${t('preflight.you')})` : seatName(presence, seat);
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
+    <main className="mx-auto flex max-w-6xl flex-col gap-4 p-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold">{t('preflight.title')}</h1>
         <p className="text-sm text-muted-foreground">
@@ -62,55 +78,32 @@ export function Preflight({ view, presence }: { view: SetupView; presence: SeatP
         </p>
       </header>
 
-      <section aria-labelledby="order-title" className="flex flex-col gap-2">
-        <h2 id="order-title" className="font-semibold">
-          {t('preflight.order')}
-        </h2>
-        <ol className="flex flex-wrap gap-2">
-          {seats.map((seat, i) => (
-            <li
-              key={seat}
-              className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
-              style={{ borderColor: `var(--color-seat-${seat})` }}
-            >
-              <span className="font-semibold">{i + 1}.</span>
-              <span>{seatName(presence, seat)}</span>
-              {seat === you && (
-                <span className="text-muted-foreground">({t('preflight.you')})</span>
-              )}
-              {confirmed.includes(seat) && (
-                <span className="font-medium text-green-700">{t('preflight.ready')}</span>
-              )}
-            </li>
-          ))}
-        </ol>
-      </section>
-
       <section aria-labelledby="roles-title" className="flex flex-col gap-2">
         <h2 id="roles-title" className="font-semibold">
           {t('roles.title')}
         </h2>
         {roleMode === 'random' ? (
-          <div className="grid gap-2 tablet:grid-cols-2">
+          // In turn order.
+          <div className="grid grid-cols-4 gap-2">
             {seats.map((seat) => {
               const role = picks[seat];
               return role ? (
-                <RoleFace key={seat} role={role} who={seatName(presence, seat)} />
+                <RoleFace
+                  key={seat}
+                  role={role}
+                  who={name(seat)}
+                  confirmed={confirmed.includes(seat)}
+                />
               ) : null;
             })}
           </div>
         ) : (
           <>
             <p className="text-sm">{done ? t('preflight.locked') : t('preflight.pickHint')}</p>
-            <div
-              role="group"
-              aria-label={t('roles.title')}
-              className="grid gap-2 tablet:grid-cols-2"
-            >
+            <div role="group" aria-label={t('roles.title')} className="grid grid-cols-4 gap-2">
               {ROLE_IDS.map((role) => {
                 const by = holder(role);
                 const mine = by === you;
-                const free = !by;
                 return (
                   <button
                     key={role}
@@ -120,17 +113,12 @@ export function Preflight({ view, presence }: { view: SetupView; presence: SeatP
                     onClick={() => send({ type: 'pick-role', role })}
                     className={`rounded-lg text-left outline-offset-2 disabled:cursor-not-allowed ${
                       mine ? 'ring-4 ring-primary' : ''
-                    } ${!free && !mine ? 'opacity-50' : ''}`}
+                    } ${by && !mine ? 'opacity-50' : ''}`}
                   >
                     <RoleFace
                       role={role}
-                      who={
-                        mine
-                          ? t('preflight.yours')
-                          : by
-                            ? t('preflight.takenBy', { name: seatName(presence, by) })
-                            : undefined
-                      }
+                      who={by ? name(by) : undefined}
+                      confirmed={!!by && confirmed.includes(by)}
                     />
                   </button>
                 );
@@ -140,23 +128,20 @@ export function Preflight({ view, presence }: { view: SetupView; presence: SeatP
         )}
       </section>
 
-      <footer className="flex flex-col gap-2">
-        {you && (
-          <Button
-            className="h-11"
-            disabled={!can({ type: 'confirm' })}
-            onClick={() => send({ type: 'confirm' })}
-          >
-            {t('preflight.confirm')}
-          </Button>
-        )}
-        {waiting.length > 0 && (
-          <p role="status" className="text-sm text-muted-foreground">
-            {t('preflight.waitingFor', {
-              names: waiting.map((seat) => seatName(presence, seat)).join(', '),
-            })}
-          </p>
-        )}
+      <footer className="flex gap-2">
+        <Button variant="outline" onClick={() => void platform().leave()}>
+          {t('preflight.leave')}
+        </Button>
+        {you &&
+          (done ? (
+            <Button variant="secondary" onClick={() => send({ type: 'unconfirm' })}>
+              {t('preflight.undo')}
+            </Button>
+          ) : (
+            <Button disabled={!can({ type: 'confirm' })} onClick={() => send({ type: 'confirm' })}>
+              {t('preflight.confirm')}
+            </Button>
+          ))}
       </footer>
     </main>
   );
