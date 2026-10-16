@@ -79,7 +79,7 @@ export function MapPieces({
       {cubes.map(({ item: cube, leaving }) => {
         const { x, y } = cityPoint(cube.city);
         return (
-          <g key={cube.key} transform={`translate(${x} ${y})`}>
+          <g key={cube.key} data-cube-city={cube.city} transform={`translate(${x} ${y})`}>
             <Cube
               data-cube={cube.color}
               color={cube.color}

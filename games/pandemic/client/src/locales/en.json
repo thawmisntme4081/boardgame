@@ -140,9 +140,43 @@
       "name": "Teacher",
       "power": "As an action, create a student pawn in your city (at most 2 per game). At the start of your turn, choose the teacher or a student: that pawn does this turn's actions, with your hand."
     },
+    "relocation-specialist": {
+      "name": "Relocation Specialist",
+      "power": "Whenever your pawn leaves a city, however it moves, you may take up to 3 disease cubes and/or 1 other pawn (if its owner agrees) from that city to where you arrive."
+    },
+    "crisis-mitigator": {
+      "name": "Crisis Mitigator",
+      "power": "Your actions each turn depend on the disease cubes in your city when your turn starts: 0–1 cubes: 4 actions, 2: 5, 3: 6, 4 or more: 7."
+    },
+    "generalist": {
+      "name": "Generalist",
+      "power": "You have 5 actions each turn instead of 4."
+    },
+    "z-force-team-member": {
+      "name": "Z-Force Team Member",
+      "power": "Start in Montreal. As an action, move to Montreal or Essen. When you discover a cure, other players in your city may give up to 2 of its cards (if they agree)."
+    },
     "students": "Students: {{count}} / {{max}}",
     "info": "What {{role}} can do",
     "stored": "Stored: {{event}}"
+  },
+  "cureOffer": {
+    "title": "Discover a cure",
+    "offered": "{{by}} asks to use {{cards}} to cure {{color}}.",
+    "accept": "Give the cards",
+    "decline": "Decline",
+    "cancel": "Cancel the cure",
+    "waiting": "Waiting for {{names}} to agree."
+  },
+  "carry": {
+    "title": "Take along",
+    "hintMove": "Choose the cubes and the pawn that come with you, then where to go on the map.",
+    "hintAccept": "Choose the cubes and the pawn that come with you, then accept.",
+    "cubes": "{{color}}: {{count}}",
+    "count": "{{count}} / {{max}} cubes",
+    "more": "One more {{color}} cube",
+    "less": "One fewer {{color}} cube",
+    "pawn": "Take {{name}}"
   },
   "pawns": {
     "teacher": "Teacher pawn",
@@ -179,6 +213,9 @@
   "actions": {
     "title": "Actions",
     "drive": "Drive / Ferry",
+    "montrealEssen": "Go to {{city}}",
+    "cureHelp": "From other players (up to {{max}}):",
+    "cureHelpCard": "{{city}} ({{name}})",
     "direct": "Direct Flight",
     "charter": "Charter Flight",
     "shuttle": "Shuttle Flight",
@@ -226,6 +263,9 @@
   "moveOffer": {
     "title": "Move a pawn",
     "offered": "{{by}} offers to move {{pawn}} to {{city}}.",
+    "takeAlong": "{{carrier}} offers to take {{pawn}} along to {{city}}.",
+    "cubes_one": "{{count}} cube comes along.",
+    "cubes_other": "{{count}} cubes come along.",
     "accept": "Accept",
     "decline": "Decline",
     "cancel": "Cancel the offer"

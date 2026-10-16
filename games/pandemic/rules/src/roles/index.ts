@@ -1,15 +1,18 @@
-// The seven role cards of the base game and the fan-made Teacher, by id. Each role's powers are hooks (`RoleModule`);
-// a role without powers yet is only its id.
+// The seven role cards of the base game, the fan-made ones and the Gen Con 2016 promo, by id.
+// Each role's powers are hooks (`RoleModule`); a role without powers yet is only its id.
 import type { ActionState, RoleId, SeatId } from '../types';
 import { contingencyPlanner } from './contingencyPlanner';
+import { crisisMitigator } from './crisisMitigator';
 import { medic } from './medic';
 import { operationsExpert } from './operationsExpert';
 import { quarantineSpecialist } from './quarantineSpecialist';
 import { teacher } from './teacher';
+import { zForceTeamMember } from './zForceTeamMember';
 import type { RoleModule } from './types';
 
 export * from './types';
 export { MAX_STUDENTS } from './teacher';
+export { ZFORCE_CITIES } from './zForceTeamMember';
 
 export const ROLES: Readonly<Record<RoleId, RoleModule>> = {
   'contingency-planner': contingencyPlanner,
@@ -23,6 +26,12 @@ export const ROLES: Readonly<Record<RoleId, RoleModule>> = {
   // Discovers a cure with 4 cards of a color.
   scientist: { id: 'scientist', cardsToCure: 4 },
   teacher,
+  // Takes up to 3 cubes and/or 1 other pawn along whenever its pawn leaves a city.
+  'relocation-specialist': { id: 'relocation-specialist', carries: true },
+  'crisis-mitigator': crisisMitigator,
+  // 5 actions a turn.
+  generalist: { id: 'generalist', actionsPerTurn: () => 5 },
+  'z-force-team-member': zForceTeamMember,
 };
 
 /** The role a seat holds (`undefined` for a seat not in the game). */

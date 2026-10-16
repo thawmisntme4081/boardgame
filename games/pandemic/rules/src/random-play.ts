@@ -3,7 +3,10 @@
 // enough to be won or to run out of cards, not only to be lost to outbreaks.
 import type { NextMove } from '@platform/engine/testing';
 import { CITIES, COLORS, cityOf, type CityId, type Color } from './cities';
-import { cardsToCure, cubesOnBoard } from './actions';
+import { cardsToCure, cubesOnBoard, isPawnMove } from './actions';
+import { MAX_CARRIED_CUBES, carriesAlong, type Carry } from './carry';
+import { cureHelpOf } from './cure';
+import { canCarryOnAccept } from './moveOffer';
 import { legalActions, legalRoleActions, legalShareOffers } from './legal';
 import { actingPawn, pawnsOf } from './pawns';
 import { canPlayCard, heldEvents } from './playEvent';
@@ -15,6 +18,7 @@ import {
   pawnOwner,
   pawnsOnMap,
   type EventId,
+  type PawnId,
   type GameState,
   type HandCard,
   type PandemicState,
@@ -64,6 +68,56 @@ function cardToDiscard(hand: readonly HandCard[]): HandCard {
   });
 }
 
+/** Some of the cubes in `pawn`'s city and maybe a pawn there, for a pawn that takes them along. */
+function randomCarry(state: GameState, pawn: PawnId, random: () => number): Carry {
+  const from = state.pawns[pawn] as CityId;
+  const cubes = COLORS.flatMap((color) => Array<Color>(state.cubes[from][color]).fill(color));
+  const taken: Color[] = [];
+  while (cubes.length > 0 && taken.length < MAX_CARRIED_CUBES && random() < 0.7) {
+    taken.push(...cubes.splice(Math.floor(random() * cubes.length), 1));
+  }
+  const others = pawnsOnMap(state).filter((other) => other !== pawn && state.pawns[other] === from);
+  const along = others.length > 0 && random() < 0.4 ? pick(others, random) : undefined;
+  return { cubes: taken, ...(along && { pawn: along }) };
+}
+
+/** `move`, now and then taking things along when it moves `by`'s own pawn and that pawn carries. */
+function maybeCarry(state: GameState, by: SeatId, move: PandemicMove, random: () => number) {
+  const pawn = 'pawn' in move && move.pawn !== undefined ? move.pawn : actingPawn(state, by);
+  const moves = isPawnMove(move) || (move.type === 'play-event' && move.event === 'airlift');
+  if (!moves || pawnOwner(pawn) !== by || !carriesAlong(state, pawn) || random() >= 0.4) {
+    return move;
+  }
+  return { ...move, carry: randomCarry(state, pawn, random) } as PandemicMove;
+}
+
+/**
+ * A cure with other players' cards, for a role that may use them (Z-Force Team Member): its own
+ * cards of a color first, the rest from the players in its city; `null` if none is legal.
+ */
+function helpedCure(state: GameState, by: SeatId): PandemicMove | null {
+  const allowed = cureHelpOf(state, by);
+  if (allowed === 0) return null;
+  const here = state.pawns[actingPawn(state, by)] as CityId;
+  const ofColor = (seat: SeatId, color: Color): CityId[] =>
+    (state.hands[seat] ?? []).flatMap((card) =>
+      card.kind === 'city' && cityOf(card.city).color === color ? [card.city] : [],
+    );
+  const helpers = state.seats.filter(
+    (seat) => seat !== by && pawnsOf(state, seat).some((pawn) => state.pawns[pawn] === here),
+  );
+  for (const color of COLORS) {
+    const needed = cardsToCure(state, by);
+    const cards = ofColor(by, color).slice(0, needed);
+    const help = helpers
+      .flatMap((seat) => ofColor(seat, color).map((city) => ({ seat, city })))
+      .slice(0, Math.min(allowed, needed - cards.length));
+    const move: PandemicMove = { type: 'cure', color, cards, help };
+    if (help.length > 0 && checkMove(state, by, move).ok) return move;
+  }
+  return null;
+}
+
 /** A random way to play `event` (it may turn out illegal: the caller checks it). */
 function eventMove(state: GameState, event: EventId, random: () => number): PandemicMove | null {
   switch (event) {
@@ -94,7 +148,8 @@ function randomEvent(state: GameState, random: () => number): NextMove<PandemicM
   for (const by of [...state.seats].sort(() => random() - 0.5)) {
     for (const event of heldEvents(state, by)) {
       if (!canPlayCard(state, by, event)) continue;
-      const move = eventMove(state, event, random);
+      const plain = eventMove(state, event, random);
+      const move = plain && maybeCarry(state, by, plain, random);
       if (move && checkMove(state, by, move).ok) return { by, move };
     }
   }
@@ -126,7 +181,20 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
   if (pending?.kind === 'move') {
     if (random() < 0.05) return { by: pending.by, move: { type: 'move-cancel' } };
     const by = pawnOwner(pending.pawn);
-    return { by, move: { type: random() < 0.9 ? 'move-accept' : 'move-decline' } };
+    if (random() >= 0.9) return { by, move: { type: 'move-decline' } };
+    // A pawn that takes things along chooses them when accepting, now and then.
+    const carry = canCarryOnAccept(state) && random() < 0.5;
+    return {
+      by,
+      move: carry
+        ? { type: 'move-accept', carry: randomCarry(state, pending.pawn, random) }
+        : { type: 'move-accept' },
+    };
+  }
+  if (pending?.kind === 'cure') {
+    if (random() < 0.05) return { by: pending.by, move: { type: 'cure-cancel' } };
+    const by = pick(pending.waiting, random);
+    return { by, move: { type: random() < 0.9 ? 'cure-accept' : 'cure-decline' } };
   }
   if (pending?.kind === 'forecast') {
     // Puts the cards back as they were or upside down: any order is legal.
@@ -158,7 +226,7 @@ export function agentMove(table: PandemicState, random: () => number): NextMove<
       if (turn.pawn === null) {
         return { by, move: { type: 'choose-pawn', pawn: pick(pawnsOf(state, by), random) } };
       }
-      return { by, move: actionMove(state, by, random) };
+      return { by, move: maybeCarry(state, by, actionMove(state, by, random), random) };
   }
 }
 
@@ -171,7 +239,7 @@ function actionMove(state: GameState, by: SeatId, random: () => number): Pandemi
   const powers = legalRoleActions(state, by);
   if (powers.length > 0 && random() < 0.15) return pick(powers, random);
 
-  const cure = actions.find((action) => action.type === 'cure');
+  const cure = actions.find((action) => action.type === 'cure') ?? helpedCure(state, by);
   if (cure) return cure;
 
   // Hold the cards for a cure: get to a research station.

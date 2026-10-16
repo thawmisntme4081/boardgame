@@ -5,7 +5,7 @@ import type { ShareMove } from './share';
 import { checkShare } from './share';
 import { actingPawn } from './pawns';
 import { checkRoleAction } from './roleActions';
-import { roleOf, type RoleAction } from './roles';
+import { ZFORCE_CITIES, roleOf, type RoleAction } from './roles';
 import { EVENT_IDS, pawnsOnMap, type GameState, type SeatId } from './types';
 
 /** Actions worth trying, legal or not (a superset of `legalActions`). */
@@ -80,7 +80,8 @@ export function legalRoleActions(state: GameState, seat: SeatId): RoleAction[] {
   );
   const takes: RoleAction[] = EVENT_IDS.map((event): RoleAction => ({ type: 'take-event', event }));
   const student: RoleAction = { type: 'create-student' };
-  return [...flights, ...takes, student].filter(
+  const zForce = ZFORCE_CITIES.map((to): RoleAction => ({ type: 'montreal-essen', to }));
+  return [...flights, ...takes, student, ...zForce].filter(
     (action) => checkRoleAction(state, seat, action).ok,
   );
 }

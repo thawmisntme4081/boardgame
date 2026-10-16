@@ -2,10 +2,18 @@
 // and it is not an action. The rulebook allows events at any time "except in between drawing and
 // resolving a card": every card of the turn is its own move, so the moments in between are the
 // states between moves. What each card does is its module in `events/`.
-import { isMoveOffer, type ActionCheck, type ActionReason } from './actions';
+import type { ActionCheck, ActionReason } from './actions';
+import { answeringPawn } from './carry';
 import { EVENTS, type PawnEventMove, type PlayEventMove } from './events';
 import { roleOf } from './roles';
-import { HAND_LIMIT, type ActionState, type EventId, type GameState, type SeatId } from './types';
+import {
+  HAND_LIMIT,
+  type ActionState,
+  type EventId,
+  type GameState,
+  type PawnId,
+  type SeatId,
+} from './types';
 
 const fail = (reason: ActionReason): { ok: false; reason: ActionReason } => ({ ok: false, reason });
 
@@ -84,9 +92,12 @@ export function canPlayEvent(state: ActionState, seat: SeatId): boolean {
   );
 }
 
-/** An event that moves another player's pawn: an offer its owner answers (`moveOffer.ts`). */
+/**
+ * An event that moves another player's pawn, or takes one along: an offer its owner answers
+ * (`moveOffer.ts`).
+ */
 export const isPawnOffer = (seat: SeatId, move: PlayEventMove): move is PawnEventMove =>
-  'pawn' in move && isMoveOffer(seat, move.pawn);
+  'pawn' in move && answeringPawn(seat, move.pawn, move.carry) !== null;
 
 export function checkPlayEvent(state: ActionState, seat: SeatId, move: PlayEventMove): ActionCheck {
   const moment = eventMoment(state, seat);
@@ -146,7 +157,12 @@ export function applyPlayEvent(state: GameState, seat: SeatId, move: PlayEventMo
 
   const s = structuredClone(state);
   if (isPawnOffer(seat, move)) {
-    s.pending = { kind: 'move', by: seat, pawn: move.pawn, move };
+    s.pending = {
+      kind: 'move',
+      by: seat,
+      pawn: answeringPawn(seat, move.pawn, move.carry) as PawnId,
+      move,
+    };
   } else {
     resolveEvent(s, seat, move);
   }

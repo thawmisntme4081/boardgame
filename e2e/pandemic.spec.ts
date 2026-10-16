@@ -361,6 +361,121 @@ test.describe('a three-player Pandemic game', () => {
     await expect(ana.getByText('This turn: Student 1 in Chicago')).toBeVisible();
   });
 
+  test("a Relocation Specialist takes two cubes and a pawn along; the pawn's owner agrees first", async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const { ana, ben, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+
+    // Ana is the Relocation Specialist in Atlanta, with 3 blue cubes there and Ben's pawn.
+    await setGame(request, code, {
+      ...anasTurn,
+      roles: { p1: 'relocation-specialist', p2: 'researcher', p3: 'scientist' },
+      pawns: { p1: 'atlanta', p2: 'atlanta', p3: 'miami' },
+      cubes: { ...noCubes(), atlanta: { blue: 3, yellow: 0, black: 0, red: 0 } },
+      supply: {
+        blue: CUBES_PER_COLOR - 3,
+        yellow: CUBES_PER_COLOR,
+        black: CUBES_PER_COLOR,
+        red: CUBES_PER_COLOR,
+      },
+      hands: { p1: [], p2: [], p3: [] },
+    });
+    await expect(ana.getByText(/4 actions left/)).toBeVisible();
+
+    // She chooses two blue cubes and Ben, then drives to Chicago.
+    const along = ana.getByRole('group', { name: 'Take along' });
+    await along.getByRole('button', { name: 'One more Blue cube' }).click();
+    await along.getByRole('button', { name: 'One more Blue cube' }).click();
+    await expect(along.getByText('2 / 3 cubes')).toBeVisible();
+    await along.getByRole('button', { name: 'Take Ben' }).click();
+    await ana.locator('[data-city="chicago"]').click();
+    await ana
+      .getByRole('menu', { name: 'Fly to Chicago' })
+      .getByRole('button', { name: 'Drive / Ferry' })
+      .click();
+
+    // Nothing moves until Ben agrees.
+    await expect(
+      ben.getByText('Ana offers to take Ben along to Chicago. 2 cubes come along.'),
+    ).toBeVisible();
+    await expect(ben.locator('[data-cube-city="atlanta"]')).toHaveCount(3);
+    await ben.getByRole('button', { name: 'Accept' }).click();
+
+    // Both pawns and two cubes are in Chicago; one cube stayed in Atlanta; one action spent.
+    await expect(ana.getByText(/3 actions left/)).toBeVisible();
+    for (const page of [ana, ben]) {
+      await expect(page.locator('[data-cube-city="chicago"]')).toHaveCount(2);
+      await expect(page.locator('[data-cube-city="atlanta"]')).toHaveCount(1);
+    }
+  });
+
+  test("a Generalist's turn starts with 5 actions", async ({ browser, request }, testInfo) => {
+    const { ana, ben, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+
+    // Ana's last infection is due; Ben, the Generalist, plays next.
+    await setGame(request, code, {
+      ...anasTurn,
+      seats: ['p1', 'p2', 'p3'],
+      turn: { ...anasTurn.turn, actionsLeft: 0, step: 'infect', infectionsLeft: 1 },
+      roles: { p1: 'medic', p2: 'generalist', p3: 'scientist' },
+      cubes: noCubes(),
+      hands: { p1: [], p2: [], p3: [] },
+    });
+    await ana.getByRole('button', { name: 'Infect', exact: true }).click();
+    await expect(ben.getByText('5 actions left')).toBeVisible();
+  });
+
+  test("a Z-Force Team Member cures with two of a partner's cards once the partner agrees", async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const { ana, ben, cleo, code } = await startThreePlayers(
+      browser,
+      deviceOptions(testInfo.project.use),
+    );
+    const blue = (...cities: string[]) => cities.map((city) => ({ kind: 'city', city }));
+
+    // Ana (Z-Force) and Ben are at Atlanta's station; Cleo, in Miami, cannot help.
+    await setGame(request, code, {
+      ...anasTurn,
+      roles: { p1: 'z-force-team-member', p2: 'researcher', p3: 'scientist' },
+      pawns: { p1: 'atlanta', p2: 'atlanta', p3: 'miami' },
+      cubes: noCubes(),
+      hands: {
+        p1: blue('chicago', 'montreal', 'new-york'),
+        p2: blue('london', 'madrid'),
+        p3: blue('paris'),
+      },
+    });
+
+    await ana.getByRole('button', { name: 'Cure: Blue' }).click();
+    for (const city of ['Chicago', 'Montreal', 'New York', 'London (Ben)', 'Madrid (Ben)']) {
+      await ana.getByRole('button', { name: city, exact: true }).click();
+    }
+    await expect(ana.getByRole('button', { name: 'Paris (Cleo)' })).toHaveCount(0);
+    await ana.getByRole('button', { name: 'Discover the cure' }).click();
+
+    // Nothing happens until Ben agrees; Cleo is not asked.
+    await expect(
+      ben.getByText('Ana asks to use London (Ben), Madrid (Ben) to cure Blue.', { exact: false }),
+    ).toBeVisible();
+    await expect(cleo.getByRole('button', { name: 'Give the cards' })).toHaveCount(0);
+    await expect(ana.locator('[data-cure="blue"]')).toHaveCount(0);
+    await ben.getByRole('button', { name: 'Give the cards' }).click();
+
+    for (const page of [ana, ben, cleo]) {
+      await expect(page.locator('[data-cure="blue"]')).toHaveCount(1);
+    }
+    await expect(ana.getByText(/3 actions left/)).toBeVisible();
+  });
+
   test("an event is played during someone else's turn: Ben's Government Grant on Ana's turn", async ({
     browser,
     request,
@@ -536,7 +651,7 @@ test.describe('before the game', () => {
 
     for (const page of pages) {
       await expect(page.getByText(/5 epidemic cards · roles chosen by the players/)).toBeVisible();
-      await expect(page.locator('[data-role]')).toHaveCount(8);
+      await expect(page.locator('[data-role]')).toHaveCount(12);
       // Nothing to confirm before a role is picked.
       await expect(page.getByRole('button', { name: 'Confirm and start' })).toBeDisabled();
     }
@@ -597,14 +712,15 @@ test.describe('before the game', () => {
     const active = ana.locator('[data-role][aria-current="true"]');
     const activeName = (await active.innerText()).split('\n')[0]?.trim();
     const [mine, other] = activeName === 'Ana' ? [ana, ben] : [ben, ana];
-    await expect(mine.getByText('4 actions left')).toBeVisible({ timeout: 15_000 });
+    // The actions depend on the role dealt (4, or up to 7 for some roles).
+    await expect(mine.getByText(/[4-7] actions left/)).toBeVisible({ timeout: 15_000 });
     await expect(other.getByText(/actions left/)).toHaveCount(0);
     // Two players, 4 cards each.
     await expect(ana.getByRole('region', { name: 'Hands' }).getByRole('listitem')).toHaveCount(8);
 
     // A reload during play shows the board as it is at once: no deal, the actions straight away.
     await mine.reload();
-    await expect(mine.getByText('4 actions left')).toBeVisible({ timeout: 3000 });
+    await expect(mine.getByText(/[4-7] actions left/)).toBeVisible({ timeout: 3000 });
     await expect(cubes(mine)).toHaveCount(18, { timeout: 3000 });
     await expect(pile(mine, 'Infection discard pile: 9 cards')).toHaveCount(1, { timeout: 3000 });
   });

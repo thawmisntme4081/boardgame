@@ -2,7 +2,7 @@
 
 [← Pandemic epic](EPIC.md) · [Master plan](../../PLAN.md) · **Status: ⏳ Not started** · Effort: **medium**
 
-Needs [Pandemic 06](phase-06-setup-and-history.md) and the Teacher ([Pandemic 04](phase-04-roles.md) tasks 13 to 18), so the translations cover every text at once. Follow Sky Team 10's way of working: glossary first, then the files.
+Needs [Pandemic 06](phase-06-setup-and-variants.md) and all 12 roles of [Pandemic 04](phase-04-roles.md), so the translations cover every text at once. Follow Sky Team 10's way of working: glossary first, then the files.
 
 ## Goals
 
@@ -33,7 +33,7 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 ## Settled with the user
 
-- **Order:** the Teacher (Pandemic 04 tasks 13 to 18) is finished first; this phase then translates every text, the Teacher's included.
+- **Order:** all 12 roles (Pandemic 04) are finished first; this phase then translates every text, theirs included.
 - **City names are translated.** French: the published edition's names. Vietnamese: the common Vietnamese name where one is standard (Bắc Kinh, Thượng Hải, Hồng Kông, TP. Hồ Chí Minh, Mát-xcơ-va…), the Latin spelling otherwise (London, Paris, New York, Lagos).
 - **One short name per city and language**, used on the map, the cards and the menus (`cities.<id>` keys; `cityName` reads them instead of building the name from the id), shortened where needed (TP. Hồ Chí Minh, St-Pétersbourg); a name that still does not fit wraps onto two lines on the map.
 - **Review:** the user reviews the Vietnamese glossary and `vi.json`; Claude reviews the French, as in Sky Team 10. French addresses the players as "vous".

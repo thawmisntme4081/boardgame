@@ -1,6 +1,7 @@
 // The game's state and constants. State is plain JSON (it is saved and replayed), and the
 // rules in the other files are pure functions over it.
 import type { PawnMove } from './actions';
+import type { CureAction } from './cure';
 import type { PawnEventMove } from './events';
 import type { CityId, Color } from './cities';
 import type { GameLog } from './log';
@@ -60,7 +61,10 @@ export const EVENT_IDS = [
 ] as const;
 export type EventId = (typeof EVENT_IDS)[number];
 
-/** Role cards (their powers are hooks in `roles/`): the base game's seven and the fan-made Teacher. */
+/**
+ * Role cards (their powers are hooks in `roles/`): the base game's seven, then the fan-made ones
+ * in the order they were added, then the Gen Con 2016 promo.
+ */
 export const ROLE_IDS = [
   'contingency-planner',
   'dispatcher',
@@ -70,6 +74,10 @@ export const ROLE_IDS = [
   'researcher',
   'scientist',
   'teacher',
+  'relocation-specialist',
+  'crisis-mitigator',
+  'generalist',
+  'z-force-team-member',
 ] as const;
 export type RoleId = (typeof ROLE_IDS)[number];
 
@@ -120,10 +128,16 @@ export type Pending =
   /** The active player offered to give or take a city card; the partner answers. */
   | { kind: 'share'; from: SeatId; to: SeatId; city: CityId }
   /**
-   * `by` offered to move `pawn` (another player's), with an action or an event card (Airlift);
-   * its owner (`pawnOwner`) answers (see `moveOffer.ts`).
+   * `by` offered `move`, an action or an event card (Airlift), that moves another player's pawn
+   * or takes one along (`move.carry`, see `carry.ts`); `pawn` is that pawn: its owner
+   * (`pawnOwner`) answers (see `moveOffer.ts`).
    */
   | { kind: 'move'; by: SeatId; pawn: PawnId; move: PawnMove | PawnEventMove }
+  /**
+   * `by` offered a cure with other players' cards (`move.help`, see `cure.ts`); the helpers in
+   * `waiting` have not accepted yet.
+   */
+  | { kind: 'cure'; by: SeatId; move: CureAction; waiting: SeatId[] }
   /** A hand over the limit: this seat discards (or plays an event) first. */
   | { kind: 'discard'; seat: SeatId }
   /**

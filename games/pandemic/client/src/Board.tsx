@@ -1,4 +1,11 @@
-import { CITIES, actingPawn, type CityId, type TableView } from '@pandemic/rules';
+import {
+  CITIES,
+  actingPawn,
+  carriesAlong,
+  pawnOwner,
+  type CityId,
+  type TableView,
+} from '@pandemic/rules';
 import type { BoardProps } from '@platform/ui/game';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +29,7 @@ import { MAP_HEIGHT, MAP_WIDTH } from './lib/mapGeometry';
 import { platform } from './platform';
 import { useDeal } from './lib/deal';
 import { reachableCities } from './lib/moves';
-import { usePandemic } from './store';
+import { carryPart, usePandemic } from './store';
 
 export function Board({ view: live, presence, rematch }: BoardProps<TableView>) {
   const { t } = useTranslation('pandemic');
@@ -33,6 +40,7 @@ export function Board({ view: live, presence, rematch }: BoardProps<TableView>) 
   const eventPlan = usePandemic((s) => s.eventPlan);
   const planEvent = usePandemic((s) => s.planEvent);
   const hoverCity = usePandemic((s) => s.hoverCity);
+  const carry = usePandemic((s) => s.carry);
   const layout = handLayout(useWide());
   const canMoveNow =
     !dealing &&
@@ -57,12 +65,16 @@ export function Board({ view: live, presence, rematch }: BoardProps<TableView>) 
   const targets = you ? eventTargets(view, you, eventPlan) : null;
   const chooseTarget = (city: CityId) => {
     if (eventPlan?.event === 'airlift' && eventPlan.pawn !== null) {
+      // Your own pawn takes along what you chose (Relocation Specialist).
+      const { pawn: lifted } = eventPlan;
+      const own = you !== null && pawnOwner(lifted) === you && carriesAlong(view, lifted);
       void platform().send({
         type: 'play-event',
         event: 'airlift',
         ...(you ? ownerPart(you, eventPlan.owner) : {}),
-        pawn: eventPlan.pawn,
+        pawn: lifted,
         to: city,
+        ...(own ? carryPart(carry) : {}),
       });
       planEvent(null);
     } else if (eventPlan?.event === 'government-grant') {

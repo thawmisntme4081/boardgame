@@ -1,6 +1,8 @@
 import {
+  pawnOwner,
   pawnsOnMap,
   canActInView,
+  carriesAlong,
   canPlayCard,
   heldEvents,
   roleOf,
@@ -18,6 +20,7 @@ import { ownerPart, type EventPlan } from '../lib/events';
 import { cityName, pawnName, seatName } from '../lib/names';
 import { platform } from '../platform';
 import { usePandemic } from '../store';
+import { CarryPicker } from './CarryPicker';
 
 /** The next step of the card being played, once it needs a choice. */
 function PlanStep({
@@ -68,11 +71,14 @@ function PlanStep({
         </div>
       );
     }
+    // Your own pawn, if it takes things along (Relocation Specialist), chooses them first.
+    const carrying = pawnOwner(plan.pawn) === you && carriesAlong(view, plan.pawn);
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm">
           {t('eventBar.airliftCity', { name: pawnName(presence, plan.pawn) })}
         </p>
+        {carrying && <CarryPicker view={view} pawn={plan.pawn} presence={presence} />}
         <div>{cancel}</div>
       </div>
     );

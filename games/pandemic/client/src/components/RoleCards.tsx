@@ -14,6 +14,10 @@ const TEXT_ON: Record<RoleId, string> = {
   researcher: 'text-white',
   scientist: 'text-black',
   teacher: 'text-white',
+  'relocation-specialist': 'text-white',
+  'crisis-mitigator': 'text-black',
+  generalist: 'text-white',
+  'z-force-team-member': 'text-white',
 };
 
 /**

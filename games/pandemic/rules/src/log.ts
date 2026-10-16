@@ -1,7 +1,7 @@
 // What happened after the actions, for the players to read back: the cards drawn, each step of an
 // epidemic, every city infected and the outbreaks it set off; and every event card played, at
-// any moment of the turn. Only the current and the previous
-// turn are kept, so the state (and every view) stays small. Everything in it is already public
+// any moment of the turn, and the cubes a pawn took along (Relocation Specialist). Only the
+// current and the previous turn are kept, so the state (and every view) stays small. Everything in it is already public
 // once it happens: drawn cards go to open hands or out of the game, infection cards to the
 // discard pile.
 import type { CityId, Color } from './cities';
@@ -21,6 +21,19 @@ export type LogEntry =
       owner?: SeatId;
       pawn?: PawnId;
       city?: CityId;
+    }
+  /**
+   * Cubes of one color a pawn took along (Relocation Specialist), put down in `city`: `cubes`
+   * stayed (0 when a role protected it: `prevented`), and the cities that outbroke when there was
+   * not room, in order (the first is the city itself).
+   */
+  | {
+      type: 'carried';
+      city: CityId;
+      color: Color;
+      cubes: number;
+      prevented: boolean;
+      outbreaks: CityId[];
     }
   /** One Quiet Night: this turn's infect step was skipped. */
   | { type: 'quiet-night' }

@@ -52,7 +52,7 @@ describe('random roles', () => {
       fc.property(
         fc.integer({ min: 2, max: 4 }),
         fc.integer({ min: 0, max: 100000 }),
-        fc.shuffledSubarray([...ROLE_IDS], { minLength: 4, maxLength: 8 }),
+        fc.shuffledSubarray([...ROLE_IDS], { minLength: 4, maxLength: 12 }),
         fc.array(fc.double({ min: 0, max: 1, maxExcluded: true, noNaN: true }), {
           minLength: 300,
           maxLength: 300,

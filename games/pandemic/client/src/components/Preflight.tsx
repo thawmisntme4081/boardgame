@@ -23,6 +23,10 @@ const TEXT_ON: Record<RoleId, string> = {
   researcher: 'text-white',
   scientist: 'text-black',
   teacher: 'text-white',
+  'relocation-specialist': 'text-white',
+  'crisis-mitigator': 'text-black',
+  generalist: 'text-white',
+  'z-force-team-member': 'text-white',
 };
 
 /** A role's card: the player who has it (a check once they confirmed), its name and its power. */

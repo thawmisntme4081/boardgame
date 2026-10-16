@@ -1,6 +1,7 @@
 import {
   actingPawn,
   canActInView,
+  type Carry,
   type CityId,
   type PandemicMove,
   type PandemicView,
@@ -15,18 +16,21 @@ export type MoveType = (typeof MOVE_TYPES)[number] | 'ops-flight';
 
 /**
  * The legal moves for `seat` to bring `pawn` (their own by default, another's with a role that
- * moves pawns) to `city`, in `MOVE_TYPES` order, then a role's own flights (one per card).
+ * moves pawns) to `city`, in `MOVE_TYPES` order, then a role's own flights (one per card). Their
+ * own pawn takes `carry` along, if given (Relocation Specialist).
  */
 export function movesTo(
   view: PandemicView,
   seat: SeatId,
   city: CityId,
   pawn: PawnId = actingPawn(view, seat),
+  carry?: Carry,
 ): PandemicMove[] {
   const own = actingPawn(view, seat);
   const moves: PandemicMove[] = MOVE_TYPES.map((type) => {
     const move: PawnMove = { type, to: city };
     if (pawn !== own) move.pawn = pawn;
+    else if (carry) move.carry = carry;
     return move;
   });
   if (pawn === own) {

@@ -12,6 +12,7 @@ import { movesTo, type MoveType } from '../lib/moves';
 import { cityName, pawnName } from '../lib/names';
 import type { SeatPresence } from '@platform/ui/game';
 import { platform } from '../platform';
+import { carryPart, usePandemic } from '../store';
 
 const MENU_WIDTH = 190;
 const ROW_HEIGHT = 34;
@@ -27,8 +28,9 @@ function costOf(move: PandemicMove, from: CityId): CityId | null {
 
 /**
  * The popover a tap on a reachable city opens: every legal way to bring `pawn` there (drive,
- * direct, charter, shuttle, and the roles' join and flight), its cost if it discards a card, and a button that sends the move at once. Positioned
- * in map coordinates next to the city, flipped to stay inside the picture.
+ * direct, charter, shuttle, and the roles' join and flight), its cost if it discards a card, and a
+ * button that sends the move at once, with what the pawn takes along (`carry` in the store).
+ * Positioned in map coordinates next to the city, flipped to stay inside the picture.
  */
 export function MoveMenu({
   view,
@@ -47,8 +49,9 @@ export function MoveMenu({
   presence: SeatPresence | null;
 }) {
   const { t } = useTranslation('pandemic');
+  const carry = usePandemic((s) => s.carry);
   const from = view.pawns[pawn] as CityId;
-  const moves = movesTo(view, you, city, pawn);
+  const moves = movesTo(view, you, city, pawn, carryPart(carry).carry);
   const title =
     pawn === actingPawn(view, you)
       ? t('moveMenu.title', { city: cityName(city) })

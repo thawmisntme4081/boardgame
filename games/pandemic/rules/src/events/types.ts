@@ -1,11 +1,15 @@
 import type { ActionCheck } from '../actions';
+import type { Carry } from '../carry';
 import type { CityId } from '../cities';
 import type { ActionState, EventId, GameState, PawnId, SeatId } from '../types';
 
 /** What the player chooses when playing each event card. */
 export type EventPlay =
-  /** Move any pawn to any city (another player's pawn: its owner agrees first). */
-  | { event: 'airlift'; pawn: PawnId; to: CityId }
+  /**
+   * Move any pawn to any city (another player's pawn: its owner agrees first); `carry`: what a
+   * player's own pawn takes along (Relocation Specialist).
+   */
+  | { event: 'airlift'; pawn: PawnId; to: CityId; carry?: Carry }
   /** See the top 6 infection cards, then put them back in any order (two steps). */
   | { event: 'forecast' }
   /** A research station in any city; `move` names the one taken away once all 6 are built. */
