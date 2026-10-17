@@ -1,11 +1,12 @@
 // Pandemic's texts: the `pandemic` namespace on the platform's i18next instance, registered as
-// soon as the game's code loads. Only English for now (Vietnamese and French come in the
-// translations phase); the other languages fall back to it.
+// soon as the game's code loads.
 import i18n, { addLocales } from '@platform/ui/i18n';
 import en from './locales/en.json';
+import fr from './locales/fr.json';
+import vi from './locales/vi.json';
 
 export const NS = 'pandemic';
-export const locales = { en, vi: en, fr: en };
+export const locales = { en, vi, fr };
 
 addLocales(NS, locales);
 

@@ -69,19 +69,19 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
                   })
                 }
               >
-                {t('moveOffer.accept')}
+                {t('common.accept')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => void platform().send({ type: 'move-decline' })}
               >
-                {t('moveOffer.decline')}
+                {t('common.decline')}
               </Button>
             </>
           )}
           {you === pending.by && (
             <Button variant="outline" onClick={() => void platform().send({ type: 'move-cancel' })}>
-              {t('moveOffer.cancel')}
+              {t('common.cancelOffer')}
             </Button>
           )}
         </div>
@@ -123,7 +123,7 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
                 variant="outline"
                 onClick={() => void platform().send({ type: 'cure-decline' })}
               >
-                {t('cureOffer.decline')}
+                {t('common.decline')}
               </Button>
             </>
           )}
@@ -145,7 +145,7 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
         className="flex flex-col gap-2 rounded-lg border p-3"
       >
         <h2 id="forecast-prompt-title" className="font-semibold">
-          {t('forecast.title')}
+          {t('events.forecast')}
         </h2>
         <p className="text-sm">
           {t('forecast.waiting', { name: seatName(presence, pending.seat), count: pending.count })}
@@ -174,19 +174,19 @@ export function Prompts({ view, presence }: { view: PandemicView; presence: Seat
         {you && you === answerer && (
           <>
             <Button onClick={() => void platform().send({ type: 'share-accept' })}>
-              {t('share.accept')}
+              {t('common.accept')}
             </Button>
             <Button
               variant="outline"
               onClick={() => void platform().send({ type: 'share-decline' })}
             >
-              {t('share.decline')}
+              {t('common.decline')}
             </Button>
           </>
         )}
         {you && canActInView(view, you, { type: 'share-cancel' }) && (
           <Button variant="outline" onClick={() => void platform().send({ type: 'share-cancel' })}>
-            {t('share.cancel')}
+            {t('common.cancelOffer')}
           </Button>
         )}
       </div>

@@ -124,7 +124,7 @@ export function GameOverDialog({
       over={over}
       won={won}
       icon={Icon}
-      title={won ? t('gameOver.landed') : t('gameOver.crashed')}
+      title={won ? t('gameOver.landed') : t('status.crashed')}
       description={
         won
           ? t('gameOver.landedAt', { airport: view.scenario.airport, round: view.round })

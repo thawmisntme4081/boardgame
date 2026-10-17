@@ -39,7 +39,7 @@ function PlanStep({
   const [removed, setRemoved] = useState<CityId | ''>('');
   const cancel = (
     <Button variant="outline" size="sm" onClick={() => planEvent(null)}>
-      {t('eventBar.cancel')}
+      {t('common.cancel')}
     </Button>
   );
   const send = (move: PandemicMove) => {

@@ -24,7 +24,7 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 | 04 | [Roles](phase-04-roles.md): 12 roles (the base game's 7, 4 fan-made, the Gen Con 2016 promo Z-Force Team Member), rules and UI | ✅ Done | High | 17 |
 | 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | ✅ Done | Medium-high | 9 |
 | 06 | [Setup and variants](phase-06-setup-and-variants.md): difficulty, role choice, turn order, the deal animated (no Flight Log) | ✅ Done | Medium | 9 |
-| 07 | [Translations](phase-07-translations.md): EN, VI, FR | ⏳ Not started | Medium | 5 |
+| 07 | [Translations](phase-07-translations.md): EN, VI, FR | ✅ Done | Medium | 5 |
 | 08 | [Expansion foundation](phase-08-expansion-modules.md): modules, a variable disease list (optional from here) | ⏳ Not started | Medium-high | 8 |
 | 09 | [On the Brink: roles and events](phase-09-on-the-brink-roles-events.md) | ⏳ Not started | Medium-high | 8 |
 | 10 | [On the Brink: challenges](phase-10-on-the-brink-challenges.md): Virulent Strain, Mutation, Bio-Terrorist | ⏳ Not started | High | 9 |

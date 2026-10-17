@@ -72,14 +72,14 @@ export function Preflight({ view, presence }: { view: SetupView; presence: SeatP
   const done = !!you && confirmed.includes(you);
   const holder = (role: RoleId): SeatId | undefined => seats.find((seat) => picks[seat] === role);
   const name = (seat: SeatId) =>
-    seat === you ? `${seatName(presence, seat)} (${t('preflight.you')})` : seatName(presence, seat);
+    seat === you ? `${seatName(presence, seat)} (${t('common.you')})` : seatName(presence, seat);
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-4 p-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold">{t('preflight.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          {t('preflight.summary', { count: view.epidemics })} · {t(`preflight.${roleMode}`)}
+          {t('lobby.epidemics', { count: view.epidemics })} · {t(`preflight.${roleMode}`)}
         </p>
       </header>
 
@@ -135,7 +135,7 @@ export function Preflight({ view, presence }: { view: SetupView; presence: SeatP
 
       <footer className="flex gap-2">
         <Button variant="outline" onClick={() => void platform().leave()}>
-          {t('preflight.leave')}
+          {t('common.leave')}
         </Button>
         {you &&
           (done ? (

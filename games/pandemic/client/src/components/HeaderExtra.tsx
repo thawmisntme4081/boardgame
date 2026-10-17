@@ -68,7 +68,7 @@ function LeaveButton() {
             </Button>
           </DialogClose>
           <Button variant="destructive" className="h-11" onClick={() => void platform().leave()}>
-            {t('leave.confirm')}
+            {t('common.leave')}
           </Button>
         </DialogFooter>
       </DialogContent>

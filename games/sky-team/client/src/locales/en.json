@@ -14,8 +14,6 @@
   },
   "scenario": {
     "label": "Scenario",
-    "chooseAbilities_one": "Choose {{count}} special ability",
-    "chooseAbilities_other": "Choose {{count}} special abilities",
     "abilityCount_one": "{{count}} ability",
     "abilityCount_other": "{{count}} abilities"
   },
@@ -42,8 +40,7 @@
     "noTalking": "No talking!!!",
     "timeLeft": "Time left this round: {{time}}",
     "nextTurn": "Next turn in {{seconds}}s",
-    "nextTurnLabel": "Next turn in {{seconds}} seconds",
-    "totalTrust": "Total Trust"
+    "nextTurnLabel": "Next turn in {{seconds}} seconds"
   },
   "toast": {
     "partnerReroll": "{{name}} is using a reroll."
@@ -52,8 +49,7 @@
     "button": "Leave game",
     "title": "Leave this game?",
     "body": "Your seat is given up and {{name}}’s game restarts, waiting for a new partner. To pause instead, just close the tab: your seat is kept for 30 minutes.",
-    "stay": "Stay",
-    "confirm": "Leave game"
+    "stay": "Stay"
   },
   "tray": {
     "yourDice": "Your dice",
@@ -105,18 +101,11 @@
     "totalTrust": "Total Trust: no strategy talk this round. The dice roll by themselves."
   },
   "cockpit": {
-    "axis": "Axis",
     "axisHint": "Must be level to land",
-    "engines": "Engines",
     "enginesFinal": "Final round: speed must be below the brakes",
     "enginesWind": "Sum + wind",
     "enginesHint": "Sum sets how far you fly",
-    "radio": "Radio",
     "radioHint": "N clears a plane N−1 ahead",
-    "landingGear": "Landing gear",
-    "flaps": "Flaps",
-    "brakes": "Brakes",
-    "concentration": "Concentration",
     "concentrationHint": "Any die: +1 coffee (max 3)",
     "coffeeCount": "{{count}} coffee",
     "brakeMarker": "Brake marker",
@@ -165,16 +154,13 @@
     "keroseneHint": "Either player · burns its value; none: −6",
     "keroseneLeft": "{{left}} / {{total}} left",
     "keroseneEmpty": ": empty",
-    "wind": "Wind",
     "windHint": "Turned by the axis",
     "windOnEngines": "{{speed}} wind",
     "windLabel": "Wind {{speed}} added to the engines",
-    "intern": "Intern",
     "internHint": "Die ≠ next token · the token goes on any of your spaces",
     "internLeft": "Intern tokens left: {{tokens}}",
     "internTrained": "Intern fully trained",
     "trained": "Trained!",
-    "iceBrakes": "Ice brakes",
     "iceBrakesHint": "Pairs: pilot above, either below",
     "iceBrake": "Ice brake {{n}}"
   },
@@ -276,7 +262,6 @@
     "axisTurn": "Turn: to advance, the axis must be at {{positions}}",
     "speedLabel": "Speed {{speed}}. Below {{blue}}: stay; up to {{orange}}: 1 space; above: 2 spaces. Brakes stop speeds up to {{brake}}.",
     "speedNotSet": "not set",
-    "speedTitle": "Speed {{speed}}",
     "alarmTitle_one": "Alarm: a token flips at the start of each round here",
     "alarmTitle_other": "Alarm: {{count}} tokens flip at the start of each round here",
     "trustTitle": "Total Trust: a round ending here skips the next strategy talk",
@@ -286,7 +271,6 @@
   },
   "gameOver": {
     "landed": "Smooth landing!",
-    "crashed": "Crashed",
     "landedAt": "You landed at {{airport}} in round {{round}}.",
     "crashedAt": "Round {{round}} · {{altitude}} ft",
     "done": "done",
@@ -300,14 +284,11 @@
     "scenarioNote": "The scenario you pick here is offered to {{name}}, who has to agree before the new flight starts."
   },
   "flightLog": {
-    "open": "Flight Log",
     "title": "Flight Log",
     "intro": "Your games on this device.",
-    "tabLog": "Flight Log",
     "tabHistory": "History",
     "color": "Color",
     "code": "Code",
-    "scenario": "Scenario",
     "pilot": "Pilot (W/L)",
     "copilot": "Co-pilot (W/L)",
     "cell": "{{seat}}: {{won}} won, {{lost}} lost",
@@ -315,7 +296,6 @@
     "landed": "landed",
     "empty": "No games yet. Finished games appear here.",
     "won": "Landed",
-    "lost": "Crashed",
     "entry": "as {{seat}} with {{partner}} · round {{rounds}}",
     "entryAlone": "as {{seat}} · round {{rounds}}"
   },
@@ -388,7 +368,6 @@
     "landing-ice-brakes": "All the ice brakes deployed"
   },
   "alarms": {
-    "title": "Alarms",
     "hint": "An Alarm symbol on your space flips a random token at the start of a round. Its Action is blocked until you place the die shown on it.",
     "faceDown": "Face-down alarm",
     "cleared": "{{alarm}}: cleared",

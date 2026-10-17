@@ -477,7 +477,7 @@ export function ActionBar({
               {t('actions.cureConfirm')}
             </Button>
             <Button variant="ghost" onClick={() => setCuring(null)}>
-              {t('actions.cureCancel')}
+              {t('common.cancel')}
             </Button>
           </div>
         </fieldset>
@@ -508,7 +508,7 @@ export function ActionBar({
             </Button>
           ))}
           <Button size="sm" variant="ghost" onClick={() => setSharing(null)}>
-            {t('actions.cureCancel')}
+            {t('common.cancel')}
           </Button>
         </div>
       )}

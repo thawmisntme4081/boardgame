@@ -606,6 +606,59 @@ test.describe('a three-player Pandemic game', () => {
   });
 });
 
+test.describe('languages', () => {
+  test('a Vietnamese player and a French player each see the game in their language', async ({
+    browser,
+  }, testInfo) => {
+    const device = { ...deviceOptions(testInfo.project.use), reducedMotion: 'reduce' } as const;
+    const ana = await (await browser.newContext(device)).newPage();
+    const ben = await (await browser.newContext(device)).newPage();
+
+    // Ana switches to Vietnamese on the game's page and creates a 2-player game.
+    await ana.goto('/play/pandemic');
+    await ana.getByRole('combobox', { name: 'Language' }).click();
+    await ana.getByRole('option', { name: 'Tiếng Việt' }).click();
+    await ana.getByLabel('Tên', { exact: true }).fill('Ana');
+    await ana.getByRole('radio', { name: '2', exact: true }).click();
+    await ana.getByRole('button', { name: 'Tạo ván mới' }).click();
+    const code = (await ana.getByLabel(/^Mã phòng/).textContent())!.trim();
+
+    // Ben opens the invite link, picks French and joins.
+    await ben.goto(`/r/${code}`);
+    await ben.getByRole('combobox', { name: 'Language' }).click();
+    await ben.getByRole('option', { name: 'Français' }).click();
+    await ben.getByLabel('Votre nom').fill('Ben');
+    await ben.getByRole('button', { name: 'Rejoindre' }).click();
+
+    // Before the game, each in their own language.
+    await expect(ana.getByRole('heading', { name: 'Trước khi chơi' })).toBeVisible();
+    await expect(ben.getByRole('heading', { name: 'Avant la partie' })).toBeVisible();
+    await ana.getByRole('button', { name: 'Xác nhận và bắt đầu' }).click();
+    await ben.getByRole('button', { name: 'Confirmer et commencer' }).click();
+
+    // The board: the map's name, the role cards and the cities in each language.
+    await expect(ana.getByRole('group', { name: 'Bản đồ' })).toBeVisible();
+    await expect(ben.getByRole('group', { name: 'Carte du monde' })).toBeVisible();
+    await expect(ana.getByRole('region', { name: 'Vai trò' })).toBeVisible();
+    await expect(ben.getByRole('region', { name: 'Rôles' })).toBeVisible();
+    await expect(ana.locator('[data-city="moscow"]')).toContainText('Mát-xcơ-va');
+    await expect(ben.locator('[data-city="moscow"]')).toContainText('Moscou');
+    await expect(ana.locator('[data-city="beijing"]')).toContainText('Bắc Kinh');
+    await expect(ben.locator('[data-city="beijing"]')).toContainText('Pékin');
+
+    // Whoever has the turn gives up the actions: the next step is in their language.
+    const anaActions = ana.getByText(/Còn \d+ hành động/);
+    const benActions = ben.getByText(/\d+ actions? restantes?/);
+    await expect
+      .poll(async () => (await anaActions.count()) + (await benActions.count()))
+      .toBeGreaterThan(0);
+    const active = (await anaActions.count()) > 0;
+    const [mine, pass, draw] = active ? [ana, 'Bỏ lượt', 'Rút thẻ'] : [ben, 'Passer', 'Piocher'];
+    await mine.getByRole('button', { name: pass, exact: true }).click();
+    await expect(mine.getByRole('button', { name: draw, exact: true })).toBeVisible();
+  });
+});
+
 test.describe('before the game', () => {
   test('a 2-player game: the turn order and roles are shown, and everyone confirms', async ({
     browser,

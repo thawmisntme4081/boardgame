@@ -44,7 +44,7 @@ function Arrange({ cards }: { cards: readonly CityId[] }) {
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t('forecast.title')}</DialogTitle>
+          <DialogTitle>{t('events.forecast')}</DialogTitle>
           <DialogDescription>{t('forecast.hint')}</DialogDescription>
         </DialogHeader>
         <ol className="flex flex-col gap-2">

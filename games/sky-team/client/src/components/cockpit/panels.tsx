@@ -50,8 +50,8 @@ function InstrumentColumn({ seat, view }: { seat: Seat; view: PlayerView }) {
   const { axis, engine } = INSTRUMENT_SLOTS[seat];
   return (
     <div className="flex flex-col items-center justify-between">
-      <LabeledSlot slot={axis} label={t('cockpit.axis')} view={view} />
-      <LabeledSlot slot={engine} label={t('cockpit.engines')} view={view} />
+      <LabeledSlot slot={axis} label={t('slot.group.axis')} view={view} />
+      <LabeledSlot slot={engine} label={t('slot.group.engines')} view={view} />
     </div>
   );
 }
@@ -102,7 +102,7 @@ export function RadioPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   const groups = view.seat === 'pilot' ? RADIO_GROUPS : [...RADIO_GROUPS].reverse();
   return (
-    <Panel title={t('cockpit.radio')} hint={t('cockpit.radioHint')}>
+    <Panel title={t('slot.group.radio')} hint={t('cockpit.radioHint')}>
       <div
         className={cn(
           'flex items-center gap-1.5 desktop:flex-col desktop:items-start desktop:gap-2',
@@ -132,7 +132,7 @@ export function GearPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   return (
     <Panel
-      title={t('cockpit.landingGear')}
+      title={t('slot.group.gear')}
       badge={
         <MarkerBadge
           icon={<AeroMarkerIcon marker="blue" />}
@@ -151,7 +151,7 @@ export function FlapsPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   return (
     <Panel
-      title={t('cockpit.flaps')}
+      title={t('slot.group.flaps')}
       badge={
         <MarkerBadge
           icon={<AeroMarkerIcon marker="orange" />}
@@ -172,7 +172,7 @@ export function BrakesPanel({ view }: { view: PlayerView }) {
   if (view.scenario.modules.includes('ice-brakes')) return <IceBrakesPanel view={view} />;
   return (
     <Panel
-      title={t('cockpit.brakes')}
+      title={t('slot.group.brakes')}
       badge={<MarkerBadge icon={<BrakeMarkerIcon />} label={t('cockpit.brakeMarker')} bonus={2} />}
       className="justify-between"
     >
@@ -191,7 +191,7 @@ export function ConcentrationPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   return (
     <Panel
-      title={t('cockpit.concentration')}
+      title={t('slot.group.concentration')}
       hint={t('cockpit.concentrationHint')}
       className="justify-between"
     >

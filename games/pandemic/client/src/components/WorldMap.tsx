@@ -1,8 +1,9 @@
 import { COLORS, CITIES, type CityId, type Color, type CureState } from '@pandemic/rules';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import mapUrl from '../assets/map.webp';
 import { CURE_SLOTS, MAP_HEIGHT, MAP_WIDTH, cityPoint } from '../lib/mapGeometry';
-import { cityName } from '../lib/names';
+import { cityName, labelLines } from '../lib/names';
 import { CURE_MARKER_INSET, CURE_MARKER_WIDTH, CureMarker } from '../svgs/CureMarker';
 
 export interface WorldMapProps {
@@ -37,11 +38,12 @@ export function WorldMap({
   handHeight = 0,
   children,
 }: WorldMapProps) {
+  const { t } = useTranslation('pandemic');
   return (
     <svg
       viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT + (hand ? handHeight : 0)}`}
       role="group"
-      aria-label="Map"
+      aria-label={t('map.label')}
       className="h-full w-full select-none"
       preserveAspectRatio="xMidYMid meet"
     >
@@ -86,7 +88,11 @@ export function WorldMap({
               strokeWidth={2.5}
               paintOrder="stroke"
             >
-              {cityName(id)}
+              {labelLines(cityName(id)).map((line, i) => (
+                <tspan key={i} x={0} dy={i === 0 ? 0 : 12}>
+                  {line}
+                </tspan>
+              ))}
             </text>
           </g>
         );

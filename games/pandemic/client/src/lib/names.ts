@@ -3,12 +3,24 @@ import type { SeatPresence } from '@platform/ui/game';
 import { seatInfo } from '@platform/ui/game';
 import { t } from '../i18n';
 
-export const cityName = (city: CityId): string =>
-  city
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-    .replace('St ', 'St. ');
+/** A city's short name in the current language (`cities.<id>`). */
+export const cityName = (city: CityId): string => t(`cities.${city}`);
+
+/** A long name on two lines, split at the space or hyphen nearest its middle. */
+export function labelLines(name: string): string[] {
+  if (name.length <= 12) return [name];
+  const middle = name.length / 2;
+  let best = -1;
+  for (let i = 0; i < name.length; i++) {
+    if (
+      (name[i] === ' ' || name[i] === '-') &&
+      (best < 0 || Math.abs(i - middle) < Math.abs(best - middle))
+    )
+      best = i;
+  }
+  if (best < 0) return [name];
+  return [name.slice(0, best + (name[best] === '-' ? 1 : 0)), name.slice(best + 1)];
+}
 
 export const seatName = (presence: SeatPresence | null, seat: SeatId): string =>
   seatInfo(presence, seat)?.name ?? seat;

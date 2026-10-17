@@ -63,7 +63,7 @@ export function Hands({ view, presence }: { view: PandemicView; presence: SeatPr
             <p className="font-semibold">
               {seatName(presence, seat)}
               {seat === view.you && (
-                <span className="ml-1 font-normal text-muted-foreground">({t('hands.you')})</span>
+                <span className="ml-1 font-normal text-muted-foreground">({t('common.you')})</span>
               )}
             </p>
             {cards.length === 0 ? (
