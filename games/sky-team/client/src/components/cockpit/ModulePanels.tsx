@@ -97,7 +97,7 @@ export function KerosenePanel({ view }: { view: PlayerView }) {
 export function WindPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   return (
-    <Panel title={t('modules.wind')} hint={t('modules.windHint')}>
+    <Panel title={t('moduleText.wind.name')} hint={t('modules.windHint')}>
       {/* Desktop: the ring fills the height left in the panel (set by the Axis panel beside it). */}
       <div className="flex justify-center desktop:relative desktop:min-h-28 desktop:flex-1">
         <WindRing
@@ -146,7 +146,7 @@ export function InternPanel({ view }: { view: PlayerView }) {
   const { t } = useTranslation('sky-team');
   const tokens = view.intern ?? [];
   return (
-    <Panel title={t('modules.intern')} hint={t('modules.internHint')}>
+    <Panel title={t('moduleText.intern.name')} hint={t('modules.internHint')}>
       <div className="flex items-center gap-1 desktop:flex-1 desktop:flex-col">
         <Slot slot="internPilot" view={view} />
         <ol
@@ -199,7 +199,7 @@ export function IceBrakesPanel({ view }: { view: PlayerView }) {
     ));
   return (
     <Panel
-      title={t('modules.iceBrakes')}
+      title={t('moduleText.ice-brakes.name')}
       hint={t('modules.iceBrakesHint')}
       className="justify-between"
     >
@@ -250,7 +250,7 @@ export function AlarmsPanel({ view }: { view: PlayerView }) {
     (id) => !board.active.includes(id) && !board.faceDown.includes(id),
   );
   return (
-    <Panel title={t('alarms.title')} hint={t('alarms.hint')}>
+    <Panel title={t('moduleText.alarms.name')} hint={t('alarms.hint')}>
       <ul
         className="flex flex-wrap items-start gap-2"
         aria-label={t('alarms.board', {

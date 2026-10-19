@@ -1,0 +1,393 @@
+{
+  "common": {
+    "leave": "Quitter",
+    "you": "vous",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "cancel": "Annuler",
+    "cancelOffer": "Annuler la proposition"
+  },
+  "status": {
+    "playerOnline": "{{name}} en ligne",
+    "playerOffline": "{{name}} hors ligne"
+  },
+  "leave": {
+    "button": "Quitter la partie",
+    "title": "Quitter la partie ?",
+    "body": "Votre place reste libre pour qu’un autre joueur prenne la suite.",
+    "stay": "Rester"
+  },
+  "lobby": {
+    "players": "Joueurs",
+    "playerCount_one": "{{count}} joueur",
+    "playerCount_other": "{{count}} joueurs",
+    "waitingForPlayers_one": "En attente de {{count}} joueur de plus",
+    "waitingForPlayers_other": "En attente de {{count}} joueurs de plus",
+    "epidemics_one": "{{count}} carte Épidémie",
+    "epidemics_other": "{{count}} cartes Épidémie",
+    "difficulty": {
+      "title": "Difficulté",
+      "introductory": "Initiation",
+      "standard": "Standard",
+      "heroic": "Héroïque",
+      "hint_one": "{{count}} carte Épidémie dans la pioche Joueur.",
+      "hint_other": "{{count}} cartes Épidémie dans la pioche Joueur."
+    },
+    "roleMode": {
+      "title": "Rôles",
+      "random": "Au hasard",
+      "choose": "Au choix",
+      "randomHint": "Chaque joueur reçoit un rôle au hasard.",
+      "chooseHint": "Avant la partie, chaque joueur choisit un rôle que personne d’autre n’a."
+    }
+  },
+  "preflight": {
+    "title": "Avant la partie",
+    "random": "rôles distribués au hasard",
+    "choose": "rôles choisis par les joueurs",
+    "pickHint": "Choisissez un rôle que personne d’autre n’a. Vous pouvez en changer tant que vous n’avez pas confirmé.",
+    "ready": "Prêt",
+    "locked": "Vous avez confirmé. Annulez pour changer de rôle.",
+    "confirm": "Confirmer et commencer",
+    "undo": "Annuler"
+  },
+  "board": {
+    "actionsLeft_one": "{{count}} action restante",
+    "actionsLeft_other": "{{count}} actions restantes",
+    "epidemicStep": {
+      "increase": "Accélération",
+      "infect": "Infection",
+      "intensify": "Intensification"
+    },
+    "won": "Vous avez guéri les quatre maladies. Vous avez gagné !",
+    "lost": "Le monde est perdu : {{reason}}",
+    "lossReason": {
+      "outbreaks": "trop d’éclosions",
+      "cubes": "plus de cubes Maladie",
+      "player-deck": "plus de cartes Joueur"
+    }
+  },
+  "tracks": {
+    "outbreaks": "Éclosions : {{count}} / {{max}}",
+    "playerDeck": "Pioche Joueur : {{count}} cartes",
+    "infectionDeck": "Pioche Propagation : {{count}} cartes",
+    "stationsLeft": "Stations de recherche restantes : {{count}}",
+    "supplyOf": "Cubes {{color}} restants",
+    "infectionDiscard": "Défausse Propagation : {{count}} cartes",
+    "playerDiscard": "Défausse Joueur : {{count}} cartes",
+    "openPlayerDiscard": "Voir la défausse Joueur",
+    "openInfectionDiscard": "Voir la défausse Propagation"
+  },
+  "map": {
+    "label": "Carte du monde"
+  },
+  "cities": {
+    "atlanta": "Atlanta",
+    "chicago": "Chicago",
+    "essen": "Essen",
+    "london": "Londres",
+    "madrid": "Madrid",
+    "milan": "Milan",
+    "montreal": "Montréal",
+    "new-york": "New York",
+    "paris": "Paris",
+    "san-francisco": "San Francisco",
+    "st-petersburg": "St-Pétersbourg",
+    "washington": "Washington",
+    "bogota": "Bogotá",
+    "buenos-aires": "Buenos Aires",
+    "johannesburg": "Johannesburg",
+    "khartoum": "Khartoum",
+    "kinshasa": "Kinshasa",
+    "lagos": "Lagos",
+    "lima": "Lima",
+    "los-angeles": "Los Angeles",
+    "mexico-city": "Mexico",
+    "miami": "Miami",
+    "santiago": "Santiago",
+    "sao-paulo": "São Paulo",
+    "algiers": "Alger",
+    "baghdad": "Bagdad",
+    "cairo": "Le Caire",
+    "chennai": "Chennai",
+    "delhi": "Delhi",
+    "istanbul": "Istanbul",
+    "karachi": "Karachi",
+    "kolkata": "Kolkata",
+    "moscow": "Moscou",
+    "mumbai": "Mumbai",
+    "riyadh": "Riyad",
+    "tehran": "Téhéran",
+    "bangkok": "Bangkok",
+    "beijing": "Pékin",
+    "ho-chi-minh-city": "Hô Chi Minh-Ville",
+    "hong-kong": "Hong Kong",
+    "jakarta": "Jakarta",
+    "manila": "Manille",
+    "osaka": "Osaka",
+    "seoul": "Séoul",
+    "shanghai": "Shanghai",
+    "sydney": "Sydney",
+    "taipei": "Taipei",
+    "tokyo": "Tokyo"
+  },
+  "color": {
+    "blue": "Bleu",
+    "yellow": "Jaune",
+    "black": "Noir",
+    "red": "Rouge"
+  },
+  "roles": {
+    "title": "Rôles",
+    "contingency-planner": {
+      "name": "Planificateur d’urgence",
+      "power": "Par une action, prenez une carte Événement dans la défausse Joueur et gardez-la sur cette carte. Jouez-la normalement ; elle est ensuite retirée du jeu. Elle ne compte pas dans la limite de cartes en main."
+    },
+    "dispatcher": {
+      "name": "Répartiteur",
+      "power": "Déplacez le pion d’un autre joueur comme si c’était le vôtre, si son propriétaire est d’accord. Ou, pour une action, déplacez n’importe quel pion vers une ville où se trouve un autre pion."
+    },
+    "medic": {
+      "name": "Médecin",
+      "power": "Traiter une maladie retire tous les cubes d’une couleur. Les cubes d’une maladie guérie sont retirés de votre ville aussitôt, et aucun ne peut y être placé."
+    },
+    "operations-expert": {
+      "name": "Expert aux opérations",
+      "power": "Construisez une station de recherche sans défausser de carte. Une fois par tour, depuis une station, défaussez n’importe quelle carte Ville pour aller dans n’importe quelle ville."
+    },
+    "quarantine-specialist": {
+      "name": "Spécialiste de la quarantaine",
+      "power": "Aucun cube Maladie n’est placé dans votre ville ni dans les villes reliées, et aucune éclosion ne s’y produit."
+    },
+    "researcher": {
+      "name": "Chercheuse",
+      "power": "Pendant votre tour, donnez n’importe quelle carte Ville de votre main à un joueur dans votre ville. Les autres joueurs ne peuvent toujours prendre que la carte de la ville où vous êtes."
+    },
+    "scientist": {
+      "name": "Scientifique",
+      "power": "Découvrez un remède avec seulement 4 cartes Ville d’une même couleur."
+    },
+    "teacher": {
+      "name": "Enseignante",
+      "power": "Par une action, créez un pion élève dans votre ville (2 au plus par partie). Au début de votre tour, choisissez l’enseignante ou un élève : ce pion fait les actions du tour, avec votre main."
+    },
+    "relocation-specialist": {
+      "name": "Spécialiste du transfert",
+      "power": "Chaque fois que votre pion quitte une ville, de quelque façon que ce soit, vous pouvez emmener jusqu’à 3 cubes Maladie et/ou 1 autre pion (si son propriétaire est d’accord) de cette ville jusqu’à votre destination."
+    },
+    "crisis-mitigator": {
+      "name": "Gestionnaire de crise",
+      "power": "Vos actions par tour dépendent des cubes Maladie dans votre ville au début de votre tour : 0–1 cube : 4 actions, 2 : 5, 3 : 6, 4 ou plus : 7."
+    },
+    "generalist": {
+      "name": "Généraliste",
+      "power": "Vous avez 5 actions par tour au lieu de 4."
+    },
+    "z-force-team-member": {
+      "name": "Membre de la Z-Force",
+      "power": "Commencez à Montréal. Par une action, allez à Montréal ou à Essen. Quand vous découvrez un remède, les autres joueurs de votre ville peuvent donner jusqu’à 2 de ses cartes (s’ils sont d’accord)."
+    },
+    "students": "Élèves : {{count}} / {{max}}",
+    "info": "{{role}} : pouvoir",
+    "stored": "En réserve : {{event}}"
+  },
+  "cureOffer": {
+    "title": "Découvrir un remède",
+    "offered": "{{by}} demande à utiliser {{cards}} pour découvrir le remède {{color}}.",
+    "accept": "Donner les cartes",
+    "cancel": "Annuler le remède",
+    "waiting": "En attente de l’accord de {{names}}."
+  },
+  "carry": {
+    "title": "Emmener",
+    "hintMove": "Choisissez les cubes et le pion qui vous accompagnent, puis votre destination sur la carte.",
+    "hintAccept": "Choisissez les cubes et le pion qui vous accompagnent, puis acceptez.",
+    "cubes": "{{color}} : {{count}}",
+    "count": "{{count}} / {{max}} cubes",
+    "more": "Un cube {{color}} de plus",
+    "less": "Un cube {{color}} de moins",
+    "pawn": "Emmener {{name}}"
+  },
+  "pawns": {
+    "teacher": "Pion enseignante",
+    "student": "Élève {{number}}",
+    "studentOf": "Élève de {{name}}"
+  },
+  "hands": {
+    "title": "Mains",
+    "empty": "Aucune carte",
+    "event": "Événement : {{name}}"
+  },
+  "events": {
+    "airlift": "Pont aérien",
+    "forecast": "Prévision",
+    "government-grant": "Subvention publique",
+    "one-quiet-night": "Une nuit tranquille",
+    "resilient-population": "Population résiliente"
+  },
+  "eventInfo": {
+    "airlift": "Déplacez 1 pion de votre choix vers n’importe quelle ville. Demandez la permission avant de déplacer le pion d’un autre joueur.",
+    "forecast": "Regardez les 6 premières cartes de la pioche Propagation, puis remettez-les dans l’ordre de votre choix.",
+    "government-grant": "Construisez une station de recherche dans n’importe quelle ville, sans défausser de carte.",
+    "one-quiet-night": "Sautez la prochaine étape de propagation : aucune carte Propagation n’est retournée.",
+    "resilient-population": "Retirez du jeu 1 carte de votre choix dans la défausse Propagation. Elle peut aussi être jouée entre les étapes Infection et Intensification d’une épidémie."
+  },
+  "moveMenu": {
+    "title": "Destination : {{city}}",
+    "titleFor": "Déplacer {{name}} vers {{city}}",
+    "discard": "Défausser : {{city}}"
+  },
+  "actions": {
+    "title": "Actions",
+    "drive": "Voiture / Ferry",
+    "montrealEssen": "Aller à {{city}}",
+    "cureHelp": "Des autres joueurs (jusqu’à {{max}}) :",
+    "cureHelpCard": "{{city}} ({{name}})",
+    "direct": "Vol direct",
+    "charter": "Vol charter",
+    "shuttle": "Navette",
+    "join": "Rejoindre un pion",
+    "ops-flight": "Vol de l’expert",
+    "movePawn": "Pion à déplacer",
+    "choosePawn": "Choisissez le pion de ce tour",
+    "pawnAt": "{{pawn}} ({{city}})",
+    "pawnToday": "Ce tour : {{pawn}}",
+    "createStudent": "Créer un élève",
+    "ownPawn": "Le vôtre",
+    "takeEvent": "Prendre {{event}} dans la défausse",
+    "build": "Construire une station de recherche",
+    "moveStation": "Station à retirer",
+    "treat": "Traiter : {{color}}",
+    "cure": "Remède : {{color}}",
+    "cureChoose": "Choisissez les {{count}} cartes {{color}} à défausser",
+    "cureChosen": "{{chosen}} sur {{count}} choisies",
+    "cureConfirm": "Découvrir le remède",
+    "pass": "Passer",
+    "draw": "Piocher",
+    "epidemic": "Épidémie : {{step}}",
+    "infect": "Infecter",
+    "spectator": "Vous regardez la partie.",
+    "restart": "Recommencer le tour",
+    "discard_one": "Défaussez {{count}} carte",
+    "discard_other": "Défaussez {{count}} cartes",
+    "discardWaiting_one": "{{name}} doit défausser {{count}} carte.",
+    "discardWaiting_other": "{{name}} doit défausser {{count}} cartes."
+  },
+  "share": {
+    "title": "Partager des connaissances",
+    "giveTo": "{{role}} : donner {{city}}",
+    "takeFrom": "{{role}} : prendre {{city}}",
+    "giveCard": "Donner {{city}}",
+    "takeCard": "Prendre {{city}}",
+    "chooseGive": "Donner {{city}} à :",
+    "chooseTake": "Prendre {{city}} à :",
+    "offered": "{{from}} propose de partager la carte {{city}} avec {{to}}."
+  },
+  "moveOffer": {
+    "title": "Déplacer un pion",
+    "offered": "{{by}} propose de déplacer {{pawn}} vers {{city}}.",
+    "takeAlong": "{{carrier}} propose d’emmener {{pawn}} vers {{city}}.",
+    "cubes_one": "{{count}} cube vient aussi.",
+    "cubes_other": "{{count}} cubes viennent aussi."
+  },
+  "forecast": {
+    "hint": "Faites glisser les cartes (ou utilisez les flèches) dans l’ordre où elles seront retournées, puis validez.",
+    "top": "Suivante",
+    "up": "Monter {{city}}",
+    "down": "Descendre {{city}}",
+    "keep": "Garder cet ordre",
+    "waiting_one": "{{name}} range la première carte Propagation.",
+    "waiting_other": "{{name}} range les {{count}} premières cartes Propagation."
+  },
+  "discard": {
+    "button": "Défausser {{card}}"
+  },
+  "errors": {
+    "game-over": "La partie est terminée.",
+    "not-your-turn": "Ce n’est pas votre tour.",
+    "wrong-step": "Pas maintenant : terminez d’abord l’étape en cours.",
+    "answer-first": "Répondez d’abord à la question.",
+    "no-actions-left": "Plus aucune action.",
+    "same-city": "Vous y êtes déjà.",
+    "not-adjacent": "Cette ville n’est pas reliée à la vôtre.",
+    "card-missing": "Vous n’avez pas cette carte.",
+    "no-station": "Il faut une station de recherche.",
+    "station-exists": "Il y a déjà une station de recherche ici.",
+    "bad-station-to-move": "Choisissez une station à déplacer.",
+    "no-cubes": "Il n’y a pas de cube de cette couleur ici.",
+    "already-cured": "Cette maladie est déjà guérie.",
+    "bad-cards": "Ces cartes ne permettent pas de découvrir un remède.",
+    "card-resolving": "Pas maintenant : une carte est en cours de résolution.",
+    "not-playable": "Cet événement ne peut pas être joué ainsi.",
+    "no-forecast": "Aucune Prévision n’est en cours.",
+    "bad-order": "Remettez exactement les cartes prises.",
+    "bad-partner": "Vous ne pouvez pas partager avec ce joueur.",
+    "not-together": "Vous devez être dans la même ville.",
+    "no-offer": "Il n’y a aucune proposition à laquelle répondre.",
+    "not-your-answer": "Ce n’est pas à vous de répondre.",
+    "nothing-to-discard": "Personne n’a à défausser.",
+    "bad-seat": "Cette place n’existe pas.",
+    "room-full": "La table est complète.",
+    "not-started": "La partie n’a pas commencé.",
+    "already-confirmed": "Vous avez déjà confirmé.",
+    "not-confirmed": "Vous n’avez pas confirmé.",
+    "pick-first": "Choisissez d’abord un rôle.",
+    "roles-dealt": "Dans cette partie, les rôles sont distribués au hasard.",
+    "role-taken": "Un autre joueur a déjà ce rôle.",
+    "cannot-restart": "Le tour ne peut pas être recommencé maintenant.",
+    "choose-pawn-first": "Choisissez d’abord le pion de ce tour.",
+    "pawn-chosen": "Le pion de ce tour est déjà choisi.",
+    "not-your-pawn": "Ce pion n’est pas le vôtre.",
+    "teacher-pawn-only": "Seul le pion enseignante peut créer un élève.",
+    "no-students-left": "Les deux élèves ont déjà été créés.",
+    "wrong-role": "Votre rôle ne permet pas cela.",
+    "power-used": "Vous avez déjà utilisé ce pouvoir ce tour-ci.",
+    "no-pawn-there": "Il n’y a aucun pion dans cette ville.",
+    "event-stored": "Une carte Événement est déjà en réserve sur votre carte Rôle.",
+    "no-event": "Cette carte Événement n’est pas dans la défausse.",
+    "too-many-cubes": "Vous pouvez emmener 3 cubes au plus."
+  },
+  "epidemic": {
+    "title_one": "Épidémie ({{count}} à résoudre)",
+    "title_other": "Épidémies ({{count}} à résoudre)",
+    "step": {
+      "increase": "le marqueur de vitesse de propagation avance.",
+      "infect": "la dernière carte de la pioche Propagation reçoit 3 cubes.",
+      "intensify": "la défausse Propagation est mélangée et replacée sur la pioche."
+    }
+  },
+  "gameOver": {
+    "wonTitle": "L’humanité est sauvée",
+    "lostTitle": "Le monde est perdu",
+    "playAgain": "Rejouer",
+    "takeBack": "Retirer ma réponse",
+    "offered": "{{name}} veut rejouer.",
+    "waitingFor": "En attente de {{names}}.",
+    "cured": "Les quatre maladies sont guéries",
+    "viewBoard": "Voir le plateau",
+    "showResult": "Afficher le résultat"
+  },
+  "eventBar": {
+    "playEvent": "Jouer {{event}}",
+    "airliftPawn": "Pont aérien : choisissez le pion à déplacer.",
+    "airliftCity": "Pont aérien pour {{name}} : touchez la ville de destination.",
+    "grantCity": "Subvention publique : touchez la ville de la nouvelle station.",
+    "grantMove": "Subvention publique ({{city}}) : choisissez la station à retirer.",
+    "population": "Population résiliente : choisissez la carte à retirer du jeu.",
+    "removeCard": "Retirer cette carte",
+    "pawnAt": "{{name}} ({{city}})",
+    "ofPlayer": "{{label}} · carte de {{name}}"
+  },
+  "toast": {
+    "event": "{{name}} a joué {{event}}.",
+    "eventStored": "{{name}} a joué {{event}} depuis sa carte Rôle.",
+    "eventOf": "{{name}} a joué {{event}} de {{owner}}."
+  },
+  "piles": {
+    "player": "Défausse Joueur",
+    "infection": "Défausse Propagation",
+    "count_one": "{{count}} carte, la plus récente d’abord",
+    "count_other": "{{count}} cartes, les plus récentes d’abord",
+    "empty": "Aucune carte pour l’instant."
+  }
+}

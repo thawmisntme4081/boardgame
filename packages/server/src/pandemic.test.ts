@@ -152,12 +152,14 @@ describe('Pandemic rooms', () => {
     });
 
     const version = room.match.version;
+    // The actions a turn starts with depend on the role dealt (4, or more for some).
+    const actions = game(room).turn.actionsLeft;
     expect(rooms.move(room, first, { type: 'drive', to: 'chicago' })).toEqual({
       ok: true,
       value: undefined,
     });
     expect(game(room).pawns[first]).toBe('chicago');
-    expect(game(room).turn.actionsLeft).toBe(3);
+    expect(game(room).turn.actionsLeft).toBe(actions - 1);
     expect(room.match.version).toBe(version + 1);
 
     unwrap(rooms.move(room, first, { type: 'pass' }));

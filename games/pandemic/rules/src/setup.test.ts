@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { roleOf } from './roles';
 import { CITIES, COLORS } from './cities';
 import { createGame, pileSizes, shuffle } from './setup';
 import { CUBES_PER_COLOR, EVENT_IDS, HAND_SIZES, SEATS, type GameState } from './types';
@@ -32,9 +33,11 @@ describe('createGame', () => {
       describe(`${players} players, ${epidemics} epidemics`, () => {
         const game = make(players, epidemics);
 
-        it('seats everyone at Atlanta with a station there and no other', () => {
+        it('seats everyone at Atlanta (or the start of their role) with a station only there', () => {
           expect([...game.seats].sort()).toEqual(SEATS.slice(0, players));
-          for (const seat of game.seats) expect(game.pawns[seat]).toBe('atlanta');
+          for (const seat of game.seats) {
+            expect(game.pawns[seat]).toBe(roleOf(game, seat)?.startCity ?? 'atlanta');
+          }
           expect(game.stations).toEqual(['atlanta']);
         });
 

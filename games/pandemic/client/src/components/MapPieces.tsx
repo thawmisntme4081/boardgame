@@ -1,7 +1,14 @@
-import { CITIES, COLORS, SEATS, type Color, type PandemicView } from '@pandemic/rules';
+import {
+  CITIES,
+  COLORS,
+  PAWN_IDS,
+  pawnOwner,
+  type Color,
+  type PandemicView,
+} from '@pandemic/rules';
 import type { SeatPresence } from '@platform/ui/game';
 import { cityPoint } from '../lib/mapGeometry';
-import { seatName } from '../lib/names';
+import { isStudent, pawnName } from '../lib/names';
 import { Cube } from '../svgs/Cube';
 import { PAWN_HEIGHT, PAWN_WIDTH } from '../svgs/Pawn';
 import { useLeaving } from '../lib/leaving';
@@ -72,7 +79,7 @@ export function MapPieces({
       {cubes.map(({ item: cube, leaving }) => {
         const { x, y } = cityPoint(cube.city);
         return (
-          <g key={cube.key} transform={`translate(${x} ${y})`}>
+          <g key={cube.key} data-cube-city={cube.city} transform={`translate(${x} ${y})`}>
             <Cube
               data-cube={cube.color}
               color={cube.color}
@@ -84,25 +91,31 @@ export function MapPieces({
           </g>
         );
       })}
-      {/* Always in the same order (seat 4 first), so a pawn is never taken out of the page and put
-          back, which would stop its move; the lower seat is on top where pawns share a city. */}
-      {[...SEATS].reverse().map((seat) => {
-        const city = view.pawns[seat];
+      {/* Always in the same order (the last seat's pawns first), so a pawn is never taken out of
+          the page and put back, which would stop its move; the lower seat, and a seat's own pawn
+          before its students, is on top where pawns share a city. */}
+      {[...PAWN_IDS].reverse().map((pawn) => {
+        const city = view.pawns[pawn];
+        const seat = pawnOwner(pawn);
         if (!city || !view.seats.includes(seat)) return null;
-        const here = SEATS.filter((s) => view.seats.includes(s) && view.pawns[s] === city);
+        const here = PAWN_IDS.filter((p) => view.pawns[p] === city);
         const { x, y } = cityPoint(city);
         const stackWidth = PAWN_WIDTH + (here.length - 1) * PAWN_STEP;
+        const role = view.roles[seat];
         return (
           <MovingPawn
-            key={seat}
+            key={pawn}
+            pawn={pawn}
             seat={seat}
-            role={view.roles[seat]}
+            role={role}
+            mark={role === 'teacher' && !isStudent(pawn)}
             city={city}
-            x={x - stackWidth / 2 + here.indexOf(seat) * PAWN_STEP}
+            x={x - stackWidth / 2 + here.indexOf(pawn) * PAWN_STEP}
             y={y - PAWN_HEIGHT / 2}
-            name={seatName(presence, seat)}
-            enter={dealing}
-            order={view.seats.indexOf(seat)}
+            name={pawnName(presence, pawn)}
+            // The dealt pawns and a new student drop in.
+            enter={dealing || isStudent(pawn)}
+            order={isStudent(pawn) ? 0 : view.seats.indexOf(seat)}
           />
         );
       })}

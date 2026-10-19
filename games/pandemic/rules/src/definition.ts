@@ -10,6 +10,7 @@ import type {
   Viewer,
 } from '@platform/engine';
 import { z } from 'zod';
+import { MAX_CARRIED_CUBES } from './carry';
 import { CITIES, COLORS } from './cities';
 import { FORECAST_CARDS } from './events';
 import { applyMove, checkMove, type PandemicMove } from './moves';
@@ -18,13 +19,16 @@ import { outcome } from './outcome';
 import { shareAnswerer } from './share';
 import { checkJoin, openTable, seatJoined, seatLeft } from './table';
 import {
+  CARDS_TO_CURE,
   EPIDEMIC_COUNTS,
   ROLE_IDS,
   ROLE_MODES,
   EVENT_IDS,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  PAWN_IDS,
   SEATS,
+  pawnOwner,
   type PandemicState,
   type SeatId,
 } from './types';
@@ -33,6 +37,12 @@ import { tableViewFor, type TableView } from './views';
 const cityId = z.enum(CITIES.map((city) => city.id) as [string, ...string[]]);
 const color = z.enum(COLORS as unknown as [string, ...string[]]);
 const seat = z.enum(SEATS as unknown as [string, ...string[]]);
+const pawnId = z.enum(PAWN_IDS as unknown as [string, ...string[]]);
+/** What a pawn takes along (Relocation Specialist): cubes, one color each, and another pawn. */
+const carry = z.object({
+  cubes: z.array(color).max(MAX_CARRIED_CUBES),
+  pawn: pawnId.optional(),
+});
 const handCard = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('city'), city: cityId }),
   z.object({ kind: z.literal('event'), event: z.enum(EVENT_IDS) }),
@@ -47,26 +57,41 @@ const playEvent = (event: string, choices: z.ZodRawShape = {}) =>
     ...choices,
   });
 const playEventSchema = z.discriminatedUnion('event', [
-  playEvent('airlift', { pawn: seat, to: cityId }),
+  playEvent('airlift', { pawn: pawnId, to: cityId, carry: carry.optional() }),
   playEvent('forecast'),
   playEvent('government-grant', { city: cityId, move: cityId.optional() }),
   playEvent('one-quiet-night'),
   playEvent('resilient-population', { city: cityId }),
 ]);
 
+/** A move of a pawn: `pawn` when it is another one, `carry` what it takes along. */
+const pawnMove = (type: string) =>
+  z.object({ type: z.literal(type), to: cityId, pawn: pawnId.optional(), carry: carry.optional() });
+
 /** Every move a player may send. */
 export const pandemicMoveSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('drive'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('direct'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('charter'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('shuttle'), to: cityId, pawn: seat.optional() }),
-  z.object({ type: z.literal('join'), to: cityId, pawn: seat.optional() }),
+  pawnMove('drive'),
+  pawnMove('direct'),
+  pawnMove('charter'),
+  pawnMove('shuttle'),
+  pawnMove('join'),
   z.object({ type: z.literal('build'), move: cityId.optional() }),
   z.object({ type: z.literal('treat'), color }),
-  z.object({ type: z.literal('cure'), color, cards: z.array(cityId).max(5) }),
+  z.object({
+    type: z.literal('cure'),
+    color,
+    cards: z.array(cityId).max(CARDS_TO_CURE),
+    help: z
+      .array(z.object({ seat, city: cityId }))
+      .max(CARDS_TO_CURE)
+      .optional(),
+  }),
   z.object({ type: z.literal('pass') }),
   z.object({ type: z.literal('ops-flight'), to: cityId, card: cityId }),
   z.object({ type: z.literal('take-event'), event: z.enum(EVENT_IDS) }),
+  z.object({ type: z.literal('create-student') }),
+  z.object({ type: z.literal('montreal-essen'), to: cityId }),
+  z.object({ type: z.literal('choose-pawn'), pawn: pawnId }),
   z.object({
     type: z.literal('share-offer'),
     direction: z.enum(['give', 'take']),
@@ -76,9 +101,12 @@ export const pandemicMoveSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('share-accept') }),
   z.object({ type: z.literal('share-decline') }),
   z.object({ type: z.literal('share-cancel') }),
-  z.object({ type: z.literal('move-accept') }),
+  z.object({ type: z.literal('move-accept'), carry: carry.optional() }),
   z.object({ type: z.literal('move-decline') }),
   z.object({ type: z.literal('move-cancel') }),
+  z.object({ type: z.literal('cure-accept') }),
+  z.object({ type: z.literal('cure-decline') }),
+  z.object({ type: z.literal('cure-cancel') }),
   z.object({ type: z.literal('draw') }),
   z.object({ type: z.literal('epidemic') }),
   z.object({ type: z.literal('infect') }),
@@ -159,10 +187,13 @@ function actors(state: PandemicState): Actor[] {
     return [{ seat: pending.seat, kind: 'prompt', prompt: 'discard' }];
   }
   if (pending?.kind === 'move') {
-    return [{ seat: pending.pawn, kind: 'prompt', prompt: 'move' }];
+    return [{ seat: pawnOwner(pending.pawn), kind: 'prompt', prompt: 'move' }];
   }
   if (pending?.kind === 'forecast') {
     return [{ seat: pending.seat, kind: 'prompt', prompt: 'forecast' }];
+  }
+  if (pending?.kind === 'cure') {
+    return pending.waiting.map((seat) => ({ seat, kind: 'prompt', prompt: 'cure' }) as const);
   }
   if (pending?.kind === 'share') {
     return [{ seat: shareAnswerer(state) as SeatId, kind: 'prompt', prompt: 'share' }];
@@ -175,9 +206,12 @@ export const pandemic: GameDefinition<PandemicState, AnyMove, TableView, Pandemi
   // 3: the state holds the `roles` (Pandemic 04). 4: the turn counts `epidemicsResolved` and the
   // state has `quietNight` (event cards, Pandemic 05). 5: the "before the game" step (`setup`
   // status) and the role mode (Pandemic 06). 6: the game keeps a `checkpoint` for "Restart turn".
-  // Older matches are not migrated (Pandemic was never
-  // deployed), so they are dropped on load.
-  version: 6,
+  // 7: pawns are named by `PawnId` (a seat's own pawn or a Teacher's student) instead of a seat,
+  // and the turn holds the pawn chosen for it (`turn.pawn`). 8: three more roles (the deal draws
+  // from 11) and the Relocation Specialist's `carry` on moves. 9: the Gen Con 2016 promo role (a 12th
+  // role, helped cures).
+  // Older matches are not migrated (Pandemic was never deployed), so they are dropped on load.
+  version: 9,
   // A player who leaves frees the seat, not the hand: the game waits for whoever joins next.
   meta: {
     seats: SEATS,

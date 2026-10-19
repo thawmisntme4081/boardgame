@@ -31,7 +31,7 @@ function TurnPill({ view, partnerName }: { view: PlayerView; partnerName: string
   const myTurn = view.phase === 'placing' && view.currentSeat === view.seat;
   const text = {
     setup: () => t('preflight.title'),
-    strategy: () => (view.autoRoll ? t('status.totalTrust') : t('status.strategy')),
+    strategy: () => (view.autoRoll ? t('moduleText.total-trust.name') : t('status.strategy')),
     placing: () =>
       myTurn ? t('status.yourTurn') : t('status.partnersTurn', { name: partnerName }),
     won: () => t('status.landed'),
@@ -77,7 +77,7 @@ function LeaveButton({ partnerName }: { partnerName: string }) {
             </Button>
           </DialogClose>
           <Button variant="destructive" className="h-11" onClick={() => void leaveGame()}>
-            {t('leave.confirm')}
+            {t('leave.button')}
           </Button>
         </DialogFooter>
       </DialogContent>

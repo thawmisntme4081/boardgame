@@ -1,5 +1,8 @@
 import {
+  pawnOwner,
+  pawnsOnMap,
   canActInView,
+  carriesAlong,
   canPlayCard,
   heldEvents,
   roleOf,
@@ -14,9 +17,10 @@ import type { SeatPresence } from '@platform/ui/game';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ownerPart, type EventPlan } from '../lib/events';
-import { cityName, seatName } from '../lib/names';
+import { cityName, pawnName, seatName } from '../lib/names';
 import { platform } from '../platform';
 import { usePandemic } from '../store';
+import { CarryPicker } from './CarryPicker';
 
 /** The next step of the card being played, once it needs a choice. */
 function PlanStep({
@@ -35,7 +39,7 @@ function PlanStep({
   const [removed, setRemoved] = useState<CityId | ''>('');
   const cancel = (
     <Button variant="outline" size="sm" onClick={() => planEvent(null)}>
-      {t('eventBar.cancel')}
+      {t('common.cancel')}
     </Button>
   );
   const send = (move: PandemicMove) => {
@@ -49,16 +53,16 @@ function PlanStep({
         <div className="flex flex-col gap-2">
           <p className="text-sm">{t('eventBar.airliftPawn')}</p>
           <div className="flex flex-wrap gap-1">
-            {view.seats.map((seat) => (
+            {pawnsOnMap(view).map((pawn) => (
               <Button
-                key={seat}
+                key={pawn}
                 variant="outline"
                 size="sm"
-                onClick={() => planEvent({ event: 'airlift', owner: plan.owner, pawn: seat })}
+                onClick={() => planEvent({ event: 'airlift', owner: plan.owner, pawn })}
               >
                 {t('eventBar.pawnAt', {
-                  name: seatName(presence, seat),
-                  city: cityName(view.pawns[seat] as CityId),
+                  name: pawnName(presence, pawn),
+                  city: cityName(view.pawns[pawn] as CityId),
                 })}
               </Button>
             ))}
@@ -67,11 +71,14 @@ function PlanStep({
         </div>
       );
     }
+    // Your own pawn, if it takes things along (Relocation Specialist), chooses them first.
+    const carrying = pawnOwner(plan.pawn) === you && carriesAlong(view, plan.pawn);
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm">
-          {t('eventBar.airliftCity', { name: seatName(presence, plan.pawn) })}
+          {t('eventBar.airliftCity', { name: pawnName(presence, plan.pawn) })}
         </p>
+        {carrying && <CarryPicker view={view} pawn={plan.pawn} presence={presence} />}
         <div>{cancel}</div>
       </div>
     );

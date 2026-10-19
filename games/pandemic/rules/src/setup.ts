@@ -1,9 +1,10 @@
 // Setting up a game from a seed: the same seed always gives the same game.
 import { nextRandom } from '@platform/engine';
+import { actionsPerTurn } from './actions';
+import { roleOf } from './roles';
 import { CITIES, cityOf, type CityId, type Color } from './cities';
 import { emptyLog } from './log';
 import {
-  ACTIONS_PER_TURN,
   CUBES_PER_COLOR,
   EPIDEMIC_COUNTS,
   EVENT_IDS,
@@ -143,19 +144,25 @@ export function createGame(options: CreateGameOptions): GameState {
     order.items.forEach((seat, i) => (roles[seat] = roleDeal.items[i]));
   }
 
-  const pawns: PerSeat<CityId> = {};
-  for (const seat of order.items) pawns[seat] = START_CITY;
+  const pawns: GameState['pawns'] = {};
+  // A role may start elsewhere (Z-Force Team Member).
+  for (const seat of order.items) {
+    pawns[seat] = roleOf({ roles }, seat)?.startCity ?? START_CITY;
+  }
 
   return {
     seats: order.items,
     epidemics,
     turn: {
       seat: order.items[0] as SeatId,
-      actionsLeft: ACTIONS_PER_TURN,
+      // Read once the roles are dealt and the cities infected (Crisis Mitigator).
+      actionsLeft: actionsPerTurn({ roles, pawns, cubes }, order.items[0] as SeatId),
       step: 'actions',
       epidemics: 0,
       epidemicStep: 'increase',
       infectionsLeft: 0,
+      // Nobody has students yet: every turn starts with the seat's own pawn.
+      pawn: order.items[0] as SeatId,
       flightUsed: false,
       epidemicsResolved: 0,
     },

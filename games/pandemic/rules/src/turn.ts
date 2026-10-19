@@ -1,12 +1,12 @@
 // The parts of a turn after the actions: draw 2 cards, resolve epidemics, discard down to the
 // hand limit, infect cities, then the next player's turn. Every card is its own move of the
 // active player, so events (`playEvent.ts`) can be played between them.
-import type { ActionCheck, ActionReason } from './actions';
+import { actionsPerTurn, type ActionCheck, type ActionReason } from './actions';
 import { nextTurnLog, type LogEntry } from './log';
 import { infectCity, lose } from './outbreak';
+import { startingPawn } from './pawns';
 import { shuffle } from './setup';
 import {
-  ACTIONS_PER_TURN,
   HAND_LIMIT,
   INFECTION_RATES,
   type ActionState,
@@ -87,11 +87,12 @@ function endTurn(state: GameState): void {
   state.checkpoint = null;
   state.turn = {
     seat: next as SeatId,
-    actionsLeft: ACTIONS_PER_TURN,
+    actionsLeft: actionsPerTurn(state, next as SeatId),
     step: 'actions',
     epidemics: 0,
     epidemicStep: 'increase',
     infectionsLeft: 0,
+    pawn: startingPawn(state, next as SeatId),
     flightUsed: false,
     epidemicsResolved: 0,
   };

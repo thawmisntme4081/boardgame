@@ -1,4 +1,12 @@
 {
+  "common": {
+    "leave": "Leave",
+    "you": "you",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "cancelOffer": "Cancel the offer"
+  },
   "status": {
     "playerOnline": "{{name}} online",
     "playerOffline": "{{name}} offline"
@@ -7,12 +15,10 @@
     "button": "Leave the game",
     "title": "Leave the game?",
     "body": "Your seat stays open for someone else to take over.",
-    "stay": "Stay",
-    "confirm": "Leave"
+    "stay": "Stay"
   },
   "lobby": {
     "players": "Players",
-    "playersHint": "Everyone cooperates: cure the four diseases before they overrun the world.",
     "playerCount_one": "{{count}} player",
     "playerCount_other": "{{count}} players",
     "waitingForPlayers_one": "Waiting for {{count}} more player",
@@ -37,27 +43,17 @@
   },
   "preflight": {
     "title": "Before the game",
-    "summary_one": "{{count}} epidemic card",
-    "summary_other": "{{count}} epidemic cards",
     "random": "roles dealt at random",
     "choose": "roles chosen by the players",
     "pickHint": "Pick a role nobody else has. You can change it until you confirm.",
-    "you": "you",
     "ready": "Ready",
     "locked": "You have confirmed. Undo to change your role.",
     "confirm": "Confirm and start",
-    "leave": "Leave",
     "undo": "Undo"
   },
   "board": {
     "actionsLeft_one": "{{count}} action left",
     "actionsLeft_other": "{{count}} actions left",
-    "step": {
-      "actions": "Actions",
-      "draw": "Draw 2 cards",
-      "epidemic": "Epidemic",
-      "infect": "Infect cities"
-    },
     "epidemicStep": {
       "increase": "Increase",
       "infect": "Infect",
@@ -69,42 +65,77 @@
       "outbreaks": "too many outbreaks",
       "cubes": "out of disease cubes",
       "player-deck": "out of player cards"
-    },
-    "you": "you",
-    "none": "none"
+    }
   },
   "tracks": {
-    "title": "Tracks",
     "outbreaks": "Outbreaks: {{count}} / {{max}}",
-    "infectionRate": "Infection rate: {{count}}",
     "playerDeck": "Player deck: {{count}} cards",
     "infectionDeck": "Infection deck: {{count}} cards",
-    "supply": "Cubes left",
     "stationsLeft": "Research stations left: {{count}}",
     "supplyOf": "{{color}} cubes left",
     "infectionDiscard": "Infection discard pile: {{count}} cards",
     "playerDiscard": "Player discard pile: {{count}} cards",
-    "cures": "Cures",
-    "cureState": {
-      "none": "not cured",
-      "cured": "cured",
-      "eradicated": "eradicated"
-    },
     "openPlayerDiscard": "List the player discard pile",
     "openInfectionDiscard": "List the infection discard pile"
+  },
+  "map": {
+    "label": "Map"
+  },
+  "cities": {
+    "atlanta": "Atlanta",
+    "chicago": "Chicago",
+    "essen": "Essen",
+    "london": "London",
+    "madrid": "Madrid",
+    "milan": "Milan",
+    "montreal": "Montreal",
+    "new-york": "New York",
+    "paris": "Paris",
+    "san-francisco": "San Francisco",
+    "st-petersburg": "St. Petersburg",
+    "washington": "Washington",
+    "bogota": "Bogotá",
+    "buenos-aires": "Buenos Aires",
+    "johannesburg": "Johannesburg",
+    "khartoum": "Khartoum",
+    "kinshasa": "Kinshasa",
+    "lagos": "Lagos",
+    "lima": "Lima",
+    "los-angeles": "Los Angeles",
+    "mexico-city": "Mexico City",
+    "miami": "Miami",
+    "santiago": "Santiago",
+    "sao-paulo": "São Paulo",
+    "algiers": "Algiers",
+    "baghdad": "Baghdad",
+    "cairo": "Cairo",
+    "chennai": "Chennai",
+    "delhi": "Delhi",
+    "istanbul": "Istanbul",
+    "karachi": "Karachi",
+    "kolkata": "Kolkata",
+    "moscow": "Moscow",
+    "mumbai": "Mumbai",
+    "riyadh": "Riyadh",
+    "tehran": "Tehran",
+    "bangkok": "Bangkok",
+    "beijing": "Beijing",
+    "ho-chi-minh-city": "Ho Chi Minh City",
+    "hong-kong": "Hong Kong",
+    "jakarta": "Jakarta",
+    "manila": "Manila",
+    "osaka": "Osaka",
+    "seoul": "Seoul",
+    "shanghai": "Shanghai",
+    "sydney": "Sydney",
+    "taipei": "Taipei",
+    "tokyo": "Tokyo"
   },
   "color": {
     "blue": "Blue",
     "yellow": "Yellow",
     "black": "Black",
     "red": "Red"
-  },
-  "map": {
-    "title": "Cities with something on them",
-    "empty": "Nothing yet.",
-    "station": "research station",
-    "pawn": "{{name}}",
-    "cubes": "{{count}} {{color}}"
   },
   "roles": {
     "title": "Roles",
@@ -136,15 +167,55 @@
       "name": "Scientist",
       "power": "Discover a cure with only 4 City cards of one color."
     },
+    "teacher": {
+      "name": "Teacher",
+      "power": "As an action, create a student pawn in your city (at most 2 per game). At the start of your turn, choose the teacher or a student: that pawn does this turn's actions, with your hand."
+    },
+    "relocation-specialist": {
+      "name": "Relocation Specialist",
+      "power": "Whenever your pawn leaves a city, however it moves, you may take up to 3 disease cubes and/or 1 other pawn (if its owner agrees) from that city to where you arrive."
+    },
+    "crisis-mitigator": {
+      "name": "Crisis Mitigator",
+      "power": "Your actions each turn depend on the disease cubes in your city when your turn starts: 0–1 cubes: 4 actions, 2: 5, 3: 6, 4 or more: 7."
+    },
+    "generalist": {
+      "name": "Generalist",
+      "power": "You have 5 actions each turn instead of 4."
+    },
+    "z-force-team-member": {
+      "name": "Z-Force Team Member",
+      "power": "Start in Montreal. As an action, move to Montreal or Essen. When you discover a cure, other players in your city may give up to 2 of its cards (if they agree)."
+    },
+    "students": "Students: {{count}} / {{max}}",
     "info": "What {{role}} can do",
     "stored": "Stored: {{event}}"
+  },
+  "cureOffer": {
+    "title": "Discover a cure",
+    "offered": "{{by}} asks to use {{cards}} to cure {{color}}.",
+    "accept": "Give the cards",
+    "cancel": "Cancel the cure",
+    "waiting": "Waiting for {{names}} to agree."
+  },
+  "carry": {
+    "title": "Take along",
+    "hintMove": "Choose the cubes and the pawn that come with you, then where to go on the map.",
+    "hintAccept": "Choose the cubes and the pawn that come with you, then accept.",
+    "cubes": "{{color}}: {{count}}",
+    "count": "{{count}} / {{max}} cubes",
+    "more": "One more {{color}} cube",
+    "less": "One fewer {{color}} cube",
+    "pawn": "Take {{name}}"
+  },
+  "pawns": {
+    "teacher": "Teacher pawn",
+    "student": "Student {{number}}",
+    "studentOf": "{{name}}'s student"
   },
   "hands": {
     "title": "Hands",
     "empty": "No cards",
-    "you": "you",
-    "count_one": "({{count}} card)",
-    "count_other": "({{count}} cards)",
     "event": "Event: {{name}}"
   },
   "events": {
@@ -169,12 +240,19 @@
   "actions": {
     "title": "Actions",
     "drive": "Drive / Ferry",
+    "montrealEssen": "Go to {{city}}",
+    "cureHelp": "From other players (up to {{max}}):",
+    "cureHelpCard": "{{city}} ({{name}})",
     "direct": "Direct Flight",
     "charter": "Charter Flight",
     "shuttle": "Shuttle Flight",
     "join": "To a pawn there",
     "ops-flight": "Operations flight",
     "movePawn": "Pawn to move",
+    "choosePawn": "Choose the pawn for this turn",
+    "pawnAt": "{{pawn}} in {{city}}",
+    "pawnToday": "This turn: {{pawn}}",
+    "createStudent": "Create a student",
     "ownPawn": "Yours",
     "takeEvent": "Take {{event}} from the discard pile",
     "build": "Build a research station",
@@ -184,7 +262,6 @@
     "cureChoose": "Choose the {{count}} {{color}} cards to discard",
     "cureChosen": "{{chosen}} of {{count}} chosen",
     "cureConfirm": "Discover the cure",
-    "cureCancel": "Cancel",
     "pass": "Pass",
     "draw": "Draw cards",
     "epidemic": "Epidemic: {{step}}",
@@ -204,20 +281,16 @@
     "takeCard": "Take {{city}}",
     "chooseGive": "Give {{city}} to:",
     "chooseTake": "Take {{city}} from:",
-    "offered": "{{from}} offers to share the card of {{city}} with {{to}}.",
-    "accept": "Accept",
-    "decline": "Decline",
-    "cancel": "Cancel the offer"
+    "offered": "{{from}} offers to share the card of {{city}} with {{to}}."
   },
   "moveOffer": {
     "title": "Move a pawn",
     "offered": "{{by}} offers to move {{pawn}} to {{city}}.",
-    "accept": "Accept",
-    "decline": "Decline",
-    "cancel": "Cancel the offer"
+    "takeAlong": "{{carrier}} offers to take {{pawn}} along to {{city}}.",
+    "cubes_one": "{{count}} cube comes along.",
+    "cubes_other": "{{count}} cubes come along."
   },
   "forecast": {
-    "title": "Forecast",
     "hint": "Drag the cards (or use the arrows) into the order they will be flipped, then keep it.",
     "top": "Next",
     "up": "Move {{city}} up",
@@ -261,7 +334,18 @@
     "pick-first": "Pick a role first.",
     "roles-dealt": "The roles are dealt at random in this game.",
     "role-taken": "Another player has that role.",
-    "cannot-restart": "The turn cannot be restarted now."
+    "cannot-restart": "The turn cannot be restarted now.",
+    "choose-pawn-first": "Choose the pawn for this turn first.",
+    "pawn-chosen": "The pawn for this turn is chosen already.",
+    "not-your-pawn": "That pawn is not yours.",
+    "teacher-pawn-only": "Only the teacher pawn can create a student.",
+    "no-students-left": "Both students have been created.",
+    "wrong-role": "Your role cannot do that.",
+    "power-used": "You have used that power this turn already.",
+    "no-pawn-there": "There is no pawn in that city.",
+    "event-stored": "An event card is stored on your role card already.",
+    "no-event": "That event card is not in the discard pile.",
+    "too-many-cubes": "At most 3 cubes can come along."
   },
   "epidemic": {
     "title_one": "Epidemic ({{count}} to resolve)",
@@ -276,8 +360,6 @@
     "wonTitle": "Humanity is saved",
     "lostTitle": "The world was lost",
     "playAgain": "Play again",
-    "leave": "Leave",
-    "cancelOffer": "Cancel the offer",
     "takeBack": "Take back my answer",
     "offered": "{{name}} wants to play again.",
     "waitingFor": "Waiting for {{names}}.",
@@ -287,7 +369,6 @@
   },
   "eventBar": {
     "playEvent": "Play {{event}}",
-    "cancel": "Cancel",
     "airliftPawn": "Airlift: choose the pawn to move.",
     "airliftCity": "Airlift {{name}}: tap the city to move to.",
     "grantCity": "Government Grant: tap the city for the new station.",

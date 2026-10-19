@@ -1,4 +1,4 @@
-import type { PandemicView, RoleId } from '@pandemic/rules';
+import { MAX_STUDENTS, pawnsOf, type PandemicView, type RoleId } from '@pandemic/rules';
 import { Popover, PopoverContent, PopoverTrigger } from '@platform/ui/components/popover';
 import type { SeatPresence } from '@platform/ui/game';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,11 @@ const TEXT_ON: Record<RoleId, string> = {
   'quarantine-specialist': 'text-white',
   researcher: 'text-white',
   scientist: 'text-black',
+  teacher: 'text-white',
+  'relocation-specialist': 'text-white',
+  'crisis-mitigator': 'text-black',
+  generalist: 'text-white',
+  'z-force-team-member': 'text-white',
 };
 
 /**
@@ -46,6 +51,14 @@ export function RoleCards({
             >
               <span className="truncate text-xs opacity-80">{seatName(presence, seat)}</span>
               <span className="font-semibold">{name}</span>
+              {role === 'teacher' && (
+                <span className="text-xs">
+                  {t('roles.students', {
+                    count: pawnsOf(view, seat).length - 1,
+                    max: MAX_STUDENTS,
+                  })}
+                </span>
+              )}
               {role === 'contingency-planner' && view.contingency && (
                 <span className="text-xs">
                   {t('roles.stored', { event: t(`events.${view.contingency}`) })}

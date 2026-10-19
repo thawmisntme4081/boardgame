@@ -14,7 +14,7 @@ describe('constants', () => {
   it('match the box', () => {
     expect(CUBES_PER_COLOR * COLORS.length).toBe(96);
     expect(EVENT_IDS).toHaveLength(5);
-    expect(ROLE_IDS).toHaveLength(7);
+    expect(ROLE_IDS).toHaveLength(12);
     expect(SEATS).toHaveLength(4);
     expect(MAX_OUTBREAKS).toBe(8);
   });

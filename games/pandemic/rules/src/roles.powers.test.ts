@@ -7,7 +7,7 @@ import { infectCity } from './outbreak';
 import { applyRoleAction, checkRoleAction } from './roleActions';
 import type { RoleAction } from './roles';
 import { applyShare, checkShare } from './share';
-import { addCubes, blankGame, city, give } from './test-utils';
+import { addCubes, blankGame, city, give, setTurnSeat } from './test-utils';
 import { CUBES_PER_COLOR } from './types';
 
 describe('Scientist', () => {
@@ -73,7 +73,7 @@ describe('Researcher', () => {
   it('still needs the shared city to take a card from the Researcher', () => {
     const game = blankGame();
     game.roles.p1 = 'researcher';
-    game.turn.seat = 'p2';
+    setTurnSeat(game, 'p2');
     game.pawns.p1 = 'atlanta';
     game.pawns.p2 = 'atlanta';
     give(game, 'p1', city('tokyo'));
@@ -296,7 +296,7 @@ describe('Medic', () => {
     game.pawns.p1 = 'atlanta';
     addCubes(game, 'atlanta', 'blue', 3);
     game.stations = ['chicago'];
-    game.turn.seat = 'p2';
+    setTurnSeat(game, 'p2');
     game.pawns.p2 = 'chicago';
     game.roles.p2 = 'researcher';
     give(

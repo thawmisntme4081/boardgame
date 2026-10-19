@@ -73,7 +73,7 @@ describe('the "before the game" panel', () => {
     render(<Preflight view={stepFor('choose', 'p1')} presence={null} />);
     expect(screen.getByText(/roles chosen by the players/)).toBeInTheDocument();
     const roles = within(screen.getByRole('group', { name: 'Roles' })).getAllByRole('button');
-    expect(roles).toHaveLength(7);
+    expect(roles).toHaveLength(12);
     expect(screen.getByRole('button', { name: 'Confirm and start' })).toBeDisabled();
 
     fireEvent.click(document.querySelector('button:has([data-role="medic"])')!);

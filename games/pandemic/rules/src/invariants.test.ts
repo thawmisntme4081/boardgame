@@ -12,12 +12,8 @@ import { CUBES_PER_COLOR, SEATS, type GameState } from './types';
 function nextTurn(state: GameState): GameState {
   const s = structuredClone(state);
   const at = s.seats.indexOf(s.turn.seat);
-  s.turn = {
-    ...s.turn,
-    seat: s.seats[(at + 1) % s.seats.length]!,
-    actionsLeft: 4,
-    step: 'actions',
-  };
+  const seat = s.seats[(at + 1) % s.seats.length]!;
+  s.turn = { ...s.turn, seat, pawn: seat, actionsLeft: 4, step: 'actions' };
   return s;
 }
 
@@ -51,6 +47,7 @@ describe('cube conservation', () => {
   it('keeps every card in the game when sharing', () => {
     const game = createGame({ seats: ['p1', 'p2'], epidemics: 4, seed: 5 });
     game.turn.seat = 'p1';
+    game.turn.pawn = 'p1';
     game.pawns.p2 = game.pawns.p1 as never;
     const count = (g: GameState) =>
       (g.hands.p1?.length ?? 0) + (g.hands.p2?.length ?? 0) + g.playerDiscard.length;

@@ -78,6 +78,15 @@ export function infectCity(state: GameState, city: CityId, count: number): Infec
   if (state.cures[color] === 'eradicated') {
     return { color, cubes: 0, eradicated: true, prevented: false, outbreaks: [] };
   }
+  return putCubes(state, city, color, count);
+}
+
+/**
+ * Puts `count` cubes of `color` from the supply on `city` (an infection, or cubes a pawn took
+ * along): nothing if a role protects the city; cubes up to 3, and an outbreak when there was not
+ * room.
+ */
+export function putCubes(state: GameState, city: CityId, color: Color, count: number): Infection {
   if (prevented(state, city, color)) {
     return { color, cubes: 0, eradicated: false, prevented: true, outbreaks: [] };
   }

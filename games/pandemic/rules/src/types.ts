@@ -1,6 +1,7 @@
 // The game's state and constants. State is plain JSON (it is saved and replayed), and the
 // rules in the other files are pure functions over it.
 import type { PawnMove } from './actions';
+import type { CureAction } from './cure';
 import type { PawnEventMove } from './events';
 import type { CityId, Color } from './cities';
 import type { GameLog } from './log';
@@ -11,6 +12,25 @@ export const SEATS: readonly SeatId[] = ['p1', 'p2', 'p3', 'p4'];
 
 /** A value per seated player (a game has 2 to 4 seats, so not every seat has one). */
 export type PerSeat<T> = Partial<Record<SeatId, T>>;
+
+/**
+ * A pawn on the map. Every seat has its own, whose id is the seat's (`p1`); the Teacher may add
+ * two students (`p1-s1`, `p1-s2`). The seat in the id owns the pawn: it answers an offer to move
+ * it.
+ */
+export type PawnId = SeatId | `${SeatId}-s${1 | 2}`;
+
+export const PAWN_IDS: readonly PawnId[] = SEATS.flatMap((seat): PawnId[] => [
+  seat,
+  `${seat}-s1`,
+  `${seat}-s2`,
+]);
+
+export const pawnOwner = (pawn: PawnId): SeatId => pawn.split('-')[0] as SeatId;
+
+/** Every pawn on the map, in the order they were put there (the seats' own first). */
+export const pawnsOnMap = (state: Pick<GameState, 'pawns'>): PawnId[] =>
+  Object.keys(state.pawns) as PawnId[];
 
 // Constants from the rulebook.
 export const MIN_PLAYERS = 2;
@@ -41,7 +61,10 @@ export const EVENT_IDS = [
 ] as const;
 export type EventId = (typeof EVENT_IDS)[number];
 
-/** Role cards (their powers are hooks in `roles/`). */
+/**
+ * Role cards (their powers are hooks in `roles/`): the base game's seven, then the fan-made ones
+ * in the order they were added, then the Gen Con 2016 promo.
+ */
 export const ROLE_IDS = [
   'contingency-planner',
   'dispatcher',
@@ -50,6 +73,11 @@ export const ROLE_IDS = [
   'quarantine-specialist',
   'researcher',
   'scientist',
+  'teacher',
+  'relocation-specialist',
+  'crisis-mitigator',
+  'generalist',
+  'z-force-team-member',
 ] as const;
 export type RoleId = (typeof ROLE_IDS)[number];
 
@@ -81,6 +109,11 @@ export interface Turn {
   epidemicStep: EpidemicStep;
   /** Infection cards still to flip in the infect step. */
   infectionsLeft: number;
+  /**
+   * The pawn doing this turn's actions; `null` until a seat with several pawns chooses one
+   * (`pawns.ts`). The seat's own pawn when it has only one.
+   */
+  pawn: PawnId | null;
   /** A role's once-a-turn power was used this turn (Operations Expert's flight). */
   flightUsed: boolean;
   /**
@@ -95,10 +128,16 @@ export type Pending =
   /** The active player offered to give or take a city card; the partner answers. */
   | { kind: 'share'; from: SeatId; to: SeatId; city: CityId }
   /**
-   * `by` offered to move `pawn` (another player's), with an action or an event card (Airlift);
-   * its owner answers (see `moveOffer.ts`).
+   * `by` offered `move`, an action or an event card (Airlift), that moves another player's pawn
+   * or takes one along (`move.carry`, see `carry.ts`); `pawn` is that pawn: its owner
+   * (`pawnOwner`) answers (see `moveOffer.ts`).
    */
-  | { kind: 'move'; by: SeatId; pawn: SeatId; move: PawnMove | PawnEventMove }
+  | { kind: 'move'; by: SeatId; pawn: PawnId; move: PawnMove | PawnEventMove }
+  /**
+   * `by` offered a cure with other players' cards (`move.help`, see `cure.ts`); the helpers in
+   * `waiting` have not accepted yet.
+   */
+  | { kind: 'cure'; by: SeatId; move: CureAction; waiting: SeatId[] }
   /** A hand over the limit: this seat discards (or plays an event) first. */
   | { kind: 'discard'; seat: SeatId }
   /**
@@ -123,7 +162,8 @@ export interface GameState {
   lossReason: LossReason | null;
   /** Each seated player's role card, dealt at random after the initial infection. */
   roles: PerSeat<RoleId>;
-  pawns: PerSeat<CityId>;
+  /** Where each pawn stands. */
+  pawns: Partial<Record<PawnId, CityId>>;
   hands: PerSeat<HandCard[]>;
   /** The event card stored on the Contingency Planner's role card, outside the hand. */
   contingency: EventId | null;

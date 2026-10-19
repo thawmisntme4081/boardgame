@@ -1,35 +1,48 @@
 // The player actions of a turn: four per turn, and a reason code for every refusal.
-import { COLORS, cityOf, type CityId, type Color } from './cities';
-import { roleOf, rolesInPlay } from './roles';
+import { answeringPawn, checkCarry, moveWith, type Carry } from './carry';
+import { cityOf, type CityId, type Color } from './cities';
+import { checkCure, discoverCure, helpersOf, type CureAction } from './cure';
+import { actingPawn } from './pawns';
+import { roleOf } from './roles';
 import {
+  ACTIONS_PER_TURN,
   CARDS_TO_CURE,
   MAX_STATIONS,
   type ActionState,
   type GameState,
   type HandCard,
+  type PawnId,
   type SeatId,
   type Turn,
+  pawnOwner,
+  pawnsOnMap,
 } from './types';
 
-// The moves of a pawn carry `pawn` when a role moves another player's pawn (`movesPawns`:
-// Dispatcher); the cards always come from the hand of the player who acts.
+// Every action works on the pawn chosen for the turn (`actingPawn`: the seat's own, or a Teacher's
+// student). The moves of a pawn carry `pawn` when it is another one (`movesPawns`: the Dispatcher
+// moves other players' pawns), and `carry` when the player's own pawn takes cubes and a pawn
+// along (`carries`: the Relocation Specialist); the cards always come from the hand of the
+// player who acts.
 export type Action =
   /** Drive / Ferry: to a city joined by a white line. */
-  | { type: 'drive'; to: CityId; pawn?: SeatId }
+  | { type: 'drive'; to: CityId; pawn?: PawnId; carry?: Carry }
   /** Direct Flight: discard the card of the city you fly to. */
-  | { type: 'direct'; to: CityId; pawn?: SeatId }
+  | { type: 'direct'; to: CityId; pawn?: PawnId; carry?: Carry }
   /** Charter Flight: discard the card of the city the pawn is in, fly anywhere. */
-  | { type: 'charter'; to: CityId; pawn?: SeatId }
+  | { type: 'charter'; to: CityId; pawn?: PawnId; carry?: Carry }
   /** Shuttle Flight: from a station to another station. */
-  | { type: 'shuttle'; to: CityId; pawn?: SeatId }
+  | { type: 'shuttle'; to: CityId; pawn?: PawnId; carry?: Carry }
   /** A pawn (yours or another's) to a city with another pawn (`movesPawns`: Dispatcher). */
-  | { type: 'join'; to: CityId; pawn?: SeatId }
+  | { type: 'join'; to: CityId; pawn?: PawnId; carry?: Carry }
   /** Build a Research Station; `move` names the station to take away once all 6 are built. */
   | { type: 'build'; move?: CityId }
   /** Treat Disease: one cube, or all of a cured color. */
   | { type: 'treat'; color: Color }
-  /** Discover a Cure: discard these city cards (all of the color) at a research station. */
-  | { type: 'cure'; color: Color; cards: CityId[] }
+  /**
+   * Discover a Cure: discard these city cards (all of the color) at a research station, with
+   * other players' cards when a role allows (`help`, see `cure.ts`).
+   */
+  | CureAction
   /** Give up the rest of the actions. */
   | { type: 'pass' };
 
@@ -48,12 +61,19 @@ export type ActionReason =
   | 'no-cubes'
   | 'already-cured'
   | 'bad-cards'
+  // The pawn for the turn (see pawns.ts)
+  | 'choose-pawn-first'
+  | 'pawn-chosen'
+  | 'not-your-pawn'
   // Roles (see roles/)
   | 'wrong-role'
   | 'power-used'
   | 'no-pawn-there'
   | 'event-stored'
   | 'no-event'
+  | 'teacher-pawn-only'
+  | 'no-students-left'
+  | 'too-many-cubes'
   // Event cards (see playEvent.ts)
   | 'card-resolving'
   | 'not-playable'
@@ -103,6 +123,12 @@ export function cubesOnBoard(state: Pick<GameState, 'cubes'>, color: Color): num
   return total;
 }
 
+/** Actions a turn of `seat` starts with (a role may change it), read when the turn starts. */
+export const actionsPerTurn = (
+  state: Pick<GameState, 'roles' | 'pawns' | 'cubes'>,
+  seat: SeatId,
+): number => roleOf(state, seat)?.actionsPerTurn?.(state, seat) ?? ACTIONS_PER_TURN;
+
 /** City cards `seat` needs to discover a cure (a role may change it). */
 export const cardsToCure = (state: Pick<ActionState, 'roles'>, seat: SeatId): number =>
   roleOf(state, seat)?.cardsToCure ?? CARDS_TO_CURE;
@@ -129,23 +155,41 @@ export function placeStation(state: GameState, city: CityId, move: CityId | unde
   state.stations.push(city);
 }
 
-/** The checks every action shares: the game is on, it is `seat`'s actions step, one is left. */
+/**
+ * The checks every action shares: the game is on, it is `seat`'s actions step, its pawn for the
+ * turn is chosen, one action is left.
+ */
 export function checkTurnAction(state: ActionState, seat: SeatId): ActionCheck {
   if (state.status !== 'playing') return fail('game-over');
   if (state.turn.seat !== seat) return fail('not-your-turn');
   if (state.pending) return fail('answer-first');
   if (state.turn.step !== 'actions') return fail('wrong-step');
+  if (state.turn.pawn === null) return fail('choose-pawn-first');
   if (state.turn.actionsLeft <= 0) return fail('no-actions-left');
   return OK;
 }
 
-/** A pawn move by `seat`, the turn checks aside: whose pawn, from where, paid with which card. */
+/** Whether a move of `pawn` by `seat` is only an offer: the pawn is another player's. */
+export const isMoveOffer = (seat: SeatId, pawn: PawnId): boolean => pawnOwner(pawn) !== seat;
+
+/**
+ * A pawn move by `seat`, the turn checks aside: whose pawn, from where, paid with which card,
+ * and what it takes along (only the pawn's own player chooses that with the move).
+ */
 function checkPawnMove(state: ActionState, seat: SeatId, action: PawnMove): ActionCheck {
-  const pawn = action.pawn ?? seat;
-  if (pawn !== seat || action.type === 'join') {
+  const own = actingPawn(state, seat);
+  const pawn = action.pawn ?? own;
+  if (pawn !== own || action.type === 'join') {
     if (!roleOf(state, seat)?.movesPawns) return fail('wrong-role');
-    if (!state.seats.includes(pawn)) return fail('bad-partner');
+    if (state.pawns[pawn] === undefined) return fail('bad-partner');
   }
+  const route = checkRoute(state, seat, pawn, action);
+  if (!route.ok || action.carry === undefined) return route;
+  return pawnOwner(pawn) === seat ? checkCarry(state, pawn, action.carry) : fail('wrong-role');
+}
+
+/** Whether `pawn` can go to `action.to` the way the action says, paid from `seat`'s hand. */
+function checkRoute(state: ActionState, seat: SeatId, pawn: PawnId, action: PawnMove): ActionCheck {
   const from = state.pawns[pawn] as CityId;
   const hand = state.hands[seat];
   if (action.to === from) return fail('same-city');
@@ -161,7 +205,7 @@ function checkPawnMove(state: ActionState, seat: SeatId, action: PawnMove): Acti
         ? OK
         : fail('no-station');
     case 'join':
-      return state.seats.some((other) => other !== pawn && state.pawns[other] === action.to)
+      return pawnsOnMap(state).some((other) => other !== pawn && state.pawns[other] === action.to)
         ? OK
         : fail('no-pawn-there');
   }
@@ -173,7 +217,7 @@ export function checkAction(state: ActionState, seat: SeatId, action: Action): A
   if (isPawnMove(action)) return checkPawnMove(state, seat, action);
 
   const role = roleOf(state, seat);
-  const here = state.pawns[seat] as CityId;
+  const here = state.pawns[actingPawn(state, seat)] as CityId;
   const hand = state.hands[seat];
   switch (action.type) {
     case 'pass':
@@ -184,18 +228,8 @@ export function checkAction(state: ActionState, seat: SeatId, action: Action): A
       return checkStationPlace(state, here, action.move);
     case 'treat':
       return state.cubes[here][action.color] > 0 ? OK : fail('no-cubes');
-    case 'cure': {
-      if (!state.stations.includes(here)) return fail('no-station');
-      if (state.cures[action.color] !== 'none') return fail('already-cured');
-      const needed = cardsToCure(state, seat);
-      const valid =
-        new Set(action.cards).size === needed &&
-        action.cards.length === needed &&
-        action.cards.every(
-          (card) => cityOf(card).color === action.color && hasCityCard(hand, card),
-        );
-      return valid ? OK : fail('bad-cards');
-    }
+    case 'cure':
+      return checkCure(state, seat, action);
   }
 }
 
@@ -221,24 +255,29 @@ export function checkEradicated(state: GameState, color: Color): void {
 
 /**
  * Puts a pawn in a city, however it got there (any move, the Dispatcher, Airlift); its role
- * reacts to arriving.
+ * reacts to arriving. Only a seat's own pawn has a role: a Teacher's student has no power.
  */
-export function movePawn(state: GameState, pawn: SeatId, to: CityId): void {
+export function movePawn(state: GameState, pawn: PawnId, to: CityId): void {
   state.pawns[pawn] = to;
-  roleOf(state, pawn)?.onEnterCity?.(state, pawn);
+  const owner = pawnOwner(pawn);
+  if (pawn === owner) roleOf(state, owner)?.onEnterCity?.(state, owner);
 }
 
-/** Does a pawn move by `mover` (it was checked): pays its card from `mover`'s hand, moves the pawn. */
+/**
+ * Does a pawn move by `mover` (it was checked): pays its card from `mover`'s hand, moves the pawn
+ * with what it takes along.
+ */
 export function doPawnMove(state: GameState, mover: SeatId, action: PawnMove): void {
-  const pawn = action.pawn ?? mover;
+  const pawn = action.pawn ?? actingPawn(state, mover);
   if (action.type === 'direct') discardCity(state, mover, action.to);
   if (action.type === 'charter') discardCity(state, mover, state.pawns[pawn] as CityId);
-  movePawn(state, pawn, action.to);
+  moveWith(state, pawn, action.to, action.carry);
 }
 
 /**
  * Does the action (it must be legal: see `checkAction`) and returns the new state. Moving
- * another player's pawn is only offered: its owner answers (see `moveOffer.ts`).
+ * another player's pawn, or taking one along, is only offered: its owner answers (see
+ * `moveOffer.ts`).
  */
 export function applyAction(state: GameState, seat: SeatId, action: Action): GameState {
   const check = checkAction(state, seat, action);
@@ -246,9 +285,9 @@ export function applyAction(state: GameState, seat: SeatId, action: Action): Gam
 
   const s = structuredClone(state);
   if (isPawnMove(action)) {
-    const pawn = action.pawn ?? seat;
-    if (pawn !== seat) {
-      s.pending = { kind: 'move', by: seat, pawn, move: action };
+    const answering = answeringPawn(seat, action.pawn ?? actingPawn(s, seat), action.carry);
+    if (answering !== null) {
+      s.pending = { kind: 'move', by: seat, pawn: answering, move: action };
       return s;
     }
     doPawnMove(s, seat, action);
@@ -256,7 +295,7 @@ export function applyAction(state: GameState, seat: SeatId, action: Action): Gam
     return s;
   }
 
-  const here = s.pawns[seat] as CityId;
+  const here = s.pawns[actingPawn(s, seat)] as CityId;
   const role = roleOf(s, seat);
   switch (action.type) {
     case 'pass':
@@ -277,13 +316,12 @@ export function applyAction(state: GameState, seat: SeatId, action: Action): Gam
       break;
     }
     case 'cure':
-      for (const card of action.cards) discardCity(s, seat, card);
-      s.cures[action.color] = 'cured';
-      for (const { seat: holder, role: other } of rolesInPlay(s)) {
-        other.onCure?.(s, holder, action.color);
+      // Other players' cards: they agree first (`cure.ts`).
+      if (helpersOf(action).length > 0) {
+        s.pending = { kind: 'cure', by: seat, move: action, waiting: helpersOf(action) };
+        return s;
       }
-      checkEradicated(s, action.color);
-      if (COLORS.every((color) => s.cures[color] !== 'none')) s.status = 'won';
+      discoverCure(s, seat, action);
       break;
   }
   spendAction(s.turn);

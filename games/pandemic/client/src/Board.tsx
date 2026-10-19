@@ -1,4 +1,11 @@
-import { CITIES, type CityId, type TableView } from '@pandemic/rules';
+import {
+  CITIES,
+  actingPawn,
+  carriesAlong,
+  pawnOwner,
+  type CityId,
+  type TableView,
+} from '@pandemic/rules';
 import type { BoardProps } from '@platform/ui/game';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +29,7 @@ import { MAP_HEIGHT, MAP_WIDTH } from './lib/mapGeometry';
 import { platform } from './platform';
 import { useDeal } from './lib/deal';
 import { reachableCities } from './lib/moves';
-import { usePandemic } from './store';
+import { carryPart, usePandemic } from './store';
 
 export function Board({ view: live, presence, rematch }: BoardProps<TableView>) {
   const { t } = useTranslation('pandemic');
@@ -33,6 +40,7 @@ export function Board({ view: live, presence, rematch }: BoardProps<TableView>) 
   const eventPlan = usePandemic((s) => s.eventPlan);
   const planEvent = usePandemic((s) => s.planEvent);
   const hoverCity = usePandemic((s) => s.hoverCity);
+  const carry = usePandemic((s) => s.carry);
   const layout = handLayout(useWide());
   const canMoveNow =
     !dealing &&
@@ -42,10 +50,9 @@ export function Board({ view: live, presence, rematch }: BoardProps<TableView>) 
     view.turn.step === 'actions';
 
   const reachable = useMemo(() => {
-    const pawn = movingPawn ?? view.you;
-    return view.you && pawn && canMoveNow
-      ? reachableCities(view, view.you, CITIES, pawn)
-      : new Set<CityId>();
+    if (view.status === 'waiting' || view.status === 'setup' || !view.you) return new Set<CityId>();
+    const pawn = movingPawn ?? actingPawn(view, view.you);
+    return canMoveNow ? reachableCities(view, view.you, CITIES, pawn) : new Set<CityId>();
   }, [view, movingPawn, canMoveNow]);
   // The last seat can be taken a moment before the game is dealt: nothing to show yet.
   // The last seat can be taken a moment before the game is dealt: nothing to show yet. Then the
@@ -53,17 +60,21 @@ export function Board({ view: live, presence, rematch }: BoardProps<TableView>) 
   if (view.status === 'waiting') return null;
   if (view.status === 'setup') return <Preflight view={view} presence={presence} />;
   const { you } = view;
-  const pawn = movingPawn ?? you;
+  const pawn = movingPawn ?? (you ? actingPawn(view, you) : null);
   // Playing an event that needs a city: the map offers its targets instead of the move menu.
   const targets = you ? eventTargets(view, you, eventPlan) : null;
   const chooseTarget = (city: CityId) => {
     if (eventPlan?.event === 'airlift' && eventPlan.pawn !== null) {
+      // Your own pawn takes along what you chose (Relocation Specialist).
+      const { pawn: lifted } = eventPlan;
+      const own = you !== null && pawnOwner(lifted) === you && carriesAlong(view, lifted);
       void platform().send({
         type: 'play-event',
         event: 'airlift',
         ...(you ? ownerPart(you, eventPlan.owner) : {}),
-        pawn: eventPlan.pawn,
+        pawn: lifted,
         to: city,
+        ...(own ? carryPart(carry) : {}),
       });
       planEvent(null);
     } else if (eventPlan?.event === 'government-grant') {

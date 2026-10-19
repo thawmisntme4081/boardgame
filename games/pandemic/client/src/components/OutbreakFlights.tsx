@@ -43,7 +43,9 @@ function useOutbreakFlights(view: PandemicView): {
       current.seat === seen.seat ? current : previous?.seat === seen.seat ? previous : null;
     const fresh: OutbreakFlight[] = [];
     for (const entry of watched?.entries.slice(seen.count) ?? []) {
-      if (entry.type !== 'infect' || entry.outbreaks.length === 0) continue;
+      // An infection, or cubes a pawn took along, that broke out.
+      if (entry.type !== 'infect' && entry.type !== 'carried') continue;
+      if (entry.outbreaks.length === 0) continue;
       entry.outbreaks.forEach((from, step) => {
         for (const to of cityOf(from).links) {
           if (view.cubes[to][entry.color] <= seen.cubes[to][entry.color]) continue;

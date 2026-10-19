@@ -89,7 +89,7 @@ export function GameOverDialog({
 
       <DialogFooter className="gap-2">
         <Button variant="outline" className="h-11" onClick={() => void platform().leave()}>
-          {t('gameOver.leave')}
+          {t('common.leave')}
         </Button>
         {iAnswered ? (
           <Button
@@ -97,7 +97,7 @@ export function GameOverDialog({
             className="h-11"
             onClick={() => void platform().declineRematch()}
           >
-            {offerer === you ? t('gameOver.cancelOffer') : t('gameOver.takeBack')}
+            {offerer === you ? t('common.cancelOffer') : t('gameOver.takeBack')}
           </Button>
         ) : (
           <Button className={playAgain} onClick={() => void platform().rematch()}>

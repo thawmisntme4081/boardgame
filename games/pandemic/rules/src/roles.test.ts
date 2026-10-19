@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { cubesOnBoard } from './actions';
 import { CITIES, COLORS } from './cities';
 import { applyMove, checkMove, type PandemicMove } from './moves';
+import { pawnsOf } from './pawns';
 import { agentMove } from './random-play';
 import { createGame } from './setup';
 import {
@@ -51,7 +52,7 @@ describe('random roles', () => {
       fc.property(
         fc.integer({ min: 2, max: 4 }),
         fc.integer({ min: 0, max: 100000 }),
-        fc.shuffledSubarray([...ROLE_IDS], { minLength: 4, maxLength: 7 }),
+        fc.shuffledSubarray([...ROLE_IDS], { minLength: 4, maxLength: 12 }),
         fc.array(fc.double({ min: 0, max: 1, maxExcluded: true, noNaN: true }), {
           minLength: 300,
           maxLength: 300,
@@ -76,6 +77,12 @@ describe('random roles', () => {
               expect(cubesOnBoard(game, color) + game.supply[color]).toBe(CUBES_PER_COLOR);
             }
             expect(cardsInGame(game) + removed).toBe(CARDS);
+            // A seat has at most its own pawn and two students, and only a Teacher has students.
+            for (const seat of game.seats) {
+              const own = pawnsOf(game, seat);
+              expect(own[0]).toBe(seat);
+              expect(own.length - 1).toBeLessThanOrEqual(game.roles[seat] === 'teacher' ? 2 : 0);
+            }
           }
         },
       ),
