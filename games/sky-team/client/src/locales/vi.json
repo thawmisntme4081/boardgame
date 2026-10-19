@@ -424,5 +424,84 @@
     "trayNote": "Chọn chỗ ngồi và Kỹ năng đặc biệt ở trên, rồi xác nhận.",
     "rolesKept": "Đã chọn ghế. Chạm vào ghế để đổi.",
     "rolesKeptPartner": "{{name}} đã chọn ghế và vẫn có thể đổi."
+  },
+  "howToPlay": {
+    "open": "Cách chơi",
+    "title": "Cách chơi",
+    "intro": "Luật cơ bản từng bước, theo sách luật. Module của mỗi màn được giải thích trong phần chọn màn.",
+    "previous": "Trước",
+    "next": "Tiếp",
+    "stepOf": "Bước {{step}}/{{total}}",
+    "imageAlt": "Ảnh chụp trong game: {{title}}",
+    "steps": {
+      "goal": {
+        "title": "Cùng nhau hạ cánh",
+        "body": "Hai bạn là tổ lái của một chiếc máy bay chở khách: phi công (xanh) và cơ phó (cam). Liên lạc với đài kiểm soát để dọn đường bay, chỉnh tốc độ để không bay quá sân bay, giữ máy bay thăng bằng, mở cánh tà, hạ càng đáp và phanh khi chạm đất.\nCả hai cùng thắng hoặc cùng thua."
+      },
+      "rounds": {
+        "title": "7 vòng, 3 giai đoạn",
+        "body": "Ván chơi gồm 7 vòng, từ 6000 ft xuống mặt đất. Mỗi vòng có 3 giai đoạn:\n1. Bàn chiến thuật và đổ xúc xắc\n2. Đặt xúc xắc\n3. Kết thúc vòng"
+      },
+      "strategy": {
+        "title": "Bàn chiến thuật và đổ xúc xắc",
+        "body": "Đầu mỗi vòng, hai bạn bàn chiến thuật, ví dụ \"Phải dọn chiếc máy bay kia\" hay \"Lần này phải tiến 2 ô\". Không được nói về xúc xắc: \"Nếu được 6 thì đặt vào đây\" là không được.\nSau đó bấm \"Đổ xúc xắc\": mỗi người đổ 4 xúc xắc chỉ mình thấy. Từ lúc này phải im lặng hoàn toàn đến hết vòng."
+      },
+      "reroll": {
+        "title": "Thẻ đổ lại",
+        "body": "Nếu độ cao hiện tại có thẻ đổ lại (vòng đầu ở 6000 ft có), thẻ đó vào kho của hai bạn. Bất cứ lúc nào trong vòng, một người có thể dùng một thẻ: khi đó CẢ HAI người được đổ lại một hoặc nhiều xúc xắc còn lại của mình, một lần."
+      },
+      "placement": {
+        "title": "Đặt xúc xắc",
+        "body": "Hai người lần lượt đặt; mũi tên trên thanh độ cao cho biết ai đi trước (vòng đầu là phi công). Đến lượt, bạn đặt MỘT xúc xắc vào một ô trống trong buồng lái.\nPhi công chỉ đặt vào ô xanh, cơ phó chỉ đặt vào ô cam; ô có cả hai màu thì ai cũng đặt được. Phần lớn ô còn giới hạn giá trị (ô Cánh tà đầu tiên chỉ nhận 1 hoặc 2). Ô Radio có giới hạn màu nhưng nhận mọi giá trị; ô Tập trung nhận mọi xúc xắc của cả hai người."
+      },
+      "mandatory": {
+        "title": "Bắt buộc: Trục và Động cơ",
+        "body": "Mỗi vòng, mỗi người phải đặt một xúc xắc vào Trục và một vào Động cơ. Nếu hết vòng mà Trục và Động cơ không có đủ một xúc xắc mỗi màu, hai bạn thua ngay.\nCác ô này là bắt buộc nhưng không cần đặt đầu tiên."
+      },
+      "axis": {
+        "title": "Trục",
+        "body": "Ngay khi xúc xắc thứ hai được đặt, so sánh hai viên. Bằng nhau: không đổi gì. Khác nhau: máy bay nghiêng số nấc bằng độ chênh lệch, về phía người đặt viên lớn hơn, và giữ nguyên ở đó: trục không về giữa khi hết vòng.\nVí dụ: phi công đặt 5, cơ phó đặt 3: trục nghiêng 2 nấc về phía phi công.\nNếu trục chạm hoặc vượt nấc cuối, máy bay rơi vào vòng xoáy và hai bạn thua. Hết vòng cuối, máy bay phải thăng bằng."
+      },
+      "engines": {
+        "title": "Động cơ",
+        "body": "Ngay khi xúc xắc thứ hai được đặt, cộng hai viên ở Động cơ: đó là tốc độ.\nNhỏ hơn vạch khí động học xanh: máy bay không tiến.\nNằm giữa hai vạch: đường tiếp cận tiến 1 ô.\nLớn hơn vạch cam: tiến 2 ô."
+      },
+      "collision": {
+        "title": "Va chạm và bay quá sân bay",
+        "body": "Máy bay khác đi vào ô hiện tại của bạn thì không sao. Nhưng nếu ô hiện tại còn máy bay mà đường tiếp cận phải tiến, hai bạn va chạm và thua.\nNếu sân bay đang ở ô hiện tại mà đường tiếp cận phải tiến, hai bạn bay quá sân bay và thua."
+      },
+      "radio": {
+        "title": "Radio",
+        "body": "Phi công có 1 ô Radio, cơ phó có 2. Đếm ô trên đường tiếp cận bắt đầu từ ô hiện tại, rồi dọn ngay một máy bay ở ô mà xúc xắc đếm tới: 1 dọn máy bay ở ô hiện tại, 2 ở ô kế tiếp, cứ thế. Ô đó không có máy bay thì không có tác dụng.\nMuốn hạ cánh, phải dọn hết máy bay."
+      },
+      "landingGear": {
+        "title": "Càng đáp (chỉ phi công)",
+        "body": "Đặt xúc xắc khớp với ô (1-2, 3-4 hoặc 5-6), thứ tự nào cũng được. Công tắc chuyển xanh và vạch khí động học xanh tiến ngay 1 nấc; khi hạ hết càng đáp, vạch nằm giữa 7 và 8. Đặt vào ô đã xanh thì không có tác dụng.\nVạch xanh tiến lên thì tốc độ đổi ý nghĩa: tốc độ 5 trước đây tiến 1 ô, giờ có thể tiến 0 ô.\nMuốn hạ cánh, phải hạ hết càng đáp."
+      },
+      "flaps": {
+        "title": "Cánh tà (chỉ cơ phó)",
+        "body": "Đặt xúc xắc khớp với ô, theo thứ tự từ trên xuống: 1-2, rồi 2-3, rồi 4-5, rồi 5-6. Công tắc chuyển xanh và vạch khí động học cam tiến ngay 1 nấc; khi mở hết cánh tà, vạch nằm ngay sau 12.\nMuốn hạ cánh, phải mở hết cánh tà."
+      },
+      "concentration": {
+        "title": "Tập trung và cà phê",
+        "body": "Ai cũng đặt được xúc xắc bất kỳ vào đây: lấy ngay một cà phê (tối đa 3).\nMỗi khi đặt xúc xắc, bạn có thể dùng cà phê: mỗi cà phê cộng hoặc trừ 1 cho xúc xắc đó. Ai cũng dùng được mọi cà phê, cà phê chưa dùng giữ lại cho các vòng sau. Xúc xắc luôn nằm trong khoảng 1 đến 6: 1 không thành 6, 6 không thành 1."
+      },
+      "brakes": {
+        "title": "Phanh (chỉ phi công)",
+        "body": "Mở phanh theo thứ tự: 2, rồi 4, rồi 6. Mỗi phanh đẩy vạch phanh đỏ tiến ngay 1 nấc. Phanh chỉ có tác dụng ở vòng cuối: khi đó tốc độ phải nhỏ hơn vạch phanh. Không cần mở hết, nhưng mở càng nhiều thì hạ cánh càng dễ."
+      },
+      "endOfRound": {
+        "title": "Kết thúc vòng",
+        "body": "Khi đã đặt đủ 8 xúc xắc, hai bạn được nói chuyện lại. Thanh độ cao giảm 1 ô (1000 ft) và hai bạn lấy lại xúc xắc.\nĐã tới sân bay nhưng chưa xuống đất: hai bạn bay vòng chờ trên sân bay; chơi thêm vòng mà không được tiến, nên hãy giảm tốc!\nĐã xuống đất nhưng chưa tới sân bay: máy bay rơi trước đường băng và hai bạn thua."
+      },
+      "finalRound": {
+        "title": "Vòng cuối",
+        "body": "Bắt đầu khi sân bay ở ô hiện tại và máy bay ở cuối thanh độ cao.\nChú ý: khi đặt xúc xắc Động cơ thứ hai, so tốc độ với vạch phanh thay vì các vạch khí động học. Không cần mở hết phanh, nhưng không có phanh nào thì máy bay không dừng được."
+      },
+      "landing": {
+        "title": "Hạ cánh",
+        "body": "Hết vòng cuối, hai bạn thắng nếu:\n- không còn máy bay trên đường tiếp cận,\n- công tắc càng đáp và cánh tà đều xanh,\n- trục thăng bằng,\n- tốc độ nhỏ hơn vạch phanh.\nHành khách vỗ tay rào rào!"
+      }
+    }
   }
 }

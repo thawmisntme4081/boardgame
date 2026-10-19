@@ -1,5 +1,5 @@
 import { DIFFICULTIES, SCENARIO_LIST, SCENARIOS, type Scenario } from '@sky/rules';
-import { Check } from 'lucide-react';
+import { Check, PlaneTakeoff } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Label } from '@platform/ui/components/label';
@@ -70,7 +70,11 @@ export function ScenarioPicker({
             <SelectGroup key={difficulty}>
               <SelectLabel>{difficultyName(difficulty)}</SelectLabel>
               {SCENARIO_LIST.filter((s) => s.difficulty === difficulty).map((s) => (
-                <SelectItem key={s.id} value={s.id}>
+                <SelectItem
+                  key={s.id}
+                  value={s.id}
+                  indicator={<PlaneTakeoff className="pointer-events-none" />}
+                >
                   <DifficultyDot scenario={s} />
                   {s.name}
                   <span className="sr-only">, {difficultyName(s.difficulty)}</span>

@@ -11,3 +11,6 @@ playwright-report/
 .DS_Store
 .lighthouseci/
 docs/rulebooks/
+.agents/
+.claude/
+skills-lock.json
