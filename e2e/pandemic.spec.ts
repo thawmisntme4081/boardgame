@@ -621,6 +621,7 @@ test.describe('languages', () => {
     await ana.getByLabel('Tên', { exact: true }).fill('Ana');
     await ana.getByRole('radio', { name: '2', exact: true }).click();
     await ana.getByRole('button', { name: 'Tạo ván mới' }).click();
+    await expect(ana.getByText('Đang chờ thêm 1 người chơi')).toBeVisible();
     const code = (await ana.getByLabel(/^Mã phòng/).textContent())!.trim();
 
     // Ben opens the invite link, picks French and joins.
