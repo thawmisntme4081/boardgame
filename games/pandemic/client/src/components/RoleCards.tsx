@@ -59,11 +59,6 @@ export function RoleCards({
                   })}
                 </span>
               )}
-              {role === 'contingency-planner' && view.contingency && (
-                <span className="text-xs">
-                  {t('roles.stored', { event: t(`events.${view.contingency}`) })}
-                </span>
-              )}
             </PopoverTrigger>
             <PopoverContent>
               <p className="font-semibold">{name}</p>

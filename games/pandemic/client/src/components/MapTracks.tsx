@@ -2,6 +2,7 @@ import { COLORS, MAX_STATIONS, type Color, type PandemicView } from '@pandemic/r
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  CONTINGENCY_FRAME,
   INFECTION_DECK_FRAME,
   INFECTION_DISCARD_FRAME,
   INFECTION_SLOT_SIZE,
@@ -15,13 +16,6 @@ import {
   SUPPLY_SPOTS,
   type Frame,
 } from '../lib/mapGeometry';
-import {
-  infectionBackUrl,
-  infectionCardUrl,
-  playerBackUrl,
-  playerCardUrl,
-} from '../lib/cardImages';
-import { epidemicCardUrl } from '../lib/cardImages';
 import { useInfectionPile } from '../lib/infectionDraw';
 import { usePandemic } from '../store';
 import type { DealProgress } from '../lib/deal';
@@ -30,6 +24,9 @@ import { EpidemicCard } from './EpidemicCard';
 import { ShuffleFlight } from './ShuffleFlight';
 import { InfectionDrawFlight, INFECTION_DRAW_MS } from './InfectionDrawFlight';
 import { MovingMarker } from './MovingMarker';
+import { handFace } from '../lib/cards';
+import { Card, type CardFace } from '../svgs/Card';
+import { PileFrame } from './BoardFurniture';
 import { CubeIcon } from '../svgs/CubeIcon';
 import { Station } from '../svgs/Station';
 import { InfectionMarker } from '../svgs/InfectionMarker';
@@ -55,46 +52,44 @@ const labelProps = {
   fontWeight: 700,
 } as const;
 
-/** A pile of cards drawn into a frame of the map picture: the card, and how many are in it. */
+/** A pile of cards drawn into one of the board's frames (`BoardFurniture`): the card, and how many are in it. */
 function Pile({
   frame,
-  href,
+  face,
   count,
   label,
 }: {
   frame: Frame;
-  href: string | null;
-  count: number;
+  face: CardFace | null;
+  /** How many cards are in the pile; `null` for a place that holds at most one. */
+  count: number | null;
   label: string;
 }) {
   return (
     <g data-pile={label}>
-      {href && (
-        <image
-          href={href}
-          x={frame.x}
-          y={frame.y}
-          width={frame.width}
-          height={frame.height}
-          preserveAspectRatio="xMidYMid meet"
-        />
+      {face && (
+        <Card face={face} x={frame.x} y={frame.y} width={frame.width} height={frame.height} />
       )}
-      <text
-        x={frame.x + frame.width - 4}
-        y={frame.y + frame.height - 5}
-        textAnchor="end"
-        fontSize={15}
-        {...labelProps}
-      >
-        {count}
+      {count === null ? (
         <title>{label}</title>
-      </text>
+      ) : (
+        <text
+          x={frame.x + frame.width - 4}
+          y={frame.y + frame.height - 5}
+          textAnchor="end"
+          fontSize={15}
+          {...labelProps}
+        >
+          {count}
+          <title>{label}</title>
+        </text>
+      )}
     </g>
   );
 }
 
 /**
- * The tracks and piles printed on the map picture, drawn from the view: the outbreak marker and
+ * What sits on the board's tracks and frames (`BoardFurniture`), drawn from the view: the outbreak marker and
  * the infection rate marker (they slide to the new space), each disease's cubes left, and the
  * decks and discard piles in their frames. Draw it as the map's `children`.
  */
@@ -189,15 +184,27 @@ export function MapTracks({
           <title>{t('tracks.stationsLeft', { count: MAX_STATIONS - view.stations.length })}</title>
         </text>
       </g>
+      {/* The Contingency Planner's stored event card: a place for it only while that role plays. */}
+      {Object.values(view.roles).includes('contingency-planner') && (
+        <>
+          <PileFrame frame={CONTINGENCY_FRAME} stroke="white" />
+          <Pile
+            frame={CONTINGENCY_FRAME}
+            face={view.contingency ? { kind: 'event', event: view.contingency } : null}
+            count={null}
+            label={t('tracks.contingencyCard')}
+          />
+        </>
+      )}
       <Pile
         frame={INFECTION_DECK_FRAME}
-        href={view.infectionDeckSize > 0 ? infectionBackUrl() : null}
+        face={view.infectionDeckSize > 0 ? { kind: 'back', deck: 'infection' } : null}
         count={view.infectionDeckSize}
         label={t('tracks.infectionDeck', { count: view.infectionDeckSize })}
       />
       <Pile
         frame={INFECTION_DISCARD_FRAME}
-        href={topInfection ? infectionCardUrl(topInfection) : null}
+        face={topInfection ? { kind: 'infection', city: topInfection } : null}
         count={infectionDiscard.length}
         label={t('tracks.infectionDiscard', { count: infectionDiscard.length })}
       />
@@ -206,7 +213,7 @@ export function MapTracks({
       ))}
       <Pile
         frame={PLAYER_DISCARD_FRAME}
-        href={epidemic ? epidemicCardUrl() : topPlayer ? playerCardUrl(topPlayer) : null}
+        face={epidemic ? { kind: 'epidemic' } : topPlayer ? handFace(topPlayer) : null}
         count={view.playerDiscard.length}
         label={t('tracks.playerDiscard', { count: view.playerDiscard.length })}
       />
@@ -214,8 +221,10 @@ export function MapTracks({
       <Pile
         frame={PLAYER_DECK_FRAME}
         // The deck is taken apart into its piles while they are built.
-        href={
-          view.playerDeckSize > 0 && deal?.piles !== 1 && deal?.piles !== 2 ? playerBackUrl() : null
+        face={
+          view.playerDeckSize > 0 && deal?.piles !== 1 && deal?.piles !== 2
+            ? { kind: 'back', deck: 'player' }
+            : null
         }
         count={view.playerDeckSize}
         label={t('tracks.playerDeck', { count: view.playerDeckSize })}

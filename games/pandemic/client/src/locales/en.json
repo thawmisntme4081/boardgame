@@ -74,6 +74,7 @@
     "stationsLeft": "Research stations left: {{count}}",
     "supplyOf": "{{color}} cubes left",
     "infectionDiscard": "Infection discard pile: {{count}} cards",
+    "contingencyCard": "Event card stored on the Contingency Planner",
     "playerDiscard": "Player discard pile: {{count}} cards",
     "openPlayerDiscard": "List the player discard pile",
     "openInfectionDiscard": "List the infection discard pile"
@@ -188,8 +189,7 @@
       "power": "Start in Montreal. As an action, move to Montreal or Essen. When you discover a cure, other players in your city may give up to 2 of its cards (if they agree)."
     },
     "students": "Students: {{count}} / {{max}}",
-    "info": "What {{role}} can do",
-    "stored": "Stored: {{event}}"
+    "info": "What {{role}} can do"
   },
   "cureOffer": {
     "title": "Discover a cure",
@@ -212,6 +212,11 @@
     "teacher": "Teacher pawn",
     "student": "Student {{number}}",
     "studentOf": "{{name}}'s student"
+  },
+  "cards": {
+    "event": "Event",
+    "epidemic": "Epidemic",
+    "infection": "Infection"
   },
   "hands": {
     "title": "Hands",

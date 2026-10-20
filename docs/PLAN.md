@@ -23,7 +23,7 @@ This is a personal/learning project on a private, invite-only site: if it is eve
 | [Sky Team](epics/sky-team/EPIC.md) | Sky Team complete (base box, Turbulence, 3 languages, history, saved games) and deployed privately | 01–13 | ✅ Done; live at `boardgames-dom-mam.fly.dev` | — |
 | [Platform](epics/platform/EPIC.md) | A game-agnostic core: engine contract, moves, protocol, match log, client shell, accounts | 01–06 | ✅ Done | Sky Team |
 | [Scale-out](epics/scale-out/EPIC.md) | Several server instances, only when metrics or a public site ask for it (01); a fast monorepo with many games: Turborepo, per-game CSS, a `new-game` generator (02, around the third or fourth game) | 01–02 | ⏳ Only when needed | Platform 01–06 |
-| [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op; the second game, proving the platform | 01–07 base game, 08–13 expansions | 🚧 In progress | Platform |
+| [Pandemic](epics/pandemic/EPIC.md) | Pandemic, 2–4 players co-op; the second game, proving the platform | 01–07 base game, 09–14 expansions | 🚧 Base game done, 08 (drawn map and cards) in progress · expansions ⏸ on hold | Platform |
 | [Isle of Skye](epics/isle-of-skye/EPIC.md) | Isle of Skye, 2–5 players | planned | ⏳ Not started | Platform, Pandemic |
 | [Twilight Struggle](epics/twilight-struggle/EPIC.md) | Twilight Struggle, 2 players, long games | planned | ⏳ Not started | Platform, Pandemic |
 
@@ -39,7 +39,7 @@ The large games's order is open; each comes after Pandemic, which proves the pla
 
 **Current epic: [Pandemic](epics/pandemic/EPIC.md):**
 
-![Pandemic phases 01 to 07 make the base game; 08 to 13 are the optional expansions](diagrams/pandemic-phases.svg)
+![Pandemic phases 01 to 07 make the base game; 08 draws the map and cards; 09 to 14, the optional expansions, are on hold](diagrams/pandemic-phases.svg)
 
 The diagrams are SVG pictures in `docs/diagrams/`. Update `pandemic-phases.svg` when a phase changes status (change the box's fill, stroke and text colors to the `done`, `next` or `todo` set used by the other boxes), and replace it with the next epic's phases when the current one is done. Update `epics.svg` the same way when an epic changes status.
 
@@ -48,7 +48,7 @@ The diagrams are SVG pictures in `docs/diagrams/`. Update `pandemic-phases.svg` 
 - **Platform 01–03 are a refactor:** Sky Team must play exactly as before at the end of each.
 - **Large games** come one epic at a time, after Pandemic has proved the platform; their order is open.
 
-Suggested next steps: Pandemic → the large games (Scale-out only if metrics ask). (Sky Team is done and live; follow-up: check the first month's Fly bill.)
+Suggested next steps: Pandemic's base game is done and its expansions (09–14) are on hold → the large games (Scale-out only if metrics ask). (Sky Team is done and live; follow-up: check the first month's Fly bill.)
 
 ## Game epic template
 

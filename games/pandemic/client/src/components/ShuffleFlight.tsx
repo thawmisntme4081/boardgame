@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { infectionBackUrl } from '../lib/cardImages';
+import { Card as CardArt } from '../svgs/Card';
 import { INFECTION_DECK_FRAME, INFECTION_DISCARD_FRAME } from '../lib/mapGeometry';
 
 /** The shuffle, then the flight onto the deck (the whole animation, in ms). */
@@ -48,7 +48,7 @@ function Card({ index }: { index: number }) {
       data-shuffle-card={index}
       aria-hidden="true"
     >
-      <image href={infectionBackUrl()} width={W} height={H} />
+      <CardArt face={{ kind: 'back', deck: 'infection' }} width={W} height={H} />
     </g>
   );
 }

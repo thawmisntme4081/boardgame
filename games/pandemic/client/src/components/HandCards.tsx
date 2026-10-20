@@ -1,8 +1,8 @@
 import type { HandCard } from '@pandemic/rules';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { playerCardUrl } from '../lib/cardImages';
-import { useCardText, sortHand } from '../lib/cards';
+import { Card } from '../svgs/Card';
+import { handFace, useCardText, sortHand } from '../lib/cards';
 import { usePandemic } from '../store';
 import { EventInfo } from './EventInfo';
 import { type HandLayout } from '../lib/handLayout';
@@ -84,14 +84,14 @@ function HandCardImage({
         transition: `transform ${HAND_FLIGHT_MS / 2}ms ease`,
       }}
     >
-      <image
-        href={playerCardUrl(card)}
+      <Card
+        face={handFace(card)}
+        role="img"
         aria-label={cardText(card)}
+        title={cardText(card)}
         width={layout.cardWidth}
         height={layout.cardHeight}
-      >
-        <title>{cardText(card)}</title>
-      </image>
+      />
       <foreignObject width={layout.cardWidth} height={layout.cardHeight}>
         {card.kind === 'event' ? <EventInfo event={card.event}>{target}</EventInfo> : target}
       </foreignObject>
@@ -142,11 +142,7 @@ function LeavingCard({
       pointerEvents="none"
       style={{ transform: at(slot(layout, leaving.index)), transformOrigin: '0 0' }}
     >
-      <image
-        href={playerCardUrl(leaving.card)}
-        width={layout.cardWidth}
-        height={layout.cardHeight}
-      />
+      <Card face={handFace(leaving.card)} width={layout.cardWidth} height={layout.cardHeight} />
     </g>
   );
 }

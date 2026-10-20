@@ -5,7 +5,6 @@ import { Board } from './Board';
 import { MapPieces } from './components/MapPieces';
 import { MapTracks } from './components/MapTracks';
 import { WorldMap } from './components/WorldMap';
-import { infectionCardUrl, playerCardUrl } from './lib/cardImages';
 import { PAWN_WIDTH } from './svgs/Pawn';
 import { OUTBREAK_SLOTS, INFECTION_SLOTS, cityPoint } from './lib/mapGeometry';
 
@@ -216,16 +215,11 @@ describe('Pandemic 03: tracks, decks and piles (task 3)', () => {
       )!;
     expect(pile(/Player deck/).querySelector('text')?.firstChild?.textContent).toBe('31');
     expect(pile(/Infection deck/).querySelector('text')?.firstChild?.textContent).toBe('39');
-    expect(
-      pile(/Infection discard/)
-        .querySelector('image')
-        ?.getAttribute('href'),
-    ).toBe(infectionCardUrl('cairo'));
-    expect(
-      pile(/Player discard/)
-        .querySelector('image')
-        ?.getAttribute('href'),
-    ).toBe(playerCardUrl({ kind: 'event', event: 'airlift' }));
+    // The top card of each discard pile is drawn: its name, in the infection pile.
+    expect(pile(/Infection discard/).querySelector('[data-card="infection"]')).not.toBeNull();
+    expect(pile(/Infection discard/).textContent).toContain('Cairo');
+    expect(pile(/Player discard/).querySelector('[data-card="event"]')).not.toBeNull();
+    expect(pile(/Player discard/).textContent).toContain('Airlift');
   });
 
   it('shows no card in an empty pile', () => {
@@ -237,24 +231,7 @@ describe('Pandemic 03: tracks, decks and piles (task 3)', () => {
       /discard/.test(el.getAttribute('data-pile') ?? ''),
     );
     expect(discard).toHaveLength(2);
-    for (const el of discard) expect(el.querySelector('image')).toBeNull();
-  });
-
-  it('has a different picture for each city card, and for each event', () => {
-    const infection = new Set(CITIES.map(({ id }) => infectionCardUrl(id)));
-    const player = new Set(CITIES.map(({ id }) => playerCardUrl({ kind: 'city', city: id })));
-    expect(infection.size).toBe(48);
-    expect(player.size).toBe(48);
-    const events = (
-      [
-        'airlift',
-        'forecast',
-        'government-grant',
-        'one-quiet-night',
-        'resilient-population',
-      ] as const
-    ).map((event) => playerCardUrl({ kind: 'event', event }));
-    expect(new Set(events).size).toBe(5);
+    for (const el of discard) expect(el.querySelector('[data-card]')).toBeNull();
   });
 });
 

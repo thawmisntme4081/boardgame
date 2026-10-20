@@ -1,5 +1,6 @@
 import { cityOf, type Color, type HandCard } from '@pandemic/rules';
 import { useTranslation } from 'react-i18next';
+import type { CardFace } from '../svgs/Card';
 import { cityName } from './names';
 
 /** Text for one card in a hand. */
@@ -25,3 +26,7 @@ export function sortHand(hand: readonly HandCard[]): HandCard[] {
         : 0),
   );
 }
+
+/** The face of a card of a hand: a city card or an event card. */
+export const handFace = (card: HandCard): CardFace =>
+  card.kind === 'city' ? { kind: 'city', city: card.city } : { kind: 'event', event: card.event };

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { epidemicCardUrl } from '../lib/cardImages';
+import { Card } from '../svgs/Card';
 import { PLAYER_DECK_FRAME, PLAYER_DISCARD_FRAME } from '../lib/mapGeometry';
 
 const FLIGHT_MS = 600;
@@ -33,7 +33,7 @@ export function EpidemicCard({ count }: { count: number }) {
   return (
     <g data-epidemic-card pointerEvents="none">
       <g ref={group} style={{ transform: at(to.x, to.y, 1), transformOrigin: '0 0' }}>
-        <image href={epidemicCardUrl()} width={to.width} height={to.height} />
+        <Card face={{ kind: 'epidemic' }} width={to.width} height={to.height} />
         <rect
           className="epidemic-glow"
           width={to.width}

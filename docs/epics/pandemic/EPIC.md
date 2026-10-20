@@ -1,6 +1,6 @@
 # Epic: Pandemic
 
-[← Master plan](../../PLAN.md) · **Status: 🚧 In progress** · Effort: **high overall; every task low or medium**
+[← Master plan](../../PLAN.md) · **Status: 🚧 In progress (base game done; 08: drawn map and cards; expansions ⏸ on hold)** · Effort: **high overall; every task low or medium**
 
 ## Goal
 
@@ -10,7 +10,7 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 
 **Licensing:** a published, trademarked game. Fine for the private, invite-only site; a public site needs the publisher's permission or an original game.
 
-**Epic done when:** 2–4 players finish a base game on desktop, with all its rules tested (phases 01–07). The expansions (08–13) come after, when you want them.
+**Epic done when:** 2–4 players finish a base game on desktop, with all its rules tested (phases 01–07). The expansions (09–14) come after, when you want them.
 
 ## Phases
 
@@ -25,14 +25,15 @@ Pandemic on the platform: 2–4 players cooperate to cure four diseases before o
 | 05 | [Event cards](phase-05-events.md): the 5 events out of turn, rules and UI | ✅ Done | Medium-high | 9 |
 | 06 | [Setup and variants](phase-06-setup-and-variants.md): difficulty, role choice, turn order, the deal animated (no Flight Log) | ✅ Done | Medium | 9 |
 | 07 | [Translations](phase-07-translations.md): EN, VI, FR | ✅ Done | Medium | 5 |
-| 08 | [Expansion foundation](phase-08-expansion-modules.md): modules, a variable disease list (optional from here) | ⏳ Not started | Medium-high | 8 |
-| 09 | [On the Brink: roles and events](phase-09-on-the-brink-roles-events.md) | ⏳ Not started | Medium-high | 8 |
-| 10 | [On the Brink: challenges](phase-10-on-the-brink-challenges.md): Virulent Strain, Mutation, Bio-Terrorist | ⏳ Not started | High | 9 |
-| 11 | [In the Lab](phase-11-in-the-lab.md) | ⏳ Not started | Medium-high | 7 |
-| 12 | [State of Emergency](phase-12-state-of-emergency.md): Superbug, Hinterlands, emergency events, roles | ⏳ Not started | Medium-high | 8 |
-| 13 | [Expansion translations](phase-13-expansion-translations.md) | ⏳ Not started | Low | 4 |
+| 08 | [Drawn map and cards](phase-08-drawn-map-and-cards.md): the world map and every card in SVG, no images | 🚧 In progress | Medium | 7 |
+| 09 | [Expansion foundation](phase-09-expansion-modules.md): modules, a variable disease list (optional from here) | ⏸ On hold | Medium-high | 8 |
+| 10 | [On the Brink: roles and events](phase-10-on-the-brink-roles-events.md) | ⏸ On hold | Medium-high | 8 |
+| 11 | [On the Brink: challenges](phase-11-on-the-brink-challenges.md): Virulent Strain, Mutation, Bio-Terrorist | ⏸ On hold | High | 9 |
+| 12 | [In the Lab](phase-12-in-the-lab.md) | ⏸ On hold | Medium-high | 7 |
+| 13 | [State of Emergency](phase-13-state-of-emergency.md): Superbug, Hinterlands, emergency events, roles | ⏸ On hold | Medium-high | 8 |
+| 14 | [Expansion translations](phase-14-expansion-translations.md) | ⏸ On hold | Low | 4 |
 
-Phases 01–07 make the base game and finish the epic's "done when" check; 08–13 are the expansions, built when you want them (09–12 are independent of each other once 08 is done; expansion phase files list their card lists as Open questions, to fill from the rulebooks at their first task).
+Phases 01–07 make the base game and finish the epic's "done when" check; 09–14 are the expansions, **on hold** for now (the user's decision, 2026-10-20; resume with phase 09 when wanted) (10–13 are independent of each other once 09 is done; expansion phase files list their card lists as Open questions, to fill from the rulebooks at their first task).
 
 The rulebook is the spec; unclear rules go into each phase file's Open questions, marked "Assumption (to confirm)".
 

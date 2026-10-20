@@ -11,7 +11,7 @@ import {
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { infectionCardUrl } from '../lib/cardImages';
+import { Card } from '../svgs/Card';
 import { moveItem } from '../lib/events';
 import { cityName } from '../lib/names';
 import { platform } from '../platform';
@@ -69,11 +69,12 @@ function Arrange({ cards }: { cards: readonly CityId[] }) {
               <span className="w-12 text-xs font-medium text-muted-foreground">
                 {i === 0 ? t('forecast.top') : i + 1}
               </span>
-              <img
-                src={infectionCardUrl(city)}
-                alt=""
-                draggable={false}
-                className="h-12 w-auto rounded"
+              <Card
+                face={{ kind: 'infection', city }}
+                width={67}
+                height={48}
+                aria-hidden="true"
+                className="pointer-events-none shrink-0"
               />
               <span className="flex-1 font-medium">{cityName(city)}</span>
               <Button
