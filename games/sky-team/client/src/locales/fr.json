@@ -433,5 +433,84 @@
     "trayNote": "Choisissez les postes et les capacités spéciales ci-dessus, puis confirmez.",
     "rolesKept": "Places choisies. Touchez une place pour les échanger.",
     "rolesKeptPartner": "{{name}} a choisi les places et peut encore les échanger."
+  },
+  "howToPlay": {
+    "open": "Comment jouer",
+    "title": "Comment jouer",
+    "intro": "Le jeu de base étape par étape, d’après le livret de règles. Les modules de chaque scénario sont expliqués dans le choix du scénario.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "stepOf": "Étape {{step}} sur {{total}}",
+    "imageAlt": "Capture du jeu : {{title}}",
+    "steps": {
+      "goal": {
+        "title": "Atterrir ensemble",
+        "body": "Vous êtes l’équipage d’un avion de ligne : le pilote (bleu) et le copilote (orange). Communiquez avec la tour de contrôle pour dégager le trafic, ajustez votre vitesse pour ne pas dépasser l’aéroport, mettez l’avion à plat, sortez les volets et le train d’atterrissage, puis freinez une fois au sol.\nVous gagnez ou perdez ensemble."
+      },
+      "rounds": {
+        "title": "7 manches, 3 phases",
+        "body": "La partie se joue en 7 manches, de 6000 pieds jusqu’au sol. Chaque manche a 3 phases :\n1. Discussion stratégique et lancer des dés\n2. Placement des dés\n3. Fin de manche"
+      },
+      "strategy": {
+        "title": "Discussion stratégique et lancer des dés",
+        "body": "Discutez de votre stratégie au début de chaque manche, par exemple « Il faut absolument se débarrasser de cet avion » ou « Assurons-nous d’avancer de 2 cases ». Il est interdit de parler des dés : « Si tu fais un 6, mets-le ici » n’est pas permis.\nAppuyez ensuite sur « Lancer les dés » : chacun lance 4 dés que lui seul voit. Dès lors, silence total jusqu’à la fin de la manche."
+      },
+      "reroll": {
+        "title": "Jetons de relance",
+        "body": "Si l’altitude actuelle porte un jeton de relance (c’est le cas à 6000 pieds, au premier tour), il rejoint votre réserve. À tout moment de la manche, un joueur peut en dépenser un : LES DEUX joueurs peuvent alors relancer une fois un ou plusieurs de leurs dés restants."
+      },
+      "placement": {
+        "title": "Placer les dés",
+        "body": "Jouez chacun votre tour ; la flèche de la piste d’altitude indique qui commence (le pilote à la première manche). À votre tour, placez UN de vos dés sur une case libre du cockpit.\nLe pilote ne joue que sur les cases bleues, le copilote que sur les orange ; les cases des deux couleurs acceptent les deux. La plupart des cases n’acceptent aussi que certains nombres (la première case des volets prend un 1 ou un 2). Les cases Radio ont une couleur mais acceptent tout nombre ; les cases Concentration acceptent tout dé des deux joueurs."
+      },
+      "mandatory": {
+        "title": "Obligatoire : Axe et Moteurs",
+        "body": "À chaque manche, chaque joueur doit placer un dé sur l’Axe et un sur les Moteurs. Si, à la fin d’une manche, il n’y a pas un dé de chaque couleur sur l’Axe et sur les Moteurs, vous perdez aussitôt.\nCes cases sont obligatoires, mais ce ne sont pas forcément les premières à remplir."
+      },
+      "axis": {
+        "title": "Axe",
+        "body": "Dès que le second dé est placé, comparez les deux dés. Même nombre : rien ne bouge. Sinon, l’avion tourne d’autant de crans que la différence, vers le joueur qui a joué le dé le plus fort, et y reste : l’axe ne revient pas au centre en fin de manche.\nExemple : le pilote joue un 5 et le copilote un 3 : l’axe tourne de 2 crans vers le pilote.\nSi l’axe atteint ou dépasse le dernier cran, l’avion part en vrille et vous perdez. À la fin de la dernière manche, l’avion doit être à plat."
+      },
+      "engines": {
+        "title": "Moteurs",
+        "body": "Dès que le second dé est placé, additionnez les deux dés des Moteurs : c’est votre vitesse.\nMoins que le marqueur d’aérodynamisme bleu : l’avion n’avance pas.\nEntre les deux marqueurs : la piste d’approche avance d’1 case.\nPlus que le marqueur orange : elle avance de 2 cases."
+      },
+      "collision": {
+        "title": "Collision et dépassement",
+        "body": "Des avions qui arrivent sur votre position actuelle, ce n’est pas grave. Mais s’il reste des avions sur votre position actuelle quand la piste d’approche doit avancer, c’est la collision et vous perdez.\nSi l’aéroport est sur votre position actuelle et que la piste doit avancer, vous dépassez l’aéroport et vous perdez."
+      },
+      "radio": {
+        "title": "Radio",
+        "body": "Le pilote a 1 case Radio, le copilote 2. Comptez les cases de la piste d’approche en commençant par votre position actuelle, et retirez aussitôt un avion de la case atteinte : un 1 retire un avion de la position actuelle, un 2 de la case suivante, et ainsi de suite. Sans avion sur cette case, rien ne se passe.\nPour atterrir, tous les avions doivent avoir disparu."
+      },
+      "landingGear": {
+        "title": "Train d’atterrissage (pilote seulement)",
+        "body": "Placez un dé qui correspond à la case (1-2, 3-4 ou 5-6), dans n’importe quel ordre. L’interrupteur passe au vert et le marqueur d’aérodynamisme bleu avance aussitôt d’une case ; il finit entre 7 et 8 quand tout le train est sorti. Jouer sur une case déjà verte n’a aucun effet.\nAvancer le marqueur bleu change l’effet de votre vitesse : un 5 qui faisait avancer d’1 case peut désormais faire avancer de 0.\nPour atterrir, tout le train doit être sorti."
+      },
+      "flaps": {
+        "title": "Volets (copilote seulement)",
+        "body": "Placez un dé qui correspond à la case, dans l’ordre de haut en bas : 1-2, puis 2-3, puis 4-5, puis 5-6. L’interrupteur passe au vert et le marqueur d’aérodynamisme orange avance aussitôt d’une case ; il finit juste après le 12 quand tous les volets sont sortis.\nPour atterrir, tous les volets doivent être sortis."
+      },
+      "concentration": {
+        "title": "Concentration et café",
+        "body": "Chaque joueur peut y placer n’importe quel dé : prenez aussitôt un jeton café (3 au plus).\nChaque fois que vous placez un dé, vous pouvez dépenser du café : chaque jeton ajoute 1 à ce dé ou lui retire 1. Tout le monde peut dépenser n’importe quel jeton, et ceux qui restent servent aux manches suivantes. Un dé reste entre 1 et 6 : un 1 ne devient pas un 6, ni un 6 un 1."
+      },
+      "brakes": {
+        "title": "Freins (pilote seulement)",
+        "body": "Sortez les freins dans l’ordre : un 2, puis un 4, puis un 6. Chacun avance aussitôt le marqueur de freinage rouge d’une case. Les freins ne comptent qu’à la dernière manche : votre vitesse doit alors être inférieure au marqueur de freinage. Inutile de tous les sortir, mais plus vous en sortez, plus l’atterrissage est facile."
+      },
+      "endOfRound": {
+        "title": "Fin de manche",
+        "body": "Une fois les 8 dés placés, vous pouvez reparler. La piste d’altitude descend d’une case (1000 pieds) et vous reprenez vos dés.\nAéroport atteint mais pas encore au sol : vous êtes en attente au-dessus de l’aéroport ; jouez d’autres manches sans avancer, alors ralentissez !\nAu sol mais pas à l’aéroport : vous vous écrasez avant la piste et vous perdez."
+      },
+      "finalRound": {
+        "title": "La dernière manche",
+        "body": "Elle commence quand l’aéroport est sur votre position actuelle et que l’avion est en bas de la piste d’altitude.\nAttention : au second dé des Moteurs, comparez votre vitesse au marqueur de freinage au lieu des marqueurs d’aérodynamisme. Les freins n’ont pas tous à être sortis, mais sans aucun frein l’avion ne peut pas s’arrêter."
+      },
+      "landing": {
+        "title": "Atterrissage",
+        "body": "À la fin de la dernière manche, vous gagnez si :\n- il n’y a plus d’avion sur la piste d’approche,\n- tous les interrupteurs du train et des volets sont verts,\n- l’axe est à plat,\n- votre vitesse est inférieure au marqueur de freinage.\nLes passagers applaudissent !"
+      }
+    }
   }
 }

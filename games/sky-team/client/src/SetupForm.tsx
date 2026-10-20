@@ -6,6 +6,7 @@ import type { SetupFormProps } from '@platform/ui/game';
 import { ROUND_TIMER_MS, type GameSetup } from '@sky/rules';
 import { useTranslation } from 'react-i18next';
 import { FlightLog } from './components/FlightLog';
+import { HowToPlay } from './components/HowToPlay';
 import { ScenarioPicker } from './components/ScenarioPicker';
 import { formatClock } from './lib/clock';
 import { DEFAULT_SETUP } from './lib/setup';
@@ -33,7 +34,10 @@ export function SetupForm({ value, onChange }: SetupFormProps<GameSetup>) {
           onCheckedChange={(timer) => onChange({ ...value, timer })}
         />
       </Label>
-      <FlightLog />
+      <div className="flex flex-wrap gap-2">
+        <FlightLog />
+        <HowToPlay />
+      </div>
     </>
   );
 }

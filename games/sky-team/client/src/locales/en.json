@@ -433,5 +433,84 @@
     "trayNote": "Choose the seats and Special Abilities above, then confirm.",
     "rolesKept": "Seats chosen. Tap a seat to swap them.",
     "rolesKeptPartner": "{{name}} chose the seats and can still swap them."
+  },
+  "howToPlay": {
+    "open": "How to play",
+    "title": "How to play",
+    "intro": "The base game, step by step, from the rulebook. Each scenario's modules are explained in the scenario picker.",
+    "previous": "Previous",
+    "next": "Next",
+    "stepOf": "Step {{step}} of {{total}}",
+    "imageAlt": "Screenshot of the game: {{title}}",
+    "steps": {
+      "goal": {
+        "title": "Land the plane together",
+        "body": "You are the crew of an airliner: the pilot (blue) and the co-pilot (orange). Talk to the Control Tower to clear the traffic, adjust your speed so you don't overshoot the airport, level the plane, deploy the flaps and the landing gear, and brake once you touch down.\nYou win or lose together."
+      },
+      "rounds": {
+        "title": "7 rounds, 3 phases",
+        "body": "The game is played over 7 rounds, from 6000 ft down to the ground. Each round has 3 phases:\n1. Strategy discussion and dice rolls\n2. Dice placement\n3. End of round"
+      },
+      "strategy": {
+        "title": "Strategy discussion and dice rolls",
+        "body": "Discuss your strategy at the start of every round, for example \"We really need to get rid of that plane\" or \"Let's make sure we advance 2 spaces\". You may not talk about the dice: \"If you get a 6, put it here\" is not allowed.\nThen press \"Roll dice\": each of you rolls 4 dice that only you can see. From now on, stay completely silent until the end of the round."
+      },
+      "reroll": {
+        "title": "Reroll tokens",
+        "body": "If the Current Altitude has a Reroll token (the first round at 6000 ft does), it goes to your supply. At any time during the round, either player may spend one: then BOTH players may reroll one or more of their remaining dice, once."
+      },
+      "placement": {
+        "title": "Placing dice",
+        "body": "Take turns; the arrow on the altitude track shows who plays first (the pilot in the first round). On your turn, place ONE of your dice on a free space of the cockpit.\nThe pilot places only on blue spaces, the co-pilot only on orange ones; spaces that are both colors take either. Most spaces also take only certain numbers (the first Flaps space takes a 1 or a 2). Radio spaces have a color but any number; Concentration spaces take any die from either player."
+      },
+      "mandatory": {
+        "title": "Mandatory: Axis and Engines",
+        "body": "Every round, each player must place one die on the Axis and one on the Engines. If, at the end of a round, there isn't one die of each color on the Axis and on the Engines, you lose at once.\nThese spaces are mandatory, but they don't have to be the first ones you fill."
+      },
+      "axis": {
+        "title": "Axis",
+        "body": "As soon as the second die is placed, compare both dice. Same number: nothing moves. Otherwise, the plane turns as many marks as the difference, toward the player who played the higher die, and stays there: the axis is not reset at the end of the round.\nExample: the pilot plays a 5 and the co-pilot a 3: the axis turns 2 marks toward the pilot.\nIf the axis reaches or passes the last mark, the plane goes into a spin and you lose. At the end of the last round, the plane must be level."
+      },
+      "engines": {
+        "title": "Engines",
+        "body": "As soon as the second die is placed, add both Engine dice: this is your speed.\nLess than the blue Aerodynamics marker: the plane does not advance.\nBetween the two markers: the approach track advances 1 space.\nMore than the orange marker: it advances 2 spaces."
+      },
+      "collision": {
+        "title": "Collision and overshoot",
+        "body": "Planes moving into your Current Position are fine. But if there are still planes in your Current Position when the approach track has to advance, you collide and lose.\nIf the airport is in your Current Position and the track has to advance, you overshoot the airport and lose."
+      },
+      "radio": {
+        "title": "Radio",
+        "body": "The pilot has 1 Radio space, the co-pilot 2. Count spaces on the approach track starting with your Current Position, and remove one plane from the space the die reaches at once: a 1 removes a plane from the Current Position, a 2 from the next space, and so on. Nothing happens if that space has no plane.\nTo land, every plane must be gone."
+      },
+      "landingGear": {
+        "title": "Landing gear (pilot only)",
+        "body": "Place a die that matches the space (1-2, 3-4 or 5-6), in any order. The switch shows green and the blue Aerodynamics marker moves one space at once; it ends between 7 and 8 with all the gear down. Playing on a space already green has no effect.\nMoving the blue marker forward changes your speed: a 5 that advanced the plane 1 space may now advance it 0.\nTo land, all the landing gear must be down."
+      },
+      "flaps": {
+        "title": "Flaps (co-pilot only)",
+        "body": "Place a die that matches the space, in order from top to bottom: 1-2, then 2-3, then 4-5, then 5-6. The switch shows green and the orange Aerodynamics marker moves one space at once; it ends just past 12 with all the flaps out.\nTo land, all the flaps must be deployed."
+      },
+      "concentration": {
+        "title": "Concentration and coffee",
+        "body": "Either player may place any die here: take one Coffee token at once (at most 3).\nWhenever you place a die, you may spend coffee: each token adds 1 to or subtracts 1 from that die. Anyone may spend any token, and unspent ones stay for later rounds. A die stays between 1 and 6: a 1 does not become a 6, nor a 6 a 1."
+      },
+      "brakes": {
+        "title": "Brakes (pilot only)",
+        "body": "Deploy the brakes in order: a 2, then a 4, then a 6. Each one moves the red Brake marker one space at once. Brakes only matter in the final round: your speed must then be lower than the Brake marker. You don't have to deploy them all, but the more you do, the easier the landing."
+      },
+      "endOfRound": {
+        "title": "End of round",
+        "body": "Once all 8 dice are placed, you may talk again. The altitude track goes down one space (1000 ft) and you take your dice back.\nAirport on the approach but not yet on the ground: you are in a holding pattern; play more rounds without advancing, so slow down!\nOn the ground but not at the airport: you crash before the runway and lose."
+      },
+      "finalRound": {
+        "title": "The final round",
+        "body": "It begins when the airport is in your Current Position and the plane is at the bottom of the altitude track.\nWatch out: when the second Engine die is placed, compare your speed with the Brake marker instead of the Aerodynamics markers. The brakes don't all have to be out, but with no brake at all the plane cannot stop."
+      },
+      "landing": {
+        "title": "Landing",
+        "body": "At the end of the final round, you win if:\n- no planes are left on the approach track,\n- all the landing gear and flaps switches show green,\n- the axis is level,\n- your speed is lower than the Brake marker.\nThe passengers burst into applause!"
+      }
+    }
   }
 }
