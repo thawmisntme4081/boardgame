@@ -1,6 +1,6 @@
 import type { Seat } from '@sky/rules';
 
-/** Each seat's colour classes (blue pilot, orange co-pilot), written out in full for Tailwind. */
+/** Each seat's color classes (blue pilot, orange co-pilot), written out in full for Tailwind. */
 export const SEAT_STYLE = {
   pilot: {
     text: 'text-pilot',

@@ -1,0 +1,393 @@
+{
+  "common": {
+    "leave": "Leave",
+    "you": "you",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "cancelOffer": "Cancel the offer"
+  },
+  "status": {
+    "playerOnline": "{{name}} online",
+    "playerOffline": "{{name}} offline"
+  },
+  "leave": {
+    "button": "Leave the game",
+    "title": "Leave the game?",
+    "body": "Your seat stays open for someone else to take over.",
+    "stay": "Stay"
+  },
+  "lobby": {
+    "players": "Players",
+    "playerCount_one": "{{count}} player",
+    "playerCount_other": "{{count}} players",
+    "waitingForPlayers_one": "Waiting for {{count}} more player",
+    "waitingForPlayers_other": "Waiting for {{count}} more players",
+    "epidemics_one": "{{count}} epidemic card",
+    "epidemics_other": "{{count}} epidemic cards",
+    "difficulty": {
+      "title": "Difficulty",
+      "introductory": "Introductory",
+      "standard": "Standard",
+      "heroic": "Heroic",
+      "hint_one": "{{count}} epidemic card in the player deck.",
+      "hint_other": "{{count}} epidemic cards in the player deck."
+    },
+    "roleMode": {
+      "title": "Roles",
+      "random": "Random",
+      "choose": "Choose",
+      "randomHint": "Each player is dealt a role at random.",
+      "chooseHint": "Before the game, each player picks a role nobody else has."
+    }
+  },
+  "preflight": {
+    "title": "Before the game",
+    "random": "roles dealt at random",
+    "choose": "roles chosen by the players",
+    "pickHint": "Pick a role nobody else has. You can change it until you confirm.",
+    "ready": "Ready",
+    "locked": "You have confirmed. Undo to change your role.",
+    "confirm": "Confirm and start",
+    "undo": "Undo"
+  },
+  "board": {
+    "actionsLeft_one": "{{count}} action left",
+    "actionsLeft_other": "{{count}} actions left",
+    "epidemicStep": {
+      "increase": "Increase",
+      "infect": "Infect",
+      "intensify": "Intensify"
+    },
+    "won": "You cured all four diseases. You win!",
+    "lost": "The world was lost: {{reason}}",
+    "lossReason": {
+      "outbreaks": "too many outbreaks",
+      "cubes": "out of disease cubes",
+      "player-deck": "out of player cards"
+    }
+  },
+  "tracks": {
+    "outbreaks": "Outbreaks: {{count}} / {{max}}",
+    "playerDeck": "Player deck: {{count}} cards",
+    "infectionDeck": "Infection deck: {{count}} cards",
+    "stationsLeft": "Research stations left: {{count}}",
+    "supplyOf": "{{color}} cubes left",
+    "infectionDiscard": "Infection discard pile: {{count}} cards",
+    "playerDiscard": "Player discard pile: {{count}} cards",
+    "openPlayerDiscard": "List the player discard pile",
+    "openInfectionDiscard": "List the infection discard pile"
+  },
+  "map": {
+    "label": "Map"
+  },
+  "cities": {
+    "atlanta": "Atlanta",
+    "chicago": "Chicago",
+    "essen": "Essen",
+    "london": "London",
+    "madrid": "Madrid",
+    "milan": "Milan",
+    "montreal": "Montreal",
+    "new-york": "New York",
+    "paris": "Paris",
+    "san-francisco": "San Francisco",
+    "st-petersburg": "St. Petersburg",
+    "washington": "Washington",
+    "bogota": "Bogotá",
+    "buenos-aires": "Buenos Aires",
+    "johannesburg": "Johannesburg",
+    "khartoum": "Khartoum",
+    "kinshasa": "Kinshasa",
+    "lagos": "Lagos",
+    "lima": "Lima",
+    "los-angeles": "Los Angeles",
+    "mexico-city": "Mexico City",
+    "miami": "Miami",
+    "santiago": "Santiago",
+    "sao-paulo": "São Paulo",
+    "algiers": "Algiers",
+    "baghdad": "Baghdad",
+    "cairo": "Cairo",
+    "chennai": "Chennai",
+    "delhi": "Delhi",
+    "istanbul": "Istanbul",
+    "karachi": "Karachi",
+    "kolkata": "Kolkata",
+    "moscow": "Moscow",
+    "mumbai": "Mumbai",
+    "riyadh": "Riyadh",
+    "tehran": "Tehran",
+    "bangkok": "Bangkok",
+    "beijing": "Beijing",
+    "ho-chi-minh-city": "Ho Chi Minh City",
+    "hong-kong": "Hong Kong",
+    "jakarta": "Jakarta",
+    "manila": "Manila",
+    "osaka": "Osaka",
+    "seoul": "Seoul",
+    "shanghai": "Shanghai",
+    "sydney": "Sydney",
+    "taipei": "Taipei",
+    "tokyo": "Tokyo"
+  },
+  "color": {
+    "blue": "Blue",
+    "yellow": "Yellow",
+    "black": "Black",
+    "red": "Red"
+  },
+  "roles": {
+    "title": "Roles",
+    "contingency-planner": {
+      "name": "Contingency Planner",
+      "power": "As an action, take an Event card from the player discard pile and keep it on this card. Play it as usual; it then leaves the game. It does not count toward the hand limit."
+    },
+    "dispatcher": {
+      "name": "Dispatcher",
+      "power": "Move another player's pawn as if it were yours, if its owner agrees. Or move any pawn to a city with another pawn, for one action."
+    },
+    "medic": {
+      "name": "Medic",
+      "power": "Treat Disease removes all cubes of one color. A cured disease's cubes are removed from your city at once, and none can be placed there."
+    },
+    "operations-expert": {
+      "name": "Operations Expert",
+      "power": "Build a research station without discarding a card. Once a turn, from a station, discard any City card to move to any city."
+    },
+    "quarantine-specialist": {
+      "name": "Quarantine Specialist",
+      "power": "No disease cubes are placed in your city or the cities connected to it, and no outbreaks happen there."
+    },
+    "researcher": {
+      "name": "Researcher",
+      "power": "On your turn, give any City card from your hand to a player in your city. Another player can still only take the card of the city you share."
+    },
+    "scientist": {
+      "name": "Scientist",
+      "power": "Discover a cure with only 4 City cards of one color."
+    },
+    "teacher": {
+      "name": "Teacher",
+      "power": "As an action, create a student pawn in your city (at most 2 per game). At the start of your turn, choose the teacher or a student: that pawn does this turn's actions, with your hand."
+    },
+    "relocation-specialist": {
+      "name": "Relocation Specialist",
+      "power": "Whenever your pawn leaves a city, however it moves, you may take up to 3 disease cubes and/or 1 other pawn (if its owner agrees) from that city to where you arrive."
+    },
+    "crisis-mitigator": {
+      "name": "Crisis Mitigator",
+      "power": "Your actions each turn depend on the disease cubes in your city when your turn starts: 0–1 cubes: 4 actions, 2: 5, 3: 6, 4 or more: 7."
+    },
+    "generalist": {
+      "name": "Generalist",
+      "power": "You have 5 actions each turn instead of 4."
+    },
+    "z-force-team-member": {
+      "name": "Z-Force Team Member",
+      "power": "Start in Montreal. As an action, move to Montreal or Essen. When you discover a cure, other players in your city may give up to 2 of its cards (if they agree)."
+    },
+    "students": "Students: {{count}} / {{max}}",
+    "info": "What {{role}} can do",
+    "stored": "Stored: {{event}}"
+  },
+  "cureOffer": {
+    "title": "Discover a cure",
+    "offered": "{{by}} asks to use {{cards}} to cure {{color}}.",
+    "accept": "Give the cards",
+    "cancel": "Cancel the cure",
+    "waiting": "Waiting for {{names}} to agree."
+  },
+  "carry": {
+    "title": "Take along",
+    "hintMove": "Choose the cubes and the pawn that come with you, then where to go on the map.",
+    "hintAccept": "Choose the cubes and the pawn that come with you, then accept.",
+    "cubes": "{{color}}: {{count}}",
+    "count": "{{count}} / {{max}} cubes",
+    "more": "One more {{color}} cube",
+    "less": "One fewer {{color}} cube",
+    "pawn": "Take {{name}}"
+  },
+  "pawns": {
+    "teacher": "Teacher pawn",
+    "student": "Student {{number}}",
+    "studentOf": "{{name}}'s student"
+  },
+  "hands": {
+    "title": "Hands",
+    "empty": "No cards",
+    "event": "Event: {{name}}"
+  },
+  "events": {
+    "airlift": "Airlift",
+    "forecast": "Forecast",
+    "government-grant": "Government Grant",
+    "one-quiet-night": "One Quiet Night",
+    "resilient-population": "Resilient Population"
+  },
+  "eventInfo": {
+    "airlift": "Move any 1 pawn to any city. Get permission before moving another player's pawn.",
+    "forecast": "Look at the top 6 cards of the infection deck, then put them back in any order.",
+    "government-grant": "Build a research station in any city, with no card to discard.",
+    "one-quiet-night": "Skip the next Infect Cities step: no infection card is flipped.",
+    "resilient-population": "Remove any 1 card in the infection discard pile from the game. It can also be played between an epidemic's Infect and Intensify steps."
+  },
+  "moveMenu": {
+    "title": "Fly to {{city}}",
+    "titleFor": "Move {{name}} to {{city}}",
+    "discard": "Discard: {{city}}"
+  },
+  "actions": {
+    "title": "Actions",
+    "drive": "Drive / Ferry",
+    "montrealEssen": "Go to {{city}}",
+    "cureHelp": "From other players (up to {{max}}):",
+    "cureHelpCard": "{{city}} ({{name}})",
+    "direct": "Direct Flight",
+    "charter": "Charter Flight",
+    "shuttle": "Shuttle Flight",
+    "join": "To a pawn there",
+    "ops-flight": "Operations flight",
+    "movePawn": "Pawn to move",
+    "choosePawn": "Choose the pawn for this turn",
+    "pawnAt": "{{pawn}} in {{city}}",
+    "pawnToday": "This turn: {{pawn}}",
+    "createStudent": "Create a student",
+    "ownPawn": "Yours",
+    "takeEvent": "Take {{event}} from the discard pile",
+    "build": "Build a research station",
+    "moveStation": "Station to take away",
+    "treat": "Treat {{color}}",
+    "cure": "Cure: {{color}}",
+    "cureChoose": "Choose the {{count}} {{color}} cards to discard",
+    "cureChosen": "{{chosen}} of {{count}} chosen",
+    "cureConfirm": "Discover the cure",
+    "pass": "Pass",
+    "draw": "Draw cards",
+    "epidemic": "Epidemic: {{step}}",
+    "infect": "Infect",
+    "spectator": "You are watching.",
+    "restart": "Restart turn",
+    "discard_one": "Discard {{count}} card",
+    "discard_other": "Discard {{count}} cards",
+    "discardWaiting_one": "{{name}} must discard {{count}} card.",
+    "discardWaiting_other": "{{name}} must discard {{count}} cards."
+  },
+  "share": {
+    "title": "Share Knowledge",
+    "giveTo": "Give {{city}} to {{role}}",
+    "takeFrom": "Take {{city}} from {{role}}",
+    "giveCard": "Give {{city}}",
+    "takeCard": "Take {{city}}",
+    "chooseGive": "Give {{city}} to:",
+    "chooseTake": "Take {{city}} from:",
+    "offered": "{{from}} offers to share the card of {{city}} with {{to}}."
+  },
+  "moveOffer": {
+    "title": "Move a pawn",
+    "offered": "{{by}} offers to move {{pawn}} to {{city}}.",
+    "takeAlong": "{{carrier}} offers to take {{pawn}} along to {{city}}.",
+    "cubes_one": "{{count}} cube comes along.",
+    "cubes_other": "{{count}} cubes come along."
+  },
+  "forecast": {
+    "hint": "Drag the cards (or use the arrows) into the order they will be flipped, then keep it.",
+    "top": "Next",
+    "up": "Move {{city}} up",
+    "down": "Move {{city}} down",
+    "keep": "Keep this order",
+    "waiting_one": "{{name}} is arranging the top infection card.",
+    "waiting_other": "{{name}} is arranging the top {{count}} infection cards."
+  },
+  "discard": {
+    "button": "Discard {{card}}"
+  },
+  "errors": {
+    "game-over": "The game is over.",
+    "not-your-turn": "It is not your turn.",
+    "wrong-step": "Not now: finish the current step first.",
+    "answer-first": "Answer the question first.",
+    "no-actions-left": "No actions left.",
+    "same-city": "You are already there.",
+    "not-adjacent": "That city is not next to yours.",
+    "card-missing": "You do not have that card.",
+    "no-station": "A research station is needed.",
+    "station-exists": "There is a research station here already.",
+    "bad-station-to-move": "Choose a station to move.",
+    "no-cubes": "There are no cubes of that color here.",
+    "already-cured": "That disease is cured already.",
+    "bad-cards": "These cards do not make a cure.",
+    "card-resolving": "Not now: a card is being resolved.",
+    "not-playable": "This event cannot be played like that.",
+    "no-forecast": "No Forecast is being arranged.",
+    "bad-order": "Put back exactly the cards you took.",
+    "bad-partner": "You cannot share with that player.",
+    "not-together": "You must be in the same city.",
+    "no-offer": "There is no offer to answer.",
+    "not-your-answer": "It is not your answer to give.",
+    "nothing-to-discard": "Nobody has to discard.",
+    "bad-seat": "That seat does not exist.",
+    "room-full": "The table is full.",
+    "not-started": "The game has not started.",
+    "already-confirmed": "You have confirmed already.",
+    "not-confirmed": "You have not confirmed.",
+    "pick-first": "Pick a role first.",
+    "roles-dealt": "The roles are dealt at random in this game.",
+    "role-taken": "Another player has that role.",
+    "cannot-restart": "The turn cannot be restarted now.",
+    "choose-pawn-first": "Choose the pawn for this turn first.",
+    "pawn-chosen": "The pawn for this turn is chosen already.",
+    "not-your-pawn": "That pawn is not yours.",
+    "teacher-pawn-only": "Only the teacher pawn can create a student.",
+    "no-students-left": "Both students have been created.",
+    "wrong-role": "Your role cannot do that.",
+    "power-used": "You have used that power this turn already.",
+    "no-pawn-there": "There is no pawn in that city.",
+    "event-stored": "An event card is stored on your role card already.",
+    "no-event": "That event card is not in the discard pile.",
+    "too-many-cubes": "At most 3 cubes can come along."
+  },
+  "epidemic": {
+    "title_one": "Epidemic ({{count}} to resolve)",
+    "title_other": "Epidemics ({{count}} to resolve)",
+    "step": {
+      "increase": "the infection rate marker moves forward.",
+      "infect": "the bottom infection card gets 3 cubes.",
+      "intensify": "the infection discard pile is shuffled back on top of the deck."
+    }
+  },
+  "gameOver": {
+    "wonTitle": "Humanity is saved",
+    "lostTitle": "The world was lost",
+    "playAgain": "Play again",
+    "takeBack": "Take back my answer",
+    "offered": "{{name}} wants to play again.",
+    "waitingFor": "Waiting for {{names}}.",
+    "cured": "All four diseases are cured",
+    "viewBoard": "View board",
+    "showResult": "Show result"
+  },
+  "eventBar": {
+    "playEvent": "Play {{event}}",
+    "airliftPawn": "Airlift: choose the pawn to move.",
+    "airliftCity": "Airlift {{name}}: tap the city to move to.",
+    "grantCity": "Government Grant: tap the city for the new station.",
+    "grantMove": "Government Grant in {{city}}: choose the station to take away.",
+    "population": "Resilient Population: choose the card to remove from the game.",
+    "removeCard": "Remove this card",
+    "pawnAt": "{{name}} (in {{city}})",
+    "ofPlayer": "{{label}} · {{name}}'s card"
+  },
+  "toast": {
+    "event": "{{name}} played {{event}}.",
+    "eventStored": "{{name}} played {{event}} from the role card.",
+    "eventOf": "{{name}} played {{owner}}'s {{event}}."
+  },
+  "piles": {
+    "player": "Player discard pile",
+    "infection": "Infection discard pile",
+    "count_one": "{{count}} card, newest first",
+    "count_other": "{{count}} cards, newest first",
+    "empty": "No cards yet."
+  }
+}

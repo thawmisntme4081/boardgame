@@ -286,7 +286,7 @@ export async function shareInvite(code: string): Promise<void> {
       await navigator.share({ title: t('app.title'), text: t('toast.shareText'), url });
       return;
     } catch {
-      // Cancelled or unsupported: fall back to copying.
+      // Canceled or unsupported: fall back to copying.
     }
   }
   try {

@@ -2,13 +2,13 @@
 
 const DEG = Math.PI / 180;
 
-/** The point at `deg` degrees, `r` from a centre at (`c`, `c`). */
+/** The point at `deg` degrees, `r` from a center at (`c`, `c`). */
 export const polar = (c: number, deg: number, r: number): [number, number] => [
   c + r * Math.cos(deg * DEG),
   c + r * Math.sin(deg * DEG),
 ];
 
-/** An SVG path for the arc from `a0` to `a1` degrees, radius `r`, centre (`c`, `c`). */
+/** An SVG path for the arc from `a0` to `a1` degrees, radius `r`, center (`c`, `c`). */
 export function arc(c: number, a0: number, a1: number, r: number): string {
   const [x0, y0] = polar(c, a0, r);
   const [x1, y1] = polar(c, a1, r);

@@ -7,7 +7,7 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 ## Goals
 
 - One game-agnostic interface, `GameDefinition`, that every game implements and the platform depends on.
-- Sky Team runs through it with **no behaviour change**.
+- Sky Team runs through it with **no behavior change**.
 
 ## Feature scope
 
@@ -20,7 +20,7 @@ Design reference: [multi-game proposal](../../proposals/multi-game-platform.md),
 2. Define Sky Team's move union with one Zod `moveSchema`: seat moves `place`, `spend-reroll`, `reroll`, `ability`, `cancel-swap`; system moves `begin`, `roll`, `time-up` (decided when starting: `ready`, `pick-ability`, `confirm` and the seat choice come with Platform 02, which moves them into the game state).
 3. Write the Sky Team definition as an adapter over the existing rule functions (no rule rewrites); `actors` from `phase`, `currentSeat` and `rerollPending`.
 4. Engine test kit: random play through `GameDefinition` only, determinism (same seed and moves → same state), JSON round trip of every state, view-leak check from a per-game list of secret fields. Run it on Sky Team.
-5. Move `packages/shared` towards `games/sky-team/rules`: decided when starting to do it in Platform 05, with the client shell.
+5. Move `packages/shared` toward `games/sky-team/rules`: decided when starting to do it in Platform 05, with the client shell.
 
 ## What was built
 

@@ -1,0 +1,382 @@
+{
+  "common": {
+    "leave": "Rời đi",
+    "you": "bạn",
+    "accept": "Đồng ý",
+    "decline": "Từ chối",
+    "cancel": "Hủy",
+    "cancelOffer": "Hủy đề nghị"
+  },
+  "status": {
+    "playerOnline": "{{name}} đang online",
+    "playerOffline": "{{name}} đang offline"
+  },
+  "leave": {
+    "button": "Rời ván",
+    "title": "Rời ván chơi?",
+    "body": "Chỗ của bạn sẽ để trống cho người khác vào chơi tiếp.",
+    "stay": "Ở lại"
+  },
+  "lobby": {
+    "players": "Số người chơi",
+    "playerCount_other": "{{count}} người chơi",
+    "waitingForPlayers_other": "Đang chờ thêm {{count}} người chơi",
+    "epidemics_other": "{{count}} thẻ đại dịch",
+    "difficulty": {
+      "title": "Độ khó",
+      "introductory": "Nhập môn",
+      "standard": "Tiêu chuẩn",
+      "heroic": "Anh hùng",
+      "hint_other": "{{count}} thẻ đại dịch trong chồng bài người chơi."
+    },
+    "roleMode": {
+      "title": "Vai trò",
+      "random": "Ngẫu nhiên",
+      "choose": "Tự chọn",
+      "randomHint": "Mỗi người chơi được chia ngẫu nhiên một vai trò.",
+      "chooseHint": "Trước khi chơi, mỗi người chọn một vai trò chưa ai chọn."
+    }
+  },
+  "preflight": {
+    "title": "Trước khi chơi",
+    "random": "vai trò chia ngẫu nhiên",
+    "choose": "vai trò do người chơi chọn",
+    "pickHint": "Chọn một vai trò chưa ai chọn. Bạn có thể đổi cho đến khi xác nhận.",
+    "ready": "Sẵn sàng",
+    "locked": "Bạn đã xác nhận. Hãy hoàn tác nếu muốn đổi vai trò.",
+    "confirm": "Xác nhận và bắt đầu",
+    "undo": "Hoàn tác"
+  },
+  "board": {
+    "actionsLeft_other": "Còn {{count}} hành động",
+    "epidemicStep": {
+      "increase": "Tăng tốc",
+      "infect": "Lây nhiễm",
+      "intensify": "Tăng cường"
+    },
+    "won": "Bạn đã chữa được cả bốn bệnh. Bạn thắng!",
+    "lost": "Thế giới đã thất thủ: {{reason}}",
+    "lossReason": {
+      "outbreaks": "quá nhiều đợt bùng phát",
+      "cubes": "hết khối bệnh",
+      "player-deck": "hết thẻ người chơi"
+    }
+  },
+  "tracks": {
+    "outbreaks": "Bùng phát: {{count}} / {{max}}",
+    "playerDeck": "Chồng bài người chơi: {{count}} thẻ",
+    "infectionDeck": "Chồng bài lây nhiễm: {{count}} thẻ",
+    "stationsLeft": "Trạm nghiên cứu còn lại: {{count}}",
+    "supplyOf": "Khối {{color}} còn lại",
+    "infectionDiscard": "Chồng bài bỏ lây nhiễm: {{count}} thẻ",
+    "playerDiscard": "Chồng bài bỏ người chơi: {{count}} thẻ",
+    "openPlayerDiscard": "Xem chồng bài bỏ người chơi",
+    "openInfectionDiscard": "Xem chồng bài bỏ lây nhiễm"
+  },
+  "map": {
+    "label": "Bản đồ"
+  },
+  "cities": {
+    "atlanta": "Atlanta",
+    "chicago": "Chicago",
+    "essen": "Essen",
+    "london": "London",
+    "madrid": "Madrid",
+    "milan": "Milan",
+    "montreal": "Montreal",
+    "new-york": "New York",
+    "paris": "Paris",
+    "san-francisco": "San Francisco",
+    "st-petersburg": "St. Petersburg",
+    "washington": "Washington",
+    "bogota": "Bogotá",
+    "buenos-aires": "Buenos Aires",
+    "johannesburg": "Johannesburg",
+    "khartoum": "Khartoum",
+    "kinshasa": "Kinshasa",
+    "lagos": "Lagos",
+    "lima": "Lima",
+    "los-angeles": "Los Angeles",
+    "mexico-city": "TP. Mexico",
+    "miami": "Miami",
+    "santiago": "Santiago",
+    "sao-paulo": "São Paulo",
+    "algiers": "Algiers",
+    "baghdad": "Baghdad",
+    "cairo": "Cairo",
+    "chennai": "Chennai",
+    "delhi": "Delhi",
+    "istanbul": "Istanbul",
+    "karachi": "Karachi",
+    "kolkata": "Kolkata",
+    "moscow": "Mát-xcơ-va",
+    "mumbai": "Mumbai",
+    "riyadh": "Riyadh",
+    "tehran": "Tehran",
+    "bangkok": "Bangkok",
+    "beijing": "Bắc Kinh",
+    "ho-chi-minh-city": "TP. Hồ Chí Minh",
+    "hong-kong": "Hồng Kông",
+    "jakarta": "Jakarta",
+    "manila": "Manila",
+    "osaka": "Osaka",
+    "seoul": "Seoul",
+    "shanghai": "Thượng Hải",
+    "sydney": "Sydney",
+    "taipei": "Đài Bắc",
+    "tokyo": "Tokyo"
+  },
+  "color": {
+    "blue": "Xanh dương",
+    "yellow": "Vàng",
+    "black": "Đen",
+    "red": "Đỏ"
+  },
+  "roles": {
+    "title": "Vai trò",
+    "contingency-planner": {
+      "name": "Nhà hoạch định dự phòng",
+      "power": "Dùng một hành động để lấy một thẻ Sự kiện từ chồng bài bỏ người chơi và giữ trên thẻ này. Chơi thẻ đó như bình thường, sau đó thẻ bị loại khỏi trò chơi. Thẻ này không tính vào giới hạn bài trên tay."
+    },
+    "dispatcher": {
+      "name": "Điều phối viên",
+      "power": "Di chuyển quân cờ của người chơi khác như quân của mình, nếu chủ quân đồng ý. Hoặc dùng một hành động để đưa bất kỳ quân cờ nào đến thành phố có quân cờ khác."
+    },
+    "medic": {
+      "name": "Nhân viên y tế",
+      "power": "Chữa bệnh sẽ loại bỏ mọi khối của một màu. Khối của bệnh đã có thuốc chữa bị loại khỏi thành phố của bạn ngay lập tức, và không thể đặt thêm vào đó."
+    },
+    "operations-expert": {
+      "name": "Chuyên gia vận hành",
+      "power": "Xây trạm nghiên cứu mà không cần bỏ thẻ. Mỗi lượt một lần, từ một trạm, bỏ một thẻ Thành phố bất kỳ để đến bất kỳ thành phố nào."
+    },
+    "quarantine-specialist": {
+      "name": "Chuyên gia cách ly",
+      "power": "Không khối bệnh nào được đặt vào thành phố của bạn và các thành phố nối với nó, và không có bùng phát nào xảy ra ở đó."
+    },
+    "researcher": {
+      "name": "Nhà nghiên cứu",
+      "power": "Trong lượt của bạn, đưa bất kỳ thẻ Thành phố nào trên tay cho một người chơi ở cùng thành phố. Người chơi khác vẫn chỉ lấy được thẻ của thành phố hai người đang ở."
+    },
+    "scientist": {
+      "name": "Nhà khoa học",
+      "power": "Tìm ra thuốc chữa chỉ với 4 thẻ Thành phố cùng màu."
+    },
+    "teacher": {
+      "name": "Giáo viên",
+      "power": "Dùng một hành động để tạo một quân học trò tại thành phố của bạn (tối đa 2 mỗi ván). Đầu lượt, chọn quân giáo viên hoặc một học trò: quân đó thực hiện các hành động của lượt này, dùng bài trên tay của bạn."
+    },
+    "relocation-specialist": {
+      "name": "Chuyên gia di dời",
+      "power": "Mỗi khi quân của bạn rời một thành phố, bằng bất kỳ cách nào, bạn có thể mang theo tối đa 3 khối bệnh và/hoặc 1 quân cờ khác (nếu chủ quân đồng ý) từ thành phố đó đến nơi bạn tới."
+    },
+    "crisis-mitigator": {
+      "name": "Chuyên gia xử lý khủng hoảng",
+      "power": "Số hành động mỗi lượt của bạn tùy theo số khối bệnh trong thành phố của bạn lúc bắt đầu lượt: 0–1 khối: 4 hành động, 2: 5, 3: 6, 4 trở lên: 7."
+    },
+    "generalist": {
+      "name": "Người đa năng",
+      "power": "Bạn có 5 hành động mỗi lượt thay vì 4."
+    },
+    "z-force-team-member": {
+      "name": "Thành viên Z-Force",
+      "power": "Bắt đầu ở Montreal. Dùng một hành động để đến Montreal hoặc Essen. Khi bạn tìm ra thuốc chữa, người chơi khác ở cùng thành phố có thể góp tối đa 2 thẻ (nếu họ đồng ý)."
+    },
+    "students": "Học trò: {{count}} / {{max}}",
+    "info": "{{role}} làm được gì",
+    "stored": "Đang giữ: {{event}}"
+  },
+  "cureOffer": {
+    "title": "Tìm ra thuốc chữa",
+    "offered": "{{by}} xin dùng {{cards}} để chữa bệnh {{color}}.",
+    "accept": "Đưa thẻ",
+    "cancel": "Hủy tìm thuốc chữa",
+    "waiting": "Đang chờ {{names}} đồng ý."
+  },
+  "carry": {
+    "title": "Mang theo",
+    "hintMove": "Chọn các khối bệnh và quân cờ đi cùng bạn, rồi chọn nơi đến trên bản đồ.",
+    "hintAccept": "Chọn các khối bệnh và quân cờ đi cùng bạn, rồi đồng ý.",
+    "cubes": "{{color}}: {{count}}",
+    "count": "{{count}} / {{max}} khối",
+    "more": "Thêm một khối {{color}}",
+    "less": "Bớt một khối {{color}}",
+    "pawn": "Mang {{name}}"
+  },
+  "pawns": {
+    "teacher": "Quân giáo viên",
+    "student": "Học trò {{number}}",
+    "studentOf": "Học trò của {{name}}"
+  },
+  "hands": {
+    "title": "Bài trên tay",
+    "empty": "Không có thẻ",
+    "event": "Sự kiện: {{name}}"
+  },
+  "events": {
+    "airlift": "Không vận",
+    "forecast": "Dự báo",
+    "government-grant": "Trợ cấp chính phủ",
+    "one-quiet-night": "Một đêm yên bình",
+    "resilient-population": "Dân chúng kiên cường"
+  },
+  "eventInfo": {
+    "airlift": "Đưa 1 quân cờ bất kỳ đến bất kỳ thành phố nào. Cần chủ quân cho phép trước khi di chuyển quân của người chơi khác.",
+    "forecast": "Xem 6 thẻ trên cùng của chồng bài lây nhiễm, rồi đặt lại theo thứ tự bất kỳ.",
+    "government-grant": "Xây một trạm nghiên cứu ở bất kỳ thành phố nào, không cần bỏ thẻ.",
+    "one-quiet-night": "Bỏ qua bước Lây nhiễm các thành phố tiếp theo: không lật thẻ lây nhiễm nào.",
+    "resilient-population": "Loại 1 thẻ bất kỳ trong chồng bài bỏ lây nhiễm khỏi trò chơi. Có thể chơi cả giữa bước Lây nhiễm và Tăng cường của một đại dịch."
+  },
+  "moveMenu": {
+    "title": "Đi đến {{city}}",
+    "titleFor": "Đưa {{name}} đến {{city}}",
+    "discard": "Bỏ thẻ: {{city}}"
+  },
+  "actions": {
+    "title": "Hành động",
+    "drive": "Đi đường bộ / Phà",
+    "montrealEssen": "Đến {{city}}",
+    "cureHelp": "Từ người chơi khác (tối đa {{max}}):",
+    "cureHelpCard": "{{city}} ({{name}})",
+    "direct": "Bay thẳng",
+    "charter": "Bay thuê chuyến",
+    "shuttle": "Bay con thoi",
+    "join": "Đến chỗ quân cờ ở đó",
+    "ops-flight": "Chuyến bay vận hành",
+    "movePawn": "Quân cần di chuyển",
+    "choosePawn": "Chọn quân cho lượt này",
+    "pawnAt": "{{pawn}} ở {{city}}",
+    "pawnToday": "Lượt này: {{pawn}}",
+    "createStudent": "Tạo học trò",
+    "ownPawn": "Của bạn",
+    "takeEvent": "Lấy {{event}} từ chồng bài bỏ",
+    "build": "Xây trạm nghiên cứu",
+    "moveStation": "Trạm cần dời đi",
+    "treat": "Chữa bệnh {{color}}",
+    "cure": "Thuốc chữa: {{color}}",
+    "cureChoose": "Chọn {{count}} thẻ {{color}} để bỏ",
+    "cureChosen": "Đã chọn {{chosen}}/{{count}}",
+    "cureConfirm": "Tìm ra thuốc chữa",
+    "pass": "Bỏ lượt",
+    "draw": "Rút thẻ",
+    "epidemic": "Đại dịch: {{step}}",
+    "infect": "Lây nhiễm",
+    "spectator": "Bạn đang xem.",
+    "restart": "Chơi lại lượt",
+    "discard_other": "Bỏ {{count}} thẻ",
+    "discardWaiting_other": "{{name}} phải bỏ {{count}} thẻ."
+  },
+  "share": {
+    "title": "Chia sẻ kiến thức",
+    "giveTo": "Đưa {{city}} cho {{role}}",
+    "takeFrom": "Lấy {{city}} từ {{role}}",
+    "giveCard": "Đưa {{city}}",
+    "takeCard": "Lấy {{city}}",
+    "chooseGive": "Đưa {{city}} cho:",
+    "chooseTake": "Lấy {{city}} từ:",
+    "offered": "{{from}} đề nghị chia sẻ thẻ {{city}} với {{to}}."
+  },
+  "moveOffer": {
+    "title": "Di chuyển quân cờ",
+    "offered": "{{by}} đề nghị đưa {{pawn}} đến {{city}}.",
+    "takeAlong": "{{carrier}} đề nghị mang {{pawn}} theo đến {{city}}.",
+    "cubes_other": "{{count}} khối bệnh đi cùng."
+  },
+  "forecast": {
+    "hint": "Kéo các thẻ (hoặc dùng mũi tên) theo thứ tự chúng sẽ được lật, rồi giữ thứ tự đó.",
+    "top": "Tiếp theo",
+    "up": "Đưa {{city}} lên",
+    "down": "Đưa {{city}} xuống",
+    "keep": "Giữ thứ tự này",
+    "waiting_other": "{{name}} đang sắp xếp {{count}} thẻ lây nhiễm trên cùng."
+  },
+  "discard": {
+    "button": "Bỏ {{card}}"
+  },
+  "errors": {
+    "game-over": "Ván chơi đã kết thúc.",
+    "not-your-turn": "Chưa đến lượt bạn.",
+    "wrong-step": "Chưa được: hãy hoàn thành bước hiện tại trước.",
+    "answer-first": "Hãy trả lời câu hỏi trước.",
+    "no-actions-left": "Đã hết hành động.",
+    "same-city": "Bạn đang ở đó rồi.",
+    "not-adjacent": "Thành phố đó không liền kề với thành phố của bạn.",
+    "card-missing": "Bạn không có thẻ đó.",
+    "no-station": "Cần có trạm nghiên cứu.",
+    "station-exists": "Ở đây đã có trạm nghiên cứu.",
+    "bad-station-to-move": "Hãy chọn trạm cần dời đi.",
+    "no-cubes": "Ở đây không có khối bệnh màu đó.",
+    "already-cured": "Bệnh đó đã có thuốc chữa.",
+    "bad-cards": "Các thẻ này không đủ để tìm ra thuốc chữa.",
+    "card-resolving": "Chưa được: đang giải quyết một thẻ.",
+    "not-playable": "Không thể chơi sự kiện này theo cách đó.",
+    "no-forecast": "Không có lá Dự báo nào đang được sắp xếp.",
+    "bad-order": "Hãy đặt lại đúng các thẻ bạn đã lấy.",
+    "bad-partner": "Bạn không thể chia sẻ với người chơi đó.",
+    "not-together": "Hai người phải ở cùng một thành phố.",
+    "no-offer": "Không có đề nghị nào cần trả lời.",
+    "not-your-answer": "Không phải bạn là người trả lời.",
+    "nothing-to-discard": "Không ai phải bỏ thẻ.",
+    "bad-seat": "Chỗ ngồi đó không tồn tại.",
+    "room-full": "Bàn đã đủ người.",
+    "not-started": "Ván chơi chưa bắt đầu.",
+    "already-confirmed": "Bạn đã xác nhận rồi.",
+    "not-confirmed": "Bạn chưa xác nhận.",
+    "pick-first": "Hãy chọn vai trò trước.",
+    "roles-dealt": "Ván này chia vai trò ngẫu nhiên.",
+    "role-taken": "Người chơi khác đã chọn vai trò đó.",
+    "cannot-restart": "Không thể chơi lại lượt lúc này.",
+    "choose-pawn-first": "Hãy chọn quân cho lượt này trước.",
+    "pawn-chosen": "Đã chọn quân cho lượt này rồi.",
+    "not-your-pawn": "Quân cờ đó không phải của bạn.",
+    "teacher-pawn-only": "Chỉ quân giáo viên mới tạo được học trò.",
+    "no-students-left": "Đã tạo đủ hai học trò.",
+    "wrong-role": "Vai trò của bạn không làm được việc đó.",
+    "power-used": "Bạn đã dùng năng lực đó trong lượt này rồi.",
+    "no-pawn-there": "Không có quân cờ nào ở thành phố đó.",
+    "event-stored": "Thẻ vai trò của bạn đã giữ một thẻ sự kiện.",
+    "no-event": "Thẻ sự kiện đó không có trong chồng bài bỏ.",
+    "too-many-cubes": "Chỉ mang theo được tối đa 3 khối."
+  },
+  "epidemic": {
+    "title_other": "Đại dịch (còn {{count}} cần giải quyết)",
+    "step": {
+      "increase": "vạch tốc độ lây nhiễm tiến lên.",
+      "infect": "thẻ lây nhiễm dưới cùng nhận 3 khối bệnh.",
+      "intensify": "chồng bài bỏ lây nhiễm được xáo lại và đặt lên trên chồng bài."
+    }
+  },
+  "gameOver": {
+    "wonTitle": "Nhân loại đã được cứu",
+    "lostTitle": "Thế giới đã thất thủ",
+    "playAgain": "Chơi lại",
+    "takeBack": "Rút lại câu trả lời",
+    "offered": "{{name}} muốn chơi lại.",
+    "waitingFor": "Đang chờ {{names}}.",
+    "cured": "Đã chữa được cả bốn bệnh",
+    "viewBoard": "Xem bàn chơi",
+    "showResult": "Xem kết quả"
+  },
+  "eventBar": {
+    "playEvent": "Chơi {{event}}",
+    "airliftPawn": "Không vận: chọn quân cờ cần di chuyển.",
+    "airliftCity": "Không vận {{name}}: chạm vào thành phố muốn đến.",
+    "grantCity": "Trợ cấp chính phủ: chạm vào thành phố để xây trạm mới.",
+    "grantMove": "Trợ cấp chính phủ ở {{city}}: chọn trạm cần dời đi.",
+    "population": "Dân chúng kiên cường: chọn thẻ cần loại khỏi trò chơi.",
+    "removeCard": "Loại thẻ này",
+    "pawnAt": "{{name}} (ở {{city}})",
+    "ofPlayer": "{{label}} · thẻ của {{name}}"
+  },
+  "toast": {
+    "event": "{{name}} đã chơi {{event}}.",
+    "eventStored": "{{name}} đã chơi {{event}} từ thẻ vai trò.",
+    "eventOf": "{{name}} đã chơi {{event}} của {{owner}}."
+  },
+  "piles": {
+    "player": "Chồng bài bỏ người chơi",
+    "infection": "Chồng bài bỏ lây nhiễm",
+    "count_other": "{{count}} thẻ, mới nhất trước",
+    "empty": "Chưa có thẻ nào."
+  }
+}

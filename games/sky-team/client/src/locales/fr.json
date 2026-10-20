@@ -14,8 +14,6 @@
   },
   "scenario": {
     "label": "Scénario",
-    "chooseAbilities_one": "Choisissez {{count}} capacité spéciale",
-    "chooseAbilities_other": "Choisissez {{count}} capacités spéciales",
     "abilityCount_one": "{{count}} capacité",
     "abilityCount_other": "{{count}} capacités"
   },
@@ -42,8 +40,7 @@
     "noTalking": "Silence !!!",
     "timeLeft": "Temps restant pour cette manche : {{time}}",
     "nextTurn": "Manche suivante dans {{seconds}} s",
-    "nextTurnLabel": "Manche suivante dans {{seconds}} secondes",
-    "totalTrust": "Confiance totale"
+    "nextTurnLabel": "Manche suivante dans {{seconds}} secondes"
   },
   "toast": {
     "partnerReroll": "{{name}} utilise une relance."
@@ -52,8 +49,7 @@
     "button": "Quitter la partie",
     "title": "Quitter cette partie ?",
     "body": "Vous libérez votre poste et la partie de {{name}} recommence, en attendant un nouveau partenaire. Pour faire une pause, fermez simplement l’onglet : votre poste est gardé 30 minutes.",
-    "stay": "Rester",
-    "confirm": "Quitter la partie"
+    "stay": "Rester"
   },
   "tray": {
     "yourDice": "Vos dés",
@@ -105,18 +101,11 @@
     "totalTrust": "Confiance totale : pas de discussion de stratégie cette manche. Les dés se lancent tout seuls."
   },
   "cockpit": {
-    "axis": "Axe",
     "axisHint": "Doit être à plat pour atterrir",
-    "engines": "Moteurs",
     "enginesFinal": "Dernière manche : la vitesse doit rester sous les freins",
     "enginesWind": "Somme + vent",
     "enginesHint": "La somme fixe la distance parcourue",
-    "radio": "Radio",
     "radioHint": "N retire un avion N−1 cases devant",
-    "landingGear": "Train d’atterrissage",
-    "flaps": "Volets",
-    "brakes": "Freins",
-    "concentration": "Concentration",
     "concentrationHint": "N’importe quel dé : +1 café (max. 3)",
     "coffeeCount": "{{count}} café(s)",
     "brakeMarker": "Marqueur de freinage",
@@ -165,16 +154,13 @@
     "keroseneHint": "L’un ou l’autre · brûle sa valeur ; sans dé : −6",
     "keroseneLeft": "{{left}} / {{total}} restants",
     "keroseneEmpty": " : vide",
-    "wind": "Vent",
     "windHint": "Tourne avec l’axe",
     "windOnEngines": "Vent {{speed}}",
     "windLabel": "Vent {{speed}} ajouté aux moteurs",
-    "intern": "Stagiaire",
     "internHint": "Dé ≠ jeton suivant · le jeton va sur une de vos cases",
     "internLeft": "Jetons Stagiaire restants : {{tokens}}",
     "internTrained": "Stagiaire entièrement formé",
     "trained": "Formé !",
-    "iceBrakes": "Freins sur glace",
     "iceBrakesHint": "Par paires : pilote en haut, l’un ou l’autre en bas",
     "iceBrake": "Frein sur glace {{n}}"
   },
@@ -276,7 +262,6 @@
     "axisTurn": "Virage : pour avancer, l’axe doit être à {{positions}}",
     "speedLabel": "Vitesse {{speed}}. Sous {{blue}} : sur place ; jusqu’à {{orange}} : 1 case ; au-delà : 2 cases. Les freins arrêtent jusqu’à {{brake}}.",
     "speedNotSet": "non fixée",
-    "speedTitle": "Vitesse {{speed}}",
     "alarmTitle_one": "Alarme : un jeton se retourne en début de manche ici",
     "alarmTitle_other": "Alarme : {{count}} jetons se retournent en début de manche ici",
     "trustTitle": "Confiance totale : une manche qui se termine ici supprime la discussion de stratégie suivante",
@@ -286,7 +271,6 @@
   },
   "gameOver": {
     "landed": "Atterrissage en douceur !",
-    "crashed": "Crash",
     "landedAt": "Vous avez atterri à {{airport}} à la manche {{round}}.",
     "crashedAt": "Manche {{round}} · {{altitude}} ft",
     "done": "réussi",
@@ -300,14 +284,11 @@
     "scenarioNote": "Le scénario choisi ici est proposé à {{name}}, qui doit accepter avant le début du nouveau vol."
   },
   "flightLog": {
-    "open": "Carnet de vol",
     "title": "Carnet de vol",
     "intro": "Vos parties sur cet appareil.",
-    "tabLog": "Carnet de vol",
     "tabHistory": "Historique",
     "color": "Couleur",
     "code": "Code",
-    "scenario": "Scénario",
     "pilot": "Pilote (V/D)",
     "copilot": "Copilote (V/D)",
     "cell": "{{seat}} : {{won}} victoire(s), {{lost}} défaite(s)",
@@ -315,7 +296,6 @@
     "landed": "réussi",
     "empty": "Aucune partie pour l’instant. Les parties terminées apparaissent ici.",
     "won": "Atterri",
-    "lost": "Crash",
     "entry": "en {{seat}} avec {{partner}} · manche {{rounds}}",
     "entryAlone": "en {{seat}} · manche {{rounds}}"
   },
@@ -388,7 +368,6 @@
     "landing-ice-brakes": "Tous les freins sur glace déployés"
   },
   "alarms": {
-    "title": "Alarmes",
     "hint": "Un symbole Alarme sur votre case retourne un jeton au hasard en début de manche. Son Action est bloquée jusqu’à ce que vous y posiez le dé indiqué.",
     "faceDown": "Alarme face cachée",
     "cleared": "{{alarm}} : désactivée",

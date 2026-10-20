@@ -7,6 +7,6 @@ export default defineConfig({
   platform: 'node',
   clean: true,
   sourcemap: true,
-  // Bundle the workspace package; it ships as TypeScript source.
-  noExternal: ['@sky/rules', '@platform/engine', '@platform/protocol'],
+  // Bundle the workspace packages; they ship as TypeScript source.
+  noExternal: ['@sky/rules', '@pandemic/rules', '@platform/engine', '@platform/protocol'],
 });

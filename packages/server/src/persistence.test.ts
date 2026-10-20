@@ -15,7 +15,8 @@ import { createRandomAgent } from '@sky/rules/random-play';
 import Database from 'better-sqlite3';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { RoomManager, restoreMatch, SNAPSHOT_EVERY, type Room } from './rooms';
+import { restoreMatch, SNAPSHOT_EVERY } from './rooms';
+import { SkyRooms as RoomManager, type SkyRoom as Room } from './test-server';
 import {
   fromStored,
   hashToken,

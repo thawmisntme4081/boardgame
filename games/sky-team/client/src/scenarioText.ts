@@ -19,7 +19,7 @@ export const abilityText = (id: AbilityId): { name: string; rule: string } => ({
   rule: t(`abilityText.${id}.rule`),
 });
 
-/** The airport code, numbered when the airport has two scenarios of a colour: `DUS1`, `DUS2`. */
+/** The airport code, numbered when the airport has two scenarios of a color: `DUS1`, `DUS2`. */
 export const scenarioCode = (scenario: Scenario): string =>
   scenario.airport + (/\d+$/.exec(scenario.id)?.[0] ?? '');
 
@@ -52,7 +52,7 @@ export const DIFFICULTY_DOT: Record<Difficulty, string> = {
   black: 'bg-neutral-900 ring-1 ring-neutral-400',
 };
 
-/** Compact coloured difficulty badge shown while flying. */
+/** Compact colored difficulty badge shown while flying. */
 export const DIFFICULTY_BADGE: Record<Difficulty, string> = {
   green: 'bg-emerald-100 text-emerald-800 ring-emerald-600/30',
   yellow: 'bg-amber-100 text-amber-900 ring-amber-500/30',

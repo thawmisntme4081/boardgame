@@ -4,15 +4,23 @@ import type {
   AckResult,
   ClientToServer,
   GameSetup,
+  GameState as SkyTeamState,
   PlayerMove,
   PlayerView,
   ServerToClient,
 } from '@sky/rules';
+import type { SkyTeamConfig } from '@sky/rules/definition';
 import { io as connectClient, type Socket } from 'socket.io-client';
 import { createGameServer, type ServerOptions } from './app';
-import type { RoomManager } from './rooms';
+import { RoomManager, type Room } from './rooms';
 
 export type Client = Socket<ServerToClient, ClientToServer>;
+
+/** A Sky Team room with its game's types (the platform sees them as unknown). */
+export type SkyRoom = Room<SkyTeamState, SkyTeamConfig>;
+
+/** Rooms for tests that play Sky Team: the same manager, with Sky Team's state and config. */
+export class SkyRooms extends RoomManager<SkyTeamState, SkyTeamConfig> {}
 
 /** The match each client last saw a view of: its moves and rematches name it. */
 const seenMatch = new WeakMap<Client, string>();
@@ -63,7 +71,7 @@ export function nextView(client: Client): Promise<PlayerView> {
   return new Promise((resolve) => client.once('match:view', ({ view }) => resolve(view)));
 }
 
-export async function startTestServer(rooms?: RoomManager, options: ServerOptions = {}) {
+export async function startTestServer(rooms = new SkyRooms(), options: ServerOptions = {}) {
   const server = createGameServer(rooms, options);
   await new Promise<void>((resolve) => server.httpServer.listen(0, resolve));
   const { port } = server.httpServer.address() as AddressInfo;
@@ -72,6 +80,7 @@ export async function startTestServer(rooms?: RoomManager, options: ServerOption
 
   return {
     ...server,
+    rooms,
     url,
     /** A new connection; `cookie` is sent with the handshake (a signed-in device). */
     async connect(cookie?: string): Promise<Client> {

@@ -18,6 +18,8 @@
       "@sky/rules": ["./games/sky-team/rules/src/index.ts"],
       "@pandemic/rules": ["./games/pandemic/rules/src/index.ts"],
       "@sky/client": ["./games/sky-team/client/src/index.ts"],
+      "@pandemic/client": ["./games/pandemic/client/src/index.ts"],
+      "@pandemic/client/*": ["./games/pandemic/client/src/*"],
       "@sky/client/*": ["./games/sky-team/client/src/*"],
       "@platform/engine": ["./packages/engine/src/index.ts"],
       "@platform/engine/testing": ["./packages/engine/src/testing.ts"],

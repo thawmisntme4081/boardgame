@@ -15,7 +15,7 @@ Needs [Pandemic 08](phase-08-expansion-modules.md). Expansion phases are optiona
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 - [ ] 1. **L** Read the rulebook and write the full list of new roles and events into this file's Open questions with their exact text; confirm it with the user.
 - [ ] 2. **M** Role hooks for the new roles that change movement or treating (one sitting per two roles; add one task per extra pair).
@@ -24,6 +24,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 5. **L** Module setup: the cards join the pools and the deck size and epidemic piles stay correct; tests.
 - [ ] 6. **M** Client: role cards, role controls and event buttons for the new cards; texts in English.
 - [ ] 7. **L** Playwright: a game with the module on, one new role and one new event played.
+
+**Checks**
+
+- [ ] 8. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 

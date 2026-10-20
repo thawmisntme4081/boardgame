@@ -6,7 +6,7 @@
   "tailwind": {
     "config": "",
     "css": "src/theme.css",
-    "baseColor": "neutral",
+    "baseColor": "stone",
     "cssVariables": true,
     "prefix": ""
   },
@@ -16,7 +16,7 @@
     "components": "@platform/ui/components",
     "utils": "@platform/ui/utils",
     "ui": "@platform/ui/components",
-    "lib": "@platform/ui",
+    "lib": "@platform/ui/utils",
     "hooks": "@platform/ui/hooks"
   },
   "menuColor": "default",

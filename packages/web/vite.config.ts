@@ -16,8 +16,21 @@ export default defineConfig({
     },
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
+        // Libraries in their own chunks: they change rarely, so a deploy that changes only the
+        // app's code leaves them in the browser's cache.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            { name: 'router', test: /[\\/]node_modules[\\/]@tanstack[\\/]/ },
+            { name: 'i18n', test: /[\\/]node_modules[\\/](i18next|react-i18next)[\\/]/ },
+            {
+              name: 'socket',
+              test: /[\\/]node_modules[\\/](socket\.io-client|engine\.io-client|socket\.io-parser|engine\.io-parser|@socket\.io)[\\/]/,
+            },
+          ],
+        },
         // A game's lazy chunk is named after the game (assets/sky-team-*.js), not its entry file.
         chunkFileNames: (chunk) => {
           const game = /[\\/]games[\\/]([^\\/]+)[\\/]/.exec(chunk.facadeModuleId ?? '')?.[1];

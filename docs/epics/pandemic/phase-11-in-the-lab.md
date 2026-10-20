@@ -15,7 +15,7 @@ Needs [Pandemic 08](phase-08-expansion-modules.md). Expansion phases are optiona
 
 ## Tasks
 
-Each task is about one sitting (**L** = low, **M** = medium effort) and ends with its tests passing.
+Each task is about one sitting (**L** = low, **M** = medium effort) and ends with typecheck, lint and format passing; tests are written and run at the end of the phase, after your review.
 
 - [ ] 1. **L** Read the rulebook; write the lab challenge's rules and card list into Open questions; confirm with the user.
 - [ ] 2. **M** Rules module: setup, new state fields and their hooks; tests.
@@ -23,6 +23,10 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 - [ ] 4. **M** New roles or events, if the expansion has any (one sitting per two or three cards).
 - [ ] 5. **M** Client: the lab's board elements and controls.
 - [ ] 6. **L** Playwright: a game with the module on.
+
+**Checks**
+
+- [ ] 7. **M** Write the phase's tests and run the full suite: `pnpm test`, `pnpm e2e`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` (after your review of the other tasks).
 
 ## Checklist
 
@@ -33,4 +37,4 @@ Each task is about one sitting (**L** = low, **M** = medium effort) and ends wit
 
 - The expansion's exact content (fill in at task 1).
 
-**Done when:** a game with the lab challenge on plays to its end on phones.
+**Done when:** a game with the lab challenge on plays to its end on desktop.

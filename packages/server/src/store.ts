@@ -542,13 +542,17 @@ const toRecord = (row: typeof matchesTable.$inferSelect): MatchRecord => ({
 });
 
 /**
- * The platform's database (WAL mode, every migration run): the match store and the accounts
+ * The platform's database (WAL mode, `synchronous = NORMAL`, every migration run): the match store and the accounts
  * share one connection. `:memory:` when nothing is saved (dev without `DATA_DIR`, tests).
  */
 export function openDatabase(file: string): Database.Database {
   if (file !== ':memory:') mkdirSync(path.dirname(file), { recursive: true });
   const sqlite = new Database(file);
   sqlite.pragma('journal_mode = WAL');
+  // Safe with WAL (a power cut may lose the last commits, never corrupt the file), and no disk
+  // sync on every commit; Litestream recommends both settings.
+  sqlite.pragma('synchronous = NORMAL');
+  sqlite.pragma('busy_timeout = 5000');
   sqlite.pragma('foreign_keys = ON');
   migrate(sqlite);
   return sqlite;

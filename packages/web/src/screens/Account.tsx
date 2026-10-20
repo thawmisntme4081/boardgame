@@ -19,7 +19,7 @@ import { setAccountName, signInWithGoogle, deleteAccount, signOut } from '../acc
 import { NAME_MAX } from '../session';
 import { usePlatform } from '../store';
 
-/** The Google "G", in its colours (the sign-in button's usual mark). */
+/** The Google "G", in its colors (the sign-in button's usual mark). */
 function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4">
@@ -196,7 +196,7 @@ export function AccountButton() {
   if (!user) {
     return (
       <>
-        <Button variant="outline" className="h-11" onClick={() => setOpen(true)}>
+        <Button variant="outline" className="h-8" onClick={() => setOpen(true)}>
           <LogIn /> {t('account.signIn')}
         </Button>
         <SignInDialog open={open} onOpenChange={setOpen} />
@@ -211,7 +211,7 @@ export function AccountButton() {
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
-            className="h-11 max-w-36"
+            className="h-8 max-w-36"
             aria-label={t('account.menu', { name: user.name })}
           >
             <UserRound /> <span className="truncate">{user.name}</span>

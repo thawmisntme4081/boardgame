@@ -9,104 +9,133 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as HistoryRouteImport } from './routes/history'
-import { Route as PlayGameIdRouteImport } from './routes/play.$gameId'
-import { Route as RCodeRouteImport } from './routes/r.$code'
+import { Route as SiteRouteImport } from './routes/_site'
+import { Route as SiteIndexRouteImport } from './routes/_site.index'
+import { Route as SiteHistoryRouteImport } from './routes/_site.history'
+import { Route as SitePlayGameIdRouteImport } from './routes/_site.play.$gameId'
+import { Route as SiteRCodeRouteImport } from './routes/_site.r.$code'
 
-const IndexRoute = IndexRouteImport.update({
+const SiteRoute = SiteRouteImport.update({
+  id: '/_site',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => SiteRoute,
 } as any)
-const HistoryRoute = HistoryRouteImport.update({
+const SiteHistoryRoute = SiteHistoryRouteImport.update({
   id: '/history',
   path: '/history',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => SiteRoute,
 } as any)
-const PlayGameIdRoute = PlayGameIdRouteImport.update({
+const SitePlayGameIdRoute = SitePlayGameIdRouteImport.update({
   id: '/play/$gameId',
   path: '/play/$gameId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => SiteRoute,
 } as any)
-const RCodeRoute = RCodeRouteImport.update({
+const SiteRCodeRoute = SiteRCodeRouteImport.update({
   id: '/r/$code',
   path: '/r/$code',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => SiteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
-  '/play/$gameId': typeof PlayGameIdRoute
-  '/r/$code': typeof RCodeRoute
+  '/': typeof SiteIndexRoute
+  '/history': typeof SiteHistoryRoute
+  '/play/$gameId': typeof SitePlayGameIdRoute
+  '/r/$code': typeof SiteRCodeRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
-  '/play/$gameId': typeof PlayGameIdRoute
-  '/r/$code': typeof RCodeRoute
+  '/history': typeof SiteHistoryRoute
+  '/': typeof SiteIndexRoute
+  '/play/$gameId': typeof SitePlayGameIdRoute
+  '/r/$code': typeof SiteRCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/history': typeof HistoryRoute
-  '/play/$gameId': typeof PlayGameIdRoute
-  '/r/$code': typeof RCodeRoute
+  '/_site': typeof SiteRouteWithChildren
+  '/_site/history': typeof SiteHistoryRoute
+  '/_site/': typeof SiteIndexRoute
+  '/_site/play/$gameId': typeof SitePlayGameIdRoute
+  '/_site/r/$code': typeof SiteRCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/history' | '/play/$gameId' | '/r/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/play/$gameId' | '/r/$code'
-  id: '__root__' | '/' | '/history' | '/play/$gameId' | '/r/$code'
+  to: '/history' | '/' | '/play/$gameId' | '/r/$code'
+  id:
+    | '__root__'
+    | '/_site'
+    | '/_site/history'
+    | '/_site/'
+    | '/_site/play/$gameId'
+    | '/_site/r/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  HistoryRoute: typeof HistoryRoute
-  PlayGameIdRoute: typeof PlayGameIdRoute
-  RCodeRoute: typeof RCodeRoute
+  SiteRoute: typeof SiteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_site': {
+      id: '/_site'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof SiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_site/': {
+      id: '/_site/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRoute
     }
-    '/history': {
-      id: '/history'
+    '/_site/history': {
+      id: '/_site/history'
       path: '/history'
       fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof SiteHistoryRouteImport
+      parentRoute: typeof SiteRoute
     }
-    '/play/$gameId': {
-      id: '/play/$gameId'
+    '/_site/play/$gameId': {
+      id: '/_site/play/$gameId'
       path: '/play/$gameId'
       fullPath: '/play/$gameId'
-      preLoaderRoute: typeof PlayGameIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof SitePlayGameIdRouteImport
+      parentRoute: typeof SiteRoute
     }
-    '/r/$code': {
-      id: '/r/$code'
+    '/_site/r/$code': {
+      id: '/_site/r/$code'
       path: '/r/$code'
       fullPath: '/r/$code'
-      preLoaderRoute: typeof RCodeRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof SiteRCodeRouteImport
+      parentRoute: typeof SiteRoute
     }
   }
 }
 
+interface SiteRouteChildren {
+  SiteHistoryRoute: typeof SiteHistoryRoute
+  SiteIndexRoute: typeof SiteIndexRoute
+  SitePlayGameIdRoute: typeof SitePlayGameIdRoute
+  SiteRCodeRoute: typeof SiteRCodeRoute
+}
+
+const SiteRouteChildren: SiteRouteChildren = {
+  SiteHistoryRoute: SiteHistoryRoute,
+  SiteIndexRoute: SiteIndexRoute,
+  SitePlayGameIdRoute: SitePlayGameIdRoute,
+  SiteRCodeRoute: SiteRCodeRoute,
+}
+
+const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  HistoryRoute: HistoryRoute,
-  PlayGameIdRoute: PlayGameIdRoute,
-  RCodeRoute: RCodeRoute,
+  SiteRoute: SiteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

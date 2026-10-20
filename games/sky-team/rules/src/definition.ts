@@ -117,6 +117,7 @@ const SYSTEM_MOVES: ReadonlySet<AnyMove['type']> = new Set([
   'time-up',
   'table:join',
   'table:choose-seat',
+  'table:leave',
 ]);
 
 function check(state: GameState, move: AnyMove, { by, at }: MoveContext): Result {
@@ -128,6 +129,9 @@ function check(state: GameState, move: AnyMove, { by, at }: MoveContext): Result
       return isSeat(move.seat) ? OK : fail('unknown-seat');
     case 'table:choose-seat':
       return isSeat(move.seat) ? canChooseSeat(state) : fail('unknown-seat');
+    case 'table:leave':
+      // Sky Team restarts the match when a player leaves; the platform never tells it.
+      return fail('not-allowed');
     case 'roll':
       return canAutoRoll(state, at);
     case 'time-up':
@@ -158,6 +162,8 @@ function play(state: GameState, move: AnyMove, { by, at }: MoveContext): GameSta
       return seatJoined(state, move.seat as Seat);
     case 'table:choose-seat':
       return chooseSeat(state, move.seat as Seat);
+    case 'table:leave':
+      return state;
     case 'roll':
       // Timed games: the round's countdown starts with the roll.
       return startRoundTimer(rollDice(state), at);

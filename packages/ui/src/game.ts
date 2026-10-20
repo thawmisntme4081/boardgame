@@ -51,12 +51,14 @@ export interface PlatformApi<Move, Setup> {
 }
 
 /**
- * A rematch after a game needs both players: one makes an offer (`by` is their seat), the
- * other accepts by asking for a rematch too, or declines. `config` is the offered setup.
+ * A rematch after a game needs every seated player: one makes an offer (`by` is their seat),
+ * the others accept by asking for a rematch too, or decline. `config` is the offered setup;
+ * `accepted` the seats that asked so far, the offerer first.
  */
 export interface RematchState {
   by: string | null;
   config: unknown;
+  accepted?: string[];
 }
 
 export interface BoardProps<View> {
@@ -93,6 +95,12 @@ export interface GameClientModule<View = unknown, Move = unknown, Setup = unknow
    * the account's records itself through `PlatformApi.flightLog`).
    */
   History?: ComponentType;
+  /**
+   * Shown in the site's header above the board (next to the language and the account), which
+   * then stays on screen and the board fills the window below it. Without it the board fills
+   * the whole window and the site's header is left out.
+   */
+  HeaderExtra?: ComponentType<{ view: View; presence: SeatPresence | null }>;
   /** The player left the room: forget the game's own UI state. */
   reset?(): void;
   /** The text for a code the server sent (a rule's reason), or `undefined` if not the game's. */

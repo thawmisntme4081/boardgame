@@ -79,7 +79,7 @@ function LogTable({ history }: { history: readonly GameRecord[] }) {
               {t('flightLog.code')}
             </th>
             <th scope="col" className="px-2 py-2 text-left font-medium">
-              {t('flightLog.scenario')}
+              {t('scenario.label')}
             </th>
             <th scope="col" className="px-2 py-2 font-medium">
               {t('flightLog.pilot')}
@@ -141,7 +141,7 @@ function HistoryList({ history }: { history: readonly GameRecord[] }) {
                   won ? 'bg-emerald-600' : 'bg-danger',
                 )}
               >
-                {won ? t('flightLog.won') : t('flightLog.lost')}
+                {won ? t('flightLog.won') : t('status.crashed')}
               </span>
             </span>
             <span className="text-xs text-muted-foreground">
@@ -168,7 +168,7 @@ function FlightLogTabs() {
     <Tabs defaultValue="log">
       <TabsList className="w-full">
         <TabsTrigger value="log" className="h-9">
-          {t('flightLog.tabLog')}
+          {t('flightLog.title')}
         </TabsTrigger>
         <TabsTrigger value="history" className="h-9">
           {t('flightLog.tabHistory')}
@@ -199,7 +199,7 @@ export function FlightLog({ className }: { className?: string }) {
     <Dialog onOpenChange={(open) => open && void syncHistory()}>
       <DialogTrigger asChild>
         <Button variant="ghost" className={cn('h-11', className)}>
-          <BookOpen /> {t('flightLog.open')}
+          <BookOpen /> {t('flightLog.title')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] gap-3 desktop:max-w-2xl!">

@@ -14,7 +14,6 @@
   },
   "scenario": {
     "label": "Kịch bản",
-    "chooseAbilities_other": "Chọn {{count}} kỹ năng đặc biệt",
     "abilityCount_other": "{{count}} kỹ năng"
   },
   "difficulty": {
@@ -40,8 +39,7 @@
     "noTalking": "Không trao đổi!!!",
     "timeLeft": "Thời gian còn lại của vòng: {{time}}",
     "nextTurn": "Vòng sau sau {{seconds}} giây",
-    "nextTurnLabel": "Vòng sau bắt đầu sau {{seconds}} giây",
-    "totalTrust": "Tin tưởng tuyệt đối"
+    "nextTurnLabel": "Vòng sau bắt đầu sau {{seconds}} giây"
   },
   "toast": {
     "partnerReroll": "{{name}} đang dùng lượt đổ lại."
@@ -50,8 +48,7 @@
     "button": "Rời ván",
     "title": "Rời ván chơi này?",
     "body": "Bạn sẽ nhường lại chỗ ngồi và ván của {{name}} bắt đầu lại, chờ người chơi mới. Nếu chỉ muốn tạm dừng, hãy đóng thẻ: chỗ của bạn được giữ trong 30 phút.",
-    "stay": "Ở lại",
-    "confirm": "Rời ván"
+    "stay": "Ở lại"
   },
   "tray": {
     "yourDice": "Xúc xắc của bạn",
@@ -100,18 +97,11 @@
     "totalTrust": "Tin tưởng tuyệt đối: vòng này không bàn chiến thuật. Xúc xắc tự đổ."
   },
   "cockpit": {
-    "axis": "Trục",
     "axisHint": "Độ chênh lệch giữa giá trị hai viên xúc xắc này sẽ dịch chuyển thanh thăng bằng sang bên có giá trị lớn hơn",
-    "engines": "Động cơ",
     "enginesFinal": "Vòng cuối: tốc độ phải dưới mức phanh",
     "enginesWind": "Cộng tổng số xúc xắc động cơ + tốc độ gió",
     "enginesHint": "Cộng tổng số nút của 2 xúc xắc",
-    "radio": "Radio",
     "radioHint": "Loại bỏ ngay 1 máy bay nằm ở ô được đếm tới đó",
-    "landingGear": "Càng đáp",
-    "flaps": "Cánh tà",
-    "brakes": "Phanh",
-    "concentration": "Tập trung",
     "concentrationHint": "Xúc xắc bất kỳ: +1 cà phê (tối đa 3)",
     "coffeeCount": "{{count}} cà phê",
     "brakeMarker": "Vạch phanh",
@@ -160,16 +150,13 @@
     "keroseneHint": "Giá trị dốt = giá trị xúc xắc; không đặt = −6",
     "keroseneLeft": "còn {{left}} / {{total}}",
     "keroseneEmpty": ": hết",
-    "wind": "Gió",
     "windHint": "Xoay theo độ nghiêng của trục",
     "windOnEngines": "Tốc độ gió {{speed}}",
     "windLabel": "Gió {{speed}} cộng vào động cơ",
-    "intern": "Thực tập sinh",
     "internHint": "Xúc xắc ≠ thẻ kế tiếp · thẻ đặt vào ô nào của bạn cũng được",
     "internLeft": "Thẻ thực tập sinh còn lại: {{tokens}}",
     "internTrained": "Thực tập sinh đã được đào tạo xong",
     "trained": "Đã đào tạo xong!",
-    "iceBrakes": "Phanh băng",
     "iceBrakesHint": "Cả 2 xúc xắc phải đặt cùng 1 turn. Hàng trên bắt buộc là phi công, hàng dưới có thể là 1 trong 2. Phải vượt qua 5 để hạ cánh.",
     "iceBrake": "Phanh băng {{n}}"
   },
@@ -270,7 +257,6 @@
     "axisTurn": "Rẽ: để tiến lên, trục phải ở {{positions}}",
     "speedLabel": "Tốc độ {{speed}}. Từ {{blue}} trở xuống: đứng yên; đến {{orange}}: 1 ô; cao hơn: 2 ô. Phanh dừng được tốc độ đến {{brake}}.",
     "speedNotSet": "chưa có",
-    "speedTitle": "Tốc độ {{speed}}",
     "alarmTitle_other": "Báo động: {{count}} thẻ lật khi bắt đầu mỗi vòng ở đây",
     "trustTitle": "Tin tưởng tuyệt đối: vòng kết thúc ở đây sẽ bỏ bàn chiến thuật vòng sau",
     "hereAlarm_other": "{{count}} báo động lật khi bắt đầu mỗi vòng ở đây",
@@ -278,7 +264,6 @@
   },
   "gameOver": {
     "landed": "Hạ cánh êm!",
-    "crashed": "Rơi máy bay",
     "landedAt": "Bạn đã hạ cánh xuống {{airport}} ở vòng {{round}}.",
     "crashedAt": "Vòng {{round}} · {{altitude}} ft",
     "done": "hoàn thành",
@@ -292,14 +277,11 @@
     "scenarioNote": "Kịch bản bạn chọn ở đây sẽ được đề nghị cho {{name}}, và {{name}} phải đồng ý thì chuyến bay mới bắt đầu."
   },
   "flightLog": {
-    "open": "Nhật ký bay",
     "title": "Nhật ký bay",
     "intro": "Các ván của bạn trên thiết bị này.",
-    "tabLog": "Nhật ký bay",
     "tabHistory": "Lịch sử",
     "color": "Màu",
     "code": "Mã",
-    "scenario": "Kịch bản",
     "pilot": "Phi công (T/B)",
     "copilot": "Cơ phó (T/B)",
     "cell": "{{seat}}: thắng {{won}}, thua {{lost}}",
@@ -307,7 +289,6 @@
     "landed": "đã hạ cánh",
     "empty": "Chưa có ván nào. Các ván đã xong sẽ hiện ở đây.",
     "won": "Hạ cánh",
-    "lost": "Rơi máy bay",
     "entry": "là {{seat}} cùng {{partner}} · vòng {{rounds}}",
     "entryAlone": "là {{seat}} · vòng {{rounds}}"
   },
@@ -380,7 +361,6 @@
     "landing-ice-brakes": "Đã mở hết phanh băng"
   },
   "alarms": {
-    "title": "Báo động",
     "hint": "Biểu tượng Báo động ở ô của bạn lật ngẫu nhiên một thẻ khi bắt đầu vòng. Hành động của thẻ bị khóa cho đến khi bạn đặt xúc xắc in trên thẻ.",
     "faceDown": "Thẻ báo động úp",
     "cleared": "{{alarm}}: đã tắt",

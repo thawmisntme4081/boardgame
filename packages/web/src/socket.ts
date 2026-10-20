@@ -7,5 +7,13 @@ export type GameSocket = Socket<
   ClientEvents<string, unknown, unknown, string>
 >;
 
-/** One typed socket for the app. Same origin: Vite proxies `/socket.io` in development. */
-export const socket: GameSocket = io({ autoConnect: false });
+/**
+ * One typed socket for the app. Same origin: Vite proxies `/socket.io` in development. It opens
+ * a WebSocket straight away (no long-polling handshake first) and falls back to polling only
+ * when WebSockets are blocked.
+ */
+export const socket: GameSocket = io({
+  autoConnect: false,
+  transports: ['websocket', 'polling'],
+  tryAllTransports: true,
+});
