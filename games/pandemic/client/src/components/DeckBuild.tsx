@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { epidemicCardUrl, playerBackUrl } from '../lib/cardImages';
+import { Card as CardArt } from '../svgs/Card';
 import { PLAYER_DECK_FRAME } from '../lib/mapGeometry';
 
 /** A small face-down pile (a player card shrunk), and the row the piles are laid out in. */
@@ -64,9 +64,9 @@ function MiniPile({ index, count, stage }: { index: number; count: number; stage
   return (
     <g ref={group} style={{ transform: at(slot.x, slot.y), transformOrigin: '0 0' }}>
       {[2, 1, 0].map((depth) => (
-        <image
+        <CardArt
           key={depth}
-          href={playerBackUrl()}
+          face={{ kind: 'back', deck: 'player' }}
           x={depth * 1.5}
           y={depth * -1.5}
           width={CARD.width}
@@ -75,7 +75,7 @@ function MiniPile({ index, count, stage }: { index: number; count: number; stage
       ))}
       {stage >= 2 && (
         <g ref={epidemic}>
-          <image href={epidemicCardUrl()} width={CARD.width} height={CARD.height} />
+          <CardArt face={{ kind: 'epidemic' }} width={CARD.width} height={CARD.height} />
         </g>
       )}
     </g>

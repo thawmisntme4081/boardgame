@@ -1,6 +1,6 @@
 import type { CityId } from '@pandemic/rules';
 import { useLayoutEffect, useRef } from 'react';
-import { infectionBackUrl, infectionCardUrl } from '../lib/cardImages';
+import { Card } from '../svgs/Card';
 import { INFECTION_DECK_FRAME, INFECTION_DISCARD_FRAME } from '../lib/mapGeometry';
 
 /** How long one card's flight from the deck to the discard pile takes. */
@@ -20,8 +20,8 @@ const at = (x: number, y: number, scaleX: number) => `translate(${x}px, ${y}px) 
  */
 export function InfectionDrawFlight({ city }: { city: CityId }) {
   const group = useRef<SVGGElement>(null);
-  const back = useRef<SVGImageElement>(null);
-  const face = useRef<SVGImageElement>(null);
+  const back = useRef<SVGSVGElement>(null);
+  const face = useRef<SVGSVGElement>(null);
 
   useLayoutEffect(() => {
     group.current?.animate(
@@ -47,8 +47,8 @@ export function InfectionDrawFlight({ city }: { city: CityId }) {
       ref={group}
       style={{ transform: at(FROM.x, FROM.y, 1), transformOrigin: `${W / 2}px ${H / 2}px` }}
     >
-      <image ref={back} href={infectionBackUrl()} width={W} height={H} />
-      <image ref={face} href={infectionCardUrl(city)} width={W} height={H} opacity={0} />
+      <Card ref={back} face={{ kind: 'back', deck: 'infection' }} width={W} height={H} />
+      <Card ref={face} face={{ kind: 'infection', city }} width={W} height={H} opacity={0} />
     </g>
   );
 }

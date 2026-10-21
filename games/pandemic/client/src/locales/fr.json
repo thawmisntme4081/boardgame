@@ -74,6 +74,7 @@
     "stationsLeft": "Stations de recherche restantes : {{count}}",
     "supplyOf": "Cubes {{color}} restants",
     "infectionDiscard": "Défausse Propagation : {{count}} cartes",
+    "contingencyCard": "Carte événement conservée sur le Planificateur d’urgence",
     "playerDiscard": "Défausse Joueur : {{count}} cartes",
     "openPlayerDiscard": "Voir la défausse Joueur",
     "openInfectionDiscard": "Voir la défausse Propagation"
@@ -188,8 +189,7 @@
       "power": "Commencez à Montréal. Par une action, allez à Montréal ou à Essen. Quand vous découvrez un remède, les autres joueurs de votre ville peuvent donner jusqu’à 2 de ses cartes (s’ils sont d’accord)."
     },
     "students": "Élèves : {{count}} / {{max}}",
-    "info": "{{role}} : pouvoir",
-    "stored": "En réserve : {{event}}"
+    "info": "{{role}} : pouvoir"
   },
   "cureOffer": {
     "title": "Découvrir un remède",
@@ -212,6 +212,11 @@
     "teacher": "Pion enseignante",
     "student": "Élève {{number}}",
     "studentOf": "Élève de {{name}}"
+  },
+  "cards": {
+    "event": "Événement",
+    "epidemic": "Épidémie",
+    "infection": "Infection"
   },
   "hands": {
     "title": "Mains",

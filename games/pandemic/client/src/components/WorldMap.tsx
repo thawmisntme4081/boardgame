@@ -1,8 +1,16 @@
-import { COLORS, CITIES, type CityId, type Color, type CureState } from '@pandemic/rules';
+import {
+  COLORS,
+  CITIES,
+  PACIFIC_LINKS,
+  type CityId,
+  type Color,
+  type CureState,
+} from '@pandemic/rules';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import mapUrl from '../assets/map.webp';
+import { BoardFurniture } from './BoardFurniture';
 import { CURE_SLOTS, MAP_HEIGHT, MAP_WIDTH, cityPoint } from '../lib/mapGeometry';
+import { WORLD_LAND } from '../lib/worldLand';
 import { cityName, labelLines } from '../lib/names';
 import { CURE_MARKER_INSET, CURE_MARKER_WIDTH, CureMarker } from '../svgs/CureMarker';
 
@@ -23,8 +31,70 @@ export interface WorldMapProps {
   children?: ReactNode;
 }
 
+const OCEAN = 'oklch(0.3 0.06 245)';
+const LAND = 'oklch(0.5 0.07 150)';
+const COAST = 'oklch(0.68 0.07 150)';
+const LINK = 'oklch(0.95 0 0 / 0.7)';
+
+/** Every white line of the board once (the Pacific ones are drawn apart, cut at the map's edges). */
+const LINKS: readonly (readonly [CityId, CityId])[] = CITIES.flatMap(({ id, links }) =>
+  links
+    .filter((other) => id < other)
+    .filter(
+      (other) =>
+        !PACIFIC_LINKS.some(([a, b]) => (a === id && b === other) || (a === other && b === id)),
+    )
+    .map((other) => [id, other] as const),
+);
+
 /**
- * The world map: the picture (it already draws the links and the cities' icons), a name under
+ * The three lines over the Pacific leave the map on one side and come back on the other: each
+ * is two half-lines, the ones of the straight line to the other city's copy beyond the edge.
+ */
+const PACIFIC_HALVES = PACIFIC_LINKS.flatMap(([a, b]) => {
+  const [west, east] = [cityPoint(a), cityPoint(b)].sort((p, q) => p.x - q.x) as [
+    { x: number; y: number },
+    { x: number; y: number },
+  ];
+  const sx = east.x - MAP_WIDTH;
+  const lx = west.x + MAP_WIDTH;
+  return [
+    {
+      x1: west.x,
+      y1: west.y,
+      x2: 0,
+      y2: west.y + ((east.y - west.y) * (0 - west.x)) / (sx - west.x),
+    },
+    {
+      x1: east.x,
+      y1: east.y,
+      x2: MAP_WIDTH,
+      y2: east.y + ((west.y - east.y) * (MAP_WIDTH - east.x)) / (lx - east.x),
+    },
+  ];
+});
+
+/** The ocean, the land and the links, drawn under everything else; a tap on any of it is the background. */
+function Backdrop({ onClick }: { onClick: (() => void) | undefined }) {
+  return (
+    <g onClick={onClick}>
+      <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill={OCEAN} />
+      <path d={WORLD_LAND} fill={LAND} stroke={COAST} strokeWidth={0.6} strokeLinejoin="round" />
+      <g stroke={LINK} strokeWidth={1.6} pointerEvents="none">
+        {LINKS.map(([a, b]) => {
+          const [from, to] = [cityPoint(a), cityPoint(b)];
+          return <line key={`${a}-${b}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} />;
+        })}
+        {PACIFIC_HALVES.map((half, i) => (
+          <line key={i} {...half} />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+/**
+ * The world map: the ocean, the land, the links and a dot in each city's color, a name under
  * each city, and a round target on each city for highlights and taps.
  */
 export function WorldMap({
@@ -47,8 +117,9 @@ export function WorldMap({
       className="h-full w-full select-none"
       preserveAspectRatio="xMidYMid meet"
     >
-      <image href={mapUrl} width={MAP_WIDTH} height={MAP_HEIGHT} onClick={onBackgroundClick} />
-      {CITIES.map(({ id }) => {
+      <Backdrop onClick={onBackgroundClick} />
+      <BoardFurniture />
+      {CITIES.map(({ id, color }) => {
         const { x, y } = cityPoint(id);
         return (
           <g
@@ -77,6 +148,12 @@ export function WorldMap({
               />
             )}
             {selected === id && <circle r={17} fill="none" stroke="white" strokeWidth={3} />}
+            <circle
+              r={6.5}
+              fill={`var(--color-disease-${color})`}
+              stroke="white"
+              strokeWidth={1.5}
+            />
             <circle r={15} fill="transparent" />
             <text
               y={24}

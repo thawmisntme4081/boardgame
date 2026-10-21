@@ -69,6 +69,7 @@
     "stationsLeft": "Trạm nghiên cứu còn lại: {{count}}",
     "supplyOf": "Khối {{color}} còn lại",
     "infectionDiscard": "Chồng bài bỏ lây nhiễm: {{count}} thẻ",
+    "contingencyCard": "Thẻ sự kiện đang lưu trên thẻ Nhà hoạch định dự phòng",
     "playerDiscard": "Chồng bài bỏ người chơi: {{count}} thẻ",
     "openPlayerDiscard": "Xem chồng bài bỏ người chơi",
     "openInfectionDiscard": "Xem chồng bài bỏ lây nhiễm"
@@ -183,8 +184,7 @@
       "power": "Bắt đầu ở Montreal. Dùng một hành động để đến Montreal hoặc Essen. Khi bạn tìm ra thuốc chữa, người chơi khác ở cùng thành phố có thể góp tối đa 2 thẻ (nếu họ đồng ý)."
     },
     "students": "Học trò: {{count}} / {{max}}",
-    "info": "{{role}} làm được gì",
-    "stored": "Đang giữ: {{event}}"
+    "info": "{{role}} làm được gì"
   },
   "cureOffer": {
     "title": "Tìm ra thuốc chữa",
@@ -207,6 +207,11 @@
     "teacher": "Quân giáo viên",
     "student": "Học trò {{number}}",
     "studentOf": "Học trò của {{name}}"
+  },
+  "cards": {
+    "event": "Sự kiện",
+    "epidemic": "Đại dịch",
+    "infection": "Lây nhiễm"
   },
   "hands": {
     "title": "Bài trên tay",
